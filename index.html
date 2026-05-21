@@ -575,8 +575,8 @@ function renderMapPins(jobs) {
 // ── LOAD JOBS ───────────────────────────────
 async function loadJobs() {
   if (!sb) return loadDemoJobs();
-  const {data, error} = await sb.from('jobs')
-    .select('*, profiles(full_name,avatar_url)')
+  const {data, error} = await sb.from('tasks')
+    .select('*, profiles!tasks_poster_id_fkey(full_name,avatar_url)')
     .eq('status','open')
     .order('created_at',{ascending:false});
   if (error || !data) return loadDemoJobs();
@@ -587,13 +587,13 @@ async function loadJobs() {
 
 function loadDemoJobs() {
   allJobs = [
-    {id:'d1',title:'Help moving a couch + bookshelf',category:'moving',budget:55,description:'Third floor walk-up, need someone strong for about 2 hrs. Truck arranged.',location:'Etobicoke',location_verified:true,lat:43.6447,lng:-79.5258,created_at:ago(5),status:'open',profiles:{full_name:'Roman M'}},
-    {id:'d2',title:'Backyard lawn & garden cleanup',category:'garden',budget:80,description:'Overgrown grass, weeding, leaves need bagging. All tools provided.',location:'Bloor West Village',location_verified:true,lat:43.6534,lng:-79.4629,created_at:ago(62),status:'open',profiles:{full_name:'Sarah K'}},
-    {id:'d3',title:'Dog walker needed Saturdays',category:'petcare',budget:35,description:'Golden retriever, super friendly. 45 min walk, recurring if it goes well!',location:'The Junction',location_verified:true,lat:43.6601,lng:-79.4624,created_at:ago(180),status:'open',profiles:{full_name:'Mike T'}},
-    {id:'d4',title:'Set up new iPhone + data transfer',category:'tech',budget:40,description:'Just got an iPhone 16, migrating from Android. Everything backed up.',location:'Roncesvalles',location_verified:false,lat:43.6474,lng:-79.4473,created_at:ago(300),status:'open',profiles:{full_name:'Janet R'}},
-    {id:'d5',title:'Weekly grocery run',category:'errands',budget:25,description:'List ready, Loblaws on Dundas. About 1 hour. Car helpful but not required.',location:'Parkdale',location_verified:true,lat:43.6421,lng:-79.4388,created_at:ago(720),status:'open',profiles:{full_name:'Community Ctr'}},
-    {id:'d6',title:'Fix leaking bathroom tap',category:'handyman',budget:60,description:'Slow drip under the sink. Have tools available. Just need the know-how.',location:'High Park',location_verified:true,lat:43.6507,lng:-79.4760,created_at:ago(1200),status:'open',profiles:{full_name:'Dave L'}},
-    {id:'d7',title:'Help assemble IKEA furniture',category:'handyman',budget:45,description:'3 flat-pack boxes. KALLAX shelf + bed frame. Tools provided.',location:'Swansea',location_verified:true,lat:43.6378,lng:-79.4818,created_at:ago(90),status:'open',profiles:{full_name:'Priya S'}},
+    {id:'d1',title:'Help moving a couch + bookshelf',category:'moving',price:55,description:'Third floor walk-up, need someone strong for about 2 hrs. Truck arranged.',address:'Etobicoke',location_verified:true,lat:43.6447,lng:-79.5258,created_at:ago(5),status:'open',profiles:{full_name:'Roman M'}},
+    {id:'d2',title:'Backyard lawn & garden cleanup',category:'garden',price:80,description:'Overgrown grass, weeding, leaves need bagging. All tools provided.',address:'Bloor West Village',location_verified:true,lat:43.6534,lng:-79.4629,created_at:ago(62),status:'open',profiles:{full_name:'Sarah K'}},
+    {id:'d3',title:'Dog walker needed Saturdays',category:'petcare',price:35,description:'Golden retriever, super friendly. 45 min walk, recurring if it goes well!',address:'The Junction',location_verified:true,lat:43.6601,lng:-79.4624,created_at:ago(180),status:'open',profiles:{full_name:'Mike T'}},
+    {id:'d4',title:'Set up new iPhone + data transfer',category:'tech',price:40,description:'Just got an iPhone 16, migrating from Android. Everything backed up.',address:'Roncesvalles',location_verified:false,lat:43.6474,lng:-79.4473,created_at:ago(300),status:'open',profiles:{full_name:'Janet R'}},
+    {id:'d5',title:'Weekly grocery run',category:'errands',price:25,description:'List ready, Loblaws on Dundas. About 1 hour. Car helpful but not required.',address:'Parkdale',location_verified:true,lat:43.6421,lng:-79.4388,created_at:ago(720),status:'open',profiles:{full_name:'Community Ctr'}},
+    {id:'d6',title:'Fix leaking bathroom tap',category:'handyman',price:60,description:'Slow drip under the sink. Have tools available. Just need the know-how.',address:'High Park',location_verified:true,lat:43.6507,lng:-79.4760,created_at:ago(1200),status:'open',profiles:{full_name:'Dave L'}},
+    {id:'d7',title:'Help assemble IKEA furniture',category:'handyman',price:45,description:'3 flat-pack boxes. KALLAX shelf + bed frame. Tools provided.',address:'Swansea',location_verified:true,lat:43.6378,lng:-79.4818,created_at:ago(90),status:'open',profiles:{full_name:'Priya S'}},
   ];
   renderMapPins(allJobs);
   renderListGrid(allJobs);
@@ -695,11 +695,11 @@ function jobCard(j,profile){
   const locBadge=j.location_verified?`<span style="color:var(--lime);font-size:10px">✅</span>`:`<span style="color:var(--yellow);font-size:10px">⚠️</span>`;
   return `<div class="job-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="jc-badge">${emoji} ${j.category||'other'}</div>
-    <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.budget??'?'}</div></div>
+    <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
     <div class="jc-desc">${esc(j.description||'')}</div>
     <div class="jc-foot">
       <div class="jc-poster"><div class="poster-av">${avImg}</div><span class="poster-nm">${esc(name)}</span></div>
-      <div class="jc-loc">${locBadge} ${esc(j.location||'Nearby')} · ${timeAgo(j.created_at)}</div>
+      <div class="jc-loc">${locBadge} ${esc(j.address||'Nearby')} · ${timeAgo(j.created_at)}</div>
     </div>
   </div>`;
 }
@@ -713,11 +713,11 @@ function openJob(j){
   document.getElementById('m-badge').style.color=color;
   document.getElementById('m-title').textContent=j.title;
   const locTag=j.location_verified?'<span style="color:var(--lime);font-size:11px">✅ GPS verified</span>':'<span style="color:var(--yellow);font-size:11px">⚠️ Self-reported</span>';
-  document.getElementById('m-meta').innerHTML=`📍 ${esc(j.location||'Nearby')} ${locTag} &nbsp;·&nbsp; ${timeAgo(j.created_at)}`;
+  document.getElementById('m-meta').innerHTML=`📍 ${esc(j.address||'Nearby')} ${locTag} &nbsp;·&nbsp; ${timeAgo(j.created_at)}`;
   document.getElementById('m-desc').textContent=j.description||'';
-  document.getElementById('m-budget').textContent=`$${j.budget??'?'}`;
-  document.getElementById('m-loc').innerHTML=`${esc(j.location||'Nearby')}<br><span style="font-size:10px;color:var(--muted);font-weight:700">Neighbourhood only</span>`;
-  const isOwn=me&&j.user_id===me.id;
+  document.getElementById('m-budget').textContent=`$${j.price??'?'}`;
+  document.getElementById('m-loc').innerHTML=`${esc(j.address||'Nearby')}<br><span style="font-size:10px;color:var(--muted);font-weight:700">Neighbourhood only</span>`;
+  const isOwn=me&&j.poster_id===me.id;
   const btn=document.getElementById('m-action');
   if(j.status==='done'){btn.textContent='✅ Job Complete';btn.disabled=true;}
   else if(j.status==='claimed'){btn.textContent=isOwn?'Mark as Done ✅':'🤝 Already Claimed';btn.disabled=!isOwn;}
@@ -728,13 +728,13 @@ function closeModal(e){if(e.target.id==='modal')document.getElementById('modal')
 
 async function jobAction(){
   if(!sb||!me){toast('🎉 (demo) Action noted!');document.getElementById('modal').classList.remove('open');return;}
-  const isOwn=activeJob.user_id===me.id;
+  const isOwn=activeJob.poster_id===me.id;
   let update={};
-  if(activeJob.status==='open'&&!isOwn)        update={status:'claimed',claimed_by:me.id};
+  if(activeJob.status==='open'&&!isOwn)        update={status:'claimed',claimer_id:me.id};
   else if(activeJob.status==='claimed'&&isOwn) update={status:'done'};
   else if(activeJob.status==='open'&&isOwn)    update={status:'cancelled'};
   else return;
-  const{error}=await sb.from('jobs').update(update).eq('id',activeJob.id);
+  const{error}=await sb.from('tasks').update(update).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
   toast(update.status==='claimed'?'🎉 You\'re helping out!':update.status==='done'?'✅ Marked as done!':'🗑️ Job cancelled');
   document.getElementById('modal').classList.remove('open');
@@ -782,7 +782,7 @@ async function postJob(){
   if(!loc)return toast('Add your location — tap 📍 Detect');
   if(!sb||!me){toast('🚀 Job posted! (demo mode)');resetPost();nav('map');return;}
   const btn=document.getElementById('post-btn');btn.disabled=true;btn.textContent='Posting…';
-  const{error}=await sb.from('jobs').insert({user_id:me.id,title,description:desc,category:selCatVal,budget:budget?parseFloat(budget):null,location:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open'});
+  const{error}=await sb.from('tasks').insert({poster_id:me.id,title,description:desc,category:selCatVal,price:budget?parseFloat(budget):0,address:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open'});
   btn.disabled=false;btn.textContent='Post Job 🚀';
   if(error)return toast('❌ '+error.message);
   toast('🎉 Job posted!');resetPost();nav('map');
@@ -801,7 +801,7 @@ function resetPost(){
 async function loadMyJobs(){
   const g=document.getElementById('my-grid');g.innerHTML=spin();
   if(!sb||!me){g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
-  const q=myTab==='posted'?sb.from('jobs').select('*').eq('user_id',me.id).order('created_at',{ascending:false}):sb.from('jobs').select('*').eq('claimed_by',me.id).order('created_at',{ascending:false});
+  const q=myTab==='posted'?sb.from('tasks').select('*').eq('poster_id',me.id).order('created_at',{ascending:false}):sb.from('tasks').select('*').eq('claimer_id',me.id).order('created_at',{ascending:false});
   const{data,error}=await q;
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
   if(!data?.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
@@ -820,9 +820,9 @@ async function loadProfile(){
   av.innerHTML=url?`<img src="${url}" alt="">`:name[0].toUpperCase();
   if(!sb)return;
   const[{count:posted},{count:helped},{count:done}]=await Promise.all([
-    sb.from('jobs').select('*',{count:'exact',head:true}).eq('user_id',me.id),
-    sb.from('jobs').select('*',{count:'exact',head:true}).eq('claimed_by',me.id),
-    sb.from('jobs').select('*',{count:'exact',head:true}).eq('user_id',me.id).eq('status','done'),
+    sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',me.id),
+    sb.from('tasks').select('*',{count:'exact',head:true}).eq('claimer_id',me.id),
+    sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',me.id).eq('status','done'),
   ]);
   document.getElementById('s-posted').textContent=posted||0;
   document.getElementById('s-helped').textContent=helped||0;
