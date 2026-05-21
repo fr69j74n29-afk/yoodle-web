@@ -1,26 +1,841 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YoOdlE</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: white;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Yoodle — Odd Jobs. Real People. Help Each Other.</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#9B59D4;--lime:#A3E635;--pink:#EC4899;
+  --teal:#06B6D4;--orange:#F97316;--yellow:#FCD34D;
+  --bg:#0A0A0A;--surface:#161616;--surface2:#1F1F1F;
+  --border:#2A2A2A;--text:#F5F5F5;--muted:#777;
+  --radius:20px;--radius-sm:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;position:relative}
 
-    img {
-      max-width: 80%;
-      max-height: 80%;
-    }
-  </style>
+/* LOGO */
+.wordmark{font-family:'Fredoka One',cursive;line-height:1}
+.ly{color:var(--purple)}.lo1{color:var(--lime)}.lo2{color:var(--pink)}
+.ld{color:var(--teal)}.ll{color:var(--orange)}.le{color:var(--yellow)}
+
+/* ── AUTH ── */
+#view-auth{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;position:relative;overflow:hidden}
+#view-auth::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(155,89,212,.18) 0%,transparent 65%);top:-150px;left:-150px;pointer-events:none}
+#view-auth::after{content:'';position:absolute;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,.14) 0%,transparent 65%);bottom:-80px;right:-80px;pointer-events:none}
+.auth-wm{font-size:80px;position:relative;z-index:1;margin-bottom:6px}
+.auth-tag{font-size:10.5px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:48px;position:relative;z-index:1}
+.auth-h{font-size:24px;font-weight:900;text-align:center;margin-bottom:6px;position:relative;z-index:1}
+.auth-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:32px;position:relative;z-index:1;line-height:1.5}
+.auth-btns{width:100%;display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}
+.auth-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;font-weight:700;margin:4px 0}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:12px;padding:17px 24px;border-radius:var(--radius);background:#fff;color:#1a1a1a;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:none;cursor:pointer;transition:transform .15s}
+.btn-google:active{transform:scale(.96)}
+.magic-wrap{width:100%;display:flex;flex-direction:column;gap:8px}
+.magic-row{display:flex;gap:8px}
+.magic-email{flex:1;padding:15px 16px;border-radius:var(--radius);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;outline:none;transition:border-color .15s}
+.magic-email:focus{border-color:var(--purple)}
+.magic-email::placeholder{color:var(--muted)}
+.btn-magic{padding:15px 20px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;border:none;cursor:pointer;white-space:nowrap;transition:transform .15s}
+.btn-magic:active{transform:scale(.96)}
+.btn-magic:disabled{opacity:.5;cursor:not-allowed}
+.magic-sent{background:rgba(163,230,53,.1);border:1.5px solid rgba(163,230,53,.3);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--lime);font-weight:700;text-align:center;display:none;line-height:1.5}
+.auth-legal{font-size:11px;color:var(--muted);text-align:center;margin-top:24px;line-height:1.7;position:relative;z-index:1}
+
+/* ── MAIN APP ── */
+#view-main{display:none;flex-direction:column;height:100vh;overflow:hidden}
+
+/* TOP BAR */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(10,10,10,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);z-index:100;flex-shrink:0}
+.top-wm{font-size:30px}
+.top-avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--purple);overflow:hidden;cursor:pointer;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:var(--purple);flex-shrink:0}
+.top-avatar img{width:100%;height:100%;object-fit:cover}
+
+/* SCROLL AREA */
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.scroll-area.no-scroll{overflow:hidden}
+
+/* VIEWS */
+.app-view{display:none;height:100%}
+.app-view.active{display:flex;flex-direction:column}
+
+/* ── MAP VIEW ── */
+#app-map{position:relative}
+#map{flex:1;width:100%;background:#1a1a1a;z-index:1}
+
+/* Leaflet dark override */
+.leaflet-container{background:#1a1a1a!important;font-family:'Nunito',sans-serif}
+.leaflet-tile{filter:brightness(.85) saturate(.7) hue-rotate(180deg) invert(1)}
+
+/* Map top controls */
+.map-controls{position:absolute;top:12px;left:12px;right:12px;z-index:10;display:flex;gap:8px;pointer-events:none}
+.map-search-bar{flex:1;display:flex;align-items:center;gap:8px;background:rgba(22,22,22,.95);backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;pointer-events:all}
+.map-search-bar input{flex:1;background:none;border:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;outline:none}
+.map-search-bar input::placeholder{color:var(--muted)}
+.map-locate-btn{width:44px;height:44px;border-radius:50%;background:rgba(22,22,22,.95);backdrop-filter:blur(12px);border:1.5px solid var(--border);color:var(--teal);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:all;transition:all .15s;flex-shrink:0}
+.map-locate-btn:hover{border-color:var(--teal);background:rgba(6,182,212,.1)}
+
+/* Category filter strip on map */
+.map-cats{position:absolute;bottom:0;left:0;right:0;z-index:10;padding:10px 12px 12px;background:linear-gradient(transparent,rgba(10,10,10,.95));display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.map-cats::-webkit-scrollbar{display:none}
+.map-cat{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:100px;background:rgba(22,22,22,.9);backdrop-filter:blur(8px);border:1.5px solid var(--border);font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer;color:var(--text);transition:all .15s;font-family:'Nunito',sans-serif}
+.map-cat.active{border-color:var(--purple);color:var(--purple);background:rgba(155,89,212,.2)}
+
+/* Job count pill */
+.job-count-pill{position:absolute;top:68px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(22,22,22,.95);backdrop-filter:blur(8px);border:1.5px solid var(--border);border-radius:100px;padding:6px 16px;font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap;pointer-events:none;transition:opacity .3s}
+
+/* Custom map pin */
+.yoodle-pin{background:none;border:none}
+.pin-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid rgba(10,10,10,.6);box-shadow:0 3px 12px rgba(0,0,0,.5);cursor:pointer;transition:transform .15s}
+.pin-dot:hover{transform:scale(1.15)}
+.pin-dot.pin-pulse::after{content:'';position:absolute;width:36px;height:36px;border-radius:50%;border:2px solid;animation:pulse 1.5s ease-out infinite;opacity:0}
+@keyframes pulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.2);opacity:0}}
+
+/* User location ring */
+.user-ring{width:20px;height:20px;border-radius:50%;background:rgba(6,182,212,.9);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+
+/* 3km radius circle — styled via Leaflet options */
+
+/* ── LIST VIEW ── */
+#app-list{overflow:hidden}
+.list-header{padding:16px 20px 10px;flex-shrink:0}
+.list-h{font-size:22px;font-weight:900;margin-bottom:2px}
+.list-sub{font-size:13px;color:var(--muted)}
+.list-scroll{flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch}
+.cat-scroll{display:flex;gap:8px;overflow-x:auto;padding:10px 20px 12px;scrollbar-width:none;flex-shrink:0;border-bottom:1px solid var(--border)}
+.cat-scroll::-webkit-scrollbar{display:none}
+.cat-chip{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:100px;background:var(--surface);border:1.5px solid var(--border);font-size:13px;font-weight:800;white-space:nowrap;cursor:pointer;color:var(--text);transition:all .15s;font-family:'Nunito',sans-serif}
+.cat-chip.active{border-color:var(--purple);color:var(--purple);background:rgba(155,89,212,.1)}
+.jobs-grid{display:flex;flex-direction:column;gap:12px;padding-top:16px}
+
+/* JOB CARD */
+.job-card{background:var(--surface);border-radius:var(--radius);padding:18px 18px 16px;border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;position:relative;overflow:hidden;flex-shrink:0}
+.job-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--jc,var(--purple))}
+.job-card:active{transform:scale(.98)}
+.jc-badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;padding:4px 10px;border-radius:100px;background:rgba(255,255,255,.05);color:var(--jc,var(--purple));margin-bottom:10px}
+.jc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.jc-title{font-size:16px;font-weight:900;line-height:1.3;flex:1;padding-right:10px}
+.jc-budget{font-size:18px;font-weight:900;color:var(--lime);white-space:nowrap}
+.jc-desc{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.jc-foot{display:flex;align-items:center;justify-content:space-between}
+.jc-poster{display:flex;align-items:center;gap:7px}
+.poster-av{width:26px;height:26px;border-radius:50%;background:var(--surface2);overflow:hidden;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--muted);flex-shrink:0}
+.poster-av img{width:100%;height:100%;object-fit:cover}
+.poster-nm{font-size:12px;font-weight:700;color:var(--muted)}
+.jc-loc{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px}
+
+/* ── POST JOB ── */
+#app-post{overflow:hidden}
+.post-scroll{flex:1;overflow-y:auto;padding:20px;-webkit-overflow-scrolling:touch}
+.section-h{font-size:22px;font-weight:900;margin-bottom:20px}
+.form-g{margin-bottom:16px}
+.form-lbl{display:block;font-size:12px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.form-inp,.form-ta{width:100%;padding:14px 16px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.form-inp:focus,.form-ta:focus{border-color:var(--purple)}
+.form-ta{resize:none;height:100px}
+.loc-row{display:flex;gap:8px;align-items:stretch}
+.loc-row .form-inp{flex:1}
+.btn-gps{padding:0 14px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--teal);cursor:pointer;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:6px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800}
+.btn-gps:hover{border-color:var(--teal);background:rgba(6,182,212,.08)}
+.btn-gps:disabled{opacity:.5;cursor:not-allowed}
+.loc-status{font-size:11px;font-weight:700;margin-top:6px;min-height:16px}
+.loc-status.verified{color:var(--lime)}
+.loc-status.manual{color:var(--yellow)}
+.loc-status.loading{color:var(--muted)}
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cat-opt{padding:14px 8px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);text-align:center;cursor:pointer;font-size:12px;font-weight:800;color:var(--muted);transition:all .15s;font-family:'Nunito',sans-serif}
+.cat-opt .ce{font-size:22px;display:block;margin-bottom:5px}
+.cat-opt.sel{border-color:var(--purple);color:var(--purple);background:rgba(155,89,212,.1)}
+.btn-primary{width:100%;padding:16px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;border:none;cursor:pointer;transition:opacity .15s,transform .15s}
+.btn-primary:active{transform:scale(.97);opacity:.9}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed}
+
+/* ── MY JOBS ── */
+#app-myjobs{overflow:hidden}
+.myjobs-inner{flex:1;overflow-y:auto;padding:20px;-webkit-overflow-scrolling:touch}
+.tab-row{display:flex;gap:6px;margin-bottom:20px;background:var(--surface);border-radius:var(--radius-sm);padding:4px}
+.tab-btn{flex:1;padding:10px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .15s}
+.tab-btn.active{background:var(--surface2);color:var(--text)}
+
+/* ── PROFILE ── */
+#app-profile{overflow:hidden}
+.profile-scroll{flex:1;overflow-y:auto;padding:20px;-webkit-overflow-scrolling:touch}
+.profile-hero{text-align:center;padding:20px 0 16px}
+.profile-av{width:84px;height:84px;border-radius:50%;border:3px solid var(--purple);overflow:hidden;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:var(--purple);background:var(--surface2)}
+.profile-av img{width:100%;height:100%;object-fit:cover}
+.profile-nm{font-size:22px;font-weight:900;margin-bottom:4px}
+.profile-em{font-size:13px;color:var(--muted)}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:24px 0}
+.stat-c{background:var(--surface);border-radius:var(--radius-sm);padding:16px 10px;text-align:center;border:1.5px solid var(--border)}
+.stat-n{font-size:26px;font-weight:900;color:var(--purple);display:block}
+.stat-l{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+.settings-l{display:flex;flex-direction:column;gap:2px}
+.setting-i{display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--surface);font-size:15px;font-weight:700;cursor:pointer}
+.setting-i:first-child{border-radius:var(--radius) var(--radius) var(--radius-sm) var(--radius-sm)}
+.setting-i:last-child{border-radius:var(--radius-sm) var(--radius-sm) var(--radius) var(--radius)}
+.btn-so{width:100%;padding:16px;border-radius:var(--radius);background:var(--surface);color:#EF4444;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;border:1.5px solid rgba(239,68,68,.25);cursor:pointer;margin-top:20px}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{display:flex;align-items:center;justify-content:space-around;padding:10px 0 env(safe-area-inset-bottom,0);background:rgba(14,14,14,.97);backdrop-filter:blur(20px);border-top:1px solid var(--border);z-index:100;flex-shrink:0}
+.nav-i{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 12px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.4px;transition:color .15s}
+.nav-i.active{color:var(--purple)}
+.nav-i svg{width:22px;height:22px}
+
+/* FAB */
+.fab{position:absolute;bottom:90px;right:16px;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-size:26px;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(155,89,212,.5);transition:transform .15s;z-index:50}
+.fab:active{transform:scale(.91)}
+#view-main{position:relative}
+
+/* ── MODAL ── */
+.modal-ov{position:absolute;inset:0;background:rgba(0,0,0,.82);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.modal-ov.open{display:flex}
+.modal-sheet{width:100%;background:var(--surface);border-radius:28px 28px 0 0;padding:24px;max-height:85vh;overflow-y:auto}
+.modal-handle{width:40px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 20px}
+.modal-title{font-size:22px;font-weight:900;margin-bottom:6px}
+.modal-meta{font-size:13px;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.modal-desc{font-size:15px;line-height:1.6;margin-bottom:22px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.modal-pill{background:var(--surface2);border-radius:14px;padding:14px;text-align:center}
+.modal-pill-l{font-size:10px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.modal-pill-v{font-size:18px;font-weight:900}
+
+/* ── UTILS ── */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-ico{font-size:48px;margin-bottom:12px}
+.empty-t{font-size:18px;font-weight:900;margin-bottom:8px;color:var(--text)}
+.empty-d{font-size:14px;line-height:1.6}
+.toast{position:absolute;top:76px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--surface2);border:1.5px solid var(--border);padding:11px 22px;border-radius:100px;font-size:14px;font-weight:800;z-index:999;opacity:0;transition:all .28s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.loading{text-align:center;padding:50px;color:var(--muted)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:22px;height:22px;border:2.5px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .75s linear infinite;display:inline-block}
+.cfg-banner{background:rgba(252,211,77,.08);border:1.5px solid rgba(252,211,77,.25);border-radius:var(--radius-sm);padding:10px 16px;margin:8px 16px 0;font-size:12px;color:var(--yellow);font-weight:800;display:none;line-height:1.6;z-index:101;position:relative}
+</style>
 </head>
 <body>
-  <img src="./image.png" alt="logo">
+
+<!-- AUTH -->
+<div id="view-auth">
+  <div class="wordmark auth-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
+  <div class="auth-tag">Odd Jobs · Real People · Help Each Other</div>
+  <div class="auth-h">Find help. Earn cash.<br>Build your community.</div>
+  <div class="auth-sub">Sign in to get started — no passwords needed.</div>
+  <div class="auth-btns">
+    <button class="btn-google" onclick="signIn('google')">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+    <div class="auth-divider">or use your email</div>
+    <div class="magic-wrap">
+      <div class="magic-row">
+        <input class="magic-email" id="magic-email" type="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')sendMagicLink()">
+        <button class="btn-magic" id="magic-btn" onclick="sendMagicLink()">Send Link ✉️</button>
+      </div>
+      <div class="magic-sent" id="magic-sent">✅ Check your inbox! Link sent to <span id="magic-addr"></span></div>
+    </div>
+  </div>
+  <div class="auth-legal">By continuing you agree to Yoodle's Terms of Service<br>and Privacy Policy. No spam, ever.</div>
+</div>
+
+<!-- CONFIG BANNER -->
+<div class="cfg-banner" id="cfg-banner">⚠️ Fill in SUPABASE_URL and SUPABASE_ANON_KEY in the &lt;script&gt; to connect your database.</div>
+
+<!-- MAIN APP -->
+<div id="view-main">
+  <div class="top-bar">
+    <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
+    <div class="top-avatar" onclick="nav('profile')" id="top-av">?</div>
+  </div>
+
+  <!-- MAP VIEW -->
+  <div class="app-view active" id="app-map">
+    <div style="position:relative;flex:1;display:flex;flex-direction:column">
+      <div id="map"></div>
+
+      <!-- Top controls -->
+      <div class="map-controls">
+        <div class="map-search-bar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="map-search" placeholder="Search jobs near you…" oninput="filterMapJobs()">
+        </div>
+        <button class="map-locate-btn" onclick="locateUser()" title="Find my location">📍</button>
+      </div>
+
+      <!-- Job count -->
+      <div class="job-count-pill" id="job-count-pill">Loading jobs…</div>
+
+      <!-- Category strip -->
+      <div class="map-cats">
+        <button class="map-cat active" onclick="mapFilterCat(this,'all')">🔥 All</button>
+        <button class="map-cat" onclick="mapFilterCat(this,'handyman')">🔨 Handyman</button>
+        <button class="map-cat" onclick="mapFilterCat(this,'garden')">🌿 Garden</button>
+        <button class="map-cat" onclick="mapFilterCat(this,'moving')">🚗 Moving</button>
+        <button class="map-cat" onclick="mapFilterCat(this,'cleaning')">🧹 Cleaning</button>
+        <button class="map-cat" onclick="mapFilterCat(this,'petcare')">🐕 Pet Care</button>
+        <button class="map-cat" onclick="mapFilterCat(this,'tech')">💻 Tech</button>
+        <button class="map-cat" onclick="mapFilterCat(this,'errands')">🛒 Errands</button>
+        <button class="map-cat" onclick="mapFilterCat(this,'other')">✨ Other</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div class="app-view" id="app-list">
+    <div class="list-header">
+      <div class="list-h">Jobs Near You 📋</div>
+      <div class="list-sub" id="list-sub">Open jobs in your area</div>
+    </div>
+    <div class="cat-scroll">
+      <button class="cat-chip active" onclick="listFilterCat(this,'all')">🔥 All</button>
+      <button class="cat-chip" onclick="listFilterCat(this,'handyman')">🔨 Handyman</button>
+      <button class="cat-chip" onclick="listFilterCat(this,'garden')">🌿 Garden</button>
+      <button class="cat-chip" onclick="listFilterCat(this,'moving')">🚗 Moving</button>
+      <button class="cat-chip" onclick="listFilterCat(this,'cleaning')">🧹 Cleaning</button>
+      <button class="cat-chip" onclick="listFilterCat(this,'petcare')">🐕 Pet Care</button>
+      <button class="cat-chip" onclick="listFilterCat(this,'tech')">💻 Tech</button>
+      <button class="cat-chip" onclick="listFilterCat(this,'errands')">🛒 Errands</button>
+      <button class="cat-chip" onclick="listFilterCat(this,'other')">✨ Other</button>
+    </div>
+    <div class="list-scroll"><div class="jobs-grid" id="list-grid"><div class="loading"><div class="spinner"></div></div></div></div>
+  </div>
+
+  <!-- POST JOB -->
+  <div class="app-view" id="app-post">
+    <div class="post-scroll">
+      <div class="section-h">Post a Job 📋</div>
+      <div class="form-g">
+        <label class="form-lbl">Category</label>
+        <div class="cat-grid">
+          <button class="cat-opt" data-cat="handyman" onclick="selCat(this)"><span class="ce">🔨</span>Handyman</button>
+          <button class="cat-opt" data-cat="garden" onclick="selCat(this)"><span class="ce">🌿</span>Garden</button>
+          <button class="cat-opt" data-cat="moving" onclick="selCat(this)"><span class="ce">🚗</span>Moving</button>
+          <button class="cat-opt" data-cat="cleaning" onclick="selCat(this)"><span class="ce">🧹</span>Cleaning</button>
+          <button class="cat-opt" data-cat="petcare" onclick="selCat(this)"><span class="ce">🐕</span>Pet Care</button>
+          <button class="cat-opt" data-cat="tech" onclick="selCat(this)"><span class="ce">💻</span>Tech Help</button>
+          <button class="cat-opt" data-cat="errands" onclick="selCat(this)"><span class="ce">🛒</span>Errands</button>
+          <button class="cat-opt" data-cat="childcare" onclick="selCat(this)"><span class="ce">👶</span>Childcare</button>
+          <button class="cat-opt" data-cat="other" onclick="selCat(this)"><span class="ce">✨</span>Other</button>
+        </div>
+      </div>
+      <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="p-title" type="text" placeholder="e.g. Help me move a couch"></div>
+      <div class="form-g"><label class="form-lbl">Description</label><textarea class="form-ta" id="p-desc" placeholder="Describe what needs doing, when, any requirements…"></textarea></div>
+      <div class="form-g"><label class="form-lbl">Budget (CAD $)</label><input class="form-inp" id="p-budget" type="number" min="0" placeholder="e.g. 50"></div>
+      <div class="form-g">
+        <label class="form-lbl">Location</label>
+        <div class="loc-row">
+          <input class="form-inp" id="p-loc" type="text" placeholder="Neighbourhood appears here" readonly>
+          <button class="btn-gps" id="gps-btn" onclick="detectLocation()">📍 Detect</button>
+        </div>
+        <div class="loc-status" id="loc-status"></div>
+      </div>
+      <button class="btn-primary" id="post-btn" onclick="postJob()">Post Job 🚀</button>
+    </div>
+  </div>
+
+  <!-- MY JOBS -->
+  <div class="app-view" id="app-myjobs">
+    <div class="myjobs-inner">
+      <div class="section-h" style="margin-bottom:16px">My Jobs</div>
+      <div class="tab-row">
+        <button class="tab-btn active" onclick="switchTab(this,'posted')">Posted by me</button>
+        <button class="tab-btn" onclick="switchTab(this,'helping')">I'm helping</button>
+      </div>
+      <div class="jobs-grid" id="my-grid"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="app-view" id="app-profile">
+    <div class="profile-scroll">
+      <div class="profile-hero">
+        <div class="profile-av" id="pav">?</div>
+        <div class="profile-nm" id="pnm">—</div>
+        <div class="profile-em" id="pem">—</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-c"><span class="stat-n" id="s-posted">0</span><span class="stat-l">Posted</span></div>
+        <div class="stat-c"><span class="stat-n" id="s-helped">0</span><span class="stat-l">Helped</span></div>
+        <div class="stat-c"><span class="stat-n" id="s-done">0</span><span class="stat-l">Done</span></div>
+      </div>
+      <div class="settings-l">
+        <div class="setting-i"><span>🔔 Notifications</span><span style="color:var(--muted)">›</span></div>
+        <div class="setting-i"><span>📍 My Location</span><span style="color:var(--muted)">›</span></div>
+        <div class="setting-i"><span>💬 Messages</span><span style="color:var(--muted)">›</span></div>
+        <div class="setting-i"><span>🛡️ Privacy & Safety</span><span style="color:var(--muted)">›</span></div>
+      </div>
+      <button class="btn-so" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- FAB (post job shortcut on map) -->
+  <button class="fab" id="fab" onclick="nav('post')">+</button>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-i active" id="ni-map" onclick="nav('map')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Map
+    </button>
+    <button class="nav-i" id="ni-list" onclick="nav('list')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      List
+    </button>
+    <button class="nav-i" id="ni-post" onclick="nav('post')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Post Job
+    </button>
+    <button class="nav-i" id="ni-myjobs" onclick="nav('myjobs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      My Jobs
+    </button>
+    <button class="nav-i" id="ni-profile" onclick="nav('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </button>
+  </nav>
+</div>
+
+<!-- JOB MODAL -->
+<div class="modal-ov" id="modal" onclick="closeModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="m-badge" class="jc-badge">—</div>
+    <div class="modal-title" id="m-title">—</div>
+    <div class="modal-meta" id="m-meta">—</div>
+    <div class="modal-desc" id="m-desc">—</div>
+    <div class="modal-grid">
+      <div class="modal-pill"><div class="modal-pill-l">Budget</div><div class="modal-pill-v" id="m-budget" style="color:var(--lime)">—</div></div>
+      <div class="modal-pill"><div class="modal-pill-l">Location</div><div class="modal-pill-v" id="m-loc" style="font-size:13px;line-height:1.4">—</div></div>
+    </div>
+    <button class="btn-primary" id="m-action" onclick="jobAction()">I Can Help! 🙋</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  ⚙️  YOUR SUPABASE CREDENTIALS
+// ═══════════════════════════════════════════
+const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
+// ═══════════════════════════════════════════
+
+const CAT_COLOR={handyman:'#F97316',garden:'#A3E635',moving:'#06B6D4',cleaning:'#8B5CF6',petcare:'#FCD34D',tech:'#06B6D4',errands:'#EC4899',childcare:'#A3E635',other:'#9B59D4'};
+const CAT_EMOJI={handyman:'🔨',garden:'🌿',moving:'🚗',cleaning:'🧹',petcare:'🐕',tech:'💻',errands:'🛒',childcare:'👶',other:'✨'};
+const RADIUS_KM = 3;
+
+let sb, me, activeJob, mapCatFilter='all', listCatFilter='all', myTab='posted';
+let map, userMarker, radiusCircle, jobMarkers=[], allJobs=[];
+let userLat=null, userLng=null;
+let gpsLat=null, gpsLng=null, locVerified=false;
+
+// ── INIT ────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+    document.getElementById('cfg-banner').style.display='block';
+    showDemoApp(); return;
+  }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  sb.auth.getSession().then(({data:{session}})=>{
+    if(session){me=session.user;showApp();}
+  });
+  sb.auth.onAuthStateChange((_e,session)=>{
+    if(session){me=session.user;showApp();}
+    else{me=null;showAuthScreen();}
+  });
+});
+
+// ── MAP INIT ────────────────────────────────
+function initMap() {
+  // Default to Toronto area until user locates
+  map = L.map('map', {
+    center: [43.6532, -79.3832],
+    zoom: 13,
+    zoomControl: false,
+    attributionControl: false
+  });
+
+  // Dark OpenStreetMap tiles via CSS filter
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // Attribution small
+  L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
+
+  // Zoom control top-right
+  L.control.zoom({position:'bottomright'}).addTo(map);
+
+  // Try to locate user right away
+  locateUser();
+}
+
+function locateUser() {
+  if (!navigator.geolocation) { loadDemoJobs(); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      centerMapOnUser();
+      sb ? loadJobs() : loadDemoJobs();
+    },
+    () => { sb ? loadJobs() : loadDemoJobs(); },
+    {timeout:8000, enableHighAccuracy:false}
+  );
+}
+
+function centerMapOnUser() {
+  if (!userLat || !map) return;
+  map.setView([userLat, userLng], 14);
+
+  // Remove old user marker + radius
+  if (userMarker) map.removeLayer(userMarker);
+  if (radiusCircle) map.removeLayer(radiusCircle);
+
+  // User location dot
+  const icon = L.divIcon({
+    className:'yoodle-pin',
+    html:`<div class="user-ring"></div>`,
+    iconSize:[20,20], iconAnchor:[10,10]
+  });
+  userMarker = L.marker([userLat, userLng], {icon, zIndexOffset:1000}).addTo(map);
+
+  // 3km radius circle
+  radiusCircle = L.circle([userLat, userLng], {
+    radius: RADIUS_KM * 1000,
+    color: '#9B59D4',
+    fillColor: '#9B59D4',
+    fillOpacity: 0.06,
+    weight: 1.5,
+    dashArray: '6 4'
+  }).addTo(map);
+}
+
+// ── FUZZY PIN — ±300m offset to protect poster privacy
+function fuzzyCoords(lat, lng) {
+  const offsetLat = (Math.random() - 0.5) * 0.005; // ~300m
+  const offsetLng = (Math.random() - 0.5) * 0.007;
+  return [lat + offsetLat, lng + offsetLng];
+}
+
+// ── PLACE JOB PINS ──────────────────────────
+function renderMapPins(jobs) {
+  // Clear existing pins
+  jobMarkers.forEach(m => map.removeLayer(m));
+  jobMarkers = [];
+
+  const visible = jobs.filter(j =>
+    (mapCatFilter === 'all' || j.category === mapCatFilter) &&
+    j.lat && j.lng
+  );
+
+  const search = document.getElementById('map-search').value.toLowerCase();
+  const filtered = search ? visible.filter(j =>
+    j.title.toLowerCase().includes(search) ||
+    (j.description||'').toLowerCase().includes(search) ||
+    (j.category||'').toLowerCase().includes(search)
+  ) : visible;
+
+  filtered.forEach(job => {
+    const color = CAT_COLOR[job.category] || '#9B59D4';
+    const emoji = CAT_EMOJI[job.category] || '✨';
+    const [fLat, fLng] = job._fuzzy || fuzzyCoords(job.lat, job.lng);
+    job._fuzzy = [fLat, fLng]; // cache so it doesn't shift on re-render
+
+    const icon = L.divIcon({
+      className: 'yoodle-pin',
+      html: `<div class="pin-dot" style="background:${color};border-color:rgba(10,10,10,.5)">${emoji}</div>`,
+      iconSize: [36,36], iconAnchor: [18,18]
+    });
+
+    const marker = L.marker([fLat, fLng], {icon})
+      .addTo(map)
+      .on('click', () => openJob(job));
+
+    jobMarkers.push(marker);
+  });
+
+  const pill = document.getElementById('job-count-pill');
+  pill.textContent = filtered.length === 0
+    ? 'No jobs in this area yet'
+    : `${filtered.length} job${filtered.length===1?'':'s'} nearby`;
+}
+
+// ── LOAD JOBS ───────────────────────────────
+async function loadJobs() {
+  if (!sb) return loadDemoJobs();
+  const {data, error} = await sb.from('jobs')
+    .select('*, profiles(full_name,avatar_url)')
+    .eq('status','open')
+    .order('created_at',{ascending:false});
+  if (error || !data) return loadDemoJobs();
+  allJobs = data;
+  renderMapPins(allJobs);
+  renderListGrid(allJobs);
+}
+
+function loadDemoJobs() {
+  allJobs = [
+    {id:'d1',title:'Help moving a couch + bookshelf',category:'moving',budget:55,description:'Third floor walk-up, need someone strong for about 2 hrs. Truck arranged.',location:'Etobicoke',location_verified:true,lat:43.6447,lng:-79.5258,created_at:ago(5),status:'open',profiles:{full_name:'Roman M'}},
+    {id:'d2',title:'Backyard lawn & garden cleanup',category:'garden',budget:80,description:'Overgrown grass, weeding, leaves need bagging. All tools provided.',location:'Bloor West Village',location_verified:true,lat:43.6534,lng:-79.4629,created_at:ago(62),status:'open',profiles:{full_name:'Sarah K'}},
+    {id:'d3',title:'Dog walker needed Saturdays',category:'petcare',budget:35,description:'Golden retriever, super friendly. 45 min walk, recurring if it goes well!',location:'The Junction',location_verified:true,lat:43.6601,lng:-79.4624,created_at:ago(180),status:'open',profiles:{full_name:'Mike T'}},
+    {id:'d4',title:'Set up new iPhone + data transfer',category:'tech',budget:40,description:'Just got an iPhone 16, migrating from Android. Everything backed up.',location:'Roncesvalles',location_verified:false,lat:43.6474,lng:-79.4473,created_at:ago(300),status:'open',profiles:{full_name:'Janet R'}},
+    {id:'d5',title:'Weekly grocery run',category:'errands',budget:25,description:'List ready, Loblaws on Dundas. About 1 hour. Car helpful but not required.',location:'Parkdale',location_verified:true,lat:43.6421,lng:-79.4388,created_at:ago(720),status:'open',profiles:{full_name:'Community Ctr'}},
+    {id:'d6',title:'Fix leaking bathroom tap',category:'handyman',budget:60,description:'Slow drip under the sink. Have tools available. Just need the know-how.',location:'High Park',location_verified:true,lat:43.6507,lng:-79.4760,created_at:ago(1200),status:'open',profiles:{full_name:'Dave L'}},
+    {id:'d7',title:'Help assemble IKEA furniture',category:'handyman',budget:45,description:'3 flat-pack boxes. KALLAX shelf + bed frame. Tools provided.',location:'Swansea',location_verified:true,lat:43.6378,lng:-79.4818,created_at:ago(90),status:'open',profiles:{full_name:'Priya S'}},
+  ];
+  renderMapPins(allJobs);
+  renderListGrid(allJobs);
+}
+
+// ── MAP FILTER ───────────────────────────────
+function mapFilterCat(el, cat) {
+  document.querySelectorAll('.map-cat').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  mapCatFilter = cat;
+  renderMapPins(allJobs);
+}
+
+function filterMapJobs() { renderMapPins(allJobs); }
+
+// ── LIST FILTER ──────────────────────────────
+function listFilterCat(el, cat) {
+  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  listCatFilter = cat;
+  renderListGrid(allJobs);
+}
+
+function renderListGrid(jobs) {
+  const filtered = listCatFilter === 'all' ? jobs : jobs.filter(j=>j.category===listCatFilter);
+  const g = document.getElementById('list-grid');
+  if (!filtered.length) { g.innerHTML = emptyState('🌱','No jobs yet','Be the first to post something!'); return; }
+  document.getElementById('list-sub').textContent = `${filtered.length} open job${filtered.length===1?'':'s'} near you`;
+  g.innerHTML = filtered.map(j=>jobCard(j,j.profiles)).join('');
+}
+
+// ── NAV ─────────────────────────────────────
+function nav(view) {
+  document.querySelectorAll('.app-view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-i').forEach(n=>n.classList.remove('active'));
+  document.getElementById('app-'+view).classList.add('active');
+  document.getElementById('ni-'+view).classList.add('active');
+  document.getElementById('fab').style.display = view==='map' ? 'flex' : 'none';
+  if (view==='map') { setTimeout(()=>map.invalidateSize(),100); }
+  if (view==='myjobs') loadMyJobs();
+  if (view==='profile') loadProfile();
+}
+
+// ── AUTH ─────────────────────────────────────
+async function signIn(provider) {
+  if(!sb) return toast('⚠️ Add Supabase credentials first');
+  await sb.auth.signInWithOAuth({provider, options:{redirectTo:window.location.href}});
+}
+
+async function sendMagicLink() {
+  const email=document.getElementById('magic-email').value.trim();
+  if(!email||!email.includes('@')) return toast('Enter a valid email address');
+  if(!sb){
+    document.getElementById('magic-addr').textContent=email;
+    document.getElementById('magic-sent').style.display='block';
+    document.getElementById('magic-btn').disabled=true; return;
+  }
+  document.getElementById('magic-btn').disabled=true;
+  document.getElementById('magic-btn').textContent='Sending…';
+  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.href}});
+  document.getElementById('magic-btn').textContent='Send Link ✉️';
+  if(error){document.getElementById('magic-btn').disabled=false;return toast('❌ '+error.message);}
+  document.getElementById('magic-addr').textContent=email;
+  document.getElementById('magic-sent').style.display='block';
+}
+
+async function signOut(){if(sb)await sb.auth.signOut();else showAuthScreen();}
+
+function showAuthScreen(){document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';document.getElementById('cfg-banner').style.display='none';}
+
+function showApp(){
+  document.getElementById('view-auth').style.display='none';
+  document.getElementById('cfg-banner').style.display='none';
+  const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
+  setAvatar(); loadJobs();
+}
+
+function showDemoApp(){
+  document.getElementById('view-auth').style.display='none';
+  const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
+  document.getElementById('top-av').textContent='😊';
+  document.getElementById('fab').style.display='flex';
+}
+
+function setAvatar(){
+  if(!me)return;
+  const av=document.getElementById('top-av');
+  const url=me.user_metadata?.avatar_url;
+  if(url)av.innerHTML=`<img src="${url}" alt="">`;
+  else av.textContent=(me.user_metadata?.full_name||me.email||'?')[0].toUpperCase();
+}
+
+// ── JOB CARD (list) ─────────────────────────
+function jobCard(j,profile){
+  const color=CAT_COLOR[j.category]||'#9B59D4';
+  const emoji=CAT_EMOJI[j.category]||'✨';
+  const name=profile?.full_name||'Someone';
+  const avImg=profile?.avatar_url?`<img src="${profile.avatar_url}" alt="">`:esc(name[0].toUpperCase());
+  const locBadge=j.location_verified?`<span style="color:var(--lime);font-size:10px">✅</span>`:`<span style="color:var(--yellow);font-size:10px">⚠️</span>`;
+  return `<div class="job-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
+    <div class="jc-badge">${emoji} ${j.category||'other'}</div>
+    <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.budget??'?'}</div></div>
+    <div class="jc-desc">${esc(j.description||'')}</div>
+    <div class="jc-foot">
+      <div class="jc-poster"><div class="poster-av">${avImg}</div><span class="poster-nm">${esc(name)}</span></div>
+      <div class="jc-loc">${locBadge} ${esc(j.location||'Nearby')} · ${timeAgo(j.created_at)}</div>
+    </div>
+  </div>`;
+}
+
+// ── JOB MODAL ───────────────────────────────
+function openJob(j){
+  activeJob=j;
+  const color=CAT_COLOR[j.category]||'#9B59D4';
+  const emoji=CAT_EMOJI[j.category]||'✨';
+  document.getElementById('m-badge').textContent=`${emoji} ${j.category||'other'}`;
+  document.getElementById('m-badge').style.color=color;
+  document.getElementById('m-title').textContent=j.title;
+  const locTag=j.location_verified?'<span style="color:var(--lime);font-size:11px">✅ GPS verified</span>':'<span style="color:var(--yellow);font-size:11px">⚠️ Self-reported</span>';
+  document.getElementById('m-meta').innerHTML=`📍 ${esc(j.location||'Nearby')} ${locTag} &nbsp;·&nbsp; ${timeAgo(j.created_at)}`;
+  document.getElementById('m-desc').textContent=j.description||'';
+  document.getElementById('m-budget').textContent=`$${j.budget??'?'}`;
+  document.getElementById('m-loc').innerHTML=`${esc(j.location||'Nearby')}<br><span style="font-size:10px;color:var(--muted);font-weight:700">Neighbourhood only</span>`;
+  const isOwn=me&&j.user_id===me.id;
+  const btn=document.getElementById('m-action');
+  if(j.status==='done'){btn.textContent='✅ Job Complete';btn.disabled=true;}
+  else if(j.status==='claimed'){btn.textContent=isOwn?'Mark as Done ✅':'🤝 Already Claimed';btn.disabled=!isOwn;}
+  else{btn.textContent=isOwn?'Cancel Job 🗑️':"I Can Help! 🙋";btn.disabled=false;}
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(e){if(e.target.id==='modal')document.getElementById('modal').classList.remove('open');}
+
+async function jobAction(){
+  if(!sb||!me){toast('🎉 (demo) Action noted!');document.getElementById('modal').classList.remove('open');return;}
+  const isOwn=activeJob.user_id===me.id;
+  let update={};
+  if(activeJob.status==='open'&&!isOwn)        update={status:'claimed',claimed_by:me.id};
+  else if(activeJob.status==='claimed'&&isOwn) update={status:'done'};
+  else if(activeJob.status==='open'&&isOwn)    update={status:'cancelled'};
+  else return;
+  const{error}=await sb.from('jobs').update(update).eq('id',activeJob.id);
+  if(error)return toast('❌ '+error.message);
+  toast(update.status==='claimed'?'🎉 You\'re helping out!':update.status==='done'?'✅ Marked as done!':'🗑️ Job cancelled');
+  document.getElementById('modal').classList.remove('open');
+  loadJobs();
+}
+
+// ── POST JOB ────────────────────────────────
+let selCatVal=null;
+function selCat(el){document.querySelectorAll('.cat-opt').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');selCatVal=el.dataset.cat;}
+
+async function detectLocation(){
+  const btn=document.getElementById('gps-btn');
+  const inp=document.getElementById('p-loc');
+  const st=document.getElementById('loc-status');
+  if(!navigator.geolocation){st.textContent='GPS not available — type your neighbourhood';st.className='loc-status manual';inp.readOnly=false;inp.placeholder='e.g. Etobicoke';return;}
+  btn.disabled=true;btn.textContent='📡 Locating…';
+  st.textContent='Getting your location…';st.className='loc-status loading';
+  navigator.geolocation.getCurrentPosition(
+    async pos=>{
+      gpsLat=pos.coords.latitude;gpsLng=pos.coords.longitude;
+      try{
+        const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${gpsLat}&lon=${gpsLng}&zoom=14&format=json`,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
+        const d=await r.json();const a=d.address||{};
+        const nb=a.neighbourhood||a.suburb||a.quarter||a.village||a.town||a.city_district||'';
+        const city=a.city||a.town||a.municipality||a.county||'';
+        const prov=a.state_code||a.state||'';
+        inp.value=[nb,city,prov].filter(Boolean).slice(0,2).join(', ')||city;
+        locVerified=true;st.textContent='✅ GPS verified — neighbourhood only, no exact address stored';st.className='loc-status verified';
+      }catch{inp.value='';locVerified=false;st.textContent='Could not detect neighbourhood — type it below';st.className='loc-status manual';inp.readOnly=false;inp.placeholder='e.g. Etobicoke';}
+      btn.disabled=false;btn.textContent='📍 Detect';
+    },
+    ()=>{locVerified=false;st.textContent='Location denied — type your neighbourhood below';st.className='loc-status manual';inp.readOnly=false;inp.placeholder='e.g. Etobicoke';btn.disabled=false;btn.textContent='📍 Detect';},
+    {timeout:10000,enableHighAccuracy:false}
+  );
+}
+
+async function postJob(){
+  const title=document.getElementById('p-title').value.trim();
+  const desc=document.getElementById('p-desc').value.trim();
+  const budget=document.getElementById('p-budget').value;
+  const loc=document.getElementById('p-loc').value.trim();
+  if(!selCatVal)return toast('Pick a category first!');
+  if(!title)return toast('Add a job title!');
+  if(!desc)return toast('Describe the job!');
+  if(!loc)return toast('Add your location — tap 📍 Detect');
+  if(!sb||!me){toast('🚀 Job posted! (demo mode)');resetPost();nav('map');return;}
+  const btn=document.getElementById('post-btn');btn.disabled=true;btn.textContent='Posting…';
+  const{error}=await sb.from('jobs').insert({user_id:me.id,title,description:desc,category:selCatVal,budget:budget?parseFloat(budget):null,location:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open'});
+  btn.disabled=false;btn.textContent='Post Job 🚀';
+  if(error)return toast('❌ '+error.message);
+  toast('🎉 Job posted!');resetPost();nav('map');
+}
+
+function resetPost(){
+  selCatVal=null;gpsLat=null;gpsLng=null;locVerified=false;
+  document.querySelectorAll('.cat-opt').forEach(c=>c.classList.remove('sel'));
+  ['p-title','p-desc','p-budget'].forEach(id=>document.getElementById(id).value='');
+  const loc=document.getElementById('p-loc');loc.value='';loc.readOnly=true;loc.placeholder='Neighbourhood appears here';
+  document.getElementById('loc-status').textContent='';
+  document.getElementById('gps-btn').textContent='📍 Detect';
+}
+
+// ── MY JOBS ─────────────────────────────────
+async function loadMyJobs(){
+  const g=document.getElementById('my-grid');g.innerHTML=spin();
+  if(!sb||!me){g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
+  const q=myTab==='posted'?sb.from('jobs').select('*').eq('user_id',me.id).order('created_at',{ascending:false}):sb.from('jobs').select('*').eq('claimed_by',me.id).order('created_at',{ascending:false});
+  const{data,error}=await q;
+  if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
+  if(!data?.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
+  g.innerHTML=data.map(j=>jobCard(j,{full_name:me.user_metadata?.full_name})).join('');
+}
+function switchTab(btn,tab){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');myTab=tab;loadMyJobs();}
+
+// ── PROFILE ─────────────────────────────────
+async function loadProfile(){
+  if(!me){document.getElementById('pnm').textContent='Demo User';return;}
+  const name=me.user_metadata?.full_name||me.email?.split('@')[0]||'Yoodler';
+  const url=me.user_metadata?.avatar_url;
+  document.getElementById('pnm').textContent=name;
+  document.getElementById('pem').textContent=me.email||'';
+  const av=document.getElementById('pav');
+  av.innerHTML=url?`<img src="${url}" alt="">`:name[0].toUpperCase();
+  if(!sb)return;
+  const[{count:posted},{count:helped},{count:done}]=await Promise.all([
+    sb.from('jobs').select('*',{count:'exact',head:true}).eq('user_id',me.id),
+    sb.from('jobs').select('*',{count:'exact',head:true}).eq('claimed_by',me.id),
+    sb.from('jobs').select('*',{count:'exact',head:true}).eq('user_id',me.id).eq('status','done'),
+  ]);
+  document.getElementById('s-posted').textContent=posted||0;
+  document.getElementById('s-helped').textContent=helped||0;
+  document.getElementById('s-done').textContent=done||0;
+}
+
+// ── UTILS ────────────────────────────────────
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function spin(){return'<div class="loading"><div class="spinner"></div></div>';}
+function emptyState(ico,t,d){return`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-t">${t}</div><div class="empty-d">${d}</div></div>`;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function ago(mins){return new Date(Date.now()-mins*60000).toISOString();}
+function timeAgo(d){const m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
+</script>
 </body>
 </html>
