@@ -585,7 +585,7 @@ async function loadJobs() {
   renderListGrid(allJobs);
 }
 
-function loadDemoJobs() {
+function loadDemoJobs() { return;
   allJobs = [
     {id:'d1',title:'Help moving a couch + bookshelf',category:'moving',price:55,description:'Third floor walk-up, need someone strong for about 2 hrs. Truck arranged.',address:'Etobicoke',location_verified:true,lat:43.6447,lng:-79.5258,created_at:ago(5),status:'open',profiles:{full_name:'Roman M'}},
     {id:'d2',title:'Backyard lawn & garden cleanup',category:'garden',price:80,description:'Overgrown grass, weeding, leaves need bagging. All tools provided.',address:'Bloor West Village',location_verified:true,lat:43.6534,lng:-79.4629,created_at:ago(62),status:'open',profiles:{full_name:'Sarah K'}},
