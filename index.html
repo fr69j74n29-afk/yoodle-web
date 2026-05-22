@@ -398,11 +398,10 @@ body{
         <div class="stat-c"><span class="stat-n" id="s-helped">0</span><span class="stat-l">Helped</span></div>
         <div class="stat-c"><span class="stat-n" id="s-done">0</span><span class="stat-l">Done</span></div>
       </div>
-      <div class="settings-l">
-        <div class="setting-i"><span>🔔 Notifications</span><span style="color:var(--muted)">›</span></div>
-        <div class="setting-i"><span>📍 My Location</span><span style="color:var(--muted)">›</span></div>
-        <div class="setting-i"><span>💬 Messages</span><span style="color:var(--muted)">›</span></div>
-        <div class="setting-i"><span>🛡️ Privacy & Safety</span><span style="color:var(--muted)">›</span></div>
+	<div style="margin-bottom:8px">
+        <label class="form-lbl">About Me</label>
+	<textarea class="form-ta" id="p-bio" placeholder="Tell your neighbours a bit about yourself…" 	style="height:120px;margin-bottom:8px"></textarea>
+        <button class="btn-primary" onclick="saveBio()">Save Profile ✨</button>
       </div>
       <button class="btn-so" onclick="signOut()">Sign Out</button>
     </div>
@@ -872,7 +871,9 @@ async function loadProfile(){
   const name=me.user_metadata?.full_name||me.email?.split('@')[0]||'Yoodler';const url=me.user_metadata?.avatar_url;
   document.getElementById('pnm').textContent=name;document.getElementById('pem').textContent=me.email||'';
   const av=document.getElementById('pav');av.innerHTML=url?`<img src="${url}" alt="">`:name[0].toUpperCase();
-  if(!sb)return;
+if(!sb)return;
+  const{data:prof}=await sb.from('profiles').select('bio').eq('id',myProfileId||me.id).maybeSingle();
+  document.getElementById('p-bio').value=prof?.bio||'';
   const[{count:posted},{count:helped},{count:done}]=await Promise.all([sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id),sb.from('tasks').select('*',{count:'exact',head:true}).eq('doer_id',myProfileId||me.id),sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id).eq('status','completed')]);
   document.getElementById('s-posted').textContent=posted||0;document.getElementById('s-helped').textContent=helped||0;document.getElementById('s-done').textContent=done||0;
 }
@@ -920,6 +921,15 @@ function spin(){return'<div class="loading"><div class="spinner"></div></div>';}
 function emptyState(ico,t,d){return`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-t">${t}</div><div class="empty-d">${d}</div></div>`;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function timeAgo(d){const m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
+async function saveBio(){
+  if(!sb||!me)return toast('Not signed in');
+  const bio=document.getElementById('p-bio').value.trim();
+  const{error}=await sb.from('profiles').update({bio}).eq('id',myProfileId||me.id);
+  if(error)return toast('❌ '+error.message);
+  toast('✅ Profile saved!');
+}
+
 </script>
+
 </body>
 </html>
