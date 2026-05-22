@@ -1181,35 +1181,55 @@ async function loadMessages(){
     const preview=lastMsg?esc(lastMsg.body||'').slice(0,60):'Tap to open chat';
     const msgTime=lastMsg?timeAgo(lastMsg.created_at):'';
     const isUnread=lastMsg&&!lastMsg.read&&lastMsg.sender_id!==pid;
-    const unreadDot=isUnread?`<span style="width:8px;height:8px;border-radius:50%;background:var(--pink);display:inline-block;margin-left:4px;flex-shrink:0"></span>`:'';
-    return `<div class="conv-row" onclick="openChat('${t.id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.doer_id}')">
+    const rowBg=isUnread?'background:rgba(236,72,153,.06);border-color:rgba(236,72,153,.25)':'';
+    const unreadDot=isUnread?`<span style="width:7px;height:7px;border-radius:50%;background:var(--pink);display:inline-block;margin-left:5px;flex-shrink:0;vertical-align:middle"></span>`:'';
+    return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.doer_id}')">
       <div class="conv-icon" style="background:${color}22;border:1.5px solid ${color}44">${emoji}</div>
       <div class="conv-body">
         <div class="conv-top">
-          <span class="conv-name" style="${isUnread?'color:var(--text)':''}">${esc(otherName)}${unreadDot}</span>
-          <span class="conv-time">${msgTime}</span>
+          <span class="conv-name">${esc(otherName)}${unreadDot}</span>
+          <span class="conv-time" style="${isUnread?'color:var(--pink);font-weight:900':''}">${msgTime}</span>
         </div>
         <div class="conv-title">${esc(t.title)}</div>
-        <div class="conv-preview" style="${isUnread?'color:var(--text);font-weight:700':''}">${preview}</div>
+        <div class="conv-preview" style="${isUnread?'color:var(--text);font-weight:800':'color:#666'}">${preview}</div>
       </div>
     </div>`;
   }).join('');
 }
 
 let activeChatPosterId=null, activeChatDoerId=null;
-function openChat(taskId,title,otherName,posterId,doerId){
+async function openChat(taskId,title,otherName,posterId,doerId){
   activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=doerId;
   document.getElementById('chat-title').textContent=title;
   document.getElementById('chat-other').textContent=otherName;
-  const pid=myProfileId||me.id;
-  const isPoster=posterId===pid;
-  const actionsEl=document.getElementById('chat-actions');
-  const completeBtn=isPoster?`<button onclick="chatComplete('${taskId}','${doerId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Mark Complete</button>`:'';
-  const unclaimBtn=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
-  actionsEl.innerHTML=`${completeBtn}${unclaimBtn}`;
-  actionsEl.style.display='flex';
   document.getElementById('chat-modal').classList.add('open');
   loadChatMessages(taskId);
+
+  // fetch current task status to show correct action buttons
+  const actionsEl=document.getElementById('chat-actions');
+  actionsEl.innerHTML='';actionsEl.style.display='none';
+  if(!sb||!me)return;
+  const pid=myProfileId||me.id;
+  const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id').eq('id',taskId).single();
+  if(!task)return;
+
+  const isPoster=task.poster_id===pid;
+  const isDoer=task.doer_id===pid;
+
+  if(task.status==='claimed'){
+    let btns='';
+    if(isPoster){
+      btns+=`<button onclick="chatComplete('${taskId}','${task.doer_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Mark Complete</button>`;
+      btns+=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
+    } else if(isDoer){
+      btns+=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
+    }
+    if(btns){actionsEl.innerHTML=btns;actionsEl.style.display='flex';}
+  } else if(task.status==='open'){
+    // job was unclaimed — offer to claim again
+    actionsEl.innerHTML=`<button onclick="claimFromChat('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🙋 Claim Again</button>`;
+    actionsEl.style.display='flex';
+  }
 }
 
 async function loadChatMessages(taskId){
@@ -1228,6 +1248,22 @@ async function sendMessage(){
   const receiverId=taskData?.poster_id===pid?taskData?.doer_id:taskData?.poster_id;
   const{error}=await sb.from('messages').insert({task_id:activeChatTaskId,sender_id:pid,receiver_id:receiverId,body:content,read:false});
   if(error){toast('❌ '+error.message);return;}loadChatMessages(activeChatTaskId);
+}
+
+async function claimFromChat(taskId){
+  if(!sb||!me)return;
+  const pid=myProfileId||me.id;
+  const{error}=await sb.from('tasks').update({status:'claimed',doer_id:pid}).eq('id',taskId);
+  if(error)return toast('❌ '+error.message);
+  toast('🎉 Job claimed!');
+  // refresh action buttons
+  const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id').eq('id',taskId).single();
+  const actionsEl=document.getElementById('chat-actions');
+  if(task?.status==='claimed'){
+    actionsEl.innerHTML=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
+    actionsEl.style.display='flex';
+  }
+  loadMessages();loadJobs();
 }
 
 async function sendSystemMessage(taskId,posterId,doerId,body){
