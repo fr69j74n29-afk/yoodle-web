@@ -830,7 +830,7 @@ async function sendMessage(){
   const inp=document.getElementById('chat-input');const content=inp.value.trim();if(!content||!activeChatTaskId||!sb)return;inp.value='';const pid=myProfileId||me.id;
   const{data:taskData}=await sb.from('tasks').select('poster_id,doer_id').eq('id',activeChatTaskId).single();
   const receiverId=taskData?.poster_id===pid?taskData?.doer_id:taskData?.poster_id;
-  const{error}=await sb.from('messages').insert({task_id:activeChatTaskId,sender_id:pid,receiver_id:receiverId,body:content,topic:`task:${activeChatTaskId}`,extension:'chat',read:false});
+  const{error}=await sb.from('messages').insert({task_id:activeChatTaskId,sender_id:pid,receiver_id:receiverId,body:content,read:false});
   if(error){toast('❌ '+error.message);return;}loadChatMessages(activeChatTaskId);
 }
 
