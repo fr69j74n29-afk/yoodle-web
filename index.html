@@ -666,7 +666,7 @@ function nav(view) {
   document.getElementById('fab').style.display = view==='map' ? 'flex' : 'none';
   if (view==='map') { setTimeout(()=>map.invalidateSize(),100); }
   if (view==='myjobs') loadMyJobs();
-  if (view==='messages') loadMessages();
+  if (view==='messages'){ clearMessageBadge(); loadMessages(); }
   if (view==='profile') loadProfile();
 }
 
@@ -708,6 +708,76 @@ async function showApp(){
     myProfileId = data?.id || me.id;
   }
   loadJobs();
+  subscribeToMessages();
+}
+
+// ── REALTIME NOTIFICATIONS ───────────────────
+let realtimeChannel = null;
+
+function playNotificationSound(){
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Two-tone pleasant ping
+    [0, 0.15].forEach((delay, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = i === 0 ? 840 : 1060;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + delay + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.4);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.4);
+    });
+  } catch(e) {}
+}
+
+function showMessageBadge(){
+  const btn = document.getElementById('ni-messages');
+  if(!btn) return;
+  if(!btn.querySelector('.msg-badge')){
+    const badge = document.createElement('div');
+    badge.className = 'msg-badge';
+    badge.style.cssText = 'position:absolute;top:4px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--pink);';
+    btn.style.position = 'relative';
+    btn.appendChild(badge);
+  }
+}
+
+function clearMessageBadge(){
+  const badge = document.getElementById('ni-messages')?.querySelector('.msg-badge');
+  if(badge) badge.remove();
+}
+
+function subscribeToMessages(){
+  if(!sb || !me) return;
+  // Clean up existing subscription
+  if(realtimeChannel) sb.removeChannel(realtimeChannel);
+
+  realtimeChannel = sb.channel('messages-notify')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages'
+    }, payload => {
+      const msg = payload.new;
+      const pid = myProfileId || me.id;
+      // Only notify if this message is for us and we didn't send it
+      if(msg.receiver_id === pid && msg.sender_id !== pid){
+        playNotificationSound();
+        showMessageBadge();
+        // If chat is already open for this task, refresh it
+        if(activeChatTaskId === msg.task_id){
+          loadChatMessages(msg.task_id);
+        }
+        // If on messages view, refresh list
+        const msgView = document.getElementById('app-messages');
+        if(msgView?.classList.contains('active')) loadMessages();
+      }
+    })
+    .subscribe();
 }
 
 function showDemoApp(){
