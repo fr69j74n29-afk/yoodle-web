@@ -394,6 +394,7 @@ body{
         <div class="stat-c"><span class="stat-n" id="s-helped">0</span><span class="stat-l">Helped</span></div>
         <div class="stat-c"><span class="stat-n" id="s-done">0</span><span class="stat-l">Done</span></div>
       </div>
+		<div style="text-align:center;margin-bottom:20px;font-size:15px;font-weight:800;color:var(--yellow)" id="p-rating">—</div>
 	<div style="margin-bottom:8px">
         <label class="form-lbl">About Me</label>
 	<textarea class="form-ta" id="p-bio" placeholder="Tell your neighbours a bit about yourself…" 	style="height:120px;margin-bottom:8px"></textarea>
@@ -477,7 +478,23 @@ body{
     <button class="btn-primary" id="m-action" onclick="jobAction()">I Can Help! 🙋</button>
   </div>
 </div>
-
+<!-- RATING MODAL -->
+<div class="modal-ov" id="rating-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="margin-bottom:6px">Rate your experience ⭐</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:24px" id="rating-prompt">How did it go?</div>
+    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:28px" id="rating-stars">
+      <span style="font-size:40px;cursor:pointer" onclick="setRating(1)">⭐</span>
+      <span style="font-size:40px;cursor:pointer" onclick="setRating(2)">⭐</span>
+      <span style="font-size:40px;cursor:pointer" onclick="setRating(3)">⭐</span>
+      <span style="font-size:40px;cursor:pointer" onclick="setRating(4)">⭐</span>
+      <span style="font-size:40px;cursor:pointer" onclick="setRating(5)">⭐</span>
+    </div>
+    <button class="btn-primary" id="rating-submit-btn" onclick="submitRating()" disabled>Submit Rating</button>
+    <button onclick="document.getElementById('rating-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Skip</button>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -508,8 +525,8 @@ function normalizeCategory(cat) {
   return cat || 'other';
 }
 const RADIUS_KM = 3;
-
 let sb, me, myProfileId, activeJob, mapCatFilter='all', listCatFilter='all', myTab='posted';
+let ratingTaskId=null, ratingRatedId=null, selectedRating=0;
 let map, userMarker, radiusCircle, jobMarkers=[], allJobs=[];
 let userLat=null, userLng=null;
 let gpsLat=null, gpsLng=null, locVerified=false;
@@ -752,14 +769,15 @@ async function jobAction(){
   const isPoster=activeJob.poster_id===me.id||activeJob.poster_id===myProfileId;const isDoer=activeJob.doer_id===me.id||activeJob.doer_id===myProfileId;let update={},msg='';
   if(activeJob.status==='open'&&!isPoster){update={status:'claimed',doer_id:myProfileId||me.id};msg='__OPEN_MESSAGES__';}
   else if(activeJob.status==='open'&&isPoster){update={status:'cancelled'};msg='🗑️ Job cancelled';}
-  else if(activeJob.status==='claimed'&&isPoster){update={status:'open',doer_id:null};msg='↩️ Job returned to open';}
+  else if(activeJob.status==='claimed'&&isPoster){update={status:'completed'};msg='__COMPLETE__';}
   else if(activeJob.status==='claimed'&&isDoer){toast('💬 Messaging coming soon!');return;}
   else{return;}
   const{error}=await sb.from('tasks').update(update).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
   document.getElementById('modal').classList.remove('open');
-  if(msg==='__OPEN_MESSAGES__'){loadJobs();nav('messages');toast('🎉 Job claimed! Message the poster.');}
-  else{toast(msg);loadJobs();}
+if(msg==='__OPEN_MESSAGES__'){loadJobs();nav('messages');toast('🎉 Job claimed! Message the poster.');}
+else if(msg==='__COMPLETE__'){loadJobs();document.getElementById('modal').classList.remove('open');openRatingModal(activeJob.id,activeJob.doer_id,'How did the doer do?');}
+else{toast(msg);loadJobs();}
 }
 
 let selCatVal=null;
@@ -867,8 +885,9 @@ async function loadProfile(){
   document.getElementById('pnm').textContent=name;document.getElementById('pem').textContent=me.email||'';
   const av=document.getElementById('pav');av.innerHTML=url?`<img src="${url}" alt="">`:name[0].toUpperCase();
 if(!sb)return;
-  const{data:prof}=await sb.from('profiles').select('bio').eq('id',myProfileId||me.id).maybeSingle();
-  document.getElementById('p-bio').value=prof?.bio||'';
+const{data:prof}=await sb.from('profiles').select('bio,rating,task_count').eq('id',myProfileId||me.id).maybeSingle();
+document.getElementById('p-bio').value=prof?.bio||'';
+document.getElementById('p-rating').textContent=prof?.rating?`⭐ ${prof.rating}`:'No ratings yet';
   const[{count:posted},{count:helped},{count:done}]=await Promise.all([sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id),sb.from('tasks').select('*',{count:'exact',head:true}).eq('doer_id',myProfileId||me.id),sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id).eq('status','completed')]);
   document.getElementById('s-posted').textContent=posted||0;document.getElementById('s-helped').textContent=helped||0;document.getElementById('s-done').textContent=done||0;
 }
@@ -923,7 +942,39 @@ async function saveBio(){
   if(error)return toast('❌ '+error.message);
   toast('✅ Profile saved!');
 }
+function openRatingModal(taskId, ratedId, prompt){
+  ratingTaskId=taskId;ratingRatedId=ratedId;selectedRating=0;
+  document.getElementById('rating-prompt').textContent=prompt;
+  document.getElementById('rating-submit-btn').disabled=true;
+  renderStars(0);
+  document.getElementById('rating-modal').classList.add('open');
+}
 
+function setRating(n){
+  selectedRating=n;
+  renderStars(n);
+  document.getElementById('rating-submit-btn').disabled=false;
+}
+
+function renderStars(n){
+  const stars=document.getElementById('rating-stars').querySelectorAll('span');
+  stars.forEach((s,i)=>s.textContent=i<n?'⭐':'☆');
+}
+
+async function submitRating(){
+  if(!selectedRating||!ratingTaskId||!ratingRatedId||!sb)return;
+  const pid=myProfileId||me.id;
+  const{error}=await sb.from('ratings').insert({task_id:ratingTaskId,rater_id:pid,rated_id:ratingRatedId,score:selectedRating});
+  if(error)return toast('❌ '+error.message);
+  // update aggregate rating on profile
+  const{data:allRatings}=await sb.from('ratings').select('score').eq('rated_id',ratingRatedId);
+  if(allRatings?.length){
+    const avg=allRatings.reduce((s,r)=>s+r.score,0)/allRatings.length;
+    await sb.from('profiles').update({rating:Math.round(avg*10)/10}).eq('id',ratingRatedId);
+  }
+  document.getElementById('rating-modal').classList.remove('open');
+  toast('⭐ Rating submitted!');
+}
 </script>
 
 </body>
