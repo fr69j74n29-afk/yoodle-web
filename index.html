@@ -119,7 +119,22 @@ body{
 .cat-scroll::-webkit-scrollbar{display:none}
 .cat-chip{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:100px;background:var(--surface);border:1.5px solid var(--border);font-size:13px;font-weight:800;white-space:nowrap;cursor:pointer;color:var(--text);transition:all .15s;font-family:'Nunito',sans-serif}
 .cat-chip.active{border-color:var(--purple);color:var(--purple);background:rgba(155,89,212,.1)}
-.jobs-grid{display:flex;flex-direction:column;gap:12px;padding-top:16px}
+.jobs-grid{display:flex;flex-direction:column;gap:8px;padding-top:16px}
+
+/* compact list card */
+.list-card{background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px}
+.list-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--jc,var(--purple))}
+.list-card:active{transform:scale(.98)}
+.lc-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lc-cat{font-size:10px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:var(--jc,var(--purple));display:flex;align-items:center;gap:4px;flex-shrink:0}
+.lc-budget{font-size:17px;font-weight:900;color:var(--lime);white-space:nowrap;flex-shrink:0}
+.lc-title{font-size:15px;font-weight:900;line-height:1.3;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-desc{font-size:12px;color:#aaa;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lc-poster{display:flex;align-items:center;gap:5px;min-width:0}
+.lc-av{width:20px;height:20px;border-radius:50%;background:var(--surface2);font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--muted);flex-shrink:0}
+.lc-name{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-meta{font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0}
 
 /* JOB CARD */
 .job-card{background:var(--surface);border-radius:var(--radius);padding:18px 18px 16px;border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;position:relative;overflow:hidden;flex-shrink:0}
@@ -694,11 +709,13 @@ function filterMapJobs(){renderMapPins(allJobs);}
 function listFilterCat(el,cat){document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');listCatFilter=cat;renderListGrid(allJobs);}
 
 function renderListGrid(jobs) {
-  const filtered=listCatFilter==='all'?jobs:jobs.filter(j=>j.category===listCatFilter);
+  const pid=myProfileId||me?.id;
+  const others=pid?jobs.filter(j=>j.poster_id!==pid):jobs;
+  const filtered=listCatFilter==='all'?others:others.filter(j=>j.category===listCatFilter);
   const g=document.getElementById('list-grid');
-  if(!filtered.length){g.innerHTML=emptyState('🌱','No jobs yet','Be the first to post something!');return;}
-  document.getElementById('list-sub').textContent=`${filtered.length} task${filtered.length===1?'':'s'} open`;
-  g.innerHTML=filtered.map(j=>jobCard(j,j.profiles)).join('');
+  if(!filtered.length){g.innerHTML=emptyState('🌱','No jobs nearby','Check back soon or post your own!');return;}
+  document.getElementById('list-sub').textContent=`${filtered.length} task${filtered.length===1?'':'s'} open nearby`;
+  g.innerHTML=filtered.map(j=>listCard(j,j.profiles)).join('');
 }
 
 function nav(view) {
@@ -779,6 +796,31 @@ function jobCard(j,profile){
     <div class="jc-foot">
       <div class="jc-poster"><div class="poster-av">${avImg}</div><span class="poster-nm">${esc(name)}</span>${rating}</div>
       <div class="jc-loc">${locBadge} ${esc(j.address||'Nearby')} · ${timeAgo(j.created_at)}</div>
+    </div>
+  </div>`;
+}
+
+function listCard(j,profile){
+  const color=CAT_COLOR[j.category]||'#9B59D4';
+  const emoji=CAT_EMOJI[j.category]||'✨';
+  const name=profile?.name||'Someone';
+  const rating=profile?.rating?`⭐ ${profile.rating}`:'New';
+  const area=(j.address||'Nearby').split(',')[0].trim();
+  const locBadge=j.location_verified?'✅':'⚠️';
+  return `<div class="list-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
+    <div class="lc-top">
+      <span class="lc-cat">${emoji} ${j.category||'other'}</span>
+      <span class="lc-budget">$${j.price??'?'}</span>
+    </div>
+    <div class="lc-title">${esc(j.title)}</div>
+    <div class="lc-desc">${esc(j.description||'')}</div>
+    <div class="lc-foot">
+      <div class="lc-poster">
+        <div class="lc-av">${esc(name[0].toUpperCase())}</div>
+        <span class="lc-name">${esc(name)}</span>
+        <span style="color:var(--yellow);font-size:11px;font-weight:800;flex-shrink:0">${rating}</span>
+      </div>
+      <span class="lc-meta">${locBadge} ${esc(area)} · ${timeAgo(j.created_at)}</span>
     </div>
   </div>`;
 }
