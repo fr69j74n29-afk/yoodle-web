@@ -604,8 +604,7 @@ function renderMapPins(jobs) {
   jobMarkers.forEach(m=>map.removeLayer(m));
   jobMarkers=[];
   const visible=jobs.filter(j=>(mapCatFilter==='all'||j.category===mapCatFilter)&&j.lat&&j.lng);
-  const search=document.getElementById('map-search').value.toLowerCase();
-  const filtered=search?visible.filter(j=>j.title.toLowerCase().includes(search)||(j.description||'').toLowerCase().includes(search)):visible;
+  const filtered=visible;
   filtered.forEach(job=>{
     const color=CAT_COLOR[job.category]||'#9B59D4';
     const emoji=CAT_EMOJI[job.category]||'✨';
