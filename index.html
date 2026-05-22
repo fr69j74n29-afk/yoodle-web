@@ -615,7 +615,7 @@ function renderMapPins(jobs) {
     jobMarkers.push(marker);
   });
   const pill=document.getElementById('job-count-pill');
-  pill.textContent=filtered.length===0?'No jobs in this area yet':`${filtered.length} job${filtered.length===1?'':'s'} nearby`;
+  pill.textContent=filtered.length===0?'No tasks open in this area yet':`${filtered.length} task${filtered.length===1?'':'s'} open`;
 }
 
 async function loadJobs() {
