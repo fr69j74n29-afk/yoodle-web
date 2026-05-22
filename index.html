@@ -260,6 +260,17 @@ body{
 .spinner{width:22px;height:22px;border:2.5px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .75s linear infinite;display:inline-block}
 .cfg-banner{background:rgba(252,211,77,.08);border:1.5px solid rgba(252,211,77,.25);border-radius:var(--radius-sm);padding:10px 16px;margin:8px 16px 0;font-size:12px;color:var(--yellow);font-weight:800;display:none;line-height:1.6;z-index:101;position:relative;flex-shrink:0}
 
+/* conversation row */
+.conv-row{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border-radius:var(--radius-sm);border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;margin-bottom:8px}
+.conv-row:active{transform:scale(.98)}
+.conv-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.conv-body{flex:1;min-width:0}
+.conv-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:3px}
+.conv-name{font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-time{font-size:11px;color:var(--muted);font-weight:700;flex-shrink:0}
+.conv-title{font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.conv-preview{font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 @media(min-width:481px){
   body{box-shadow:0 0 0 1px var(--border)}
   html{background:#050505}
@@ -1132,22 +1143,55 @@ async function loadMessages(){
   const el=document.getElementById('conversations-list');el.innerHTML=spin();
   if(!sb||!me){el.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see messages');return;}
   const pid=myProfileId||me.id;
-  const{data,error}=await sb.from('tasks').select('*, profiles!tasks_poster_id_fkey(id,name)').or(`poster_id.eq.${pid},doer_id.eq.${pid}`).eq('status','claimed').order('created_at',{ascending:false});
+
+  // fetch claimed tasks involving this user
+  const{data:tasks,error}=await sb.from('tasks')
+    .select('*, profiles!tasks_poster_id_fkey(id,name)')
+    .or(`poster_id.eq.${pid},doer_id.eq.${pid}`)
+    .eq('status','claimed')
+    .order('created_at',{ascending:false});
   if(error){el.innerHTML=emptyState('😕','Error',error.message);return;}
-  if(!data?.length){el.innerHTML=emptyState('💬','No active conversations','Claim a job to start messaging');return;}
-  el.innerHTML=data.map(t=>{
+  if(!tasks?.length){el.innerHTML=emptyState('💬','No active conversations','Claim a job to start messaging');return;}
+
+  // fetch last message for each task
+  const taskIds=tasks.map(t=>t.id);
+  const{data:lastMsgs}=await sb.from('messages')
+    .select('task_id,body,sender_id,created_at')
+    .in('task_id',taskIds)
+    .order('created_at',{ascending:false});
+
+  // build map of taskId → last message
+  const lastMsgMap={};
+  (lastMsgs||[]).forEach(m=>{if(!lastMsgMap[m.task_id])lastMsgMap[m.task_id]=m;});
+
+  // sort tasks by last message time (most recent first)
+  tasks.sort((a,b)=>{
+    const at=lastMsgMap[a.id]?.created_at||a.created_at;
+    const bt=lastMsgMap[b.id]?.created_at||b.created_at;
+    return new Date(bt)-new Date(at);
+  });
+
+  el.innerHTML=tasks.map(t=>{
     const isPoster=t.poster_id===pid;
-    const otherName=isPoster?(t.profiles?.name||'Doer'):'Poster: '+(t.profiles?.name||'Someone');
+    const otherName=isPoster?(t.profiles?.name||'Helper'):(t.profiles?.name||'Poster');
     const cat=(t.category||'other').toLowerCase();
-    const color=CAT_COLOR[cat]||'#9B59D4';const emoji=CAT_EMOJI[cat]||'✨';
-    const completeBtn=isPoster?`<button onclick="event.stopPropagation();chatComplete('${t.id}','${t.doer_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>`:'';
-    const unclaimBtn=`<button onclick="event.stopPropagation();chatUnclaim('${t.id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
-    return `<div class="job-card" style="--jc:${color};margin-bottom:12px" onclick="openChat('${t.id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.doer_id}')">
-      <div class="jc-badge">${emoji} ${cat}</div>
-      <div class="jc-top"><div class="jc-title">${esc(t.title)}</div><div style="font-size:12px;color:var(--lime);font-weight:800">Active</div></div>
-      <div class="jc-desc">${isPoster?'You posted this':'You are helping with this'}</div>
-      <div class="jc-foot"><span style="font-size:12px;color:var(--muted);font-weight:700">👤 ${esc(otherName)}</span><span style="font-size:12px;color:var(--purple);font-weight:800">Open chat →</span></div>
-      <div style="display:flex;gap:8px;margin-top:10px">${completeBtn}${unclaimBtn}</div>
+    const color=CAT_COLOR[cat]||'#9B59D4';
+    const emoji=CAT_EMOJI[cat]||'✨';
+    const lastMsg=lastMsgMap[t.id];
+    const preview=lastMsg?esc(lastMsg.body||'').slice(0,60):'Tap to open chat';
+    const msgTime=lastMsg?timeAgo(lastMsg.created_at):'';
+    const isUnread=lastMsg&&!lastMsg.read&&lastMsg.sender_id!==pid;
+    const unreadDot=isUnread?`<span style="width:8px;height:8px;border-radius:50%;background:var(--pink);display:inline-block;margin-left:4px;flex-shrink:0"></span>`:'';
+    return `<div class="conv-row" onclick="openChat('${t.id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.doer_id}')">
+      <div class="conv-icon" style="background:${color}22;border:1.5px solid ${color}44">${emoji}</div>
+      <div class="conv-body">
+        <div class="conv-top">
+          <span class="conv-name" style="${isUnread?'color:var(--text)':''}">${esc(otherName)}${unreadDot}</span>
+          <span class="conv-time">${msgTime}</span>
+        </div>
+        <div class="conv-title">${esc(t.title)}</div>
+        <div class="conv-preview" style="${isUnread?'color:var(--text);font-weight:700':''}">${preview}</div>
+      </div>
     </div>`;
   }).join('');
 }
