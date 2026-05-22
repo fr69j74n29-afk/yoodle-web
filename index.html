@@ -651,7 +651,7 @@ function renderListGrid(jobs) {
   const filtered=listCatFilter==='all'?jobs:jobs.filter(j=>j.category===listCatFilter);
   const g=document.getElementById('list-grid');
   if(!filtered.length){g.innerHTML=emptyState('🌱','No jobs yet','Be the first to post something!');return;}
-  document.getElementById('list-sub').textContent=`${filtered.length} tasks${filtered.length===1?'':'s'} open`;
+  document.getElementById('list-sub').textContent=`${filtered.length} task${filtered.length===1?'':'s'} open`;
   g.innerHTML=filtered.map(j=>jobCard(j,j.profiles)).join('');
 }
 
