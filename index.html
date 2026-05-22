@@ -49,6 +49,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);max-
 .btn-magic:disabled{opacity:.5;cursor:not-allowed}
 .magic-sent{background:rgba(163,230,53,.1);border:1.5px solid rgba(163,230,53,.3);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--lime);font-weight:700;text-align:center;display:none;line-height:1.5}
 .auth-legal{font-size:11px;color:var(--muted);text-align:center;margin-top:24px;line-height:1.7;position:relative;z-index:1}
+.auth-legal a{color:var(--purple);text-decoration:none}
 
 /* ── MAIN APP ── */
 #view-main{display:none;flex-direction:column;height:100vh;overflow:hidden}
@@ -101,8 +102,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);max-
 
 /* User location ring */
 .user-ring{width:20px;height:20px;border-radius:50%;background:rgba(6,182,212,.9);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.5)}
-
-/* 3km radius circle — styled via Leaflet options */
 
 /* ── LIST VIEW ── */
 #app-list{overflow:hidden}
@@ -242,7 +241,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);max-
       <div class="magic-sent" id="magic-sent">✅ Check your inbox! Link sent to <span id="magic-addr"></span></div>
     </div>
   </div>
-  <div class="auth-legal">By continuing you agree to Yoodle's Terms of Service<br>and Privacy Policy. No spam, ever.</div>
+  <div class="auth-legal">By continuing you agree to Yoodle's <a href="/terms" target="_blank">Terms of Service</a><br>and <a href="/privacy" target="_blank">Privacy Policy</a>. No spam, ever.</div>
 </div>
 
 <!-- CONFIG BANNER -->
@@ -418,15 +417,12 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);max-
 <!-- CHAT MODAL -->
 <div class="modal-ov" id="chat-modal" onclick="if(event.target.id==='chat-modal')document.getElementById('chat-modal').classList.remove('open')">
   <div class="modal-sheet" style="height:80vh;display:flex;flex-direction:column;padding:0">
-    <!-- Chat header -->
     <div style="padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div class="modal-handle" style="margin-bottom:12px"></div>
       <div style="font-size:17px;font-weight:900" id="chat-title">—</div>
       <div style="font-size:12px;color:var(--muted);font-weight:700" id="chat-other">—</div>
     </div>
-    <!-- Messages -->
     <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch"></div>
-    <!-- Input -->
     <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;background:var(--surface)">
       <input id="chat-input" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMessage()"
         style="flex:1;padding:12px 16px;border-radius:100px;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;outline:none">
@@ -454,12 +450,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);max-
 <div class="toast" id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════
-//  ⚙️  YOUR SUPABASE CREDENTIALS
-// ═══════════════════════════════════════════
 const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
-// ═══════════════════════════════════════════
 
 const CAT_COLOR={handyman:'#F97316',garden:'#A3E635',moving:'#06B6D4',cleaning:'#8B5CF6',petcare:'#FCD34D',tech:'#06B6D4',errands:'#EC4899',childcare:'#A3E635',other:'#9B59D4'};
 const CAT_EMOJI={handyman:'🔨',garden:'🌿',moving:'🚗',cleaning:'🧹',petcare:'🐕',tech:'💻',errands:'🛒',childcare:'👶',other:'✨'};
@@ -470,7 +462,6 @@ let map, userMarker, radiusCircle, jobMarkers=[], allJobs=[];
 let userLat=null, userLng=null;
 let gpsLat=null, gpsLng=null, locVerified=false;
 
-// ── INIT ────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   initMap();
   if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
@@ -487,206 +478,101 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// ── MAP INIT ────────────────────────────────
 function initMap() {
-  // Default to Toronto area until user locates
-  map = L.map('map', {
-    center: [43.6532, -79.3832],
-    zoom: 13,
-    zoomControl: false,
-    attributionControl: false
-  });
-
-  // Dark OpenStreetMap tiles via CSS filter
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
-
-  // Attribution small
+  map = L.map('map', {center:[43.6532,-79.3832],zoom:13,zoomControl:false,attributionControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
   L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
-
-  // Zoom control top-right
   L.control.zoom({position:'bottomright'}).addTo(map);
-
-  // Try to locate user right away
   locateUser();
 }
 
 function locateUser() {
   if (!navigator.geolocation) { loadDemoJobs(); return; }
   navigator.geolocation.getCurrentPosition(
-    pos => {
-      userLat = pos.coords.latitude;
-      userLng = pos.coords.longitude;
-      centerMapOnUser();
-      sb ? loadJobs() : loadDemoJobs();
-    },
-    () => { sb ? loadJobs() : loadDemoJobs(); },
-    {timeout:8000, enableHighAccuracy:false}
+    pos => { userLat=pos.coords.latitude; userLng=pos.coords.longitude; centerMapOnUser(); sb?loadJobs():loadDemoJobs(); },
+    () => { sb?loadJobs():loadDemoJobs(); },
+    {timeout:8000,enableHighAccuracy:false}
   );
 }
 
 function centerMapOnUser() {
-  if (!userLat || !map) return;
-  map.setView([userLat, userLng], 14);
-
-  // Remove old user marker + radius
-  if (userMarker) map.removeLayer(userMarker);
-  if (radiusCircle) map.removeLayer(radiusCircle);
-
-  // User location dot
-  const icon = L.divIcon({
-    className:'yoodle-pin',
-    html:`<div class="user-ring"></div>`,
-    iconSize:[20,20], iconAnchor:[10,10]
-  });
-  userMarker = L.marker([userLat, userLng], {icon, zIndexOffset:1000}).addTo(map);
-
-  // 3km radius circle
-  radiusCircle = L.circle([userLat, userLng], {
-    radius: RADIUS_KM * 1000,
-    color: '#9B59D4',
-    fillColor: '#9B59D4',
-    fillOpacity: 0.06,
-    weight: 1.5,
-    dashArray: '6 4'
-  }).addTo(map);
+  if (!userLat||!map) return;
+  map.setView([userLat,userLng],14);
+  if(userMarker)map.removeLayer(userMarker);
+  if(radiusCircle)map.removeLayer(radiusCircle);
+  const icon=L.divIcon({className:'yoodle-pin',html:`<div class="user-ring"></div>`,iconSize:[20,20],iconAnchor:[10,10]});
+  userMarker=L.marker([userLat,userLng],{icon,zIndexOffset:1000}).addTo(map);
+  radiusCircle=L.circle([userLat,userLng],{radius:RADIUS_KM*1000,color:'#9B59D4',fillColor:'#9B59D4',fillOpacity:0.06,weight:1.5,dashArray:'6 4'}).addTo(map);
 }
 
-// ── FUZZY PIN — ±300m offset to protect poster privacy
-function fuzzyCoords(lat, lng) {
-  const offsetLat = (Math.random() - 0.5) * 0.005; // ~300m
-  const offsetLng = (Math.random() - 0.5) * 0.007;
-  return [lat + offsetLat, lng + offsetLng];
-}
+function fuzzyCoords(lat,lng){return[lat+(Math.random()-.5)*.005,lng+(Math.random()-.5)*.007];}
 
-// ── PLACE JOB PINS ──────────────────────────
 function renderMapPins(jobs) {
-  // Clear existing pins
-  jobMarkers.forEach(m => map.removeLayer(m));
-  jobMarkers = [];
-
-  const visible = jobs.filter(j =>
-    (mapCatFilter === 'all' || j.category === mapCatFilter) &&
-    j.lat && j.lng
-  );
-
-  const search = document.getElementById('map-search').value.toLowerCase();
-  const filtered = search ? visible.filter(j =>
-    j.title.toLowerCase().includes(search) ||
-    (j.description||'').toLowerCase().includes(search) ||
-    (j.category||'').toLowerCase().includes(search)
-  ) : visible;
-
-  filtered.forEach(job => {
-    const color = CAT_COLOR[job.category] || '#9B59D4';
-    const emoji = CAT_EMOJI[job.category] || '✨';
-    const [fLat, fLng] = job._fuzzy || fuzzyCoords(job.lat, job.lng);
-    job._fuzzy = [fLat, fLng]; // cache so it doesn't shift on re-render
-
-    const icon = L.divIcon({
-      className: 'yoodle-pin',
-      html: `<div class="pin-dot" style="background:${color};border-color:rgba(10,10,10,.5)">${emoji}</div>`,
-      iconSize: [36,36], iconAnchor: [18,18]
-    });
-
-    const marker = L.marker([fLat, fLng], {icon})
-      .addTo(map)
-      .on('click', () => openJob(job));
-
+  jobMarkers.forEach(m=>map.removeLayer(m));
+  jobMarkers=[];
+  const visible=jobs.filter(j=>(mapCatFilter==='all'||j.category===mapCatFilter)&&j.lat&&j.lng);
+  const search=document.getElementById('map-search').value.toLowerCase();
+  const filtered=search?visible.filter(j=>j.title.toLowerCase().includes(search)||(j.description||'').toLowerCase().includes(search)):visible;
+  filtered.forEach(job=>{
+    const color=CAT_COLOR[job.category]||'#9B59D4';
+    const emoji=CAT_EMOJI[job.category]||'✨';
+    const[fLat,fLng]=job._fuzzy||fuzzyCoords(job.lat,job.lng);
+    job._fuzzy=[fLat,fLng];
+    const icon=L.divIcon({className:'yoodle-pin',html:`<div class="pin-dot" style="background:${color};border-color:rgba(10,10,10,.5)">${emoji}</div>`,iconSize:[36,36],iconAnchor:[18,18]});
+    const marker=L.marker([fLat,fLng],{icon}).addTo(map).on('click',()=>openJob(job));
     jobMarkers.push(marker);
   });
-
-  const pill = document.getElementById('job-count-pill');
-  pill.textContent = filtered.length === 0
-    ? 'No jobs in this area yet'
-    : `${filtered.length} job${filtered.length===1?'':'s'} nearby`;
+  const pill=document.getElementById('job-count-pill');
+  pill.textContent=filtered.length===0?'No jobs in this area yet':`${filtered.length} job${filtered.length===1?'':'s'} nearby`;
 }
 
-// ── LOAD JOBS ───────────────────────────────
 async function loadJobs() {
-  if (!sb) return loadDemoJobs();
-  const {data, error} = await sb.from('tasks')
-    .select('*, profiles!tasks_poster_id_fkey(id,name,rating)')
-    .eq('status','open')
-    .order('created_at',{ascending:false});
-  if (error || !data) return loadDemoJobs();
-  allJobs = data;
+  if(!sb)return loadDemoJobs();
+  const{data,error}=await sb.from('tasks').select('*, profiles!tasks_poster_id_fkey(id,name,rating)').eq('status','open').order('created_at',{ascending:false});
+  if(error||!data)return loadDemoJobs();
+  allJobs=data;
   renderMapPins(allJobs);
   renderListGrid(allJobs);
 }
 
-function loadDemoJobs() { return;
-  allJobs = [
-    {id:'d1',title:'Help moving a couch + bookshelf',category:'moving',price:55,description:'Third floor walk-up, need someone strong for about 2 hrs. Truck arranged.',address:'Etobicoke',location_verified:true,lat:43.6447,lng:-79.5258,created_at:ago(5),status:'open',profiles:{full_name:'Roman M'}},
-    {id:'d2',title:'Backyard lawn & garden cleanup',category:'garden',price:80,description:'Overgrown grass, weeding, leaves need bagging. All tools provided.',address:'Bloor West Village',location_verified:true,lat:43.6534,lng:-79.4629,created_at:ago(62),status:'open',profiles:{full_name:'Sarah K'}},
-    {id:'d3',title:'Dog walker needed Saturdays',category:'petcare',price:35,description:'Golden retriever, super friendly. 45 min walk, recurring if it goes well!',address:'The Junction',location_verified:true,lat:43.6601,lng:-79.4624,created_at:ago(180),status:'open',profiles:{full_name:'Mike T'}},
-    {id:'d4',title:'Set up new iPhone + data transfer',category:'tech',price:40,description:'Just got an iPhone 16, migrating from Android. Everything backed up.',address:'Roncesvalles',location_verified:false,lat:43.6474,lng:-79.4473,created_at:ago(300),status:'open',profiles:{full_name:'Janet R'}},
-    {id:'d5',title:'Weekly grocery run',category:'errands',price:25,description:'List ready, Loblaws on Dundas. About 1 hour. Car helpful but not required.',address:'Parkdale',location_verified:true,lat:43.6421,lng:-79.4388,created_at:ago(720),status:'open',profiles:{full_name:'Community Ctr'}},
-    {id:'d6',title:'Fix leaking bathroom tap',category:'handyman',price:60,description:'Slow drip under the sink. Have tools available. Just need the know-how.',address:'High Park',location_verified:true,lat:43.6507,lng:-79.4760,created_at:ago(1200),status:'open',profiles:{full_name:'Dave L'}},
-    {id:'d7',title:'Help assemble IKEA furniture',category:'handyman',price:45,description:'3 flat-pack boxes. KALLAX shelf + bed frame. Tools provided.',address:'Swansea',location_verified:true,lat:43.6378,lng:-79.4818,created_at:ago(90),status:'open',profiles:{full_name:'Priya S'}},
-  ];
-  renderMapPins(allJobs);
-  renderListGrid(allJobs);
-}
+function loadDemoJobs(){return;}
 
-// ── MAP FILTER ───────────────────────────────
-function mapFilterCat(el, cat) {
-  document.querySelectorAll('.map-cat').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  mapCatFilter = cat;
-  renderMapPins(allJobs);
-}
-
-function filterMapJobs() { renderMapPins(allJobs); }
-
-// ── LIST FILTER ──────────────────────────────
-function listFilterCat(el, cat) {
-  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  listCatFilter = cat;
-  renderListGrid(allJobs);
-}
+function mapFilterCat(el,cat){document.querySelectorAll('.map-cat').forEach(c=>c.classList.remove('active'));el.classList.add('active');mapCatFilter=cat;renderMapPins(allJobs);}
+function filterMapJobs(){renderMapPins(allJobs);}
+function listFilterCat(el,cat){document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');listCatFilter=cat;renderListGrid(allJobs);}
 
 function renderListGrid(jobs) {
-  const filtered = listCatFilter === 'all' ? jobs : jobs.filter(j=>j.category===listCatFilter);
-  const g = document.getElementById('list-grid');
-  if (!filtered.length) { g.innerHTML = emptyState('🌱','No jobs yet','Be the first to post something!'); return; }
-  document.getElementById('list-sub').textContent = `${filtered.length} open job${filtered.length===1?'':'s'} near you`;
-  g.innerHTML = filtered.map(j=>jobCard(j,j.profiles)).join('');
+  const filtered=listCatFilter==='all'?jobs:jobs.filter(j=>j.category===listCatFilter);
+  const g=document.getElementById('list-grid');
+  if(!filtered.length){g.innerHTML=emptyState('🌱','No jobs yet','Be the first to post something!');return;}
+  document.getElementById('list-sub').textContent=`${filtered.length} open job${filtered.length===1?'':'s'} near you`;
+  g.innerHTML=filtered.map(j=>jobCard(j,j.profiles)).join('');
 }
 
-// ── NAV ─────────────────────────────────────
 function nav(view) {
   document.querySelectorAll('.app-view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-i').forEach(n=>n.classList.remove('active'));
   document.getElementById('app-'+view).classList.add('active');
   document.getElementById('ni-'+view).classList.add('active');
-  document.getElementById('fab').style.display = view==='map' ? 'flex' : 'none';
-  if (view==='map') { setTimeout(()=>map.invalidateSize(),100); }
-  if (view==='myjobs') loadMyJobs();
-  if (view==='messages'){ clearMessageBadge(); loadMessages(); }
-  if (view==='profile') loadProfile();
+  document.getElementById('fab').style.display=view==='map'?'flex':'none';
+  if(view==='map'){setTimeout(()=>map.invalidateSize(),100);}
+  if(view==='myjobs')loadMyJobs();
+  if(view==='messages'){clearMessageBadge();loadMessages();}
+  if(view==='profile')loadProfile();
 }
 
-// ── AUTH ─────────────────────────────────────
 async function signIn(provider) {
-  if(!sb) return toast('⚠️ Add Supabase credentials first');
-  await sb.auth.signInWithOAuth({provider, options:{redirectTo:window.location.href}});
+  if(!sb)return toast('⚠️ Add Supabase credentials first');
+  await sb.auth.signInWithOAuth({provider,options:{redirectTo:window.location.origin}});
 }
 
 async function sendMagicLink() {
   const email=document.getElementById('magic-email').value.trim();
-  if(!email||!email.includes('@')) return toast('Enter a valid email address');
-  if(!sb){
-    document.getElementById('magic-addr').textContent=email;
-    document.getElementById('magic-sent').style.display='block';
-    document.getElementById('magic-btn').disabled=true; return;
-  }
+  if(!email||!email.includes('@'))return toast('Enter a valid email address');
+  if(!sb){document.getElementById('magic-addr').textContent=email;document.getElementById('magic-sent').style.display='block';document.getElementById('magic-btn').disabled=true;return;}
   document.getElementById('magic-btn').disabled=true;
   document.getElementById('magic-btn').textContent='Sending…';
-  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.href}});
+  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
   document.getElementById('magic-btn').textContent='Send Link ✉️';
   if(error){document.getElementById('magic-btn').disabled=false;return toast('❌ '+error.message);}
   document.getElementById('magic-addr').textContent=email;
@@ -694,7 +580,6 @@ async function sendMagicLink() {
 }
 
 async function signOut(){if(sb)await sb.auth.signOut();else showAuthScreen();}
-
 function showAuthScreen(){document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';document.getElementById('cfg-banner').style.display='none';}
 
 async function showApp(){
@@ -702,224 +587,95 @@ async function showApp(){
   document.getElementById('cfg-banner').style.display='none';
   const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
   setAvatar();
-  // Fetch this user's profiles.id (app stores profiles.id not auth.users.id)
-  if(sb && me){
-    const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();
-    myProfileId = data?.id || me.id;
-  }
+  if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
   loadJobs();
   subscribeToMessages();
 }
 
-// ── REALTIME NOTIFICATIONS ───────────────────
-let realtimeChannel = null;
+let realtimeChannel=null;
 
 function playNotificationSound(){
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Two-tone pleasant ping
-    [0, 0.15].forEach((delay, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = i === 0 ? 840 : 1060;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0, ctx.currentTime + delay);
-      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + delay + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.4);
-      osc.start(ctx.currentTime + delay);
-      osc.stop(ctx.currentTime + delay + 0.4);
-    });
-  } catch(e) {}
+  try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15].forEach((delay,i)=>{const osc=ctx.createOscillator();const gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.value=i===0?840:1060;osc.type='sine';gain.gain.setValueAtTime(0,ctx.currentTime+delay);gain.gain.linearRampToValueAtTime(.3,ctx.currentTime+delay+.01);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+delay+.4);osc.start(ctx.currentTime+delay);osc.stop(ctx.currentTime+delay+.4);});}catch(e){}
 }
 
-function showMessageBadge(){
-  const btn = document.getElementById('ni-messages');
-  if(!btn) return;
-  if(!btn.querySelector('.msg-badge')){
-    const badge = document.createElement('div');
-    badge.className = 'msg-badge';
-    badge.style.cssText = 'position:absolute;top:4px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--pink);';
-    btn.style.position = 'relative';
-    btn.appendChild(badge);
-  }
-}
-
-function clearMessageBadge(){
-  const badge = document.getElementById('ni-messages')?.querySelector('.msg-badge');
-  if(badge) badge.remove();
-}
+function showMessageBadge(){const btn=document.getElementById('ni-messages');if(!btn)return;if(!btn.querySelector('.msg-badge')){const badge=document.createElement('div');badge.className='msg-badge';badge.style.cssText='position:absolute;top:4px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--pink);';btn.style.position='relative';btn.appendChild(badge);}}
+function clearMessageBadge(){const badge=document.getElementById('ni-messages')?.querySelector('.msg-badge');if(badge)badge.remove();}
 
 function subscribeToMessages(){
-  if(!sb || !me) return;
-  // Clean up existing subscription
-  if(realtimeChannel) sb.removeChannel(realtimeChannel);
-
-  realtimeChannel = sb.channel('messages-notify')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'messages'
-    }, payload => {
-      const msg = payload.new;
-      const pid = myProfileId || me.id;
-      // Only notify if this message is for us and we didn't send it
-      if(msg.receiver_id === pid && msg.sender_id !== pid){
-        playNotificationSound();
-        showMessageBadge();
-        // If chat is already open for this task, refresh it
-        if(activeChatTaskId === msg.task_id){
-          loadChatMessages(msg.task_id);
-        }
-        // If on messages view, refresh list
-        const msgView = document.getElementById('app-messages');
-        if(msgView?.classList.contains('active')) loadMessages();
-      }
-    })
-    .subscribe();
+  if(!sb||!me)return;
+  if(realtimeChannel)sb.removeChannel(realtimeChannel);
+  realtimeChannel=sb.channel('messages-notify').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},payload=>{
+    const msg=payload.new;const pid=myProfileId||me.id;
+    if(msg.receiver_id===pid&&msg.sender_id!==pid){playNotificationSound();showMessageBadge();if(activeChatTaskId===msg.task_id)loadChatMessages(msg.task_id);const msgView=document.getElementById('app-messages');if(msgView?.classList.contains('active'))loadMessages();}
+  }).subscribe();
 }
 
-function showDemoApp(){
-  document.getElementById('view-auth').style.display='none';
-  const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
-  document.getElementById('top-av').textContent='😊';
-  document.getElementById('fab').style.display='flex';
-}
+function showDemoApp(){document.getElementById('view-auth').style.display='none';const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';document.getElementById('top-av').textContent='😊';document.getElementById('fab').style.display='flex';}
 
-function setAvatar(){
-  if(!me)return;
-  const av=document.getElementById('top-av');
-  const url=me.user_metadata?.avatar_url;
-  if(url)av.innerHTML=`<img src="${url}" alt="">`;
-  else av.textContent=(me.user_metadata?.full_name||me.email||'?')[0].toUpperCase();
-}
+function setAvatar(){if(!me)return;const av=document.getElementById('top-av');const url=me.user_metadata?.avatar_url;if(url)av.innerHTML=`<img src="${url}" alt="">`;else av.textContent=(me.user_metadata?.full_name||me.email||'?')[0].toUpperCase();}
 
-// ── JOB CARD (list) ─────────────────────────
 function jobCard(j,profile){
-  const color=CAT_COLOR[j.category]||'#9B59D4';
-  const emoji=CAT_EMOJI[j.category]||'✨';
-  const name=profile?.name||'Someone';
-  const avImg=esc(name[0].toUpperCase());
-  const locBadge=j.location_verified?`<span style="color:var(--lime);font-size:10px">✅</span>`:`<span style="color:var(--yellow);font-size:10px">⚠️</span>`;
+  const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';const name=profile?.name||'Someone';const avImg=esc(name[0].toUpperCase());const locBadge=j.location_verified?`<span style="color:var(--lime);font-size:10px">✅</span>`:`<span style="color:var(--yellow);font-size:10px">⚠️</span>`;
   return `<div class="job-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="jc-badge">${emoji} ${j.category||'other'}</div>
     <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
     <div class="jc-desc">${esc(j.description||'')}</div>
-    <div class="jc-foot">
-      <div class="jc-poster"><div class="poster-av">${avImg}</div><span class="poster-nm">${esc(name)}</span></div>
-      <div class="jc-loc">${locBadge} ${esc(j.address||'Nearby')} · ${timeAgo(j.created_at)}</div>
-    </div>
+    <div class="jc-foot"><div class="jc-poster"><div class="poster-av">${avImg}</div><span class="poster-nm">${esc(name)}</span></div><div class="jc-loc">${locBadge} ${esc(j.address||'Nearby')} · ${timeAgo(j.created_at)}</div></div>
   </div>`;
 }
 
-// ── JOB MODAL ───────────────────────────────
 function openJob(j){
-  activeJob=j;
-  const color=CAT_COLOR[j.category]||'#9B59D4';
-  const emoji=CAT_EMOJI[j.category]||'✨';
-  document.getElementById('m-badge').textContent=`${emoji} ${j.category||'other'}`;
-  document.getElementById('m-badge').style.color=color;
+  activeJob=j;const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
+  document.getElementById('m-badge').textContent=`${emoji} ${j.category||'other'}`;document.getElementById('m-badge').style.color=color;
   document.getElementById('m-title').textContent=j.title;
   const locTag=j.location_verified?'<span style="color:var(--lime);font-size:11px">✅ GPS verified</span>':'<span style="color:var(--yellow);font-size:11px">⚠️ Self-reported</span>';
   document.getElementById('m-meta').innerHTML=`📍 ${esc(j.address||'Nearby')} ${locTag} &nbsp;·&nbsp; ${timeAgo(j.created_at)}`;
   document.getElementById('m-desc').textContent=j.description||'';
   document.getElementById('m-budget').textContent=`$${j.price??'?'}`;
   document.getElementById('m-loc').innerHTML=`${esc(j.address||'Nearby')}<br><span style="font-size:10px;color:var(--muted);font-weight:700">Neighbourhood only</span>`;
-  const isPoster = me && (j.poster_id === me.id || j.poster_id === myProfileId);
-  const isDoer   = me && (j.doer_id   === me.id || j.doer_id   === myProfileId);
-  const btn = document.getElementById('m-action');
-  btn.disabled = false;
-
-  if (j.status === 'completed') {
-    btn.textContent = '✅ Job Completed'; btn.disabled = true;
-  } else if (j.status === 'claimed') {
-    if (isPoster)     { btn.textContent = '↩️ Unclaim Job'; }
-    else if (isDoer)  { btn.textContent = '💬 Message Poster'; }
-    else              { btn.textContent = '🔒 Already Claimed'; btn.disabled = true; }
-  } else {
-    btn.textContent = isPoster ? '🗑️ Cancel Job' : "I Can Help! 🙋";
-  }
+  const isPoster=me&&(j.poster_id===me.id||j.poster_id===myProfileId);const isDoer=me&&(j.doer_id===me.id||j.doer_id===myProfileId);const btn=document.getElementById('m-action');btn.disabled=false;
+  if(j.status==='completed'){btn.textContent='✅ Job Completed';btn.disabled=true;}
+  else if(j.status==='claimed'){if(isPoster){btn.textContent='↩️ Unclaim Job';}else if(isDoer){btn.textContent='💬 Message Poster';}else{btn.textContent='🔒 Already Claimed';btn.disabled=true;}}
+  else{btn.textContent=isPoster?'🗑️ Cancel Job':"I Can Help! 🙋";}
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(e){if(e.target.id==='modal')document.getElementById('modal').classList.remove('open');}
 
 async function jobAction(){
   if(!sb||!me){toast('🎉 (demo) Action noted!');document.getElementById('modal').classList.remove('open');return;}
-  const isPoster = activeJob.poster_id === me.id || activeJob.poster_id === myProfileId;
-  const isDoer   = activeJob.doer_id   === me.id || activeJob.doer_id   === myProfileId;
-  let update={}, msg='';
-
-  if(activeJob.status==='open' && !isPoster){
-    // Doer claims the job
-    update={status:'claimed', doer_id:myProfileId||me.id};
-    msg='__OPEN_MESSAGES__';
-  } else if(activeJob.status==='open' && isPoster){
-    // Poster cancels their own job
-    update={status:'cancelled'};
-    msg='🗑️ Job cancelled';
-  } else if(activeJob.status==='claimed' && isPoster){
-    // Poster unclaims — returns to open
-    update={status:'open', doer_id:null};
-    msg='↩️ Job returned to open';
-  } else if(activeJob.status==='claimed' && isDoer){
-    // Doer messaging — Phase 2
-    toast('💬 Messaging coming soon!');
-    return;
-  } else { return; }
-
+  const isPoster=activeJob.poster_id===me.id||activeJob.poster_id===myProfileId;const isDoer=activeJob.doer_id===me.id||activeJob.doer_id===myProfileId;let update={},msg='';
+  if(activeJob.status==='open'&&!isPoster){update={status:'claimed',doer_id:myProfileId||me.id};msg='__OPEN_MESSAGES__';}
+  else if(activeJob.status==='open'&&isPoster){update={status:'cancelled'};msg='🗑️ Job cancelled';}
+  else if(activeJob.status==='claimed'&&isPoster){update={status:'open',doer_id:null};msg='↩️ Job returned to open';}
+  else if(activeJob.status==='claimed'&&isDoer){toast('💬 Messaging coming soon!');return;}
+  else{return;}
   const{error}=await sb.from('tasks').update(update).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
   document.getElementById('modal').classList.remove('open');
-  if(msg==='__OPEN_MESSAGES__'){
-    loadJobs();
-    nav('messages');
-    toast('🎉 Job claimed! Message the poster.');
-  } else {
-    toast(msg);
-    loadJobs();
-  }
+  if(msg==='__OPEN_MESSAGES__'){loadJobs();nav('messages');toast('🎉 Job claimed! Message the poster.');}
+  else{toast(msg);loadJobs();}
 }
 
-// ── POST JOB ────────────────────────────────
 let selCatVal=null;
 function selCat(el){document.querySelectorAll('.cat-opt').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');selCatVal=el.dataset.cat;}
 
 async function detectLocation(){
-  const btn=document.getElementById('gps-btn');
-  const inp=document.getElementById('p-loc');
-  const st=document.getElementById('loc-status');
+  const btn=document.getElementById('gps-btn');const inp=document.getElementById('p-loc');const st=document.getElementById('loc-status');
   if(!navigator.geolocation){st.textContent='GPS not available — type your neighbourhood';st.className='loc-status manual';inp.readOnly=false;inp.placeholder='e.g. Etobicoke';return;}
-  btn.disabled=true;btn.textContent='📡 Locating…';
-  st.textContent='Getting your location…';st.className='loc-status loading';
+  btn.disabled=true;btn.textContent='📡 Locating…';st.textContent='Getting your location…';st.className='loc-status loading';
   navigator.geolocation.getCurrentPosition(
-    async pos=>{
-      gpsLat=pos.coords.latitude;gpsLng=pos.coords.longitude;
-      try{
-        const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${gpsLat}&lon=${gpsLng}&zoom=14&format=json`,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
-        const d=await r.json();const a=d.address||{};
-        const nb=a.neighbourhood||a.suburb||a.quarter||a.village||a.town||a.city_district||'';
-        const city=a.city||a.town||a.municipality||a.county||'';
-        const prov=a.state_code||a.state||'';
-        inp.value=[nb,city,prov].filter(Boolean).slice(0,2).join(', ')||city;
-        locVerified=true;st.textContent='✅ GPS verified — neighbourhood only, no exact address stored';st.className='loc-status verified';
-      }catch{inp.value='';locVerified=false;st.textContent='Could not detect neighbourhood — type it below';st.className='loc-status manual';inp.readOnly=false;inp.placeholder='e.g. Etobicoke';}
-      btn.disabled=false;btn.textContent='📍 Detect';
-    },
+    async pos=>{gpsLat=pos.coords.latitude;gpsLng=pos.coords.longitude;
+      try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${gpsLat}&lon=${gpsLng}&zoom=14&format=json`,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});const d=await r.json();const a=d.address||{};const nb=a.neighbourhood||a.suburb||a.quarter||a.village||a.town||a.city_district||'';const city=a.city||a.town||a.municipality||a.county||'';const prov=a.state_code||a.state||'';inp.value=[nb,city,prov].filter(Boolean).slice(0,2).join(', ')||city;locVerified=true;st.textContent='✅ GPS verified — neighbourhood only, no exact address stored';st.className='loc-status verified';}
+      catch{inp.value='';locVerified=false;st.textContent='Could not detect neighbourhood — type it below';st.className='loc-status manual';inp.readOnly=false;inp.placeholder='e.g. Etobicoke';}
+      btn.disabled=false;btn.textContent='📍 Detect';},
     ()=>{locVerified=false;st.textContent='Location denied — type your neighbourhood below';st.className='loc-status manual';inp.readOnly=false;inp.placeholder='e.g. Etobicoke';btn.disabled=false;btn.textContent='📍 Detect';},
     {timeout:10000,enableHighAccuracy:false}
   );
 }
 
 async function postJob(){
-  const title=document.getElementById('p-title').value.trim();
-  const desc=document.getElementById('p-desc').value.trim();
-  const budget=document.getElementById('p-budget').value;
-  const loc=document.getElementById('p-loc').value.trim();
-  if(!selCatVal)return toast('Pick a category first!');
-  if(!title)return toast('Add a job title!');
-  if(!desc)return toast('Describe the job!');
-  if(!loc)return toast('Add your location — tap 📍 Detect');
+  const title=document.getElementById('p-title').value.trim();const desc=document.getElementById('p-desc').value.trim();const budget=document.getElementById('p-budget').value;const loc=document.getElementById('p-loc').value.trim();
+  if(!selCatVal)return toast('Pick a category first!');if(!title)return toast('Add a job title!');if(!desc)return toast('Describe the job!');if(!loc)return toast('Add your location — tap 📍 Detect');
   if(!sb||!me){toast('🚀 Job posted! (demo mode)');resetPost();nav('map');return;}
   const btn=document.getElementById('post-btn');btn.disabled=true;btn.textContent='Posting…';
   const{error}=await sb.from('tasks').insert({poster_id:myProfileId||me.id,title,description:desc,category:selCatVal,price:budget?parseFloat(budget):0,address:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open'});
@@ -928,20 +684,12 @@ async function postJob(){
   toast('🎉 Job posted!');resetPost();nav('map');
 }
 
-function resetPost(){
-  selCatVal=null;gpsLat=null;gpsLng=null;locVerified=false;
-  document.querySelectorAll('.cat-opt').forEach(c=>c.classList.remove('sel'));
-  ['p-title','p-desc','p-budget'].forEach(id=>document.getElementById(id).value='');
-  const loc=document.getElementById('p-loc');loc.value='';loc.readOnly=true;loc.placeholder='Neighbourhood appears here';
-  document.getElementById('loc-status').textContent='';
-  document.getElementById('gps-btn').textContent='📍 Detect';
-}
+function resetPost(){selCatVal=null;gpsLat=null;gpsLng=null;locVerified=false;document.querySelectorAll('.cat-opt').forEach(c=>c.classList.remove('sel'));['p-title','p-desc','p-budget'].forEach(id=>document.getElementById(id).value='');const loc=document.getElementById('p-loc');loc.value='';loc.readOnly=true;loc.placeholder='Neighbourhood appears here';document.getElementById('loc-status').textContent='';document.getElementById('gps-btn').textContent='📍 Detect';}
 
-// ── MY JOBS ─────────────────────────────────
 async function loadMyJobs(){
   const g=document.getElementById('my-grid');g.innerHTML=spin();
   if(!sb||!me){g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
-  const pid=myProfileId||me.id; const q=myTab==='posted'?sb.from('tasks').select('*').eq('poster_id',pid).order('created_at',{ascending:false}):sb.from('tasks').select('*').eq('doer_id',pid).order('created_at',{ascending:false});
+  const pid=myProfileId||me.id;const q=myTab==='posted'?sb.from('tasks').select('*').eq('poster_id',pid).order('created_at',{ascending:false}):sb.from('tasks').select('*').eq('doer_id',pid).order('created_at',{ascending:false});
   const{data,error}=await q;
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
   if(!data?.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
@@ -949,116 +697,54 @@ async function loadMyJobs(){
 }
 function switchTab(btn,tab){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');myTab=tab;loadMyJobs();}
 
-// ── PROFILE ─────────────────────────────────
 async function loadProfile(){
   if(!me){document.getElementById('pnm').textContent='Demo User';return;}
-  const name=me.user_metadata?.full_name||me.email?.split('@')[0]||'Yoodler';
-  const url=me.user_metadata?.avatar_url;
-  document.getElementById('pnm').textContent=name;
-  document.getElementById('pem').textContent=me.email||'';
-  const av=document.getElementById('pav');
-  av.innerHTML=url?`<img src="${url}" alt="">`:name[0].toUpperCase();
+  const name=me.user_metadata?.full_name||me.email?.split('@')[0]||'Yoodler';const url=me.user_metadata?.avatar_url;
+  document.getElementById('pnm').textContent=name;document.getElementById('pem').textContent=me.email||'';
+  const av=document.getElementById('pav');av.innerHTML=url?`<img src="${url}" alt="">`:name[0].toUpperCase();
   if(!sb)return;
-  const[{count:posted},{count:helped},{count:done}]=await Promise.all([
-    sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id),
-    sb.from('tasks').select('*',{count:'exact',head:true}).eq('doer_id',myProfileId||me.id),
-    sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id).eq('status','completed'),
-  ]);
-  document.getElementById('s-posted').textContent=posted||0;
-  document.getElementById('s-helped').textContent=helped||0;
-  document.getElementById('s-done').textContent=done||0;
+  const[{count:posted},{count:helped},{count:done}]=await Promise.all([sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id),sb.from('tasks').select('*',{count:'exact',head:true}).eq('doer_id',myProfileId||me.id),sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id).eq('status','completed')]);
+  document.getElementById('s-posted').textContent=posted||0;document.getElementById('s-helped').textContent=helped||0;document.getElementById('s-done').textContent=done||0;
 }
 
-// ── MESSAGES ────────────────────────────────
 async function loadMessages(){
-  const el=document.getElementById('conversations-list');
-  el.innerHTML=spin();
+  const el=document.getElementById('conversations-list');el.innerHTML=spin();
   if(!sb||!me){el.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see messages');return;}
   const pid=myProfileId||me.id;
-  // Load all claimed tasks where user is poster or doer
-  const{data,error}=await sb.from('tasks')
-    .select('*, profiles!tasks_poster_id_fkey(id,name)')
-    .or(`poster_id.eq.${pid},doer_id.eq.${pid}`)
-    .eq('status','claimed')
-    .order('created_at',{ascending:false});
+  const{data,error}=await sb.from('tasks').select('*, profiles!tasks_poster_id_fkey(id,name)').or(`poster_id.eq.${pid},doer_id.eq.${pid}`).eq('status','claimed').order('created_at',{ascending:false});
   if(error){el.innerHTML=emptyState('😕','Error',error.message);return;}
   if(!data?.length){el.innerHTML=emptyState('💬','No active conversations','Claim a job to start messaging');return;}
-  el.innerHTML=data.map(t=>{
-    const isPoster=t.poster_id===pid;
-    const otherName=isPoster?'Doer':'Poster: '+(t.profiles?.name||'Someone');
-    const color=CAT_COLOR[t.category]||'#9B59D4';
-    const emoji=CAT_EMOJI[t.category]||'✨';
+  el.innerHTML=data.map(t=>{const isPoster=t.poster_id===pid;const otherName=isPoster?'Doer':'Poster: '+(t.profiles?.name||'Someone');const color=CAT_COLOR[t.category]||'#9B59D4';const emoji=CAT_EMOJI[t.category]||'✨';
     return `<div class="job-card" style="--jc:${color};margin-bottom:12px" onclick="openChat('${t.id}','${esc(t.title)}','${esc(otherName)}')">
       <div class="jc-badge">${emoji} ${t.category||'other'}</div>
       <div class="jc-top"><div class="jc-title">${esc(t.title)}</div><div style="font-size:12px;color:var(--lime);font-weight:800">Active</div></div>
       <div class="jc-desc">${isPoster?'You posted this':'You are helping with this'}</div>
-      <div class="jc-foot">
-        <span style="font-size:12px;color:var(--muted);font-weight:700">👤 ${esc(otherName)}</span>
-        <span style="font-size:12px;color:var(--purple);font-weight:800">Open chat →</span>
-      </div>
+      <div class="jc-foot"><span style="font-size:12px;color:var(--muted);font-weight:700">👤 ${esc(otherName)}</span><span style="font-size:12px;color:var(--purple);font-weight:800">Open chat →</span></div>
     </div>`;
   }).join('');
 }
 
 let activeChatTaskId=null;
-
-function openChat(taskId, title, otherName){
-  activeChatTaskId=taskId;
-  document.getElementById('chat-title').textContent=title;
-  document.getElementById('chat-other').textContent=otherName;
-  document.getElementById('chat-modal').classList.add('open');
-  loadChatMessages(taskId);
-}
+function openChat(taskId,title,otherName){activeChatTaskId=taskId;document.getElementById('chat-title').textContent=title;document.getElementById('chat-other').textContent=otherName;document.getElementById('chat-modal').classList.add('open');loadChatMessages(taskId);}
 
 async function loadChatMessages(taskId){
-  const el=document.getElementById('chat-messages');
-  el.innerHTML=spin();
-  if(!sb)return;
-  const{data,error}=await sb.from('messages')
-    .select('id,body,sender_id,receiver_id,read,created_at')
-    .eq('task_id',taskId)
-    .order('created_at',{ascending:true});
-  if(error){
-    // messages table may not exist yet
-    el.innerHTML=emptyState('💬','Start the conversation','Send a message below');return;
-  }
+  const el=document.getElementById('chat-messages');el.innerHTML=spin();if(!sb)return;
+  const{data,error}=await sb.from('messages').select('id,body,sender_id,receiver_id,read,created_at').eq('task_id',taskId).order('created_at',{ascending:true});
+  if(error){el.innerHTML=emptyState('💬','Start the conversation','Send a message below');return;}
   if(!data?.length){el.innerHTML=emptyState('💬','Start the conversation','Send a message below');return;}
   const pid=myProfileId||me.id;
-  el.innerHTML=data.map(m=>{
-    const isMe=m.sender_id===pid||m.sender_id===me.id;
-    return `<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px">
-      <div style="max-width:75%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--purple)':'var(--surface2)'};font-size:14px;font-weight:600;line-height:1.4">
-        ${esc(m.body||'')}
-        <div style="font-size:10px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div>
-      </div>
-    </div>`;
-  }).join('');
+  el.innerHTML=data.map(m=>{const isMe=m.sender_id===pid||m.sender_id===me.id;return`<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div style="max-width:75%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--purple)':'var(--surface2)'};font-size:14px;font-weight:600;line-height:1.4">${esc(m.body||'')}<div style="font-size:10px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;}).join('');
   el.scrollTop=el.scrollHeight;
 }
 
 async function sendMessage(){
-  const inp=document.getElementById('chat-input');
-  const content=inp.value.trim();
-  if(!content||!activeChatTaskId||!sb)return;
-  inp.value='';
-  const pid=myProfileId||me.id;
-  // Get the other user's profile id from the active task
+  const inp=document.getElementById('chat-input');const content=inp.value.trim();if(!content||!activeChatTaskId||!sb)return;inp.value='';const pid=myProfileId||me.id;
   const{data:taskData}=await sb.from('tasks').select('poster_id,doer_id').eq('id',activeChatTaskId).single();
-  const receiverId = taskData?.poster_id===pid ? taskData?.doer_id : taskData?.poster_id;
-  const{error}=await sb.from('messages').insert({
-    task_id: activeChatTaskId,
-    sender_id: pid,
-    receiver_id: receiverId,
-    body: content,
-    topic: `task:${activeChatTaskId}`,
-    extension: 'chat',
-    read: false
-  });
-  if(error){ toast('❌ '+error.message); return; }
-  loadChatMessages(activeChatTaskId);
+  const receiverId=taskData?.poster_id===pid?taskData?.doer_id:taskData?.poster_id;
+  const{error}=await sb.from('messages').insert({task_id:activeChatTaskId,sender_id:pid,receiver_id:receiverId,body:content,topic:`task:${activeChatTaskId}`,extension:'chat',read:false});
+  if(error){toast('❌ '+error.message);return;}loadChatMessages(activeChatTaskId);
 }
 
-// ── UTILS ────────────────────────────────────
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 function spin(){return'<div class="loading"><div class="spinner"></div></div>';}
 function emptyState(ico,t,d){return`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-t">${t}</div><div class="empty-d">${d}</div></div>`;}
