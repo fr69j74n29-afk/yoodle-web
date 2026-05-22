@@ -433,7 +433,7 @@ const CAT_COLOR={handyman:'#F97316',garden:'#A3E635',moving:'#06B6D4',cleaning:'
 const CAT_EMOJI={handyman:'🔨',garden:'🌿',moving:'🚗',cleaning:'🧹',petcare:'🐕',tech:'💻',errands:'🛒',childcare:'👶',other:'✨'};
 const RADIUS_KM = 3;
 
-let sb, me, activeJob, mapCatFilter='all', listCatFilter='all', myTab='posted';
+let sb, me, myProfileId, activeJob, mapCatFilter='all', listCatFilter='all', myTab='posted';
 let map, userMarker, radiusCircle, jobMarkers=[], allJobs=[];
 let userLat=null, userLng=null;
 let gpsLat=null, gpsLng=null, locVerified=false;
@@ -664,11 +664,17 @@ async function signOut(){if(sb)await sb.auth.signOut();else showAuthScreen();}
 
 function showAuthScreen(){document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';document.getElementById('cfg-banner').style.display='none';}
 
-function showApp(){
+async function showApp(){
   document.getElementById('view-auth').style.display='none';
   document.getElementById('cfg-banner').style.display='none';
   const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
-  setAvatar(); loadJobs();
+  setAvatar();
+  // Fetch this user's profiles.id (app stores profiles.id not auth.users.id)
+  if(sb && me){
+    const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();
+    myProfileId = data?.id || me.id;
+  }
+  loadJobs();
 }
 
 function showDemoApp(){
@@ -717,8 +723,8 @@ function openJob(j){
   document.getElementById('m-desc').textContent=j.description||'';
   document.getElementById('m-budget').textContent=`$${j.price??'?'}`;
   document.getElementById('m-loc').innerHTML=`${esc(j.address||'Nearby')}<br><span style="font-size:10px;color:var(--muted);font-weight:700">Neighbourhood only</span>`;
-  const isPoster = me && j.poster_id === me.id;
-  const isDoer   = me && j.doer_id   === me.id;
+  const isPoster = me && (j.poster_id === me.id || j.poster_id === myProfileId);
+  const isDoer   = me && (j.doer_id   === me.id || j.doer_id   === myProfileId);
   const btn = document.getElementById('m-action');
   btn.disabled = false;
 
@@ -737,14 +743,14 @@ function closeModal(e){if(e.target.id==='modal')document.getElementById('modal')
 
 async function jobAction(){
   if(!sb||!me){toast('🎉 (demo) Action noted!');document.getElementById('modal').classList.remove('open');return;}
-  const isPoster = activeJob.poster_id === me.id;
-  const isDoer   = activeJob.doer_id   === me.id;
+  const isPoster = activeJob.poster_id === me.id || activeJob.poster_id === myProfileId;
+  const isDoer   = activeJob.doer_id   === me.id || activeJob.doer_id   === myProfileId;
   let update={}, msg='';
 
   if(activeJob.status==='open' && !isPoster){
     // Doer claims the job
-    update={status:'claimed', doer_id:me.id};
-    msg='🎉 Job claimed! Get to work!';
+    update={status:'claimed', doer_id:myProfileId||me.id};
+    msg='__OPEN_MESSAGES__';
   } else if(activeJob.status==='open' && isPoster){
     // Poster cancels their own job
     update={status:'cancelled'};
@@ -761,9 +767,15 @@ async function jobAction(){
 
   const{error}=await sb.from('tasks').update(update).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
-  toast(msg);
   document.getElementById('modal').classList.remove('open');
-  loadJobs();
+  if(msg==='__OPEN_MESSAGES__'){
+    loadJobs();
+    nav('messages');
+    toast('🎉 Job claimed! Message the poster.');
+  } else {
+    toast(msg);
+    loadJobs();
+  }
 }
 
 // ── POST JOB ────────────────────────────────
@@ -807,7 +819,7 @@ async function postJob(){
   if(!loc)return toast('Add your location — tap 📍 Detect');
   if(!sb||!me){toast('🚀 Job posted! (demo mode)');resetPost();nav('map');return;}
   const btn=document.getElementById('post-btn');btn.disabled=true;btn.textContent='Posting…';
-  const{error}=await sb.from('tasks').insert({poster_id:me.id,title,description:desc,category:selCatVal,price:budget?parseFloat(budget):0,address:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open'});
+  const{error}=await sb.from('tasks').insert({poster_id:myProfileId||me.id,title,description:desc,category:selCatVal,price:budget?parseFloat(budget):0,address:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open'});
   btn.disabled=false;btn.textContent='Post Job 🚀';
   if(error)return toast('❌ '+error.message);
   toast('🎉 Job posted!');resetPost();nav('map');
@@ -826,7 +838,7 @@ function resetPost(){
 async function loadMyJobs(){
   const g=document.getElementById('my-grid');g.innerHTML=spin();
   if(!sb||!me){g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
-  const q=myTab==='posted'?sb.from('tasks').select('*').eq('poster_id',me.id).order('created_at',{ascending:false}):sb.from('tasks').select('*').eq('doer_id',me.id).order('created_at',{ascending:false});
+  const pid=myProfileId||me.id; const q=myTab==='posted'?sb.from('tasks').select('*').eq('poster_id',pid).order('created_at',{ascending:false}):sb.from('tasks').select('*').eq('doer_id',pid).order('created_at',{ascending:false});
   const{data,error}=await q;
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
   if(!data?.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
@@ -845,9 +857,9 @@ async function loadProfile(){
   av.innerHTML=url?`<img src="${url}" alt="">`:name[0].toUpperCase();
   if(!sb)return;
   const[{count:posted},{count:helped},{count:done}]=await Promise.all([
-    sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',me.id),
-    sb.from('tasks').select('*',{count:'exact',head:true}).eq('doer_id',me.id),
-    sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',me.id).eq('status','done'),
+    sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id),
+    sb.from('tasks').select('*',{count:'exact',head:true}).eq('doer_id',myProfileId||me.id),
+    sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id).eq('status','completed'),
   ]);
   document.getElementById('s-posted').textContent=posted||0;
   document.getElementById('s-helped').textContent=helped||0;
