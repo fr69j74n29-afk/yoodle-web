@@ -299,16 +299,13 @@ body{
       </div>
       <div class="job-count-pill" id="job-count-pill">Loading jobs…</div>
       <div class="map-cats">
-        <button class="map-cat active" onclick="mapFilterCat(this,'all')">🔥 All</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'handyman')">🔨 Handyman</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'garden')">🌿 Garden</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'moving')">🚗 Moving</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'cleaning')">🧹 Cleaning</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'petcare')">🐕 Pet Care</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'tech')">💻 Tech</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'errands')">🛒 Errands</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'other')">✨ Other</button>
-      </div>
+  <button class="map-cat active" onclick="mapFilterCat(this,'all')">🔥 All</button>
+  <button class="map-cat" onclick="mapFilterCat(this,'assembly')">🔧 Assembly</button>
+  <button class="map-cat" onclick="mapFilterCat(this,'yard')">🌿 Yard</button>
+  <button class="map-cat" onclick="mapFilterCat(this,'moving')">📦 Moving</button>
+  <button class="map-cat" onclick="mapFilterCat(this,'errands')">🏃 Errands</button>
+  <button class="map-cat" onclick="mapFilterCat(this,'other')">✨ Other</button>
+</div>
     </div>
   </div>
 
@@ -318,17 +315,14 @@ body{
       <div class="list-h">Jobs Near You 📋</div>
       <div class="list-sub" id="list-sub">Open jobs in your area</div>
     </div>
-    <div class="cat-scroll">
-      <button class="cat-chip active" onclick="listFilterCat(this,'all')">🔥 All</button>
-      <button class="cat-chip" onclick="listFilterCat(this,'handyman')">🔨 Handyman</button>
-      <button class="cat-chip" onclick="listFilterCat(this,'garden')">🌿 Garden</button>
-      <button class="cat-chip" onclick="listFilterCat(this,'moving')">🚗 Moving</button>
-      <button class="cat-chip" onclick="listFilterCat(this,'cleaning')">🧹 Cleaning</button>
-      <button class="cat-chip" onclick="listFilterCat(this,'petcare')">🐕 Pet Care</button>
-      <button class="cat-chip" onclick="listFilterCat(this,'tech')">💻 Tech</button>
-      <button class="cat-chip" onclick="listFilterCat(this,'errands')">🛒 Errands</button>
-      <button class="cat-chip" onclick="listFilterCat(this,'other')">✨ Other</button>
-    </div>
+<div class="cat-scroll">
+  <button class="cat-chip active" onclick="listFilterCat(this,'all')">🔥 All</button>
+  <button class="cat-chip" onclick="listFilterCat(this,'assembly')">🔧 Assembly</button>
+  <button class="cat-chip" onclick="listFilterCat(this,'yard')">🌿 Yard</button>
+  <button class="cat-chip" onclick="listFilterCat(this,'moving')">📦 Moving</button>
+  <button class="cat-chip" onclick="listFilterCat(this,'errands')">🏃 Errands</button>
+  <button class="cat-chip" onclick="listFilterCat(this,'other')">✨ Other</button>
+</div>
     <div class="list-scroll"><div class="jobs-grid" id="list-grid"><div class="loading"><div class="spinner"></div></div></div></div>
   </div>
 
@@ -338,17 +332,27 @@ body{
       <div class="section-h">Post a Job 📋</div>
       <div class="form-g">
         <label class="form-lbl">Category</label>
-        <div class="cat-grid">
-          <button class="cat-opt" data-cat="handyman" onclick="selCat(this)"><span class="ce">🔨</span>Handyman</button>
-          <button class="cat-opt" data-cat="garden" onclick="selCat(this)"><span class="ce">🌿</span>Garden</button>
-          <button class="cat-opt" data-cat="moving" onclick="selCat(this)"><span class="ce">🚗</span>Moving</button>
-          <button class="cat-opt" data-cat="cleaning" onclick="selCat(this)"><span class="ce">🧹</span>Cleaning</button>
-          <button class="cat-opt" data-cat="petcare" onclick="selCat(this)"><span class="ce">🐕</span>Pet Care</button>
-          <button class="cat-opt" data-cat="tech" onclick="selCat(this)"><span class="ce">💻</span>Tech Help</button>
-          <button class="cat-opt" data-cat="errands" onclick="selCat(this)"><span class="ce">🛒</span>Errands</button>
-          <button class="cat-opt" data-cat="childcare" onclick="selCat(this)"><span class="ce">👶</span>Childcare</button>
-          <button class="cat-opt" data-cat="other" onclick="selCat(this)"><span class="ce">✨</span>Other</button>
-        </div>
+<div class="cat-grid">
+  <button class="cat-opt" data-cat="assembly" onclick="selCat(this)">
+    <span class="ce">🔧</span>Assembly
+  </button>
+
+  <button class="cat-opt" data-cat="yard" onclick="selCat(this)">
+    <span class="ce">🌿</span>Yard
+  </button>
+
+  <button class="cat-opt" data-cat="moving" onclick="selCat(this)">
+    <span class="ce">📦</span>Moving
+  </button>
+
+  <button class="cat-opt" data-cat="errands" onclick="selCat(this)">
+    <span class="ce">🏃</span>Errands
+  </button>
+
+  <button class="cat-opt" data-cat="other" onclick="selCat(this)">
+    <span class="ce">✨</span>Other
+  </button>
+</div>
       </div>
       <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="p-title" type="text" placeholder="e.g. Help me move a couch"></div>
       <div class="form-g"><label class="form-lbl">Description</label><textarea class="form-ta" id="p-desc" placeholder="Describe what needs doing, when, any requirements…"></textarea></div>
@@ -485,8 +489,29 @@ body{
 const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
 
-const CAT_COLOR={handyman:'#F97316',garden:'#A3E635',moving:'#06B6D4',cleaning:'#8B5CF6',petcare:'#FCD34D',tech:'#06B6D4',errands:'#EC4899',childcare:'#A3E635',other:'#9B59D4'};
-const CAT_EMOJI={handyman:'🔨',garden:'🌿',moving:'🚗',cleaning:'🧹',petcare:'🐕',tech:'💻',errands:'🛒',childcare:'👶',other:'✨'};
+const CAT_COLOR = {
+  assembly: '#F97316',
+  yard: '#A3E635',
+  moving: '#06B6D4',
+  errands: '#EC4899',
+  other: '#9B59D4'
+};
+
+const CAT_EMOJI = {
+  assembly: '🔧',
+  yard: '🌿',
+  moving: '📦',
+  errands: '🏃',
+  other: '✨'
+};
+
+function normalizeCategory(cat) {
+  if (['handyman', 'tech'].includes(cat)) return 'assembly';
+  if (['garden'].includes(cat)) return 'yard';
+  if (['cleaning', 'petcare', 'childcare'].includes(cat)) return 'errands';
+  if (['moving'].includes(cat)) return 'moving';
+  return cat || 'other';
+}
 const RADIUS_KM = 3;
 
 let sb, me, myProfileId, activeJob, mapCatFilter='all', listCatFilter='all', myTab='posted';
