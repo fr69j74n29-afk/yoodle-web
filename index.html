@@ -396,6 +396,8 @@ body{
       </div>
 		<div style="text-align:center;margin-bottom:20px;font-size:15px;font-weight:800;color:var(--yellow)" id="p-rating">—</div>
 	<div style="margin-bottom:8px">
+        <label class="form-lbl">Display Name</label>
+        <input class="form-inp" id="p-name" type="text" placeholder="Your name" style="margin-bottom:8px">
         <label class="form-lbl">About Me</label>
 	<textarea class="form-ta" id="p-bio" placeholder="Tell your neighbours a bit about yourself…" 	style="height:120px;margin-bottom:8px"></textarea>
         <button class="btn-primary" onclick="saveBio()">Save Profile ✨</button>
@@ -1092,9 +1094,11 @@ async function loadProfile(){
   document.getElementById('pnm').textContent=name;document.getElementById('pem').textContent=me.email||'';
   const av=document.getElementById('pav');av.innerHTML=url?`<img src="${url}" alt="">`:name[0].toUpperCase();
 if(!sb)return;
-const{data:prof}=await sb.from('profiles').select('bio,rating,task_count').eq('id',myProfileId||me.id).maybeSingle();
+const{data:prof}=await sb.from('profiles').select('bio,rating,task_count,name').eq('id',myProfileId||me.id).maybeSingle();
 document.getElementById('p-bio').value=prof?.bio||'';
+document.getElementById('p-name').value=prof?.name||name;
 document.getElementById('p-rating').textContent=prof?.rating?`⭐ ${prof.rating}`:'No ratings yet';
+if(prof?.name){document.getElementById('pnm').textContent=prof.name;}
   const[{count:posted},{count:helped},{count:done}]=await Promise.all([sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id),sb.from('tasks').select('*',{count:'exact',head:true}).eq('doer_id',myProfileId||me.id),sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id).eq('status','completed')]);
   document.getElementById('s-posted').textContent=posted||0;document.getElementById('s-helped').textContent=helped||0;document.getElementById('s-done').textContent=done||0;
 }
@@ -1200,8 +1204,11 @@ function timeAgo(d){const m=Math.floor((Date.now()-new Date(d).getTime())/60000)
 async function saveBio(){
   if(!sb||!me)return toast('Not signed in');
   const bio=document.getElementById('p-bio').value.trim();
-  const{error}=await sb.from('profiles').update({bio}).eq('id',myProfileId||me.id);
+  const name=document.getElementById('p-name').value.trim();
+  if(!name)return toast('Display name cannot be empty');
+  const{error}=await sb.from('profiles').update({bio,name}).eq('id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
+  document.getElementById('pnm').textContent=name;
   toast('✅ Profile saved!');
 }
 function openRatingModal(taskId, ratedId, prompt){
