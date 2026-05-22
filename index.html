@@ -499,6 +499,29 @@ body{
 </div>
 <div class="toast" id="toast"></div>
 
+<!-- EDIT JOB MODAL -->
+<div class="modal-ov" id="edit-modal" onclick="if(event.target.id==='edit-modal')document.getElementById('edit-modal').classList.remove('open')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="margin-bottom:20px">Edit Job ✏️</div>
+    <input type="hidden" id="edit-job-id">
+    <div class="form-g">
+      <label class="form-lbl">Job Title</label>
+      <input class="form-inp" id="edit-title" type="text" placeholder="Job title">
+    </div>
+    <div class="form-g">
+      <label class="form-lbl">Description</label>
+      <textarea class="form-ta" id="edit-desc" placeholder="Describe the job…"></textarea>
+    </div>
+    <div class="form-g">
+      <label class="form-lbl">Budget (CAD $)</label>
+      <input class="form-inp" id="edit-budget" type="number" min="0" placeholder="e.g. 50">
+    </div>
+    <button class="btn-primary" onclick="saveEdit()">Save Changes ✨</button>
+    <button onclick="document.getElementById('edit-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
@@ -910,9 +933,9 @@ async function loadMyJobs(){
   const pid=myProfileId||me.id;
   let q;
   if(myTab==='posted'){
-    q=sb.from('tasks').select('*').eq('poster_id',pid).order('created_at',{ascending:false});
+    q=sb.from('tasks').select('*, doer:profiles!tasks_doer_id_fkey(id,name)').eq('poster_id',pid).order('created_at',{ascending:false});
   } else {
-    q=sb.from('tasks').select('*').in('status',['claimed','completed']).eq('doer_id',pid).order('created_at',{ascending:false});
+    q=sb.from('tasks').select('*, poster:profiles!tasks_poster_id_fkey(id,name)').in('status',['claimed','completed']).eq('doer_id',pid).order('created_at',{ascending:false});
   }
   const{data,error}=await q;
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
@@ -945,14 +968,15 @@ async function loadMyJobs(){
 
     if(myTab==='posted'){
       if(j.status==='open'&&!isExpired){
-        // open job: cancel only
+        // open job: edit + cancel
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="event.stopPropagation();openEditModal('${j.id}','${esc(j.title)}',${JSON.stringify(j.description||'').replace(/'/g,"&#39;")},'${j.price??0}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✏️ Edit</button>
           <button onclick="event.stopPropagation();cancelJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🗑️ Cancel</button>
         </div>`;
       } else if(j.status==='claimed'){
-        // claimed: messages + complete + unclaim
+        const doerName=j.doer?.name||'Helper';
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-          <button onclick="event.stopPropagation();nav('messages')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Messages</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
           <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
           <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
         </div>`;
@@ -969,9 +993,9 @@ async function loadMyJobs(){
 
     if(myTab==='helping'){
       if(j.status==='claimed'){
-        // doer: messages + unclaim
+        const posterName=j.poster?.name||'Poster';
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();nav('messages')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Messages</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
           <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
         </div>`;
       } else if(j.status==='completed'){
@@ -1023,6 +1047,27 @@ async function checkAndRate(taskId,ratedId,prompt){
   const{data}=await sb.from('ratings').select('id').eq('task_id',taskId).eq('rater_id',pid).maybeSingle();
   if(data){toast('✅ Already rated!');return;}
   openRatingModal(taskId,ratedId,prompt);
+}
+
+function openEditModal(jobId,title,description,budget){
+  document.getElementById('edit-job-id').value=jobId;
+  document.getElementById('edit-title').value=title;
+  document.getElementById('edit-desc').value=description;
+  document.getElementById('edit-budget').value=budget;
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+async function saveEdit(){
+  const jobId=document.getElementById('edit-job-id').value;
+  const title=document.getElementById('edit-title').value.trim();
+  const desc=document.getElementById('edit-desc').value.trim();
+  const budget=document.getElementById('edit-budget').value;
+  if(!title)return toast('Title cannot be empty');
+  if(!desc)return toast('Description cannot be empty');
+  const{error}=await sb.from('tasks').update({title,description:desc,price:budget?parseFloat(budget):0}).eq('id',jobId).eq('poster_id',myProfileId||me.id);
+  if(error)return toast('❌ '+error.message);
+  document.getElementById('edit-modal').classList.remove('open');
+  toast('✅ Job updated!');loadMyJobs();loadJobs();
 }
 
 function switchTab(btn,tab){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');myTab=tab;loadMyJobs();}
