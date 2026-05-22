@@ -291,11 +291,7 @@ body{
     <div style="position:relative;flex:1;display:flex;flex-direction:column;min-height:0">
       <div id="map"></div>
       <div class="map-controls">
-        <div class="map-search-bar">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="map-search" placeholder="Search jobs near you…" oninput="filterMapJobs()">
-        </div>
-        <button class="map-locate-btn" onclick="locateUser()" title="Find my location">📍</button>
+                <button class="map-locate-btn" onclick="locateUser()" title="Find my location">📍</button>
       </div>
       <div class="job-count-pill" id="job-count-pill">Loading jobs…</div>
       <div class="map-cats">
