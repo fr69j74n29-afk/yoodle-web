@@ -497,8 +497,6 @@ body{
     <button onclick="document.getElementById('rating-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Skip</button>
   </div>
 </div>
-<div class="toast" id="toast"></div>
-
 <!-- EDIT JOB MODAL -->
 <div class="modal-ov" id="edit-modal" onclick="if(event.target.id==='edit-modal')document.getElementById('edit-modal').classList.remove('open')">
   <div class="modal-sheet">
@@ -521,6 +519,8 @@ body{
     <button onclick="document.getElementById('edit-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
@@ -933,15 +933,24 @@ async function loadMyJobs(){
   const pid=myProfileId||me.id;
   let q;
   if(myTab==='posted'){
-    q=sb.from('tasks').select('*, doer:profiles!tasks_doer_id_fkey(id,name)').eq('poster_id',pid).order('created_at',{ascending:false});
+    q=sb.from('tasks').select('*').eq('poster_id',pid).order('created_at',{ascending:false});
   } else {
-    q=sb.from('tasks').select('*, poster:profiles!tasks_poster_id_fkey(id,name)').in('status',['claimed','completed']).eq('doer_id',pid).order('created_at',{ascending:false});
+    q=sb.from('tasks').select('*, profiles!tasks_poster_id_fkey(id,name)').in('status',['claimed','completed']).eq('doer_id',pid).order('created_at',{ascending:false});
   }
   const{data,error}=await q;
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
   if(!data?.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
 
-  // check which completed jobs doer has already rated
+  // for posted tab, fetch doer names for claimed jobs separately
+  let doerNames={};
+  if(myTab==='posted'){
+    const claimedJobs=data.filter(j=>j.status==='claimed'&&j.doer_id);
+    if(claimedJobs.length){
+      const doerIds=[...new Set(claimedJobs.map(j=>j.doer_id))];
+      const{data:doerData}=await sb.from('profiles').select('id,name').in('id',doerIds);
+      (doerData||[]).forEach(p=>doerNames[p.id]=p.name);
+    }
+  }
   let ratedTaskIds=new Set();
   if(myTab==='helping'){
     const completedIds=data.filter(j=>j.status==='completed').map(j=>j.id);
@@ -968,21 +977,19 @@ async function loadMyJobs(){
 
     if(myTab==='posted'){
       if(j.status==='open'&&!isExpired){
-        // open job: edit + cancel
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openEditModal('${j.id}','${esc(j.title)}',${JSON.stringify(j.description||'').replace(/'/g,"&#39;")},'${j.price??0}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✏️ Edit</button>
+          <button onclick="event.stopPropagation();openEditModal('${j.id}','${esc(j.title)}','${esc(j.description||'')}','${j.price??0}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✏️ Edit</button>
           <button onclick="event.stopPropagation();cancelJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🗑️ Cancel</button>
         </div>`;
       } else if(j.status==='claimed'){
-        const doerName=j.doer?.name||'Helper';
+        const doerName=doerNames[j.doer_id]||'Helper';
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
           <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
           <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
           <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
         </div>`;
       } else if(j.status==='completed'){
-        // check if poster has already rated the doer
-        actionBtn=`<div style="margin-top:10px" id="rate-check-${j.id}"><button onclick="event.stopPropagation();checkAndRate('${j.id}','${j.doer_id}','How did the helper do?')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">⭐ Rate Helper</button></div>`;
+        actionBtn=`<div style="margin-top:10px"><button onclick="event.stopPropagation();checkAndRate('${j.id}','${j.doer_id}','How did the helper do?')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">⭐ Rate Helper</button></div>`;
       } else if(isExpired){
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
           <button onclick="event.stopPropagation();renewJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🔄 Renew 14 days</button>
@@ -993,7 +1000,7 @@ async function loadMyJobs(){
 
     if(myTab==='helping'){
       if(j.status==='claimed'){
-        const posterName=j.poster?.name||'Poster';
+        const posterName=j.profiles?.name||'Poster';
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
           <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
           <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
