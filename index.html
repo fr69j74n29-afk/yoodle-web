@@ -309,31 +309,14 @@ body{
                 <button class="map-locate-btn" onclick="locateUser()" title="Find my location">📍</button>
       </div>
       <div class="job-count-pill" id="job-count-pill">Loading jobs…</div>
-      <div class="map-cats">
-  <button class="map-cat active" onclick="mapFilterCat(this,'all')">🔥 All</button>
-  <button class="map-cat" onclick="mapFilterCat(this,'assembly')">🔧 Assembly</button>
-  <button class="map-cat" onclick="mapFilterCat(this,'yard')">🌿 Yard</button>
-  <button class="map-cat" onclick="mapFilterCat(this,'moving')">📦 Moving</button>
-  <button class="map-cat" onclick="mapFilterCat(this,'errands')">🏃 Errands</button>
-  <button class="map-cat" onclick="mapFilterCat(this,'other')">✨ Other</button>
-</div>
     </div>
   </div>
 
   <!-- LIST VIEW -->
   <div class="app-view" id="app-list">
-    <div class="list-header">
-      <div class="list-h">Jobs Near You 📋</div>
-      <div class="list-sub" id="list-sub">Tasks open</div>
+    <div class="list-header" style="padding:12px 20px 8px">
+      <div class="list-h" style="font-size:16px" id="list-sub">Jobs open nearby</div>
     </div>
-<div class="cat-scroll">
-  <button class="cat-chip active" onclick="listFilterCat(this,'all')">🔥 All</button>
-  <button class="cat-chip" onclick="listFilterCat(this,'assembly')">🔧 Assembly</button>
-  <button class="cat-chip" onclick="listFilterCat(this,'yard')">🌿 Yard</button>
-  <button class="cat-chip" onclick="listFilterCat(this,'moving')">📦 Moving</button>
-  <button class="cat-chip" onclick="listFilterCat(this,'errands')">🏃 Errands</button>
-  <button class="cat-chip" onclick="listFilterCat(this,'other')">✨ Other</button>
-</div>
     <div class="list-scroll"><div class="jobs-grid" id="list-grid"><div class="loading"><div class="spinner"></div></div></div></div>
   </div>
 
@@ -713,8 +696,8 @@ function renderListGrid(jobs) {
   const others=pid?jobs.filter(j=>j.poster_id!==pid):jobs;
   const filtered=listCatFilter==='all'?others:others.filter(j=>j.category===listCatFilter);
   const g=document.getElementById('list-grid');
-  if(!filtered.length){g.innerHTML=emptyState('🌱','No jobs nearby','Check back soon or post your own!');return;}
-  document.getElementById('list-sub').textContent=`${filtered.length} task${filtered.length===1?'':'s'} open nearby`;
+  if(!filtered.length){g.innerHTML=emptyState('🌱','No jobs nearby','Check back soon or post your own!');document.getElementById('list-sub').textContent='0 jobs open nearby';return;}
+  document.getElementById('list-sub').textContent=`${filtered.length} job${filtered.length===1?'':'s'} open nearby`;
   g.innerHTML=filtered.map(j=>listCard(j,j.profiles)).join('');
 }
 
