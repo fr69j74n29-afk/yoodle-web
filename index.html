@@ -698,7 +698,7 @@ async function loadJobs() {
     return;
   }
 
-  allJobs = data || [];
+  allJobs = (data||[]).map(j=>({...j, category:(j.category||'other').toLowerCase()}));
   renderMapPins(allJobs);
   renderListGrid(allJobs);
 }
@@ -813,7 +813,6 @@ function listCard(j,profile){
       <span class="lc-budget">$${j.price??'?'}</span>
     </div>
     <div class="lc-title">${esc(j.title)}</div>
-    <div class="lc-desc">${esc(j.description||'')}</div>
     <div class="lc-foot">
       <div class="lc-poster">
         <div class="lc-av">${esc(name[0].toUpperCase())}</div>
@@ -1011,8 +1010,9 @@ async function loadMyJobs(){
     }
   }
 
+  const data2=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   const now=new Date();
-  g.innerHTML=data.map(j=>{
+  g.innerHTML=data2.map(j=>{
     const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
     const isExpired=j.expires_at&&new Date(j.expires_at)<now&&j.status==='open';
     const daysLeft=j.expires_at?Math.ceil((new Date(j.expires_at)-now)/(1000*60*60*24)):null;
@@ -1155,11 +1155,12 @@ async function loadMessages(){
   el.innerHTML=data.map(t=>{
     const isPoster=t.poster_id===pid;
     const otherName=isPoster?(t.profiles?.name||'Doer'):'Poster: '+(t.profiles?.name||'Someone');
-    const color=CAT_COLOR[t.category]||'#9B59D4';const emoji=CAT_EMOJI[t.category]||'✨';
+    const cat=(t.category||'other').toLowerCase();
+    const color=CAT_COLOR[cat]||'#9B59D4';const emoji=CAT_EMOJI[cat]||'✨';
     const completeBtn=isPoster?`<button onclick="event.stopPropagation();chatComplete('${t.id}','${t.doer_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>`:'';
     const unclaimBtn=`<button onclick="event.stopPropagation();chatUnclaim('${t.id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
     return `<div class="job-card" style="--jc:${color};margin-bottom:12px" onclick="openChat('${t.id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.doer_id}')">
-      <div class="jc-badge">${emoji} ${t.category||'other'}</div>
+      <div class="jc-badge">${emoji} ${cat}</div>
       <div class="jc-top"><div class="jc-title">${esc(t.title)}</div><div style="font-size:12px;color:var(--lime);font-weight:800">Active</div></div>
       <div class="jc-desc">${isPoster?'You posted this':'You are helping with this'}</div>
       <div class="jc-foot"><span style="font-size:12px;color:var(--muted);font-weight:700">👤 ${esc(otherName)}</span><span style="font-size:12px;color:var(--purple);font-weight:800">Open chat →</span></div>
