@@ -1156,13 +1156,21 @@ async function loadMessages(){
   // fetch last message for each task
   const taskIds=tasks.map(t=>t.id);
   const{data:lastMsgs}=await sb.from('messages')
-    .select('task_id,body,sender_id,created_at')
+    .select('task_id,body,sender_id,created_at,read')
     .in('task_id',taskIds)
     .order('created_at',{ascending:false});
 
   // build map of taskId → last message
   const lastMsgMap={};
   (lastMsgs||[]).forEach(m=>{if(!lastMsgMap[m.task_id])lastMsgMap[m.task_id]=m;});
+
+  // fetch doer profiles for tasks where current user is the poster
+  const doerIds=[...new Set(tasks.filter(t=>t.poster_id===pid&&t.doer_id).map(t=>t.doer_id))];
+  const doerNames={};
+  if(doerIds.length){
+    const{data:doerProfs}=await sb.from('profiles').select('id,name').in('id',doerIds);
+    (doerProfs||[]).forEach(p=>doerNames[p.id]=p.name);
+  }
 
   // sort tasks by last message time (most recent first)
   tasks.sort((a,b)=>{
@@ -1173,7 +1181,8 @@ async function loadMessages(){
 
   el.innerHTML=tasks.map(t=>{
     const isPoster=t.poster_id===pid;
-    const otherName=isPoster?(t.profiles?.name||'Helper'):(t.profiles?.name||'Poster');
+    // always show the OTHER person's name
+    const otherName=isPoster?(doerNames[t.doer_id]||'Helper'):(t.profiles?.name||'Poster');
     const cat=(t.category||'other').toLowerCase();
     const color=CAT_COLOR[cat]||'#9B59D4';
     const emoji=CAT_EMOJI[cat]||'✨';
@@ -1181,13 +1190,13 @@ async function loadMessages(){
     const preview=lastMsg?esc(lastMsg.body||'').slice(0,60):'Tap to open chat';
     const msgTime=lastMsg?timeAgo(lastMsg.created_at):'';
     const isUnread=lastMsg&&!lastMsg.read&&lastMsg.sender_id!==pid;
-    const rowBg=isUnread?'background:rgba(236,72,153,.06);border-color:rgba(236,72,153,.25)':'';
-    const unreadDot=isUnread?`<span style="width:7px;height:7px;border-radius:50%;background:var(--pink);display:inline-block;margin-left:5px;flex-shrink:0;vertical-align:middle"></span>`:'';
+    const rowBg=isUnread?'background:rgba(236,72,153,.08);border-color:rgba(236,72,153,.3)':'';
+    const unreadBadge=isUnread?`<span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;background:var(--pink);color:#fff;font-size:9px;font-weight:900;letter-spacing:.5px;vertical-align:middle;flex-shrink:0">NEW</span>`:'';
     return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.doer_id}')">
       <div class="conv-icon" style="background:${color}22;border:1.5px solid ${color}44">${emoji}</div>
       <div class="conv-body">
         <div class="conv-top">
-          <span class="conv-name">${esc(otherName)}${unreadDot}</span>
+          <span class="conv-name">${esc(otherName)}${unreadBadge}</span>
           <span class="conv-time" style="${isUnread?'color:var(--pink);font-weight:900':''}">${msgTime}</span>
         </div>
         <div class="conv-title">${esc(t.title)}</div>
