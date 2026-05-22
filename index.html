@@ -449,7 +449,7 @@ body{
   <div class="content-area">
 
   <!-- MAP VIEW -->
-  <div class="app-view active" id="app-map">
+  <div class="app-view" id="app-map">
     <div style="position:relative;flex:1;display:flex;flex-direction:column">
       <div id="map"></div>
 
@@ -859,6 +859,7 @@ async function showApp(){
   document.getElementById('view-auth').style.display='none';
   document.getElementById('cfg-banner').style.display='none';
   const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
+  nav('map');
   setAvatar();
   if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
   loadJobs();
@@ -883,7 +884,7 @@ function subscribeToMessages(){
   }).subscribe();
 }
 
-function showDemoApp(){document.getElementById('view-auth').style.display='none';const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';document.getElementById('top-av').textContent='😊';document.getElementById('fab').style.display='flex';}
+function showDemoApp(){document.getElementById('view-auth').style.display='none';const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';document.getElementById('top-av').textContent='😊';nav('map');}
 
 function setAvatar(){if(!me)return;const av=document.getElementById('top-av');const url=me.user_metadata?.avatar_url;if(url)av.innerHTML=`<img src="${url}" alt="">`;else av.textContent=(me.user_metadata?.full_name||me.email||'?')[0].toUpperCase();}
 
