@@ -62,18 +62,22 @@ body{
 .ld{color:var(--teal)}.ll{color:var(--orange)}.le{color:var(--yellow)}
 
 /* ── AUTH SCREEN ── */
-/* Auth fills the body shell — no separate height needed */
 #view-auth{
-  flex:1;
+  position:fixed;
+  inset:0;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
   padding:max(40px, calc(var(--sat) + 20px)) 28px max(32px, calc(var(--sab) + 20px));
-  position:relative;
-  overflow:hidden;
+  background:var(--bg);
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
+  z-index:500;
+  max-width:480px;
+  margin:0 auto;
+  left:50%;
+  transform:translateX(-50%);
 }
 #view-auth::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(155,89,212,.18) 0%,transparent 65%);top:-150px;left:-150px;pointer-events:none}
 #view-auth::after{content:'';position:absolute;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,.14) 0%,transparent 65%);bottom:-80px;right:-80px;pointer-events:none}
@@ -82,7 +86,7 @@ body{
 .auth-h{font-size:22px;font-weight:900;text-align:center;margin-bottom:6px;position:relative;z-index:1}
 .auth-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:28px;position:relative;z-index:1;line-height:1.5}
 .auth-btns{width:100%;display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}
-.auth-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;font-weight:700;margin:4px 0}
+.auth-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;font-weight:700;margin:4px 0;position:relative;z-index:1}
 .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 .btn-google{display:flex;align-items:center;justify-content:center;gap:12px;padding:17px 24px;border-radius:var(--radius);background:#fff;color:#1a1a1a;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:none;cursor:pointer;transition:transform .15s;width:100%}
 .btn-google:active{transform:scale(.96)}
