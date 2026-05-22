@@ -308,8 +308,8 @@ body{
   <!-- LIST VIEW -->
   <div class="app-view" id="app-list">
     <div class="list-header">
-      <div class="list-h">Open jobs 📋</div>
-      <div class="list-sub" id="list-sub">Open jobs</div>
+      <div class="list-h">Jobs Near You 📋</div>
+      <div class="list-sub" id="list-sub">Open jobs in your area</div>
     </div>
 <div class="cat-scroll">
   <button class="cat-chip active" onclick="listFilterCat(this,'all')">🔥 All</button>
@@ -651,7 +651,7 @@ function renderListGrid(jobs) {
   const filtered=listCatFilter==='all'?jobs:jobs.filter(j=>j.category===listCatFilter);
   const g=document.getElementById('list-grid');
   if(!filtered.length){g.innerHTML=emptyState('🌱','No jobs yet','Be the first to post something!');return;}
-  document.getElementById('list-sub').textContent=`${filtered.length} open job${filtered.length===1?'':'s'} `;
+  document.getElementById('list-sub').textContent=`${filtered.length} open job${filtered.length===1?'':'s'} near you`;
   g.innerHTML=filtered.map(j=>jobCard(j,j.profiles)).join('');
 }
 
