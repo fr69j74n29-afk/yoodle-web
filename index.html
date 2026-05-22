@@ -717,26 +717,51 @@ function openJob(j){
   document.getElementById('m-desc').textContent=j.description||'';
   document.getElementById('m-budget').textContent=`$${j.price??'?'}`;
   document.getElementById('m-loc').innerHTML=`${esc(j.address||'Nearby')}<br><span style="font-size:10px;color:var(--muted);font-weight:700">Neighbourhood only</span>`;
-  const isOwn=me&&j.poster_id===me.id;
-  const btn=document.getElementById('m-action');
-  if(j.status==='done'){btn.textContent='✅ Job Complete';btn.disabled=true;}
-  else if(j.status==='claimed'){btn.textContent=isOwn?'Mark as Done ✅':'🤝 Already Claimed';btn.disabled=!isOwn;}
-  else{btn.textContent=isOwn?'Cancel Job 🗑️':"I Can Help! 🙋";btn.disabled=false;}
+  const isPoster = me && j.poster_id === me.id;
+  const isDoer   = me && j.doer_id   === me.id;
+  const btn = document.getElementById('m-action');
+  btn.disabled = false;
+
+  if (j.status === 'completed') {
+    btn.textContent = '✅ Job Completed'; btn.disabled = true;
+  } else if (j.status === 'claimed') {
+    if (isPoster)     { btn.textContent = '↩️ Unclaim Job'; }
+    else if (isDoer)  { btn.textContent = '💬 Message Poster'; }
+    else              { btn.textContent = '🔒 Already Claimed'; btn.disabled = true; }
+  } else {
+    btn.textContent = isPoster ? '🗑️ Cancel Job' : "I Can Help! 🙋";
+  }
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(e){if(e.target.id==='modal')document.getElementById('modal').classList.remove('open');}
 
 async function jobAction(){
   if(!sb||!me){toast('🎉 (demo) Action noted!');document.getElementById('modal').classList.remove('open');return;}
-  const isOwn=activeJob.poster_id===me.id;
-  let update={};
-  if(activeJob.status==='open'&&!isOwn)        update={status:'claimed',claimer_id:me.id};
-  else if(activeJob.status==='claimed'&&isOwn) update={status:'done'};
-  else if(activeJob.status==='open'&&isOwn)    update={status:'cancelled'};
-  else return;
+  const isPoster = activeJob.poster_id === me.id;
+  const isDoer   = activeJob.doer_id   === me.id;
+  let update={}, msg='';
+
+  if(activeJob.status==='open' && !isPoster){
+    // Doer claims the job
+    update={status:'claimed', doer_id:me.id};
+    msg='🎉 Job claimed! Get to work!';
+  } else if(activeJob.status==='open' && isPoster){
+    // Poster cancels their own job
+    update={status:'cancelled'};
+    msg='🗑️ Job cancelled';
+  } else if(activeJob.status==='claimed' && isPoster){
+    // Poster unclaims — returns to open
+    update={status:'open', doer_id:null};
+    msg='↩️ Job returned to open';
+  } else if(activeJob.status==='claimed' && isDoer){
+    // Doer messaging — Phase 2
+    toast('💬 Messaging coming soon!');
+    return;
+  } else { return; }
+
   const{error}=await sb.from('tasks').update(update).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
-  toast(update.status==='claimed'?'🎉 You\'re helping out!':update.status==='done'?'✅ Marked as done!':'🗑️ Job cancelled');
+  toast(msg);
   document.getElementById('modal').classList.remove('open');
   loadJobs();
 }
@@ -801,7 +826,7 @@ function resetPost(){
 async function loadMyJobs(){
   const g=document.getElementById('my-grid');g.innerHTML=spin();
   if(!sb||!me){g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
-  const q=myTab==='posted'?sb.from('tasks').select('*').eq('poster_id',me.id).order('created_at',{ascending:false}):sb.from('tasks').select('*').eq('claimer_id',me.id).order('created_at',{ascending:false});
+  const q=myTab==='posted'?sb.from('tasks').select('*').eq('poster_id',me.id).order('created_at',{ascending:false}):sb.from('tasks').select('*').eq('doer_id',me.id).order('created_at',{ascending:false});
   const{data,error}=await q;
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
   if(!data?.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
@@ -821,7 +846,7 @@ async function loadProfile(){
   if(!sb)return;
   const[{count:posted},{count:helped},{count:done}]=await Promise.all([
     sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',me.id),
-    sb.from('tasks').select('*',{count:'exact',head:true}).eq('claimer_id',me.id),
+    sb.from('tasks').select('*',{count:'exact',head:true}).eq('doer_id',me.id),
     sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',me.id).eq('status','done'),
   ]);
   document.getElementById('s-posted').textContent=posted||0;
