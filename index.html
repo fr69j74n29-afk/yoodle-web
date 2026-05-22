@@ -223,7 +223,7 @@ body{
 .btn-gps{padding:0 14px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--teal);cursor:pointer;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:6px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;flex-shrink:0;min-height:50px}
 .btn-gps:active{border-color:var(--teal);background:rgba(6,182,212,.08)}
 .btn-gps:disabled{opacity:.5;cursor:not-allowed}
-.loc-status{font-size:11px;font-weight:700;margin-top:6px;min-height:16px;line-height:1.4}
+.loc-status{font-size:11px;font-weight:700;margin-top:6px;min-height:16px;line-height:1.5;word-break:break-word}
 .loc-status.verified{color:var(--lime)}
 .loc-status.manual{color:var(--yellow)}
 .loc-status.loading{color:var(--muted)}
@@ -674,7 +674,8 @@ function centerMapOnUser() {
   radiusCircle=L.circle([userLat,userLng],{radius:RADIUS_KM*1000,color:'#9B59D4',fillColor:'#9B59D4',fillOpacity:0.06,weight:1.5,dashArray:'6 4'}).addTo(map);
 }
 
-function fuzzyCoords(lat,lng){return[lat+(Math.random()-.5)*.005,lng+(Math.random()-.5)*.007];}
+// Fuzzy offset: max ~80m — enough for privacy, not enough to jump streets
+function fuzzyCoords(lat,lng){return[lat+(Math.random()-.5)*.0014,lng+(Math.random()-.5)*.0018];}
 
 function renderMapPins(jobs) {
   jobMarkers.forEach(m=>map.removeLayer(m));
@@ -859,18 +860,24 @@ async function fetchLocSuggestions(query){
   const st=document.getElementById('loc-status');
   const sug=document.getElementById('loc-suggestions');
   try{
-    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=ca`;
+    // No countrycodes restriction — Nominatim coverage varies; let it find the best match globally
+    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`;
     const r=await fetch(url,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
     const data=await r.json();
     locSuggestionsData=data;
     if(!data.length){sug.classList.remove('open');st.textContent='No addresses found — try a different search';st.className='loc-status manual';return;}
     sug.innerHTML=data.map((item,i)=>{
       const a=item.address||{};
-      const main=a.house_number?`${a.house_number} ${a.road||''}`:(a.road||a.pedestrian||a.neighbourhood||item.display_name.split(',')[0]);
-      const sub=[a.neighbourhood||a.suburb,a.city||a.town||a.village,a.state_code||a.state].filter(Boolean).join(', ');
+      // Show the street/place as the primary line
+      const main=a.house_number
+        ?`${a.house_number} ${a.road||a.pedestrian||''}`
+        :(a.road||a.pedestrian||a.footway||a.path||a.neighbourhood||a.suburb||item.display_name.split(',')[0]);
+      // Show full context so user can verify it's the right place
+      const parts=[a.suburb||a.neighbourhood,a.city||a.town||a.village||a.county,a.state||a.state_code,a.country_code?.toUpperCase()].filter(Boolean);
+      const sub=parts.join(', ');
       return`<div class="loc-suggestion" onclick="selectLocSuggestion(${i})">
-        <div class="sug-main">${esc(main.trim())}</div>
-        <div class="sug-sub">${esc(sub)}</div>
+        <div class="sug-main">${esc(main.trim()||item.display_name.split(',')[0])}</div>
+        <div class="sug-sub">${esc(sub||item.display_name)}</div>
       </div>`;
     }).join('');
     sug.classList.add('open');
@@ -881,16 +888,22 @@ async function fetchLocSuggestions(query){
 function selectLocSuggestion(i){
   const item=locSuggestionsData[i];if(!item)return;
   const a=item.address||{};
-  const nb=a.neighbourhood||a.suburb||a.quarter||'';
+  // Use the actual geocoded street name — don't rebuild from parts which can mismatch
+  const road=a.house_number?`${a.house_number} ${a.road||''}`.trim():(a.road||a.pedestrian||a.footway||a.path||'');
+  const area=a.suburb||a.neighbourhood||a.city_district||'';
   const city=a.city||a.town||a.village||a.municipality||'';
   const prov=a.state_code||a.state||'';
-  const parts=a.house_number?[`${a.house_number} ${a.road||''}`.trim(),city,prov]:[nb||city,city!==nb?city:'',prov];
-  const display=parts.filter((v,i2,arr)=>v&&arr.indexOf(v)===i2).join(', ');
+  // Build display: "Road, Area, City, Province" — only include non-duplicate parts
+  const seen=new Set();
+  const display=[road,area,city,prov].filter(v=>{if(!v||seen.has(v))return false;seen.add(v);return true;}).join(', ');
   const inp=document.getElementById('p-loc');
-  inp.value=display||item.display_name.split(',').slice(0,3).join(',');
+  inp.value=display||item.display_name.split(',').slice(0,3).join(',').trim();
   gpsLat=parseFloat(item.lat);gpsLng=parseFloat(item.lon);locVerified=true;
   const st=document.getElementById('loc-status');
-  st.textContent='✅ Address confirmed';st.className='loc-status verified';
+  // Show the FULL display_name as confirmation so user can catch mismatches
+  const fullName=item.display_name;
+  st.innerHTML=`✅ Pinned to: <span style="color:var(--text)">${esc(fullName)}</span>`;
+  st.className='loc-status verified';
   hideLocSuggestions();
 }
 
