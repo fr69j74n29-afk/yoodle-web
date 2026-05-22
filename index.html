@@ -158,18 +158,51 @@ body{
 .map-locate-btn:active{border-color:var(--teal);background:rgba(6,182,212,.1)}
 
 /* Category filter strip on map */
-.map-cats{
-  position:absolute;bottom:0;left:0;right:0;z-index:10;
-  padding:28px 12px 14px;
-  background:linear-gradient(transparent,rgba(10,10,10,.96) 60%);
-  display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
-}
+.map-cats{display:flex;gap:8px;overflow-x:auto;padding:6px 0 2px;scrollbar-width:none}
 .map-cats::-webkit-scrollbar{display:none}
-.map-cat{display:flex;align-items:center;gap:5px;padding:8px 15px;border-radius:100px;background:rgba(22,22,22,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid var(--border);font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer;color:var(--text);transition:all .15s;font-family:'Nunito',sans-serif;-webkit-tap-highlight-color:transparent}
+.map-cat{display:flex;align-items:center;gap:5px;padding:7px 13px;border-radius:100px;background:rgba(30,30,30,.9);border:1.5px solid var(--border);font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer;color:var(--text);transition:all .15s;font-family:'Nunito',sans-serif;flex-shrink:0}
 .map-cat.active{border-color:var(--purple);color:var(--purple);background:rgba(155,89,212,.2)}
 
-/* Job count pill */
-.job-count-pill{position:absolute;top:68px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(22,22,22,.95);backdrop-filter:blur(8px);border:1.5px solid var(--border);border-radius:100px;padding:6px 16px;font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap;pointer-events:none;transition:opacity .3s}
+/* Radius panel — sits at bottom of map */
+.radius-panel{
+  position:absolute;bottom:0;left:0;right:0;z-index:10;
+  background:linear-gradient(transparent 0%, rgba(10,10,10,.97) 28px);
+  padding:28px 16px 14px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.radius-header{
+  display:flex;align-items:baseline;gap:10px;
+}
+.radius-count{
+  font-size:22px;font-weight:900;color:var(--lime);line-height:1;
+}
+.radius-label{
+  font-size:14px;font-weight:700;color:var(--text);
+}
+.radius-hint{
+  margin-left:auto;font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;
+}
+.radius-slider-row{
+  display:flex;align-items:center;gap:10px;
+}
+.radius-tick{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap}
+.radius-slider{
+  flex:1;-webkit-appearance:none;appearance:none;
+  height:4px;border-radius:2px;
+  background:linear-gradient(to right, var(--purple) 0%, var(--purple) 50%, var(--border) 50%, var(--border) 100%);
+  outline:none;cursor:pointer;
+}
+.radius-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--purple);border:3px solid #fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:grab;
+}
+.radius-slider::-moz-range-thumb{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--purple);border:3px solid #fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:grab;
+}
 
 /* Custom map pin */
 .yoodle-pin{background:none;border:none}
@@ -426,25 +459,35 @@ body{
       <div class="map-controls">
         <div class="map-search-bar">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="map-search" placeholder="Search jobs near you…" oninput="filterMapJobs()">
+          <input type="text" id="map-search" placeholder="Search jobs…" oninput="filterMapJobs()">
         </div>
         <button class="map-locate-btn" onclick="locateUser()" title="Find my location">📍</button>
       </div>
 
-      <!-- Job count -->
-      <div class="job-count-pill" id="job-count-pill">Loading jobs…</div>
-
-      <!-- Category strip -->
-      <div class="map-cats">
-        <button class="map-cat active" onclick="mapFilterCat(this,'all')">🔥 All</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'handyman')">🔨 Handyman</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'garden')">🌿 Garden</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'moving')">🚗 Moving</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'cleaning')">🧹 Cleaning</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'petcare')">🐕 Pet Care</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'tech')">💻 Tech</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'errands')">🛒 Errands</button>
-        <button class="map-cat" onclick="mapFilterCat(this,'other')">✨ Other</button>
+      <!-- Radius panel at bottom -->
+      <div class="radius-panel">
+        <div class="radius-header">
+          <div class="radius-count" id="radius-count">— jobs</div>
+          <div class="radius-label" id="radius-label">within <strong>2 km</strong></div>
+          <div class="radius-hint">Drag circle to move · Slider to resize</div>
+        </div>
+        <div class="radius-slider-row">
+          <span class="radius-tick">1 km</span>
+          <input type="range" class="radius-slider" id="radius-slider" min="1" max="3" step="0.25" value="2" oninput="onRadiusSlider(this.value)">
+          <span class="radius-tick">3 km</span>
+        </div>
+        <!-- Category strip -->
+        <div class="map-cats">
+          <button class="map-cat active" onclick="mapFilterCat(this,'all')">🔥 All</button>
+          <button class="map-cat" onclick="mapFilterCat(this,'handyman')">🔨 Handyman</button>
+          <button class="map-cat" onclick="mapFilterCat(this,'garden')">🌿 Garden</button>
+          <button class="map-cat" onclick="mapFilterCat(this,'moving')">🚗 Moving</button>
+          <button class="map-cat" onclick="mapFilterCat(this,'cleaning')">🧹 Cleaning</button>
+          <button class="map-cat" onclick="mapFilterCat(this,'petcare')">🐕 Pet Care</button>
+          <button class="map-cat" onclick="mapFilterCat(this,'tech')">💻 Tech</button>
+          <button class="map-cat" onclick="mapFilterCat(this,'errands')">🛒 Errands</button>
+          <button class="map-cat" onclick="mapFilterCat(this,'other')">✨ Other</button>
+        </div>
       </div>
     </div>
   </div>
@@ -624,10 +667,9 @@ const SUPABASE_ANON = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
 
 const CAT_COLOR={handyman:'#F97316',garden:'#A3E635',moving:'#06B6D4',cleaning:'#8B5CF6',petcare:'#FCD34D',tech:'#06B6D4',errands:'#EC4899',childcare:'#A3E635',other:'#9B59D4'};
 const CAT_EMOJI={handyman:'🔨',garden:'🌿',moving:'🚗',cleaning:'🧹',petcare:'🐕',tech:'💻',errands:'🛒',childcare:'👶',other:'✨'};
-const RADIUS_KM = 3;
 
 let sb, me, myProfileId, activeJob, mapCatFilter='all', listCatFilter='all', myTab='posted';
-let map, userMarker, radiusCircle, jobMarkers=[], allJobs=[];
+let map, userMarker, jobMarkers=[], allJobs=[];
 let userLat=null, userLng=null;
 let gpsLat=null, gpsLng=null, locVerified=false;
 
@@ -651,50 +693,117 @@ function initMap() {
   map = L.map('map', {center:[43.6532,-79.3832],zoom:13,zoomControl:false,attributionControl:false});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
   L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
-  L.control.zoom({position:'bottomright'}).addTo(map);
+  // When the user drags the map, move the search radius circle with it
+  map.on('move', ()=>{ if(searchCircle) searchCircle.setLatLng(map.getCenter()); updateRadiusCount(); });
+  map.on('moveend', ()=>{ if(searchCircle) searchCircle.setLatLng(map.getCenter()); renderMapPins(allJobs); });
   locateUser();
 }
 
 function locateUser() {
-  if (!navigator.geolocation) { loadDemoJobs(); return; }
+  if (!navigator.geolocation) { initSearchCircle(43.6532,-79.3832); loadDemoJobs(); return; }
   navigator.geolocation.getCurrentPosition(
-    pos => { userLat=pos.coords.latitude; userLng=pos.coords.longitude; centerMapOnUser(); sb?loadJobs():loadDemoJobs(); },
-    () => { sb?loadJobs():loadDemoJobs(); },
+    pos => {
+      userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+      map.setView([userLat,userLng],14);
+      // Blue dot for user location
+      if(userMarker)map.removeLayer(userMarker);
+      const icon=L.divIcon({className:'yoodle-pin',html:`<div class="user-ring"></div>`,iconSize:[20,20],iconAnchor:[10,10]});
+      userMarker=L.marker([userLat,userLng],{icon,zIndexOffset:1000,interactive:false}).addTo(map);
+      initSearchCircle(userLat, userLng);
+      sb?loadJobs():loadDemoJobs();
+    },
+    () => { initSearchCircle(43.6532,-79.3832); sb?loadJobs():loadDemoJobs(); },
     {timeout:8000,enableHighAccuracy:false}
   );
 }
 
-function centerMapOnUser() {
-  if (!userLat||!map) return;
-  map.setView([userLat,userLng],14);
-  if(userMarker)map.removeLayer(userMarker);
-  if(radiusCircle)map.removeLayer(radiusCircle);
-  const icon=L.divIcon({className:'yoodle-pin',html:`<div class="user-ring"></div>`,iconSize:[20,20],iconAnchor:[10,10]});
-  userMarker=L.marker([userLat,userLng],{icon,zIndexOffset:1000}).addTo(map);
-  radiusCircle=L.circle([userLat,userLng],{radius:RADIUS_KM*1000,color:'#9B59D4',fillColor:'#9B59D4',fillOpacity:0.06,weight:1.5,dashArray:'6 4'}).addTo(map);
+// ── SEARCH RADIUS CIRCLE ──
+let searchCircle=null;
+let searchRadiusKm=2;
+
+function initSearchCircle(lat,lng){
+  if(searchCircle) map.removeLayer(searchCircle);
+  searchRadiusKm = parseFloat(document.getElementById('radius-slider').value)||2;
+  searchCircle = L.circle([lat,lng],{
+    radius: searchRadiusKm*1000,
+    color:'#9B59D4', weight:2.5,
+    fillColor:'#9B59D4', fillOpacity:0.08,
+    dashArray:'8 5',
+    interactive:false,  // map drag moves it via 'move' event
+  }).addTo(map);
+  updateRadiusLabel();
 }
 
-// Fuzzy offset: max ~80m — enough for privacy, not enough to jump streets
+function onRadiusSlider(val){
+  searchRadiusKm = parseFloat(val);
+  if(searchCircle) searchCircle.setRadius(searchRadiusKm*1000);
+  // Update gradient fill on the slider track
+  const pct=((searchRadiusKm-1)/2)*100;
+  document.getElementById('radius-slider').style.background=
+    `linear-gradient(to right, var(--purple) 0%, var(--purple) ${pct}%, var(--border) ${pct}%, var(--border) 100%)`;
+  updateRadiusLabel();
+  renderMapPins(allJobs);
+}
+
+function updateRadiusLabel(){
+  const km=searchRadiusKm%1===0?searchRadiusKm.toFixed(0):searchRadiusKm.toFixed(2).replace(/\.?0+$/,'');
+  document.getElementById('radius-label').innerHTML=`within <strong>${km} km</strong>`;
+}
+
+function updateRadiusCount(){
+  if(!searchCircle||!allJobs.length) return;
+  const center=searchCircle.getLatLng();
+  const inRadius=allJobs.filter(j=>{
+    if(!j.lat||!j.lng) return false;
+    if(mapCatFilter!=='all'&&j.category!==mapCatFilter) return false;
+    return haversineKm(center.lat,center.lng,j.lat,j.lng)<=searchRadiusKm;
+  });
+  const n=inRadius.length;
+  document.getElementById('radius-count').textContent=n===0?'No jobs':`${n} job${n===1?'':'s'}`;
+}
+
+// Great-circle distance in km
+function haversineKm(lat1,lng1,lat2,lng2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// Small privacy fuzz — stays within the same street block (~80m max)
 function fuzzyCoords(lat,lng){return[lat+(Math.random()-.5)*.0014,lng+(Math.random()-.5)*.0018];}
 
 function renderMapPins(jobs) {
   jobMarkers.forEach(m=>map.removeLayer(m));
   jobMarkers=[];
-  const visible=jobs.filter(j=>(mapCatFilter==='all'||j.category===mapCatFilter)&&j.lat&&j.lng);
   const search=document.getElementById('map-search').value.toLowerCase();
-  const filtered=search?visible.filter(j=>j.title.toLowerCase().includes(search)||(j.description||'').toLowerCase().includes(search)):visible;
-  filtered.forEach(job=>{
+  const center=searchCircle?searchCircle.getLatLng():map.getCenter();
+  let inRadius=0;
+
+  jobs.forEach(job=>{
+    if(!job.lat||!job.lng) return;
+    if(mapCatFilter!=='all'&&job.category!==mapCatFilter) return;
+    if(search&&!job.title.toLowerCase().includes(search)&&!(job.description||'').toLowerCase().includes(search)) return;
+    const dist=haversineKm(center.lat,center.lng,job.lat,job.lng);
+    if(dist>searchRadiusKm) return; // outside radius — don't show pin
+    inRadius++;
     const color=CAT_COLOR[job.category]||'#9B59D4';
     const emoji=CAT_EMOJI[job.category]||'✨';
     const[fLat,fLng]=job._fuzzy||fuzzyCoords(job.lat,job.lng);
     job._fuzzy=[fLat,fLng];
-    const icon=L.divIcon({className:'yoodle-pin',html:`<div class="pin-dot" style="background:${color};border-color:rgba(10,10,10,.5)">${emoji}</div>`,iconSize:[36,36],iconAnchor:[18,18]});
+    const icon=L.divIcon({className:'yoodle-pin',html:`<div class="pin-dot" style="background:${color};border-color:rgba(10,10,10,.5)">${emoji}</div>`,iconSize:[38,38],iconAnchor:[19,19]});
     const marker=L.marker([fLat,fLng],{icon}).addTo(map).on('click',()=>openJob(job));
     jobMarkers.push(marker);
   });
-  const pill=document.getElementById('job-count-pill');
-  pill.textContent=filtered.length===0?'No jobs in this area yet':`${filtered.length} job${filtered.length===1?'':'s'} nearby`;
+
+  const n=inRadius;
+  document.getElementById('radius-count').textContent=n===0?'No jobs':`${n} job${n===1?'':'s'}`;
 }
+
+function mapFilterCat(el,cat){
+  document.querySelectorAll('.map-cat').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');mapCatFilter=cat;renderMapPins(allJobs);
+}
+function filterMapJobs(){renderMapPins(allJobs);}
 
 async function loadJobs() {
   if(!sb)return loadDemoJobs();
@@ -705,11 +814,7 @@ async function loadJobs() {
   renderListGrid(allJobs);
 }
 
-function loadDemoJobs(){return;}
-
-function mapFilterCat(el,cat){document.querySelectorAll('.map-cat').forEach(c=>c.classList.remove('active'));el.classList.add('active');mapCatFilter=cat;renderMapPins(allJobs);}
-function filterMapJobs(){renderMapPins(allJobs);}
-function listFilterCat(el,cat){document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');listCatFilter=cat;renderListGrid(allJobs);}
+function loadDemoJobs(){return;}(el,cat){document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');listCatFilter=cat;renderListGrid(allJobs);}
 
 function renderListGrid(jobs) {
   const filtered=listCatFilter==='all'?jobs:jobs.filter(j=>j.category===listCatFilter);
