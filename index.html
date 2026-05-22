@@ -544,13 +544,53 @@ function initMap() {
 }
 
 function locateUser() {
-  if (!navigator.geolocation) { loadDemoJobs(); return; }
+  if (!navigator.geolocation) {
+    showGeoFallback();
+    return;
+  }
+
   navigator.geolocation.getCurrentPosition(
-    pos => { userLat=pos.coords.latitude; userLng=pos.coords.longitude; centerMapOnUser(); sb?loadJobs():loadDemoJobs(); },
-    () => { sb?loadJobs():loadDemoJobs(); },
-    {timeout:8000,enableHighAccuracy:false}
+    pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      centerMapOnUser();
+
+      if (!sb) {
+        showDbError();
+        return;
+      }
+
+      loadJobs();
+    },
+    err => {
+      console.warn("Geolocation failed:", err);
+
+      if (!sb) {
+        showDbError();
+        return;
+      }
+
+      loadJobs();
+    },
+    { timeout: 8000, enableHighAccuracy: false }
   );
 }
+
+function showDbError() {
+  document.getElementById('list-grid').innerHTML =
+    emptyState('🔌', 'Database not connected', 'Check Supabase configuration');
+}
+
+function showGeoFallback() {
+  console.warn("Geolocation not available");
+
+  if (sb) {
+    loadJobs();
+  } else {
+    showDbError();
+  }
+}
+
 
 function centerMapOnUser() {
   if (!userLat||!map) return;
@@ -585,15 +625,29 @@ function renderMapPins(jobs) {
 }
 
 async function loadJobs() {
-  if(!sb)return loadDemoJobs();
-  const{data,error}=await sb.from('tasks').select('*, profiles!tasks_poster_id_fkey(id,name,rating)').eq('status','open').order('created_at',{ascending:false});
-  if(error||!data)return loadDemoJobs();
-  allJobs=data;
+  if (!sb) {
+    document.getElementById('list-grid').innerHTML =
+      emptyState('🔌', 'No database connection', 'Check Supabase config');
+    return;
+  }
+
+  const { data, error } = await sb
+    .from('tasks')
+    .select('*, profiles!tasks_poster_id_fkey(id,name,rating)')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    document.getElementById('list-grid').innerHTML =
+      emptyState('😕', 'Error loading jobs', error.message);
+    return;
+  }
+
+  allJobs = data || [];
   renderMapPins(allJobs);
   renderListGrid(allJobs);
 }
 
-function loadDemoJobs(){return;}
 
 function mapFilterCat(el,cat){document.querySelectorAll('.map-cat').forEach(c=>c.classList.remove('active'));el.classList.add('active');mapCatFilter=cat;renderMapPins(allJobs);}
 function filterMapJobs(){renderMapPins(allJobs);}
