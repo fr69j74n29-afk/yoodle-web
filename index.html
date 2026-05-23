@@ -2130,7 +2130,7 @@ function updateNotifTip(){
     body.innerHTML='On iPhone, push notifications require adding Yoodle to your home screen.<br><br>Tap <strong style="color:var(--text)">Share →</strong> then <strong style="color:var(--text)">Add to Home Screen</strong>, then open the app from your home screen icon.';
   } else if(isIos()&&isInStandaloneMode()){
     tip.style.display='block';
-    body.innerHTML='✅ You're using Yoodle as an app! Make sure you've allowed notifications when prompted.';
+    body.innerHTML='✅ You\'re using Yoodle as an app! Make sure you\'ve allowed notifications when prompted.';
   } else if(Notification?.permission==='granted'){
     tip.style.display='block';
     body.innerHTML='✅ Push notifications are enabled on this device.';
