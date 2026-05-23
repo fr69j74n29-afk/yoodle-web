@@ -636,11 +636,11 @@ let sheetTab='jobs';
 let sheetJobs=[],sheetHelpers=[];
 
 function initMap() {
-  map = L.map('map', {center:[43.6532,-79.3832],zoom:13,zoomControl:false,attributionControl:false});
+  map = L.map('map', {center:[43.6532,-79.3832],zoom:11,zoomControl:false,attributionControl:false});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
   L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
   L.control.zoom({position:'bottomright'}).addTo(map);
-  locateUser();
+  setTimeout(()=>{map.invalidateSize();locateUser();},200);
 }
 
 function changeRadius(delta){
@@ -735,7 +735,6 @@ function showGeoFallback() {
 
 function centerMapOnUser() {
   if (!userLat||!map) return;
-  map.setView([userLat,userLng],13);
   if(userMarker)map.removeLayer(userMarker);
   if(radiusCircle)map.removeLayer(radiusCircle);
   const icon=L.divIcon({className:'yoodle-pin',html:`<div class="user-ring"></div>`,iconSize:[20,20],iconAnchor:[10,10]});
@@ -748,11 +747,13 @@ function centerMapOnUser() {
     weight:2,
     dashArray:'6 4'
   }).addTo(map);
-  // fit map to show full circle
-  map.fitBounds(radiusCircle.getBounds(),{padding:[40,40]});
-  // show counts overlay immediately
-  document.getElementById('map-counts').style.display='flex';
-  updateRadiusCounts();
+  // invalidateSize first to fix desktop container sizing, then fitBounds
+  map.invalidateSize();
+  setTimeout(()=>{
+    map.fitBounds(radiusCircle.getBounds(),{padding:[60,60],maxZoom:14});
+    document.getElementById('map-counts').style.display='flex';
+    updateRadiusCounts();
+  },100);
 }
 
 // Max ~80m fuzzy offset — enough for privacy, not enough to jump streets
