@@ -1424,10 +1424,13 @@ async function openChat(taskId,title,otherName,posterId,doerId){
       btns+=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
     }
     if(btns){actionsEl.innerHTML=btns;actionsEl.style.display='flex';}
-  } else if(task.status==='open'){
-    // job was unclaimed — offer to claim again
-    actionsEl.innerHTML=`<button onclick="claimFromChat('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🙋 Claim Again</button>`;
-    actionsEl.style.display='flex';
+  } else if(task.status==='open'&&!isPoster){
+    // only show re-apply if doer had a withdrawn application
+    const{data:app}=await sb.from('applications').select('id,status').eq('task_id',taskId).eq('applicant_id',pid).maybeSingle();
+    if(app&&app.status==='withdrawn'){
+      actionsEl.innerHTML=`<button onclick="applyForJob('${taskId}','${task.poster_id}',document.getElementById('chat-title').textContent)" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🙋 Re-apply</button>`;
+      actionsEl.style.display='flex';
+    }
   }
 }
 
