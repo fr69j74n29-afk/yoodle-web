@@ -1464,10 +1464,18 @@ async function loadChatMessages(taskId){
 }
 
 async function sendMessage(){
-  const inp=document.getElementById('chat-input');const content=inp.value.trim();if(!content||!activeChatTaskId||!sb)return;inp.value='';const pid=myProfileId||me.id;
+  const inp=document.getElementById('chat-input');const content=inp.value.trim();if(!content||!activeChatTaskId||!sb)return;inp.value='';
+  const pid=myProfileId||me.id;
   const{data:taskData}=await sb.from('tasks').select('poster_id,doer_id').eq('id',activeChatTaskId).single();
-  const receiverId=taskData?.poster_id===pid?taskData?.doer_id:taskData?.poster_id;
-  const{error}=await sb.from('messages').insert({task_id:activeChatTaskId,sender_id:pid,receiver_id:receiverId,body:content,read:false});
+  // for pre-assignment chats, doer_id may be null — fall back to activeChatDoerId
+  let receiverId;
+  if(taskData?.poster_id===pid){
+    receiverId=taskData?.doer_id||activeChatDoerId;
+  } else {
+    receiverId=taskData?.poster_id||activeChatPosterId;
+  }
+  if(!receiverId)return toast('❌ Could not determine recipient');
+  const{error}=await sb.from('messages').insert({task_id:activeChatTaskId,sender_id:me.id,receiver_id:receiverId,body:content,read:false});
   if(error){toast('❌ '+error.message);return;}loadChatMessages(activeChatTaskId);
 }
 
