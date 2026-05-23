@@ -1056,6 +1056,7 @@ async function openJob(j){
       }
     }
   }
+  document.getElementById('radius-sheet').classList.remove('open');
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(e){if(e.target.id==='modal')document.getElementById('modal').classList.remove('open');}
