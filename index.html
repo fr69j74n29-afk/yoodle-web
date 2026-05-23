@@ -951,40 +951,43 @@ async function showApp(){
   registerOneSignal();
 }
 
+let oneSignalReady=false;
 async function registerOneSignal(){
   if(!me||!sb)return;
   try{
-    await window.OneSignalDeferred?.push(async(os)=>{
-      await os.init({
-        appId:'258cf4ad-768d-4775-a8ce-4f79a5c2de04',
-        serviceWorkerPath:'/sw.js',
-        notifyButton:{enable:false},
-        promptOptions:{
-          slidedown:{
-            enabled:true,
-            autoPrompt:true,
-            timeDelay:8,
-            pageViews:1,
-            actionMessage:"Enable push notifications to get alerted about new jobs near you!",
-            acceptButton:"Yes, notify me",
-            cancelButton:"Not now",
+    window.OneSignalDeferred=window.OneSignalDeferred||[];
+    window.OneSignalDeferred.push(async(os)=>{
+      if(!oneSignalReady){
+        oneSignalReady=true;
+        await os.init({
+          appId:'258cf4ad-768d-4775-a8ce-4f79a5c2de04',
+          notifyButton:{enable:false},
+          promptOptions:{
+            slidedown:{
+              enabled:true,
+              autoPrompt:true,
+              timeDelay:8,
+              pageViews:1,
+              actionMessage:"Enable push notifications to get alerted about new jobs near you!",
+              acceptButton:"Yes, notify me",
+              cancelButton:"Not now",
+            }
           }
-        }
-      });
-      // Listen for subscription change — fires after user grants permission
-      os.User.PushSubscription.addEventListener('change',async(e)=>{
-        const osId=e.current?.id;
-        if(osId){
-          const pid=myProfileId||me.id;
-          await sb.from('profiles').update({onesignal_id:osId}).eq('id',pid);
-          console.log('OneSignal ID saved:',osId);
-        }
-      });
-      // Also try to save immediately if already subscribed
+        });
+        os.User.PushSubscription.addEventListener('change',async(e)=>{
+          const osId=e.current?.id;
+          if(osId&&me&&sb){
+            const pid=myProfileId||me.id;
+            await sb.from('profiles').update({onesignal_id:osId}).eq('id',pid);
+            console.log('OneSignal ID saved:',osId);
+          }
+        });
+      }
       const subId=os.User.PushSubscription.id;
-      if(subId){
+      if(subId&&me&&sb){
         const pid=myProfileId||me.id;
         await sb.from('profiles').update({onesignal_id:subId}).eq('id',pid);
+        console.log('OneSignal ID saved:',subId);
       }
     });
   }catch(e){
