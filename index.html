@@ -527,6 +527,17 @@ body{
   </div>
 </div>
 
+<!-- APPLICANTS MODAL -->
+<div class="modal-ov" id="applicants-modal" onclick="if(event.target.id==='applicants-modal')document.getElementById('applicants-modal').classList.remove('open')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="margin-bottom:4px">Interested People 👥</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px" id="applicants-job-title">—</div>
+    <div id="applicants-list"><div class="loading"><div class="spinner"></div></div></div>
+    <button onclick="document.getElementById('applicants-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:16px">Close</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -824,22 +835,44 @@ function openJob(j){
   document.getElementById('m-desc').textContent=j.description||'';
   document.getElementById('m-budget').textContent=`$${j.price??'?'}`;
   document.getElementById('m-loc').innerHTML=`${esc(j.address||'Nearby')}<br><span style="font-size:10px;color:var(--muted);font-weight:700">Neighbourhood only</span>`;
-  const isPoster=me&&(j.poster_id===me.id||j.poster_id===myProfileId);const isDoer=me&&(j.doer_id===me.id||j.doer_id===myProfileId);
+  const isPoster=me&&(j.poster_id===me.id||j.poster_id===myProfileId);
   const btn=document.getElementById('m-action');const unclaimBtn=document.getElementById('m-unclaim');
   btn.disabled=false;btn.style.display='block';unclaimBtn.style.display='none';
+  btn.onclick=()=>jobAction();
+
   if(j.status==='completed'){
     btn.textContent='✅ Job Completed';btn.disabled=true;
   } else if(j.status==='claimed'){
     if(isPoster){
       btn.textContent='✅ Mark Complete';
+      btn.onclick=()=>jobAction();
       unclaimBtn.style.display='block';
-    } else if(isDoer){
-      btn.textContent='💬 Message Poster';
     } else {
-      btn.textContent='🔒 Already Claimed';btn.disabled=true;
+      btn.textContent='💬 Message Poster';
+      btn.onclick=()=>{document.getElementById('modal').classList.remove('open');nav('messages');};
     }
-  } else {
-    btn.textContent=isPoster?'🗑️ Cancel Job':"I Can Help! 🙋";
+  } else if(j.status==='open'){
+    if(isPoster){
+      btn.textContent='👥 Review Applicants';
+      btn.onclick=()=>openApplicants(j.id,j.title);
+    } else {
+      // check if already applied
+      btn.textContent='Checking…';btn.disabled=true;
+      if(sb&&me){
+        const pid=myProfileId||me.id;
+        sb.from('applications').select('id,status').eq('task_id',j.id).eq('applicant_id',pid).maybeSingle().then(({data})=>{
+          if(data&&data.status==='pending'){
+            btn.textContent='↩️ Withdraw Interest';btn.disabled=false;
+            btn.onclick=()=>withdrawApplication(data.id);
+          } else if(data&&data.status==='assigned'){
+            btn.textContent='✅ You are assigned!';btn.disabled=true;
+          } else {
+            btn.textContent="🙋 I'm Interested";btn.disabled=false;
+            btn.onclick=()=>applyForJob(j.id,j.poster_id,j.title);
+          }
+        });
+      }
+    }
   }
   document.getElementById('modal').classList.add('open');
 }
@@ -848,38 +881,130 @@ function closeModal(e){if(e.target.id==='modal')document.getElementById('modal')
 async function jobAction(){
   if(!sb||!me){toast('🎉 (demo) Action noted!');document.getElementById('modal').classList.remove('open');return;}
   const isPoster=activeJob.poster_id===me.id||activeJob.poster_id===myProfileId;
-  const isDoer=activeJob.doer_id===me.id||activeJob.doer_id===myProfileId;
-  if(activeJob.status==='open'&&!isPoster){
-    const{error}=await sb.from('tasks').update({status:'claimed',doer_id:myProfileId||me.id}).eq('id',activeJob.id);
-    if(error)return toast('❌ '+error.message);
-    document.getElementById('modal').classList.remove('open');
-    loadJobs();nav('messages');toast('🎉 Job claimed! Message the poster.');
-  } else if(activeJob.status==='open'&&isPoster){
-    const{error}=await sb.from('tasks').update({status:'cancelled'}).eq('id',activeJob.id);
-    if(error)return toast('❌ '+error.message);
-    document.getElementById('modal').classList.remove('open');
-    toast('🗑️ Job cancelled');loadJobs();
-  } else if(activeJob.status==='claimed'&&isPoster){
+  if(activeJob.status==='claimed'&&isPoster){
     const{error}=await sb.from('tasks').update({status:'completed'}).eq('id',activeJob.id);
     if(error)return toast('❌ '+error.message);
     document.getElementById('modal').classList.remove('open');
     toast('✅ Job marked complete!');loadJobs();
     openRatingModal(activeJob.id,activeJob.doer_id,'How did the helper do?');
-  } else if(activeJob.status==='claimed'&&isDoer){
+  } else if(activeJob.status==='open'&&isPoster){
+    const{error}=await sb.from('tasks').update({status:'cancelled'}).eq('id',activeJob.id);
+    if(error)return toast('❌ '+error.message);
+    // notify all pending applicants
+    const{data:apps}=await sb.from('applications').select('applicant_id').eq('task_id',activeJob.id).eq('status','pending');
+    const pid=myProfileId||me.id;
+    for(const app of (apps||[])){
+      await sb.from('messages').insert({task_id:activeJob.id,sender_id:pid,receiver_id:app.applicant_id,body:'This job has been cancelled by the poster.',read:false});
+    }
+    await sb.from('applications').update({status:'rejected'}).eq('task_id',activeJob.id).eq('status','pending');
     document.getElementById('modal').classList.remove('open');
-    nav('messages');
+    toast('🗑️ Job cancelled');loadJobs();
   }
+}
+
+async function applyForJob(taskId,posterId,jobTitle){
+  if(!sb||!me)return;
+  const pid=myProfileId||me.id;
+  // insert application
+  const{error}=await sb.from('applications').insert({task_id:taskId,applicant_id:pid,status:'pending'});
+  if(error)return toast('❌ '+error.message);
+  // get applicant name
+  const{data:myProf}=await sb.from('profiles').select('name').eq('id',pid).single();
+  const myName=myProf?.name||'Someone';
+  // send auto intro message to poster
+  await sb.from('messages').insert({task_id:taskId,sender_id:pid,receiver_id:posterId,body:`Hi! I'm ${myName} and I'm interested in your job "${jobTitle}". I'd love to help!`,read:false});
+  document.getElementById('modal').classList.remove('open');
+  toast('🙋 Interest expressed!');
+  nav('messages');
+}
+
+async function withdrawApplication(appId){
+  if(!sb||!me)return;
+  const{error}=await sb.from('applications').update({status:'withdrawn'}).eq('id',appId);
+  if(error)return toast('❌ '+error.message);
+  document.getElementById('modal').classList.remove('open');
+  toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();
+}
+
+async function openApplicants(taskId,taskTitle){
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('applicants-job-title').textContent=taskTitle;
+  document.getElementById('applicants-modal').classList.add('open');
+  const el=document.getElementById('applicants-list');
+  el.innerHTML=spin();
+  if(!sb)return;
+  // fetch pending applications with applicant profiles
+  const{data,error}=await sb.from('applications')
+    .select('id,applicant_id,status,created_at,profiles!applications_applicant_id_fkey(id,name,rating,bio)')
+    .eq('task_id',taskId)
+    .eq('status','pending')
+    .order('created_at',{ascending:true});
+  if(error){el.innerHTML=emptyState('😕','Error',error.message);return;}
+  if(!data?.length){el.innerHTML=emptyState('👀','No applicants yet','Share your job to get more interest');return;}
+  el.innerHTML=data.map(app=>{
+    const p=app.profiles||{};
+    const name=p.name||'Someone';
+    const rating=p.rating?`⭐ ${p.rating}`:'New';
+    const bio=p.bio?`<div style="font-size:12px;color:#aaa;margin:4px 0 8px;line-height:1.4">${esc(p.bio)}</div>`:'';
+    return `<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;border:1.5px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--purple);font-size:15px;flex-shrink:0">${esc(name[0].toUpperCase())}</div>
+          <div>
+            <div style="font-size:15px;font-weight:900">${esc(name)}</div>
+            <div style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted)">${timeAgo(app.created_at)}</div>
+      </div>
+      ${bio}
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="openChatWithApplicant('${taskId}','${esc(name)}','${app.applicant_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+        <button onclick="assignApplicant('${taskId}','${app.id}','${app.applicant_id}','${esc(name)}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Assign</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openChatWithApplicant(taskId,applicantName,applicantId){
+  document.getElementById('applicants-modal').classList.remove('open');
+  openChat(taskId,document.getElementById('applicants-job-title').textContent,applicantName,myProfileId||me.id,applicantId);
+}
+
+async function assignApplicant(taskId,appId,applicantId,applicantName){
+  if(!sb||!me)return;
+  const pid=myProfileId||me.id;
+  // update task to claimed with this doer
+  const{error}=await sb.from('tasks').update({status:'claimed',doer_id:applicantId}).eq('id',taskId);
+  if(error)return toast('❌ '+error.message);
+  // mark this application assigned
+  await sb.from('applications').update({status:'assigned'}).eq('id',appId);
+  // reject all other pending applicants and notify them
+  const{data:others}=await sb.from('applications').select('id,applicant_id').eq('task_id',taskId).eq('status','pending').neq('id',appId);
+  for(const other of (others||[])){
+    await sb.from('applications').update({status:'rejected'}).eq('id',other.id);
+    await sb.from('messages').insert({task_id:taskId,sender_id:pid,receiver_id:other.applicant_id,body:`Thanks for your interest — someone else was selected for this job.`,read:false});
+  }
+  // send confirmation to assigned applicant
+  await sb.from('messages').insert({task_id:taskId,sender_id:pid,receiver_id:applicantId,body:`🎉 Great news, ${applicantName}! You've been selected for this job. Let's coordinate the details.`,read:false});
+  document.getElementById('applicants-modal').classList.remove('open');
+  toast(`✅ ${applicantName} assigned!`);
+  loadJobs();loadMessages();
 }
 
 async function unclaimJob(){
   if(!sb||!me)return;
+  const pid=myProfileId||me.id;
+  const{data:myProf}=await sb.from('profiles').select('name').eq('id',pid).single();
+  const name=myProf?.name||'Someone';
   const{error}=await sb.from('tasks').update({status:'open',doer_id:null}).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
+  // reset application status back to pending so they still appear
+  await sb.from('applications').update({status:'pending'}).eq('task_id',activeJob.id).eq('applicant_id',pid);
+  await sb.from('messages').insert({task_id:activeJob.id,sender_id:pid,receiver_id:activeJob.poster_id,body:`↩️ ${name} has unclaimed this job. It is back to open.`,read:false});
   document.getElementById('modal').classList.remove('open');
-  toast('↩️ Job returned to open');loadJobs();
+  toast('↩️ Job unclaimed');loadJobs();
 }
-
-let selCatVal=null;
 function selCat(el){document.querySelectorAll('.cat-opt').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');selCatVal=el.dataset.cat;}
 
 async function detectLocation(){
@@ -976,7 +1101,8 @@ async function loadMyJobs(){
   if(myTab==='posted'){
     q=sb.from('tasks').select('*').eq('poster_id',pid).order('created_at',{ascending:false});
   } else {
-    q=sb.from('tasks').select('*, profiles!tasks_poster_id_fkey(id,name)').in('status',['claimed','completed']).eq('doer_id',pid).order('created_at',{ascending:false});
+    // fetch applications by this user with task details
+    q=sb.from('applications').select('id,status,created_at,tasks(*)').eq('applicant_id',pid).order('created_at',{ascending:false});
   }
   const{data,error}=await q;
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
@@ -992,17 +1118,62 @@ async function loadMyJobs(){
       (doerData||[]).forEach(p=>doerNames[p.id]=p.name);
     }
   }
+
+  // for helping tab, check which completed tasks already rated
   let ratedTaskIds=new Set();
   if(myTab==='helping'){
-    const completedIds=data.filter(j=>j.status==='completed').map(j=>j.id);
-    if(completedIds.length){
+    const completedApps=data.filter(a=>a.tasks?.status==='completed');
+    if(completedApps.length){
+      const completedIds=completedApps.map(a=>a.tasks.id);
       const{data:rData}=await sb.from('ratings').select('task_id').eq('rater_id',pid).in('task_id',completedIds);
       ratedTaskIds=new Set((rData||[]).map(r=>r.task_id));
     }
   }
 
-  const data2=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   const now=new Date();
+
+  // for helping tab, render application rows
+  if(myTab==='helping'){
+    g.innerHTML=data.map(app=>{
+      const j=app.tasks;
+      if(!j)return'';
+      const cat=(j.category||'other').toLowerCase();
+      const color=CAT_COLOR[cat]||'#9B59D4';
+      const emoji=CAT_EMOJI[cat]||'✨';
+      let appBadge,actionBtn='';
+      if(app.status==='pending'){
+        appBadge=`<span style="color:var(--yellow);font-size:12px;font-weight:800">⏳ Pending</span>`;
+        actionBtn=`<button onclick="event.stopPropagation();withdrawApplication('${app.id}')" style="margin-top:10px;width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Withdraw Interest</button>`;
+      } else if(app.status==='assigned'){
+        appBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">🤝 Assigned</span>`;
+        actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','Poster','${j.poster_id}','${pid}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+          <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
+        </div>`;
+      } else if(app.status==='rejected'||app.status==='withdrawn'){
+        appBadge=`<span style="color:var(--muted);font-size:12px;font-weight:800">${app.status==='withdrawn'?'↩️ Withdrawn':'😔 Not selected'}</span>`;
+      } else if(j.status==='completed'){
+        appBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">✅ Done</span>`;
+        if(ratedTaskIds.has(j.id)){
+          actionBtn=`<button style="margin-top:10px;width:100%;padding:12px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:default" disabled>✅ Rated</button>`;
+        } else {
+          actionBtn=`<button onclick="event.stopPropagation();openRatingModal('${j.id}','${j.poster_id}','How was the job poster?')" style="margin-top:10px;width:100%;padding:12px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">⭐ Rate Poster</button>`;
+        }
+      }
+      return `<div class="job-card" style="--jc:${color};cursor:default">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div class="jc-badge" style="margin-bottom:0">${emoji} ${cat}</div>
+          ${appBadge||''}
+        </div>
+        <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
+        <div class="jc-desc">${esc(j.description||'')}</div>
+        ${actionBtn}
+      </div>`;
+    }).join('');
+    return;
+  }
+
+  const data2=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   g.innerHTML=data2.map(j=>{
     const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
     const isExpired=j.expires_at&&new Date(j.expires_at)<now&&j.status==='open';
@@ -1016,44 +1187,25 @@ async function loadMyJobs(){
     else statusBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">🟢 Open${daysLeft!==null?` · ${daysLeft}d left`:''}</span>`;
 
     let actionBtn='';
-
-    if(myTab==='posted'){
-      if(j.status==='open'&&!isExpired){
-        actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openEditModal('${j.id}','${esc(j.title)}','${esc(j.description||'')}','${j.price??0}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✏️ Edit</button>
-          <button onclick="event.stopPropagation();cancelJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🗑️ Cancel</button>
-        </div>`;
-      } else if(j.status==='claimed'){
-        const doerName=doerNames[j.doer_id]||'Helper';
-        actionBtn=`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
-          <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
-          <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
-        </div>`;
-      } else if(j.status==='completed'){
-        actionBtn=`<div style="margin-top:10px"><button onclick="event.stopPropagation();checkAndRate('${j.id}','${j.doer_id}','How did the helper do?')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">⭐ Rate Helper</button></div>`;
-      } else if(isExpired){
-        actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();renewJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🔄 Renew 14 days</button>
-          <button onclick="event.stopPropagation();removeJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🗑️ Remove</button>
-        </div>`;
-      }
-    }
-
-    if(myTab==='helping'){
-      if(j.status==='claimed'){
-        const posterName=j.profiles?.name||'Poster';
-        actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
-          <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
-        </div>`;
-      } else if(j.status==='completed'){
-        if(ratedTaskIds.has(j.id)){
-          actionBtn=`<button style="margin-top:10px;width:100%;padding:12px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:default" disabled>✅ Rated</button>`;
-        } else {
-          actionBtn=`<button onclick="event.stopPropagation();openRatingModal('${j.id}','${j.poster_id}','How was the job poster?')" style="margin-top:10px;width:100%;padding:12px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">⭐ Rate Poster</button>`;
-        }
-      }
+    if(j.status==='open'&&!isExpired){
+      actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="event.stopPropagation();openEditModal('${j.id}','${esc(j.title)}','${esc(j.description||'')}','${j.price??0}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✏️ Edit</button>
+        <button onclick="event.stopPropagation();cancelJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🗑️ Cancel</button>
+      </div>`;
+    } else if(j.status==='claimed'){
+      const doerName=doerNames[j.doer_id]||'Helper';
+      actionBtn=`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+        <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
+        <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
+      </div>`;
+    } else if(j.status==='completed'){
+      actionBtn=`<div style="margin-top:10px"><button onclick="event.stopPropagation();checkAndRate('${j.id}','${j.doer_id}','How did the helper do?')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">⭐ Rate Helper</button></div>`;
+    } else if(isExpired){
+      actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="event.stopPropagation();renewJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🔄 Renew 14 days</button>
+        <button onclick="event.stopPropagation();removeJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🗑️ Remove</button>
+      </div>`;
     }
 
     return `<div class="job-card" style="--jc:${color};cursor:default">
