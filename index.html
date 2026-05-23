@@ -125,11 +125,11 @@ body{
 .list-card{background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px}
 .list-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--jc,var(--purple))}
 .list-card:active{transform:scale(.98)}
-.lc-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
 .lc-cat{font-size:10px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:var(--jc,var(--purple));display:flex;align-items:center;gap:4px;flex-shrink:0}
 .lc-budget{font-size:17px;font-weight:900;color:var(--lime);white-space:nowrap;flex-shrink:0}
 .lc-title{font-size:15px;font-weight:900;line-height:1.3;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lc-desc{font-size:12px;color:#aaa;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-desc{font-size:12px;color:#aaa;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
 .lc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .lc-poster{display:flex;align-items:center;gap:5px;min-width:0}
 .lc-av{width:20px;height:20px;border-radius:50%;background:var(--surface2);font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--muted);flex-shrink:0}
@@ -827,10 +827,10 @@ function listCard(j,profile){
   }
   return `<div class="list-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="lc-top">
-      <span class="lc-cat">${emoji} ${j.category||'other'}</span>
+      <span class="lc-title">${emoji} ${esc(j.title)}</span>
       <span class="lc-budget">$${j.price??'?'}</span>
     </div>
-    <div class="lc-title">${esc(j.title)}</div>
+    <div class="lc-desc">${esc(j.description||'')}</div>
     <div class="lc-foot">
       <div class="lc-poster">
         <div class="lc-av">${esc(name[0].toUpperCase())}</div>
