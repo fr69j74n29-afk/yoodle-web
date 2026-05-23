@@ -1259,8 +1259,7 @@ async function loadMyJobs(){
         appBadge=`<span style="color:var(--muted);font-size:12px;font-weight:800">${app.status==='withdrawn'?'↩️ Withdrawn':'😔 Not selected'}</span>`;
       }
       return `<div class="job-card" style="--jc:${color};cursor:default">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          ${appBadge||''}
+        <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:4px">
         </div>
         <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
         <div class="jc-desc">${esc(j.description||'')}</div>
@@ -1316,7 +1315,7 @@ async function loadMyJobs(){
     }
 
     return `<div class="job-card" style="--jc:${color};cursor:default">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:4px">
         ${statusBadge}
       </div>
       <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
