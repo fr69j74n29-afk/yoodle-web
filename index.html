@@ -540,6 +540,20 @@ body{
   </div>
 </div>
 
+<!-- APPLIED CONFIRMATION MODAL -->
+<div class="modal-ov" id="applied-modal" onclick="if(event.target.id==='applied-modal')document.getElementById('applied-modal').classList.remove('open')">
+  <div class="modal-sheet" style="text-align:center">
+    <div class="modal-handle"></div>
+    <div style="font-size:48px;margin-bottom:12px">🙋</div>
+    <div class="modal-title" style="margin-bottom:6px">Applied!</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:6px" id="applied-job-title">—</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:28px">Awaiting the poster's response. You'll be notified when assigned.</div>
+    <button class="btn-primary" id="applied-chat-btn" onclick="openAppliedChat()">💬 Ask a Question</button>
+    <button id="applied-withdraw-btn" onclick="withdrawFromConfirm()" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;margin-top:10px">↩️ Withdraw Interest</button>
+    <button onclick="document.getElementById('applied-modal').classList.remove('open')" style="width:100%;padding:12px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-top:6px">Close</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -984,9 +998,36 @@ async function applyForJob(taskId,posterId,jobTitle){
   if(msgErr)console.warn('Message insert failed:',msgErr.message);
 
   document.getElementById('modal').classList.remove('open');
+  document.getElementById('applied-job-title').textContent=jobTitle;
+  // store context for chat/withdraw buttons
+  document.getElementById('applied-chat-btn').dataset.taskId=taskId;
+  document.getElementById('applied-chat-btn').dataset.posterId=posterId;
+  document.getElementById('applied-withdraw-btn').dataset.taskId=taskId;
+  document.getElementById('applied-modal').classList.add('open');
   toast('🙋 Interest expressed!');
   loadJobs();
-  nav('messages');
+}
+
+function openAppliedChat(){
+  const btn=document.getElementById('applied-chat-btn');
+  const taskId=btn.dataset.taskId;
+  const posterId=btn.dataset.posterId;
+  const jobTitle=document.getElementById('applied-job-title').textContent;
+  document.getElementById('applied-modal').classList.remove('open');
+  openChat(taskId,jobTitle,'Poster',posterId,myProfileId||me.id);
+}
+
+async function withdrawFromConfirm(){
+  const btn=document.getElementById('applied-withdraw-btn');
+  const taskId=btn.dataset.taskId;
+  if(!sb||!me||!taskId)return;
+  const pid=myProfileId||me.id;
+  const{data:app}=await sb.from('applications').select('id').eq('task_id',taskId).eq('applicant_id',pid).maybeSingle();
+  if(!app)return toast('❌ Application not found');
+  const{error}=await sb.from('applications').update({status:'withdrawn'}).eq('id',app.id);
+  if(error)return toast('❌ '+error.message);
+  document.getElementById('applied-modal').classList.remove('open');
+  toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();
 }
 
 async function withdrawApplication(appId){
@@ -1434,6 +1475,14 @@ async function loadMessages(){
     (doerProfs||[]).forEach(p=>doerNames[p.id]=p.name);
   }
 
+  // fetch application statuses for tasks where current user is NOT the poster
+  const appStatusMap={};
+  const nonPosterTaskIds=tasks.filter(t=>t.poster_id!==pid).map(t=>t.id);
+  if(nonPosterTaskIds.length){
+    const{data:appData}=await sb.from('applications').select('task_id,status').eq('applicant_id',pid).in('task_id',nonPosterTaskIds);
+    (appData||[]).forEach(a=>appStatusMap[a.task_id]=a.status);
+  }
+
   // sort tasks by last message time (most recent first)
   tasks.sort((a,b)=>{
     const at=lastMsgMap[a.id]?.created_at||a.created_at;
@@ -1454,10 +1503,17 @@ async function loadMessages(){
     const rowBg=isUnread?'background:rgba(236,72,153,.08);border-color:rgba(236,72,153,.3)':'';
     const unreadBadge=isUnread?`<span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;background:var(--pink);color:#fff;font-size:9px;font-weight:900;letter-spacing:.5px;vertical-align:middle;flex-shrink:0">NEW</span>`:'';
     // status tag for non-claimed tasks
+    // determine status tag based on application status for non-poster
     let statusTag='';
     if(t.status==='completed') statusTag=`<span style="font-size:10px;color:var(--lime);font-weight:800;margin-left:6px">✅ Done</span>`;
-    else if(t.status==='open') statusTag=`<span style="font-size:10px;color:var(--yellow);font-weight:800;margin-left:6px">😔 Not selected</span>`;
     else if(t.status==='cancelled') statusTag=`<span style="font-size:10px;color:var(--muted);font-weight:800;margin-left:6px">🗑️ Cancelled</span>`;
+    else if(!isPoster){
+      const appStatus=appStatusMap[t.id];
+      if(appStatus==='pending') statusTag=`<span style="font-size:10px;color:var(--yellow);font-weight:800;margin-left:6px">⏳ Pending</span>`;
+      else if(appStatus==='rejected') statusTag=`<span style="font-size:10px;color:var(--muted);font-weight:800;margin-left:6px">😔 Not selected</span>`;
+      else if(appStatus==='withdrawn') statusTag=`<span style="font-size:10px;color:var(--muted);font-weight:800;margin-left:6px">↩️ Withdrawn</span>`;
+      else if(appStatus==='assigned'||t.status==='claimed') statusTag=`<span style="font-size:10px;color:var(--teal);font-weight:800;margin-left:6px">🤝 Assigned</span>`;
+    }
     return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.doer_id||''}')">
       <div class="conv-icon" style="background:${color}22;border:1.5px solid ${color}44">${emoji}</div>
       <div class="conv-body">
