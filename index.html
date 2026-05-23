@@ -905,16 +905,33 @@ async function jobAction(){
 async function applyForJob(taskId,posterId,jobTitle){
   if(!sb||!me)return;
   const pid=myProfileId||me.id;
-  // insert application
-  const{error}=await sb.from('applications').insert({task_id:taskId,applicant_id:pid,status:'pending'});
-  if(error)return toast('❌ '+error.message);
+  const btn=document.getElementById('m-action');
+  btn.textContent='✅ Applied';btn.disabled=true;
+
+  // upsert — handles both fresh apply and re-apply after withdraw
+  const{error}=await sb.from('applications').upsert(
+    {task_id:taskId,applicant_id:pid,status:'pending'},
+    {onConflict:'task_id,applicant_id'}
+  );
+  if(error){btn.textContent="🙋 I'm Interested";btn.disabled=false;return toast('❌ '+error.message);}
+
   // get applicant name
   const{data:myProf}=await sb.from('profiles').select('name').eq('id',pid).single();
   const myName=myProf?.name||'Someone';
-  // send auto intro message to poster
-  await sb.from('messages').insert({task_id:taskId,sender_id:pid,receiver_id:posterId,body:`Hi! I'm ${myName} and I'm interested in your job "${jobTitle}". I'd love to help!`,read:false});
+
+  // send auto intro message — use me.id (auth UID) as sender_id to satisfy RLS
+  const{error:msgErr}=await sb.from('messages').insert({
+    task_id:taskId,
+    sender_id:me.id,
+    receiver_id:posterId,
+    body:`Hi! I'm ${myName} and I'm interested in your job "${jobTitle}". I'd love to help!`,
+    read:false
+  });
+  if(msgErr)console.warn('Message insert failed:',msgErr.message);
+
   document.getElementById('modal').classList.remove('open');
   toast('🙋 Interest expressed!');
+  loadJobs();
   nav('messages');
 }
 
@@ -1108,14 +1125,22 @@ async function loadMyJobs(){
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
   if(!data?.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
 
-  // for posted tab, fetch doer names for claimed jobs separately
+  // for posted tab, fetch doer names and applicant counts
   let doerNames={};
+  let applicantCounts={};
   if(myTab==='posted'){
     const claimedJobs=data.filter(j=>j.status==='claimed'&&j.doer_id);
     if(claimedJobs.length){
       const doerIds=[...new Set(claimedJobs.map(j=>j.doer_id))];
       const{data:doerData}=await sb.from('profiles').select('id,name').in('id',doerIds);
       (doerData||[]).forEach(p=>doerNames[p.id]=p.name);
+    }
+    // fetch pending application counts for open jobs
+    const openJobs=data.filter(j=>j.status==='open');
+    if(openJobs.length){
+      const openIds=openJobs.map(j=>j.id);
+      const{data:appData}=await sb.from('applications').select('task_id').eq('status','pending').in('task_id',openIds);
+      (appData||[]).forEach(a=>{applicantCounts[a.task_id]=(applicantCounts[a.task_id]||0)+1;});
     }
   }
 
@@ -1188,10 +1213,15 @@ async function loadMyJobs(){
 
     let actionBtn='';
     if(j.status==='open'&&!isExpired){
+      const appCount=applicantCounts[j.id]||0;
+      const appBadge=appCount>0?`<div style="margin-top:8px;padding:8px 12px;background:rgba(155,89,212,.12);border:1.5px solid rgba(155,89,212,.3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-weight:800;color:var(--purple)">👥 ${appCount} interested</span>
+        <button onclick="event.stopPropagation();openApplicants('${j.id}','${esc(j.title)}')" style="padding:6px 14px;border-radius:100px;background:var(--purple);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;cursor:pointer">Review →</button>
+      </div>`:'';
       actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
         <button onclick="event.stopPropagation();openEditModal('${j.id}','${esc(j.title)}','${esc(j.description||'')}','${j.price??0}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✏️ Edit</button>
         <button onclick="event.stopPropagation();cancelJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🗑️ Cancel</button>
-      </div>`;
+      </div>${appBadge}`;
     } else if(j.status==='claimed'){
       const doerName=doerNames[j.doer_id]||'Helper';
       actionBtn=`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
