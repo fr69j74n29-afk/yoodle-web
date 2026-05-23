@@ -307,6 +307,18 @@ body{
 <!-- CONFIG BANNER -->
 <div class="cfg-banner" id="cfg-banner">⚠️ Fill in SUPABASE_URL and SUPABASE_ANON_KEY in the &lt;script&gt; to connect your database.</div>
 
+<!-- iOS PWA BANNER -->
+<div id="ios-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:998;padding:12px 16px max(12px,env(safe-area-inset-bottom));background:linear-gradient(135deg,rgba(155,89,212,.97),rgba(236,72,153,.97));backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.15)">
+  <div style="display:flex;align-items:flex-start;gap:12px">
+    <div style="font-size:28px;flex-shrink:0;line-height:1">📲</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:3px">Get notified about nearby jobs!</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.85);font-weight:700;line-height:1.5">Tap <span style="background:rgba(255,255,255,.25);border-radius:4px;padding:1px 5px">Share</span> then <span style="background:rgba(255,255,255,.25);border-radius:4px;padding:1px 5px">Add to Home Screen</span> to enable push notifications on iPhone.</div>
+    </div>
+    <button onclick="dismissIosBanner()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:16px;cursor:pointer;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Nunito',sans-serif;font-weight:900">✕</button>
+  </div>
+</div>
+
 <!-- MAIN APP -->
 <div id="view-main">
   <div class="top-bar">
@@ -474,6 +486,11 @@ body{
         <label class="form-lbl">About Me</label>
 	<textarea class="form-ta" id="p-bio" placeholder="Tell your neighbours a bit about yourself…" 	style="height:120px;margin-bottom:8px"></textarea>
         <button class="btn-primary" onclick="saveBio()">Save Profile ✨</button>
+      </div>
+      <!-- Notification tip -->
+      <div id="notif-tip" style="display:none;background:rgba(155,89,212,.08);border:1.5px solid rgba(155,89,212,.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:900;color:var(--purple);margin-bottom:6px">🔔 Push Notifications</div>
+        <div id="notif-tip-body" style="font-size:12px;color:#aaa;line-height:1.6;font-weight:700"></div>
       </div>
       <button class="btn-so" onclick="signOut()">Sign Out</button>
     </div>
@@ -949,6 +966,7 @@ async function showApp(){
   loadJobs();
   subscribeToMessages();
   registerOneSignal();
+  setTimeout(showIosBanner, 3000);
 }
 
 let oneSignalReady=false;
@@ -1712,6 +1730,7 @@ const avgPoster=posterRatings?.length?( posterRatings.reduce((s,r)=>s+r.score,0)
 const avgHelper=helperRatings?.length?(helperRatings.reduce((s,r)=>s+r.score,0)/helperRatings.length).toFixed(1):null;
 document.getElementById('s-poster-rating').textContent=avgPoster?`⭐ ${avgPoster} (${posterRatings.length} reviews)`:'No reviews yet';
 document.getElementById('s-helper-rating').textContent=avgHelper?`⭐ ${avgHelper} (${helperRatings.length} reviews)`:'No reviews yet';
+updateNotifTip();
 }
 
 async function loadMessages(){
@@ -2083,6 +2102,45 @@ function setRating(n){
 function renderStars(n){
   const stars=document.getElementById('rating-stars').querySelectorAll('span');
   stars.forEach((s,i)=>s.textContent=i<n?'⭐':'☆');
+}
+
+function isIos(){return/iphone|ipad|ipod/i.test(navigator.userAgent);}
+function isInStandaloneMode(){return window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone===true;}
+
+function showIosBanner(){
+  if(!isIos())return;
+  if(isInStandaloneMode())return;
+  if(localStorage.getItem('ios-banner-dismissed'))return;
+  const banner=document.getElementById('ios-banner');
+  if(banner)banner.style.display='block';
+}
+
+function dismissIosBanner(){
+  localStorage.setItem('ios-banner-dismissed','1');
+  const banner=document.getElementById('ios-banner');
+  if(banner)banner.style.display='none';
+}
+
+function updateNotifTip(){
+  const tip=document.getElementById('notif-tip');
+  const body=document.getElementById('notif-tip-body');
+  if(!tip||!body)return;
+  if(isIos()&&!isInStandaloneMode()){
+    tip.style.display='block';
+    body.innerHTML='On iPhone, push notifications require adding Yoodle to your home screen.<br><br>Tap <strong style="color:var(--text)">Share →</strong> then <strong style="color:var(--text)">Add to Home Screen</strong>, then open the app from your home screen icon.';
+  } else if(isIos()&&isInStandaloneMode()){
+    tip.style.display='block';
+    body.innerHTML='✅ You're using Yoodle as an app! Make sure you've allowed notifications when prompted.';
+  } else if(Notification?.permission==='granted'){
+    tip.style.display='block';
+    body.innerHTML='✅ Push notifications are enabled on this device.';
+  } else if(Notification?.permission==='denied'){
+    tip.style.display='block';
+    body.innerHTML='⚠️ Notifications are blocked. Go to your browser settings and allow notifications for yoodle.ca.';
+  } else {
+    tip.style.display='block';
+    body.innerHTML='Enable notifications to get alerted about new jobs and messages near you.';
+  }
 }
 
 async function submitRating(){
