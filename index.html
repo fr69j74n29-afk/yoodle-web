@@ -1549,9 +1549,21 @@ function renderStars(n){
 
 async function submitRating(){
   if(!selectedRating||!ratingTaskId||!ratingRatedId||!sb)return;
+  const btn=document.getElementById('rating-submit-btn');
+  btn.disabled=true;btn.textContent='Saving…';
   const pid=myProfileId||me.id;
   const{error}=await sb.from('ratings').insert({task_id:ratingTaskId,rater_id:pid,rated_id:ratingRatedId,score:selectedRating});
-  if(error)return toast('❌ '+error.message);
+  if(error){
+    btn.disabled=false;btn.textContent='Submit Rating';
+    if(error.code==='23505'){
+      document.getElementById('rating-modal').classList.remove('open');
+      toast('✅ Already rated!');
+      loadMyJobs();
+    } else {
+      toast('❌ '+error.message);
+    }
+    return;
+  }
   // update aggregate rating on profile
   const{data:allRatings}=await sb.from('ratings').select('score').eq('rated_id',ratingRatedId);
   if(allRatings?.length){
@@ -1560,6 +1572,7 @@ async function submitRating(){
   }
   document.getElementById('rating-modal').classList.remove('open');
   toast('⭐ Rating submitted!');
+  loadMyJobs();
 }
 </script>
 
