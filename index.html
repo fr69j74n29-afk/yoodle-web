@@ -9,8 +9,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="manifest" href="/manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <style>
 :root{
   --purple:#9B59D4;--lime:#A3E635;--pink:#EC4899;
@@ -946,6 +948,48 @@ async function showApp(){
   if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
   loadJobs();
   subscribeToMessages();
+  registerOneSignal();
+}
+
+async function registerOneSignal(){
+  if(!me||!sb)return;
+  try{
+    await window.OneSignalDeferred?.push(async(os)=>{
+      await os.init({
+        appId:'258cf4ad-768d-4775-a8ce-4f79a5c2de04',
+        serviceWorkerPath:'/sw.js',
+        notifyButton:{enable:false},
+        promptOptions:{
+          slidedown:{
+            enabled:true,
+            autoPrompt:true,
+            timeDelay:8,
+            pageViews:1,
+            actionMessage:"Enable push notifications to get alerted about new jobs near you!",
+            acceptButton:"Yes, notify me",
+            cancelButton:"Not now",
+          }
+        }
+      });
+      // Listen for subscription change — fires after user grants permission
+      os.User.PushSubscription.addEventListener('change',async(e)=>{
+        const osId=e.current?.id;
+        if(osId){
+          const pid=myProfileId||me.id;
+          await sb.from('profiles').update({onesignal_id:osId}).eq('id',pid);
+          console.log('OneSignal ID saved:',osId);
+        }
+      });
+      // Also try to save immediately if already subscribed
+      const subId=os.User.PushSubscription.id;
+      if(subId){
+        const pid=myProfileId||me.id;
+        await sb.from('profiles').update({onesignal_id:subId}).eq('id',pid);
+      }
+    });
+  }catch(e){
+    console.warn('OneSignal init error:',e);
+  }
 }
 
 let realtimeChannel=null;
