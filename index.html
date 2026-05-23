@@ -1125,9 +1125,10 @@ async function loadMyJobs(){
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
   if(!data?.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
 
-  // for posted tab, fetch doer names and applicant counts
+  // for posted tab, fetch doer names, applicant counts, and rated task IDs
   let doerNames={};
   let applicantCounts={};
+  let ratedTaskIds=new Set();
   if(myTab==='posted'){
     const claimedJobs=data.filter(j=>j.status==='claimed'&&j.doer_id);
     if(claimedJobs.length){
@@ -1135,17 +1136,21 @@ async function loadMyJobs(){
       const{data:doerData}=await sb.from('profiles').select('id,name').in('id',doerIds);
       (doerData||[]).forEach(p=>doerNames[p.id]=p.name);
     }
-    // fetch pending application counts for open jobs
     const openJobs=data.filter(j=>j.status==='open');
     if(openJobs.length){
       const openIds=openJobs.map(j=>j.id);
       const{data:appData}=await sb.from('applications').select('task_id').eq('status','pending').in('task_id',openIds);
       (appData||[]).forEach(a=>{applicantCounts[a.task_id]=(applicantCounts[a.task_id]||0)+1;});
     }
+    const completedJobs=data.filter(j=>j.status==='completed');
+    if(completedJobs.length){
+      const completedIds=completedJobs.map(j=>j.id);
+      const{data:rData}=await sb.from('ratings').select('task_id').eq('rater_id',pid).in('task_id',completedIds);
+      ratedTaskIds=new Set((rData||[]).map(r=>r.task_id));
+    }
   }
 
   // for helping tab, check which completed tasks already rated
-  let ratedTaskIds=new Set();
   if(myTab==='helping'){
     const completedApps=data.filter(a=>a.tasks?.status==='completed');
     if(completedApps.length){
@@ -1166,7 +1171,14 @@ async function loadMyJobs(){
       const color=CAT_COLOR[cat]||'#9B59D4';
       const emoji=CAT_EMOJI[cat]||'✨';
       let appBadge,actionBtn='';
-      if(app.status==='pending'){
+      if(j.status==='completed'){
+        appBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">✅ Done</span>`;
+        if(ratedTaskIds.has(j.id)){
+          actionBtn=`<button style="margin-top:10px;width:100%;padding:12px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:default" disabled>✅ Rated</button>`;
+        } else {
+          actionBtn=`<button onclick="event.stopPropagation();openRatingModal('${j.id}','${j.poster_id}','How was the job poster?')" style="margin-top:10px;width:100%;padding:12px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">⭐ Rate Poster</button>`;
+        }
+      } else if(app.status==='pending'){
         appBadge=`<span style="color:var(--yellow);font-size:12px;font-weight:800">⏳ Pending</span>`;
         actionBtn=`<button onclick="event.stopPropagation();withdrawApplication('${app.id}')" style="margin-top:10px;width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Withdraw Interest</button>`;
       } else if(app.status==='assigned'){
@@ -1177,13 +1189,6 @@ async function loadMyJobs(){
         </div>`;
       } else if(app.status==='rejected'||app.status==='withdrawn'){
         appBadge=`<span style="color:var(--muted);font-size:12px;font-weight:800">${app.status==='withdrawn'?'↩️ Withdrawn':'😔 Not selected'}</span>`;
-      } else if(j.status==='completed'){
-        appBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">✅ Done</span>`;
-        if(ratedTaskIds.has(j.id)){
-          actionBtn=`<button style="margin-top:10px;width:100%;padding:12px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:default" disabled>✅ Rated</button>`;
-        } else {
-          actionBtn=`<button onclick="event.stopPropagation();openRatingModal('${j.id}','${j.poster_id}','How was the job poster?')" style="margin-top:10px;width:100%;padding:12px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">⭐ Rate Poster</button>`;
-        }
       }
       return `<div class="job-card" style="--jc:${color};cursor:default">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -1230,7 +1235,11 @@ async function loadMyJobs(){
         <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
       </div>`;
     } else if(j.status==='completed'){
-      actionBtn=`<div style="margin-top:10px"><button onclick="event.stopPropagation();checkAndRate('${j.id}','${j.doer_id}','How did the helper do?')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">⭐ Rate Helper</button></div>`;
+      if(ratedTaskIds.has(j.id)){
+        actionBtn=`<button style="margin-top:10px;width:100%;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:default" disabled>✅ Rated</button>`;
+      } else {
+        actionBtn=`<div style="margin-top:10px"><button onclick="event.stopPropagation();checkAndRate('${j.id}','${j.doer_id}','How did the helper do?')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">⭐ Rate Helper</button></div>`;
+      }
     } else if(isExpired){
       actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
         <button onclick="event.stopPropagation();renewJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🔄 Renew 14 days</button>
