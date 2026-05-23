@@ -419,18 +419,18 @@ body{
         <div class="profile-av" id="pav" style="margin:0;flex-shrink:0">?</div>
         <div style="flex:1;min-width:0">
           <div class="profile-nm" id="pnm" style="margin-bottom:2px">—</div>
-          <div id="pem" style="font-size:12px;color:var(--muted);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+          <div id="pem" style="font-size:12px;color:var(--muted);margin-bottom:6px">—</div>
           <!-- Helper toggle inline -->
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-            <div style="min-width:0">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="display:flex;align-items:center;gap:8px">
               <div style="font-size:13px;font-weight:800;color:var(--text)">💪 Available as Helper</div>
-              <button id="helper-location-label" onclick="toggleHelperInput()" style="background:none;border:none;font-size:11px;color:var(--muted);margin-top:2px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;padding:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">Off</button>
+              <label style="position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0">
+                <input type="checkbox" id="helper-toggle" onchange="onHelperToggle()" style="opacity:0;width:0;height:0">
+                <span id="helper-toggle-track" style="position:absolute;inset:0;border-radius:100px;background:var(--border);transition:background .2s;cursor:pointer"></span>
+                <span id="helper-toggle-thumb" style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none"></span>
+              </label>
             </div>
-            <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
-              <input type="checkbox" id="helper-toggle" onchange="onHelperToggle()" style="opacity:0;width:0;height:0">
-              <span id="helper-toggle-track" style="position:absolute;inset:0;border-radius:100px;background:var(--border);transition:background .2s;cursor:pointer"></span>
-              <span id="helper-toggle-thumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none"></span>
-            </label>
+            <button id="helper-location-label" onclick="toggleHelperInput()" style="background:none;border:none;font-size:11px;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;padding:0;text-align:left">Off</button>
           </div>
         </div>
       </div>
@@ -876,7 +876,7 @@ function renderSheetContent(){
   } else {
     if(!sheetHelpers.length){el.innerHTML=emptyState('💪','No helpers visible nearby','Helpers can enable visibility in their profile');return;}
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">${sheetHelpers.map(h=>{
-      const color=h.rating?'#9B59D4':'#06B6D4';
+      const color='#9B59D4';
       const name=h.name||'Helper';
       const rating=h.rating?`⭐ ${h.rating}`:'New';
       return `<div style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;align-items:center;gap:12px">
