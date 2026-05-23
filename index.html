@@ -1804,7 +1804,7 @@ async function loadMessages(){
   }).join('');
 }
 
-let activeChatPosterId=null, activeChatDoerId=null;
+let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null;
 async function openChat(taskId,title,otherName,posterId,doerId){
   activeChatTaskId=taskId;activeChatPosterId=posterId;
   document.getElementById('chat-title').textContent=title;
