@@ -196,7 +196,7 @@ body{
 #app-profile{overflow:hidden}
 .profile-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 20px calc(var(--sab) + 20px);-webkit-overflow-scrolling:touch}
 .profile-hero{text-align:center;padding:20px 0 16px}
-.profile-av{width:84px;height:84px;border-radius:50%;border:3px solid var(--purple);overflow:hidden;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:var(--purple);background:var(--surface2)}
+.profile-av{width:64px;height:64px;border-radius:50%;border:3px solid var(--purple);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:var(--purple);background:var(--surface2);flex-shrink:0}
 .profile-av img{width:100%;height:100%;object-fit:cover}
 .profile-nm{font-size:22px;font-weight:900;margin-bottom:4px}
 .profile-em{font-size:13px;color:var(--muted)}
@@ -316,10 +316,31 @@ body{
   <div class="app-view active" id="app-map">
     <div style="position:relative;flex:1;display:flex;flex-direction:column;min-height:0">
       <div id="map"></div>
+      <!-- Floating locate button -->
       <div class="map-controls">
-                <button class="map-locate-btn" onclick="locateUser()" title="Find my location">📍</button>
+        <button class="map-locate-btn" onclick="locateUser()" title="Find my location">📍</button>
       </div>
-      <div class="job-count-pill" id="job-count-pill">Loading jobs…</div>
+      <!-- Count text floating inside circle - no background -->
+      <div id="map-counts" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;pointer-events:all;display:none;flex-direction:column;align-items:center;gap:0">
+        <button onclick="openRadiusSheet()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 12px">
+          <div style="text-align:center">
+            <div style="font-size:26px;font-weight:900;color:#fff;line-height:1;text-shadow:0 1px 8px rgba(0,0,0,.8)" id="map-jobs-count">0</div>
+            <div style="font-size:10px;font-weight:900;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.8px;text-shadow:0 1px 4px rgba(0,0,0,.8)">Jobs</div>
+          </div>
+          <div style="width:1px;height:32px;background:rgba(255,255,255,.25)"></div>
+          <div style="text-align:center">
+            <div style="font-size:26px;font-weight:900;color:#fff;line-height:1;text-shadow:0 1px 8px rgba(0,0,0,.8)" id="map-helpers-count">0</div>
+            <div style="font-size:10px;font-weight:900;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.8px;text-shadow:0 1px 4px rgba(0,0,0,.8)">Helpers</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Radius control — fixed at bottom, never overlaps circle content -->
+      <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;display:flex;align-items:center;gap:10px;background:rgba(10,10,10,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:100px;padding:7px 16px">
+        <button onclick="changeRadius(-1)" style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;line-height:1;flex-shrink:0">−</button>
+        <span id="radius-label" style="font-size:13px;font-weight:900;color:var(--text);min-width:36px;text-align:center">3 km</span>
+        <button onclick="changeRadius(1)" style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;line-height:1;flex-shrink:0">+</button>
+      </div>
     </div>
   </div>
 
@@ -393,10 +414,39 @@ body{
   <!-- PROFILE -->
   <div class="app-view" id="app-profile">
     <div class="profile-scroll">
-      <div class="profile-hero">
-        <div class="profile-av" id="pav">?</div>
-        <div class="profile-nm" id="pnm">—</div>
-        <div class="profile-em" id="pem">—</div>
+      <!-- Hero: avatar left, name + toggle right -->
+      <div style="display:flex;align-items:center;gap:16px;padding:20px 0 16px">
+        <div class="profile-av" id="pav" style="margin:0;flex-shrink:0">?</div>
+        <div style="flex:1;min-width:0">
+          <div class="profile-nm" id="pnm" style="margin-bottom:2px">—</div>
+          <div id="pem" style="font-size:12px;color:var(--muted);margin-bottom:6px">—</div>
+          <!-- Helper toggle inline -->
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="font-size:13px;font-weight:800;color:var(--text)">💪 Available as Helper</div>
+              <label style="position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0">
+                <input type="checkbox" id="helper-toggle" onchange="onHelperToggle()" style="opacity:0;width:0;height:0">
+                <span id="helper-toggle-track" style="position:absolute;inset:0;border-radius:100px;background:var(--border);transition:background .2s;cursor:pointer"></span>
+                <span id="helper-toggle-thumb" style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none"></span>
+              </label>
+            </div>
+            <button id="helper-location-label" onclick="toggleHelperInput()" style="background:none;border:none;font-size:11px;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;padding:0;text-align:left">Off</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Helper location input (hidden until toggled or change tapped) -->
+      <div id="helper-location-wrap" style="display:none;background:var(--surface);border-radius:var(--radius-sm);border:1.5px solid var(--border);padding:14px;margin-bottom:16px">
+        <div style="font-size:12px;color:var(--yellow);font-weight:700;margin-bottom:10px;line-height:1.5">
+          📍 Enter the area where you're available to help. Remember to keep this updated to where you currently are.
+        </div>
+        <div style="position:relative">
+          <input class="form-inp" id="helper-loc" type="text" placeholder="Start typing your address…" autocomplete="off"
+            oninput="onHelperLocInput(this.value)" onfocus="if(this.value.length>2)showHelperSuggestions()" onblur="setTimeout(hideHelperSuggestions,200)">
+          <div class="loc-suggestions" id="helper-loc-suggestions"></div>
+        </div>
+        <div class="loc-status" id="helper-loc-status">Select your area from the suggestions</div>
+        <button class="btn-primary" onclick="saveHelperMode()" style="margin-top:12px">Save Location ✨</button>
       </div>
       <div class="stats-row" style="grid-template-columns:1fr 1fr">
         <div class="stat-c" style="text-align:left;padding:16px">
@@ -566,6 +616,21 @@ body{
   </div>
 </div>
 
+<!-- RADIUS SHEET -->
+<div class="modal-ov" id="radius-sheet" onclick="if(event.target.id==='radius-sheet')document.getElementById('radius-sheet').classList.remove('open')">
+  <div class="modal-sheet" style="max-height:85dvh;display:flex;flex-direction:column;padding:0">
+    <div style="padding:16px 20px 0;flex-shrink:0">
+      <div class="modal-handle"></div>
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;background:var(--surface2);border-radius:var(--radius-sm);padding:4px;margin-bottom:16px">
+        <button id="sheet-tab-jobs" onclick="switchSheetTab('jobs')" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">📋 Jobs <span id="sheet-jobs-count" style="color:var(--purple)">0</span></button>
+        <button id="sheet-tab-helpers" onclick="switchSheetTab('helpers')" style="flex:1;padding:10px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">💪 Helpers <span id="sheet-helpers-count" style="color:var(--lime)">0</span></button>
+      </div>
+    </div>
+    <div id="sheet-content" style="flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -595,7 +660,50 @@ function normalizeCategory(cat) {
   if (['moving'].includes(cat)) return 'moving';
   return cat || 'other';
 }
-const RADIUS_KM = 3;
+let RADIUS_KM=3;
+let sheetTab='jobs';
+let sheetJobs=[],sheetHelpers=[];
+
+function initMap() {
+  map = L.map('map', {center:[43.6532,-79.3832],zoom:11,zoomControl:false,attributionControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  setTimeout(()=>{map.invalidateSize();locateUser();},200);
+}
+
+function changeRadius(delta){
+  let step = (RADIUS_KM >= 5) ? 10 : 1;
+  RADIUS_KM = RADIUS_KM + (delta * step);
+  RADIUS_KM = Math.min(100, Math.max(1, RADIUS_KM));
+  document.getElementById('radius-label').textContent=`${RADIUS_KM} km`;
+  centerMapOnUser();
+  updateRadiusCounts();
+}
+
+function updateRadiusCounts(){
+  if(!userLat||!userLng)return;
+  const pid=myProfileId||me?.id;
+  // filter jobs within radius — exclude own jobs
+  sheetJobs=(allJobs||[]).filter(j=>{
+    if(!j.lat||!j.lng)return false;
+    if(pid&&j.poster_id===pid)return false;
+    return haversineKm(userLat,userLng,j.lat,j.lng)<=RADIUS_KM;
+  });
+  // filter helpers within radius — exclude self
+  sheetHelpers=(allHelpers||[]).filter(h=>{
+    if(!h.last_lat||!h.last_lng)return false;
+    if(pid&&h.id===pid)return false;
+    return haversineKm(userLat,userLng,h.last_lat,h.last_lng)<=RADIUS_KM;
+  });
+  const jobCount=sheetJobs.length;
+  const helperCount=sheetHelpers.length;
+  document.getElementById('map-jobs-count').textContent=jobCount;
+  document.getElementById('map-helpers-count').textContent=helperCount;
+  document.getElementById('sheet-jobs-count').textContent=jobCount;
+  document.getElementById('sheet-helpers-count').textContent=helperCount;
+  document.getElementById('map-counts').style.display='flex';
+}
 let sb, me, myProfileId, activeJob, mapCatFilter='all', listCatFilter='all', myTab='posted';
 let ratingTaskId=null, ratingRatedId=null, selectedRating=0;
 let map, userMarker, radiusCircle, jobMarkers=[], allJobs=[];
@@ -637,23 +745,10 @@ function locateUser() {
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
       centerMapOnUser();
-
-      if (!sb) {
-        showDbError();
-        return;
-      }
-
-      loadJobs();
+      if(allJobs.length) updateRadiusCounts();
     },
     err => {
       console.warn("Geolocation failed:", err);
-
-      if (!sb) {
-        showDbError();
-        return;
-      }
-
-      loadJobs();
     },
     { timeout: 8000, enableHighAccuracy: false }
   );
@@ -666,23 +761,30 @@ function showDbError() {
 
 function showGeoFallback() {
   console.warn("Geolocation not available");
-
-  if (sb) {
-    loadJobs();
-  } else {
-    showDbError();
-  }
 }
 
 
 function centerMapOnUser() {
   if (!userLat||!map) return;
-  map.setView([userLat,userLng],14);
   if(userMarker)map.removeLayer(userMarker);
   if(radiusCircle)map.removeLayer(radiusCircle);
   const icon=L.divIcon({className:'yoodle-pin',html:`<div class="user-ring"></div>`,iconSize:[20,20],iconAnchor:[10,10]});
   userMarker=L.marker([userLat,userLng],{icon,zIndexOffset:1000}).addTo(map);
-  radiusCircle=L.circle([userLat,userLng],{radius:RADIUS_KM*1000,color:'#9B59D4',fillColor:'#9B59D4',fillOpacity:0.06,weight:1.5,dashArray:'6 4'}).addTo(map);
+  radiusCircle=L.circle([userLat,userLng],{
+    radius:RADIUS_KM*1000,
+    color:'#9B59D4',
+    fillColor:'#9B59D4',
+    fillOpacity:0.07,
+    weight:2,
+    dashArray:'6 4'
+  }).addTo(map);
+  // invalidateSize first to fix desktop container sizing, then fitBounds
+  map.invalidateSize();
+  setTimeout(()=>{
+    map.fitBounds(radiusCircle.getBounds(),{padding:[60,60],maxZoom:14});
+    document.getElementById('map-counts').style.display='flex';
+    updateRadiusCounts();
+  },100);
 }
 
 // Max ~80m fuzzy offset — enough for privacy, not enough to jump streets
@@ -706,6 +808,8 @@ function renderMapPins(jobs) {
   pill.textContent=filtered.length===0?'No tasks open in this area yet':`${filtered.length} task${filtered.length===1?'':'s'} open`;
 }
 
+let allHelpers=[];
+
 async function loadJobs() {
   if (!sb) {
     document.getElementById('list-grid').innerHTML =
@@ -714,12 +818,19 @@ async function loadJobs() {
   }
 
   const now=new Date().toISOString();
-  const { data, error } = await sb
-    .from('tasks')
-    .select('*, profiles!tasks_poster_id_fkey(id,name,rating)')
-    .eq('status', 'open')
-    .or(`expires_at.is.null,expires_at.gt.${now}`)
-    .order('created_at', { ascending: false });
+  const pid=myProfileId||me?.id;
+
+  const[{data,error},{data:helpers}]=await Promise.all([
+    sb.from('tasks')
+      .select('*, profiles!tasks_poster_id_fkey(id,name,rating)')
+      .eq('status', 'open')
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
+      .order('created_at', { ascending: false }),
+    sb.from('profiles')
+      .select('id,name,rating,last_lat,last_lng')
+      .eq('visible_on_map', true)
+      .neq('id', pid||'00000000-0000-0000-0000-000000000000')
+  ]);
 
   if (error) {
     document.getElementById('list-grid').innerHTML =
@@ -728,14 +839,57 @@ async function loadJobs() {
   }
 
   allJobs = (data||[]).map(j=>({...j, category:(j.category||'other').toLowerCase()}));
-  renderMapPins(allJobs);
+  allHelpers = helpers||[];
   renderListGrid(allJobs);
+  updateRadiusCounts();
 }
 
 
-function mapFilterCat(el,cat){document.querySelectorAll('.map-cat').forEach(c=>c.classList.remove('active'));el.classList.add('active');mapCatFilter=cat;renderMapPins(allJobs);}
-function filterMapJobs(){renderMapPins(allJobs);}
+function mapFilterCat(el,cat){document.querySelectorAll('.map-cat').forEach(c=>c.classList.remove('active'));el.classList.add('active');mapCatFilter=cat;}
+function filterMapJobs(){}
 function listFilterCat(el,cat){document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');listCatFilter=cat;renderListGrid(allJobs);}
+
+function openRadiusSheet(){
+  document.getElementById('radius-sheet').classList.add('open');
+  renderSheetContent();
+}
+
+function switchSheetTab(tab){
+  sheetTab=tab;
+  const jobBtn=document.getElementById('sheet-tab-jobs');
+  const helperBtn=document.getElementById('sheet-tab-helpers');
+  if(tab==='jobs'){
+    jobBtn.style.background='var(--surface)';jobBtn.style.color='var(--text)';
+    helperBtn.style.background='transparent';helperBtn.style.color='var(--muted)';
+  } else {
+    helperBtn.style.background='var(--surface)';helperBtn.style.color='var(--text)';
+    jobBtn.style.background='transparent';jobBtn.style.color='var(--muted)';
+  }
+  renderSheetContent();
+}
+
+function renderSheetContent(){
+  const el=document.getElementById('sheet-content');
+  if(sheetTab==='jobs'){
+    if(!sheetJobs.length){el.innerHTML=emptyState('🌱','No jobs in this area','Try expanding the radius');return;}
+    el.innerHTML=`<div class="jobs-grid" style="padding-top:4px">${sheetJobs.map(j=>listCard(j,j.profiles)).join('')}</div>`;
+  } else {
+    if(!sheetHelpers.length){el.innerHTML=emptyState('💪','No helpers visible nearby','Helpers can enable visibility in their profile');return;}
+    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">${sheetHelpers.map(h=>{
+      const color='#9B59D4';
+      const name=h.name||'Helper';
+      const rating=h.rating?`⭐ ${h.rating}`:'New';
+      return `<div style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:50%;background:${color}22;border:2px solid ${color};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:${color};flex-shrink:0">${esc(name[0].toUpperCase())}</div>
+        <div style="min-width:0">
+          <div style="font-size:15px;font-weight:900">${esc(name)}</div>
+          <div style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</div>
+        </div>
+        <div style="margin-left:auto;font-size:12px;color:var(--lime);font-weight:800">Available</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+}
 
 function renderListGrid(jobs) {
   const pid=myProfileId||me?.id;
@@ -946,6 +1100,7 @@ async function openJob(j){
       }
     }
   }
+  document.getElementById('radius-sheet').classList.remove('open');
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(e){if(e.target.id==='modal')document.getElementById('modal').classList.remove('open');}
@@ -1435,13 +1590,31 @@ function switchTab(btn,tab){document.querySelectorAll('.tab-btn').forEach(b=>b.c
 async function loadProfile(){
   if(!me){document.getElementById('pnm').textContent='Demo User';return;}
   const name=me.user_metadata?.full_name||me.email?.split('@')[0]||'Yoodler';const url=me.user_metadata?.avatar_url;
-  document.getElementById('pnm').textContent=name;document.getElementById('pem').textContent=me.email||'';
+  document.getElementById('pnm').textContent=name;
+  document.getElementById('pem').textContent=me.email||'';
   const av=document.getElementById('pav');av.innerHTML=url?`<img src="${url}" alt="">`:name[0].toUpperCase();
 if(!sb)return;
-const{data:prof}=await sb.from('profiles').select('bio,rating,task_count,name').eq('id',myProfileId||me.id).maybeSingle();
+const{data:prof}=await sb.from('profiles').select('bio,rating,task_count,name,visible_on_map,last_lat,last_lng,helper_address').eq('id',myProfileId||me.id).maybeSingle();
 document.getElementById('p-bio').value=prof?.bio||'';
 document.getElementById('p-name').value=prof?.name||name;
 if(prof?.name){document.getElementById('pnm').textContent=prof.name;}
+// populate helper mode toggle
+const isHelper=prof?.visible_on_map||false;
+const toggle=document.getElementById('helper-toggle');
+toggle.checked=isHelper;
+updateHelperToggleUI(isHelper);
+const lbl=document.getElementById('helper-location-label');
+if(isHelper&&prof?.helper_address){
+  lbl.textContent=`📍 ${prof.helper_address} · Change`;
+  lbl.style.color='var(--lime)';
+} else if(isHelper){
+  lbl.textContent='⚠️ Add your location';
+  lbl.style.color='var(--yellow)';
+  document.getElementById('helper-location-wrap').style.display='block';
+} else {
+  lbl.textContent='Off';
+  lbl.style.color='var(--muted)';
+}
 const pid=myProfileId||me.id;
 // fetch all stats in parallel
 const[
@@ -1717,6 +1890,106 @@ async function saveBio(){
   if(error)return toast('❌ '+error.message);
   document.getElementById('pnm').textContent=name;
   toast('✅ Profile saved!');
+}
+
+// Helper mode toggle
+let helperLat=null,helperLng=null;
+let helperLocSuggestionsData=[];
+let helperLocDebounceTimer=null;
+
+function updateHelperToggleUI(on){
+  const track=document.getElementById('helper-toggle-track');
+  const thumb=document.getElementById('helper-toggle-thumb');
+  track.style.background=on?'var(--purple)':'var(--border)';
+  thumb.style.transform=on?'translateX(20px)':'translateX(0)';
+}
+
+function onHelperToggle(){
+  const on=document.getElementById('helper-toggle').checked;
+  updateHelperToggleUI(on);
+  if(on){
+    document.getElementById('helper-location-label').textContent='⚠️ Add your location';
+    document.getElementById('helper-location-label').style.color='var(--yellow)';
+    document.getElementById('helper-location-wrap').style.display='block';
+  } else {
+    document.getElementById('helper-location-label').textContent='Off';
+    document.getElementById('helper-location-label').style.color='var(--muted)';
+    document.getElementById('helper-location-wrap').style.display='none';
+    if(sb&&me) sb.from('profiles').update({visible_on_map:false}).eq('id',myProfileId||me.id).then(({error})=>{
+      if(error)toast('❌ '+error.message);
+      else{toast('Helper mode off');loadJobs();}
+    });
+  }
+}
+
+function onHelperLocInput(val){
+  helperLat=null;helperLng=null;
+  clearTimeout(helperLocDebounceTimer);
+  const sug=document.getElementById('helper-loc-suggestions');
+  if(val.length<3){sug.classList.remove('open');return;}
+  helperLocDebounceTimer=setTimeout(()=>fetchHelperLocSuggestions(val),400);
+}
+
+async function fetchHelperLocSuggestions(query){
+  const sug=document.getElementById('helper-loc-suggestions');
+  const st=document.getElementById('helper-loc-status');
+  try{
+    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6&countrycodes=ca,us`;
+    const r=await fetch(url,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
+    const data=await r.json();
+    helperLocSuggestionsData=data;
+    if(!data.length){sug.classList.remove('open');st.textContent='No addresses found — try different search';st.className='loc-status manual';return;}
+    sug.innerHTML=data.map((item,i)=>{
+      const a=item.address||{};
+      const main=a.house_number?`${a.house_number} ${a.road||''}`.trim():(a.road||a.neighbourhood||a.suburb||item.display_name.split(',')[0]);
+      const parts=[a.suburb||a.neighbourhood,a.city||a.town||a.village,a.state_code||a.state].filter(Boolean);
+      return`<div class="loc-suggestion" onclick="selectHelperSuggestion(${i})">
+        <div class="sug-main">${esc(main.trim())}</div>
+        <div class="sug-sub">${esc(parts.join(', '))}</div>
+      </div>`;
+    }).join('');
+    sug.classList.add('open');
+    st.textContent='';st.className='loc-status';
+  }catch(e){st.textContent='Could not search — check connection';st.className='loc-status manual';}
+}
+
+function selectHelperSuggestion(i){
+  const item=helperLocSuggestionsData[i];if(!item)return;
+  const a=item.address||{};
+  const road=a.house_number?`${a.house_number} ${a.road||''}`.trim():(a.road||'');
+  const area=a.suburb||a.neighbourhood||a.city_district||'';
+  const city=a.city||a.town||a.village||a.municipality||'';
+  const prov=a.state_code||a.state||'';
+  const seen=new Set();
+  const display=[road,area,city,prov].filter(v=>{if(!v||seen.has(v))return false;seen.add(v);return true;}).join(', ');
+  document.getElementById('helper-loc').value=display||item.display_name.split(',').slice(0,3).join(',').trim();
+  helperLat=parseFloat(item.lat);helperLng=parseFloat(item.lon);
+  const st=document.getElementById('helper-loc-status');
+  st.textContent=`📍 ${esc(city||area||display)}`;
+  st.className='loc-status verified';
+  document.getElementById('helper-loc-suggestions').classList.remove('open');
+}
+
+function showHelperSuggestions(){document.getElementById('helper-loc-suggestions').classList.add('open');}
+function hideHelperSuggestions(){document.getElementById('helper-loc-suggestions').classList.remove('open');}
+
+async function saveHelperMode(){
+  if(!sb||!me)return toast('Not signed in');
+  if(!helperLat||!helperLng)return toast('⚠️ Please select an address from the suggestions');
+  const helperAddress=document.getElementById('helper-loc').value||'';
+  const{error}=await sb.from('profiles').update({visible_on_map:true,last_lat:helperLat,last_lng:helperLng,helper_address:helperAddress}).eq('id',myProfileId||me.id);
+  if(error)return toast('❌ '+error.message);
+  document.getElementById('helper-location-wrap').style.display='none';
+  const lbl=document.getElementById('helper-location-label');
+  lbl.textContent=`📍 ${helperAddress} · Change`;
+  lbl.style.color='var(--lime)';
+  toast('✅ Helper mode enabled!');
+  loadJobs();
+}
+
+function toggleHelperInput(){
+  const wrap=document.getElementById('helper-location-wrap');
+  wrap.style.display=wrap.style.display==='none'?'block':'none';
 }
 function openRatingModal(taskId, ratedId, prompt){
   ratingTaskId=taskId;ratingRatedId=ratedId;selectedRating=0;
