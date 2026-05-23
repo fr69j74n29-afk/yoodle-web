@@ -414,10 +414,38 @@ body{
   <!-- PROFILE -->
   <div class="app-view" id="app-profile">
     <div class="profile-scroll">
-      <div class="profile-hero">
-        <div class="profile-av" id="pav">?</div>
-        <div class="profile-nm" id="pnm">—</div>
-        <div class="profile-em" id="pem">—</div>
+      <!-- Hero: avatar left, name + toggle right -->
+      <div style="display:flex;align-items:center;gap:16px;padding:20px 0 16px">
+        <div class="profile-av" id="pav" style="margin:0;flex-shrink:0">?</div>
+        <div style="flex:1;min-width:0">
+          <div class="profile-nm" id="pnm" style="margin-bottom:4px">—</div>
+          <!-- Helper toggle inline -->
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--text)">💪 Available as Helper</div>
+              <div id="helper-location-label" style="font-size:11px;color:var(--muted);margin-top:1px;cursor:pointer" onclick="toggleHelperInput()">—</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+              <input type="checkbox" id="helper-toggle" onchange="onHelperToggle()" style="opacity:0;width:0;height:0">
+              <span id="helper-toggle-track" style="position:absolute;inset:0;border-radius:100px;background:var(--border);transition:background .2s;cursor:pointer"></span>
+              <span id="helper-toggle-thumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Helper location input (hidden until toggled or change tapped) -->
+      <div id="helper-location-wrap" style="display:none;background:var(--surface);border-radius:var(--radius-sm);border:1.5px solid var(--border);padding:14px;margin-bottom:16px">
+        <div style="font-size:12px;color:var(--yellow);font-weight:700;margin-bottom:10px;line-height:1.5">
+          📍 Enter the area where you're available to help. Remember to keep this updated to where you currently are.
+        </div>
+        <div style="position:relative">
+          <input class="form-inp" id="helper-loc" type="text" placeholder="Start typing your address…" autocomplete="off"
+            oninput="onHelperLocInput(this.value)" onfocus="if(this.value.length>2)showHelperSuggestions()" onblur="setTimeout(hideHelperSuggestions,200)">
+          <div class="loc-suggestions" id="helper-loc-suggestions"></div>
+        </div>
+        <div class="loc-status" id="helper-loc-status">Select your area from the suggestions</div>
+        <button class="btn-primary" onclick="saveHelperMode()" style="margin-top:12px">Save Location ✨</button>
       </div>
       <div class="stats-row" style="grid-template-columns:1fr 1fr">
         <div class="stat-c" style="text-align:left;padding:16px">
@@ -445,33 +473,6 @@ body{
         <button class="btn-primary" onclick="saveBio()">Save Profile ✨</button>
       </div>
       <button class="btn-so" onclick="signOut()">Sign Out</button>
-
-      <!-- HELPER MODE -->
-      <div style="margin-top:20px;background:var(--surface);border-radius:var(--radius);border:1.5px solid var(--border);overflow:hidden">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px">
-          <div>
-            <div style="font-size:15px;font-weight:900">💪 Helper Mode</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:2px">Show me as available on the map</div>
-          </div>
-          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
-            <input type="checkbox" id="helper-toggle" onchange="onHelperToggle()" style="opacity:0;width:0;height:0">
-            <span id="helper-toggle-track" style="position:absolute;inset:0;border-radius:100px;background:var(--border);transition:background .2s;cursor:pointer"></span>
-            <span id="helper-toggle-thumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none"></span>
-          </label>
-        </div>
-        <div id="helper-location-wrap" style="display:none;padding:0 16px 16px">
-          <div style="font-size:12px;color:var(--yellow);font-weight:700;margin-bottom:10px;line-height:1.5">
-            📍 Enter the area where you're available to help. Remember to keep this updated to where you currently are.
-          </div>
-          <div style="position:relative">
-            <input class="form-inp" id="helper-loc" type="text" placeholder="Start typing your address…" autocomplete="off"
-              oninput="onHelperLocInput(this.value)" onfocus="if(this.value.length>2)showHelperSuggestions()" onblur="setTimeout(hideHelperSuggestions,200)">
-            <div class="loc-suggestions" id="helper-loc-suggestions"></div>
-          </div>
-          <div class="loc-status" id="helper-loc-status">Select your area from the suggestions</div>
-          <button class="btn-primary" onclick="saveHelperMode()" style="margin-top:12px">Save Helper Location ✨</button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -1588,7 +1589,7 @@ function switchTab(btn,tab){document.querySelectorAll('.tab-btn').forEach(b=>b.c
 async function loadProfile(){
   if(!me){document.getElementById('pnm').textContent='Demo User';return;}
   const name=me.user_metadata?.full_name||me.email?.split('@')[0]||'Yoodler';const url=me.user_metadata?.avatar_url;
-  document.getElementById('pnm').textContent=name;document.getElementById('pem').textContent=me.email||'';
+  document.getElementById('pnm').textContent=name;
   const av=document.getElementById('pav');av.innerHTML=url?`<img src="${url}" alt="">`:name[0].toUpperCase();
 if(!sb)return;
 const{data:prof}=await sb.from('profiles').select('bio,rating,task_count,name,visible_on_map,last_lat,last_lng').eq('id',myProfileId||me.id).maybeSingle();
@@ -1603,6 +1604,15 @@ updateHelperToggleUI(isHelper);
 if(isHelper&&prof?.last_lat&&prof?.last_lng){
   document.getElementById('helper-loc-status').textContent='✅ Location saved';
   document.getElementById('helper-loc-status').className='loc-status verified';
+  document.getElementById('helper-location-label').textContent='📍 Location saved · Change';
+  document.getElementById('helper-location-label').style.color='var(--lime)';
+} else if(isHelper){
+  document.getElementById('helper-location-label').textContent='⚠️ Add your location';
+  document.getElementById('helper-location-label').style.color='var(--yellow)';
+  document.getElementById('helper-location-wrap').style.display='block';
+} else {
+  document.getElementById('helper-location-label').textContent='Off';
+  document.getElementById('helper-location-label').style.color='var(--muted)';
 }
 const pid=myProfileId||me.id;
 // fetch all stats in parallel
@@ -1889,17 +1899,21 @@ let helperLocDebounceTimer=null;
 function updateHelperToggleUI(on){
   const track=document.getElementById('helper-toggle-track');
   const thumb=document.getElementById('helper-toggle-thumb');
-  const wrap=document.getElementById('helper-location-wrap');
   track.style.background=on?'var(--purple)':'var(--border)';
   thumb.style.transform=on?'translateX(20px)':'translateX(0)';
-  wrap.style.display=on?'block':'none';
 }
 
 function onHelperToggle(){
   const on=document.getElementById('helper-toggle').checked;
   updateHelperToggleUI(on);
-  if(!on){
-    // immediately save visible_on_map=false
+  if(on){
+    document.getElementById('helper-location-label').textContent='⚠️ Add your location';
+    document.getElementById('helper-location-label').style.color='var(--yellow)';
+    document.getElementById('helper-location-wrap').style.display='block';
+  } else {
+    document.getElementById('helper-location-label').textContent='Off';
+    document.getElementById('helper-location-label').style.color='var(--muted)';
+    document.getElementById('helper-location-wrap').style.display='none';
     if(sb&&me) sb.from('profiles').update({visible_on_map:false}).eq('id',myProfileId||me.id).then(({error})=>{
       if(error)toast('❌ '+error.message);
       else{toast('Helper mode off');loadJobs();}
@@ -1963,8 +1977,18 @@ async function saveHelperMode(){
   if(!helperLat||!helperLng)return toast('⚠️ Please select an address from the suggestions');
   const{error}=await sb.from('profiles').update({visible_on_map:true,last_lat:helperLat,last_lng:helperLng}).eq('id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
+  // close input, show change location link
+  document.getElementById('helper-location-wrap').style.display='none';
+  const loc=document.getElementById('helper-loc').value;
+  document.getElementById('helper-location-label').textContent=`📍 ${loc} · Change`;
+  document.getElementById('helper-location-label').style.color='var(--lime)';
   toast('✅ Helper mode enabled!');
-  loadJobs();// refresh map counts
+  loadJobs();
+}
+
+function toggleHelperInput(){
+  const wrap=document.getElementById('helper-location-wrap');
+  wrap.style.display=wrap.style.display==='none'?'block':'none';
 }
 function openRatingModal(taskId, ratedId, prompt){
   ratingTaskId=taskId;ratingRatedId=ratedId;selectedRating=0;
