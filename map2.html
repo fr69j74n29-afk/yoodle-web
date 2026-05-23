@@ -423,7 +423,7 @@ body{
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
             <div>
               <div style="font-size:13px;font-weight:800;color:var(--text)">💪 Available as Helper</div>
-              <div id="helper-location-label" style="font-size:11px;color:var(--muted);margin-top:1px;cursor:pointer" onclick="toggleHelperInput()">—</div>
+              <button id="helper-location-label" onclick="toggleHelperInput()" style="background:none;border:none;font-size:11px;color:var(--muted);margin-top:2px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;padding:0;text-align:left">—</button>
             </div>
             <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
               <input type="checkbox" id="helper-toggle" onchange="onHelperToggle()" style="opacity:0;width:0;height:0">
@@ -826,7 +826,7 @@ async function loadJobs() {
       .or(`expires_at.is.null,expires_at.gt.${now}`)
       .order('created_at', { ascending: false }),
     sb.from('profiles')
-      .select('id,name,rating,last_lat,last_lng,avatar_color')
+      .select('id,name,rating,last_lat,last_lng')
       .eq('visible_on_map', true)
       .neq('id', pid||'00000000-0000-0000-0000-000000000000')
   ]);
@@ -875,7 +875,7 @@ function renderSheetContent(){
   } else {
     if(!sheetHelpers.length){el.innerHTML=emptyState('💪','No helpers visible nearby','Helpers can enable visibility in their profile');return;}
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">${sheetHelpers.map(h=>{
-      const color=h.avatar_color||'#9B59D4';
+      const color=h.rating?'#9B59D4':'#06B6D4';
       const name=h.name||'Helper';
       const rating=h.rating?`⭐ ${h.rating}`:'New';
       return `<div style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;align-items:center;gap:12px">
@@ -1979,8 +1979,9 @@ async function saveHelperMode(){
   if(error)return toast('❌ '+error.message);
   // close input, show change location link
   document.getElementById('helper-location-wrap').style.display='none';
-  const loc=document.getElementById('helper-loc').value;
-  document.getElementById('helper-location-label').textContent=`📍 ${loc} · Change`;
+  const locParts=(document.getElementById('helper-loc').value||'').split(',');
+  const area=locParts[0]?.trim()||'Location saved';
+  document.getElementById('helper-location-label').textContent=`📍 ${area} · Change`;
   document.getElementById('helper-location-label').style.color='var(--lime)';
   toast('✅ Helper mode enabled!');
   loadJobs();
