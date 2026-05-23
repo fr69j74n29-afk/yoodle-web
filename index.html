@@ -307,22 +307,19 @@ body{
 <!-- CONFIG BANNER -->
 <div class="cfg-banner" id="cfg-banner">⚠️ Fill in SUPABASE_URL and SUPABASE_ANON_KEY in the &lt;script&gt; to connect your database.</div>
 
-<!-- iOS PWA BANNER -->
-<div id="ios-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:998;padding:12px 16px max(12px,env(safe-area-inset-bottom));background:linear-gradient(135deg,rgba(155,89,212,.97),rgba(236,72,153,.97));backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.15)">
-  <div style="display:flex;align-items:flex-start;gap:12px">
-    <div style="font-size:28px;flex-shrink:0;line-height:1">📲</div>
-    <div style="flex:1;min-width:0">
-      <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:3px">Get notified about nearby jobs!</div>
-      <div style="font-size:12px;color:rgba(255,255,255,.85);font-weight:700;line-height:1.5">Tap <span style="background:rgba(255,255,255,.25);border-radius:4px;padding:1px 5px">Share</span> then <span style="background:rgba(255,255,255,.25);border-radius:4px;padding:1px 5px">Add to Home Screen</span> to enable push notifications on iPhone.</div>
-    </div>
-    <button onclick="dismissIosBanner()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:16px;cursor:pointer;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Nunito',sans-serif;font-weight:900">✕</button>
-  </div>
-</div>
+
 
 <!-- MAIN APP -->
 <div id="view-main">
   <div class="top-bar">
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
+    <!-- Notification nudge bar — between logo and avatar -->
+    <div id="notif-nudge" style="display:none;flex:1;margin:0 10px;cursor:pointer" onclick="nav('profile')">
+      <div style="background:linear-gradient(135deg,rgba(155,89,212,.2),rgba(236,72,153,.2));border:1.5px solid rgba(155,89,212,.4);border-radius:100px;padding:5px 12px;display:flex;align-items:center;gap:6px">
+        <span style="font-size:14px">🔔</span>
+        <span style="font-size:11px;font-weight:900;color:var(--purple);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="notif-nudge-text">Enable notifications</span>
+      </div>
+    </div>
     <div class="top-avatar" onclick="nav('profile')" id="top-av">?</div>
   </div>
 
@@ -966,7 +963,7 @@ async function showApp(){
   loadJobs();
   subscribeToMessages();
   registerOneSignal();
-  setTimeout(showIosBanner, 3000);
+  setTimeout(updateNotifNudge, 2000);
 }
 
 let oneSignalReady=false;
@@ -2107,18 +2104,19 @@ function renderStars(n){
 function isIos(){return/iphone|ipad|ipod/i.test(navigator.userAgent);}
 function isInStandaloneMode(){return window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone===true;}
 
-function showIosBanner(){
-  if(!isIos())return;
-  if(isInStandaloneMode())return;
-  if(localStorage.getItem('ios-banner-dismissed'))return;
-  const banner=document.getElementById('ios-banner');
-  if(banner)banner.style.display='block';
-}
-
-function dismissIosBanner(){
-  localStorage.setItem('ios-banner-dismissed','1');
-  const banner=document.getElementById('ios-banner');
-  if(banner)banner.style.display='none';
+function updateNotifNudge(){
+  const nudge=document.getElementById('notif-nudge');
+  const nudgeText=document.getElementById('notif-nudge-text');
+  if(!nudge)return;
+  const granted=Notification?.permission==='granted';
+  const iosNotReady=isIos()&&!isInStandaloneMode();
+  if(granted&&!iosNotReady){nudge.style.display='none';}
+  else{
+    nudge.style.display='flex';
+    if(iosNotReady)nudgeText.textContent='Add to Home Screen for notifications';
+    else if(Notification?.permission==='denied')nudgeText.textContent='Notifications blocked — tap to fix';
+    else nudgeText.textContent='Enable notifications';
+  }
 }
 
 function updateNotifTip(){
@@ -2141,6 +2139,7 @@ function updateNotifTip(){
     tip.style.display='block';
     body.innerHTML='Enable notifications to get alerted about new jobs and messages near you.';
   }
+  updateNotifNudge();
 }
 
 async function submitRating(){
