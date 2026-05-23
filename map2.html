@@ -320,19 +320,30 @@ body{
       <div class="map-controls">
         <button class="map-locate-btn" onclick="locateUser()" title="Find my location">📍</button>
       </div>
-      <!-- Floating count pills inside radius -->
-      <div id="map-counts" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;pointer-events:all;display:none;flex-direction:column;align-items:center;gap:6px">
-        <button onclick="openRadiusSheet()" style="background:rgba(10,10,10,.85);backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:100px;padding:8px 18px;display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Nunito',sans-serif">
-          <span style="font-size:13px;font-weight:900;color:var(--purple)" id="map-jobs-count">0 jobs</span>
-          <span style="width:1px;height:14px;background:var(--border)"></span>
-          <span style="font-size:13px;font-weight:900;color:var(--lime)" id="map-helpers-count">0 helpers</span>
-        </button>
-      </div>
-      <!-- Radius controls -->
-      <div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;display:flex;align-items:center;gap:12px;background:rgba(10,10,10,.85);backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:100px;padding:8px 20px">
-        <button onclick="changeRadius(-1)" style="width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;line-height:1">−</button>
-        <span id="radius-label" style="font-size:14px;font-weight:900;color:var(--text);min-width:40px;text-align:center">3 km</span>
-        <button onclick="changeRadius(1)" style="width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;line-height:1">+</button>
+      <!-- Floating combined card: counts + radius -->
+      <div id="map-counts" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);z-index:10;pointer-events:all;display:none;flex-direction:column;align-items:center">
+        <div style="background:rgba(10,10,10,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1.5px solid var(--border);border-radius:20px;overflow:hidden;min-width:200px">
+          <!-- Count row -->
+          <button onclick="openRadiusSheet()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 20px;background:transparent;border:none;cursor:pointer;font-family:'Nunito',sans-serif;border-bottom:1px solid var(--border)">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+              <span style="font-size:18px;font-weight:900;color:var(--purple);line-height:1" id="map-jobs-count">0</span>
+              <span style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Jobs</span>
+            </div>
+            <span style="width:1px;height:28px;background:var(--border)"></span>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+              <span style="font-size:18px;font-weight:900;color:var(--lime);line-height:1" id="map-helpers-count">0</span>
+              <span style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Helpers</span>
+            </div>
+          </button>
+          <!-- Radius row -->
+          <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 16px">
+            <button onclick="changeRadius(-1)" style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;line-height:1;flex-shrink:0">−</button>
+            <span id="radius-label" style="font-size:13px;font-weight:900;color:var(--muted);min-width:36px;text-align:center">3 km</span>
+            <button onclick="changeRadius(1)" style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;line-height:1;flex-shrink:0">+</button>
+          </div>
+        </div>
+        <!-- Arrow pointing down to center -->
+        <div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid var(--border)"></div>
       </div>
     </div>
   </div>
@@ -645,20 +656,23 @@ function changeRadius(delta){
 
 function updateRadiusCounts(){
   if(!userLat||!userLng)return;
-  // filter jobs within radius
+  const pid=myProfileId||me?.id;
+  // filter jobs within radius — exclude own jobs
   sheetJobs=(allJobs||[]).filter(j=>{
     if(!j.lat||!j.lng)return false;
+    if(pid&&j.poster_id===pid)return false;
     return haversineKm(userLat,userLng,j.lat,j.lng)<=RADIUS_KM;
   });
-  // filter helpers within radius
+  // filter helpers within radius — exclude self
   sheetHelpers=(allHelpers||[]).filter(h=>{
     if(!h.last_lat||!h.last_lng)return false;
+    if(pid&&h.id===pid)return false;
     return haversineKm(userLat,userLng,h.last_lat,h.last_lng)<=RADIUS_KM;
   });
   const jobCount=sheetJobs.length;
   const helperCount=sheetHelpers.length;
-  document.getElementById('map-jobs-count').textContent=`${jobCount} job${jobCount===1?'':'s'}`;
-  document.getElementById('map-helpers-count').textContent=`${helperCount} helper${helperCount===1?'':'s'}`;
+  document.getElementById('map-jobs-count').textContent=jobCount;
+  document.getElementById('map-helpers-count').textContent=helperCount;
   document.getElementById('sheet-jobs-count').textContent=jobCount;
   document.getElementById('sheet-helpers-count').textContent=helperCount;
   document.getElementById('map-counts').style.display='flex';
