@@ -730,6 +730,7 @@ function nav(view) {
   document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
   if(view==='map'){setTimeout(()=>map.invalidateSize(),100);}
   if(view==='myjobs')loadMyJobs();
+  if(view==='post')resetPost();
   if(view==='messages'){clearMessageBadge();loadMessages();}
   if(view==='profile')loadProfile();
 }
@@ -1112,10 +1113,10 @@ function selectLocSuggestion(i){
   const display=[road,area,city,prov].filter(v=>{if(!v||seen.has(v))return false;seen.add(v);return true;}).join(', ');
   const inp=document.getElementById('p-loc');
   inp.value=display||item.display_name.split(',').slice(0,3).join(',').trim();
-  gpsLat=parseFloat(item.lat);gpsLng=parseFloat(item.lon);locVerified=true;
+  gpsLat=parseFloat(item.lat);gpsLng=parseFloat(item.lon);locVerified=false;
   const st=document.getElementById('loc-status');
-  st.innerHTML=`✅ Pinned to: <span style="color:var(--text)">${esc(item.display_name)}</span>`;
-  st.className='loc-status verified';
+  st.innerHTML=`📍 Address confirmed: <span style="color:var(--text)">${esc(item.display_name.split(',').slice(0,3).join(',').trim())}</span>`;
+  st.className='loc-status manual';
   hideLocSuggestions();
 }
 
@@ -1138,7 +1139,18 @@ async function postJob(){
   toast('🎉 Job posted! Expires in 14 days.');resetPost();nav('map');
 }
 
-function resetPost(){selCatVal=null;gpsLat=null;gpsLng=null;locVerified=false;document.querySelectorAll('.cat-opt').forEach(c=>c.classList.remove('sel'));['p-title','p-desc','p-budget'].forEach(id=>document.getElementById(id).value='');const loc=document.getElementById('p-loc');loc.value='';loc.placeholder='Start typing your address…';const st=document.getElementById('loc-status');st.textContent='Type an address or tap GPS to auto-fill';st.className='loc-status';document.getElementById('gps-btn').textContent='📍 GPS';hideLocSuggestions();}
+function resetPost(){
+  selCatVal='other';
+  gpsLat=null;gpsLng=null;locVerified=false;
+  document.querySelectorAll('.cat-opt').forEach(c=>c.classList.remove('sel'));
+  const otherBtn=document.querySelector('.cat-opt[data-cat="other"]');
+  if(otherBtn)otherBtn.classList.add('sel');
+  ['p-title','p-desc','p-budget'].forEach(id=>document.getElementById(id).value='');
+  const loc=document.getElementById('p-loc');loc.value='';loc.placeholder='Start typing your address…';
+  const st=document.getElementById('loc-status');st.textContent='Type an address and select from suggestions, or tap GPS';st.className='loc-status';
+  document.getElementById('gps-btn').textContent='📍 GPS';
+  hideLocSuggestions();
+}
 
 async function loadMyJobs(){
   const g=document.getElementById('my-grid');g.innerHTML=spin();
