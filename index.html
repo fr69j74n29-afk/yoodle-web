@@ -851,7 +851,15 @@ async function openJob(j){
   activeJob=j;const color=CAT_COLOR[j.category]||'#9B59D4';
   document.getElementById('m-title').textContent=j.title;
   const locTag=j.location_verified?'<span style="color:var(--lime);font-size:11px">✅ GPS Verified</span>':'<span style="color:var(--yellow);font-size:11px">⚠️ GPS Unverified</span>';
-  document.getElementById('m-meta').innerHTML=`📍 ${esc(j.address||'Nearby')} ${locTag} &nbsp;·&nbsp; ${timeAgo(j.created_at)}`;
+  let modalLocLabel;
+  if(userLat&&userLng&&j.lat&&j.lng){
+    const d=haversineKm(userLat,userLng,j.lat,j.lng);
+    modalLocLabel=d<=1?'Less than 1 km away':`${d.toFixed(1)} km away`;
+  } else {
+    const parts=(j.address||'Nearby').split(',').map(s=>s.trim());
+    modalLocLabel=parts.length>=3?`${parts[1]}, ${parts[2]}`:(parts[1]||parts[0]||'Nearby');
+  }
+  document.getElementById('m-meta').innerHTML=`📍 ${esc(modalLocLabel)} ${locTag} &nbsp;·&nbsp; ${timeAgo(j.created_at)}`;
   document.getElementById('m-desc').textContent=j.description||'';
   document.getElementById('m-budget').textContent=`$${j.price??'?'}`;
 
