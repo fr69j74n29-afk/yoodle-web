@@ -480,9 +480,9 @@ body{
     <div class="modal-desc" id="m-desc">—</div>
     <div class="modal-grid">
       <div class="modal-pill"><div class="modal-pill-l">Budget</div><div class="modal-pill-v" id="m-budget" style="color:var(--lime)">—</div></div>
-      <div class="modal-pill" id="m-poster-pill" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div class="modal-pill" id="m-poster-pill">
         <div class="modal-pill-l">Posted by</div>
-        <div id="m-poster" style="display:flex;align-items:center;gap:8px;margin-top:6px;width:100%">—</div>
+        <div id="m-poster" style="display:flex;align-items:center;gap:8px;margin-top:8px">—</div>
       </div>
     </div>
     <button class="btn-primary" id="m-action" onclick="jobAction()">I Can Help! 🙋</button>
@@ -875,9 +875,9 @@ async function openJob(j){
     const prating=prof?.rating?`<span style="color:var(--yellow);font-size:13px;font-weight:800">⭐ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:12px;font-weight:700">New</span>`;
     const previews=`<span style="color:var(--muted);font-size:11px;font-weight:700">(${doneCount||0} reviews)</span>`;
     document.getElementById('m-poster').innerHTML=`
-      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;width:100%">
-        <div style="width:38px;height:38px;border-radius:50%;background:${color}33;border:1.5px solid ${color}66;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:${color}">${esc(pname[0].toUpperCase())}</div>
-        <div style="font-size:13px;font-weight:900;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${esc(pname)}</div>
+      <div style="width:38px;height:38px;border-radius:50%;background:${color}33;border:1.5px solid ${color}66;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:${color};flex-shrink:0">${esc(pname[0].toUpperCase())}</div>
+      <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
         <div style="display:flex;align-items:center;gap:5px">${prating}${previews}</div>
       </div>`;
   }
