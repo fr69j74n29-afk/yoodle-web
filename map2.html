@@ -418,12 +418,13 @@ body{
       <div style="display:flex;align-items:center;gap:16px;padding:20px 0 16px">
         <div class="profile-av" id="pav" style="margin:0;flex-shrink:0">?</div>
         <div style="flex:1;min-width:0">
-          <div class="profile-nm" id="pnm" style="margin-bottom:4px">—</div>
+          <div class="profile-nm" id="pnm" style="margin-bottom:2px">—</div>
+          <div id="pem" style="font-size:12px;color:var(--muted);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
           <!-- Helper toggle inline -->
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-            <div>
+            <div style="min-width:0">
               <div style="font-size:13px;font-weight:800;color:var(--text)">💪 Available as Helper</div>
-              <button id="helper-location-label" onclick="toggleHelperInput()" style="background:none;border:none;font-size:11px;color:var(--muted);margin-top:2px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;padding:0;text-align:left">—</button>
+              <button id="helper-location-label" onclick="toggleHelperInput()" style="background:none;border:none;font-size:11px;color:var(--muted);margin-top:2px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;padding:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">Off</button>
             </div>
             <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
               <input type="checkbox" id="helper-toggle" onchange="onHelperToggle()" style="opacity:0;width:0;height:0">
@@ -1590,9 +1591,10 @@ async function loadProfile(){
   if(!me){document.getElementById('pnm').textContent='Demo User';return;}
   const name=me.user_metadata?.full_name||me.email?.split('@')[0]||'Yoodler';const url=me.user_metadata?.avatar_url;
   document.getElementById('pnm').textContent=name;
+  document.getElementById('pem').textContent=me.email||'';
   const av=document.getElementById('pav');av.innerHTML=url?`<img src="${url}" alt="">`:name[0].toUpperCase();
 if(!sb)return;
-const{data:prof}=await sb.from('profiles').select('bio,rating,task_count,name,visible_on_map,last_lat,last_lng').eq('id',myProfileId||me.id).maybeSingle();
+const{data:prof}=await sb.from('profiles').select('bio,rating,task_count,name,visible_on_map,last_lat,last_lng,helper_address').eq('id',myProfileId||me.id).maybeSingle();
 document.getElementById('p-bio').value=prof?.bio||'';
 document.getElementById('p-name').value=prof?.name||name;
 if(prof?.name){document.getElementById('pnm').textContent=prof.name;}
@@ -1601,18 +1603,17 @@ const isHelper=prof?.visible_on_map||false;
 const toggle=document.getElementById('helper-toggle');
 toggle.checked=isHelper;
 updateHelperToggleUI(isHelper);
-if(isHelper&&prof?.last_lat&&prof?.last_lng){
-  document.getElementById('helper-loc-status').textContent='✅ Location saved';
-  document.getElementById('helper-loc-status').className='loc-status verified';
-  document.getElementById('helper-location-label').textContent='📍 Location saved · Change';
-  document.getElementById('helper-location-label').style.color='var(--lime)';
+const lbl=document.getElementById('helper-location-label');
+if(isHelper&&prof?.helper_address){
+  lbl.textContent=`📍 ${prof.helper_address} · Change`;
+  lbl.style.color='var(--lime)';
 } else if(isHelper){
-  document.getElementById('helper-location-label').textContent='⚠️ Add your location';
-  document.getElementById('helper-location-label').style.color='var(--yellow)';
+  lbl.textContent='⚠️ Add your location';
+  lbl.style.color='var(--yellow)';
   document.getElementById('helper-location-wrap').style.display='block';
 } else {
-  document.getElementById('helper-location-label').textContent='Off';
-  document.getElementById('helper-location-label').style.color='var(--muted)';
+  lbl.textContent='Off';
+  lbl.style.color='var(--muted)';
 }
 const pid=myProfileId||me.id;
 // fetch all stats in parallel
@@ -1975,14 +1976,13 @@ function hideHelperSuggestions(){document.getElementById('helper-loc-suggestions
 async function saveHelperMode(){
   if(!sb||!me)return toast('Not signed in');
   if(!helperLat||!helperLng)return toast('⚠️ Please select an address from the suggestions');
-  const{error}=await sb.from('profiles').update({visible_on_map:true,last_lat:helperLat,last_lng:helperLng}).eq('id',myProfileId||me.id);
+  const helperAddress=document.getElementById('helper-loc').value||'';
+  const{error}=await sb.from('profiles').update({visible_on_map:true,last_lat:helperLat,last_lng:helperLng,helper_address:helperAddress}).eq('id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
-  // close input, show change location link
   document.getElementById('helper-location-wrap').style.display='none';
-  const locParts=(document.getElementById('helper-loc').value||'').split(',');
-  const area=locParts[0]?.trim()||'Location saved';
-  document.getElementById('helper-location-label').textContent=`📍 ${area} · Change`;
-  document.getElementById('helper-location-label').style.color='var(--lime)';
+  const lbl=document.getElementById('helper-location-label');
+  lbl.textContent=`📍 ${helperAddress} · Change`;
+  lbl.style.color='var(--lime)';
   toast('✅ Helper mode enabled!');
   loadJobs();
 }
