@@ -712,7 +712,8 @@ function nav(view) {
   document.querySelectorAll('.app-view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-i').forEach(n=>n.classList.remove('active'));
   document.getElementById('app-'+view).classList.add('active');
-  document.getElementById('ni-'+view).classList.add('active');
+  const navBtn=document.getElementById('ni-'+view);
+  if(navBtn)navBtn.classList.add('active');
   document.getElementById('fab').style.display=view==='map'?'flex':'none';
   if(view==='map'){setTimeout(()=>map.invalidateSize(),100);}
   if(view==='myjobs')loadMyJobs();
