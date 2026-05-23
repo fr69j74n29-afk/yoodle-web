@@ -1125,7 +1125,6 @@ function hideLocSuggestions(){document.getElementById('loc-suggestions').classLi
 
 async function postJob(){
   const title=document.getElementById('p-title').value.trim();const desc=document.getElementById('p-desc').value.trim();const budget=document.getElementById('p-budget').value;const loc=document.getElementById('p-loc').value.trim();
-  if(!selCatVal)return toast('Pick a category first!');
   if(!title)return toast('Add a job title!');
   if(!desc)return toast('Describe the job!');
   if(!loc)return toast('Add your location!');
