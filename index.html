@@ -673,7 +673,7 @@ function initMap() {
 }
 
 function changeRadius(delta){
-  let step = (RADIUS_KM >= 5) ? 10 : 1;
+  let step = (RADIUS_KM >= 5) ? 50 : 1;
   RADIUS_KM = RADIUS_KM + (delta * step);
   RADIUS_KM = Math.min(700, Math.max(1, RADIUS_KM));
   document.getElementById('radius-label').textContent=`${RADIUS_KM} km`;
