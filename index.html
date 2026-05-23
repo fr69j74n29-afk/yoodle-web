@@ -726,6 +726,8 @@ function nav(view) {
   const navBtn=document.getElementById('ni-'+view);
   if(navBtn)navBtn.classList.add('active');
   document.getElementById('fab').style.display=view==='map'?'flex':'none';
+  // close any open modals when navigating
+  document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
   if(view==='map'){setTimeout(()=>map.invalidateSize(),100);}
   if(view==='myjobs')loadMyJobs();
   if(view==='messages'){clearMessageBadge();loadMessages();}
@@ -1014,7 +1016,7 @@ async function assignApplicant(taskId,appId,applicantId,applicantName){
   await sb.from('messages').insert({task_id:taskId,sender_id:pid,receiver_id:applicantId,body:`🎉 Great news, ${applicantName}! You've been selected for this job. Let's coordinate the details.`,read:false});
   document.getElementById('applicants-modal').classList.remove('open');
   toast(`✅ ${applicantName} assigned!`);
-  loadJobs();loadMessages();
+  loadJobs();loadMessages();loadMyJobs();
 }
 
 async function unclaimJob(){
