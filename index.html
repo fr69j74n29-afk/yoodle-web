@@ -1583,8 +1583,7 @@ async function submitRating(){
   // update aggregate rating on profile
   const{data:allRatings}=await sb.from('ratings').select('score').eq('rated_id',ratingRatedId);
   if(allRatings?.length){
-    const avg=allRatings.reduce((s,r)=>s+r.score,0)/allRatings.length;
-    await sb.from('profiles').update({rating:Math.round(avg*10)/10}).eq('id',ratingRatedId);
+    await sb.rpc('update_profile_rating',{profile_id:ratingRatedId});
   }
   document.getElementById('rating-modal').classList.remove('open');
   toast('⭐ Rating submitted!');
