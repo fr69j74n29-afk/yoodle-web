@@ -644,7 +644,7 @@ function initMap() {
 }
 
 function changeRadius(delta){
-  RADIUS_KM=Math.min(5,Math.max(1,RADIUS_KM+delta));
+  RADIUS_KM=Math.min(100,Math.max(1,RADIUS_KM+delta));
   document.getElementById('radius-label').textContent=`${RADIUS_KM} km`;
   centerMapOnUser();
   updateRadiusCounts();
