@@ -398,12 +398,24 @@ body{
         <div class="profile-nm" id="pnm">—</div>
         <div class="profile-em" id="pem">—</div>
       </div>
-      <div class="stats-row">
-        <div class="stat-c"><span class="stat-n" id="s-posted">0</span><span class="stat-l">Posted</span></div>
-        <div class="stat-c"><span class="stat-n" id="s-helped">0</span><span class="stat-l">Helped</span></div>
-        <div class="stat-c"><span class="stat-n" id="s-done">0</span><span class="stat-l">Done</span></div>
+      <div class="stats-row" style="grid-template-columns:1fr 1fr">
+        <div class="stat-c" style="text-align:left;padding:16px">
+          <div style="font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">As Poster</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-posted" style="color:var(--purple);font-size:18px;font-weight:900">0</span> posted</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-poster-done" style="color:var(--purple);font-size:18px;font-weight:900">0</span> completed</div>
+            <div style="font-size:13px;font-weight:700;color:var(--yellow)" id="s-poster-rating">⭐ —</div>
+          </div>
+        </div>
+        <div class="stat-c" style="text-align:left;padding:16px">
+          <div style="font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">As Helper</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-applied" style="color:var(--purple);font-size:18px;font-weight:900">0</span> applied</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-helper-done" style="color:var(--purple);font-size:18px;font-weight:900">0</span> completed</div>
+            <div style="font-size:13px;font-weight:700;color:var(--yellow)" id="s-helper-rating">⭐ —</div>
+          </div>
+        </div>
       </div>
-		<div style="text-align:center;margin-bottom:20px;font-size:15px;font-weight:800;color:var(--yellow)" id="p-rating">—</div>
 	<div style="margin-bottom:8px">
         <label class="form-lbl">Display Name</label>
         <input class="form-inp" id="p-name" type="text" placeholder="Your name" style="margin-bottom:8px">
@@ -1429,10 +1441,34 @@ if(!sb)return;
 const{data:prof}=await sb.from('profiles').select('bio,rating,task_count,name').eq('id',myProfileId||me.id).maybeSingle();
 document.getElementById('p-bio').value=prof?.bio||'';
 document.getElementById('p-name').value=prof?.name||name;
-document.getElementById('p-rating').textContent=prof?.rating?`⭐ ${prof.rating}`:'No ratings yet';
 if(prof?.name){document.getElementById('pnm').textContent=prof.name;}
-  const[{count:posted},{count:helped},{count:done}]=await Promise.all([sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id),sb.from('tasks').select('*',{count:'exact',head:true}).eq('doer_id',myProfileId||me.id),sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',myProfileId||me.id).eq('status','completed')]);
-  document.getElementById('s-posted').textContent=posted||0;document.getElementById('s-helped').textContent=helped||0;document.getElementById('s-done').textContent=done||0;
+const pid=myProfileId||me.id;
+// fetch all stats in parallel
+const[
+  {count:posted},
+  {count:posterDone},
+  {count:applied},
+  {count:helperDone},
+  {data:posterRatings},
+  {data:helperRatings}
+]=await Promise.all([
+  sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',pid).neq('status','cancelled'),
+  sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',pid).eq('status','completed'),
+  sb.from('applications').select('*',{count:'exact',head:true}).eq('applicant_id',pid),
+  sb.from('tasks').select('*',{count:'exact',head:true}).eq('doer_id',pid).eq('status','completed'),
+  // poster ratings = rated as poster (rater was the doer)
+  sb.from('ratings').select('score').eq('rated_id',pid).in('task_id',(await sb.from('tasks').select('id').eq('poster_id',pid)).data?.map(t=>t.id)||[]),
+  // helper ratings = rated as doer (rater was the poster)
+  sb.from('ratings').select('score').eq('rated_id',pid).in('task_id',(await sb.from('tasks').select('id').eq('doer_id',pid)).data?.map(t=>t.id)||[])
+]);
+document.getElementById('s-posted').textContent=posted||0;
+document.getElementById('s-poster-done').textContent=posterDone||0;
+document.getElementById('s-applied').textContent=applied||0;
+document.getElementById('s-helper-done').textContent=helperDone||0;
+const avgPoster=posterRatings?.length?( posterRatings.reduce((s,r)=>s+r.score,0)/posterRatings.length).toFixed(1):null;
+const avgHelper=helperRatings?.length?(helperRatings.reduce((s,r)=>s+r.score,0)/helperRatings.length).toFixed(1):null;
+document.getElementById('s-poster-rating').textContent=avgPoster?`⭐ ${avgPoster} (${posterRatings.length} reviews)`:'No reviews yet';
+document.getElementById('s-helper-rating').textContent=avgHelper?`⭐ ${avgHelper} (${helperRatings.length} reviews)`:'No reviews yet';
 }
 
 async function loadMessages(){
