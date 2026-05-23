@@ -1464,11 +1464,18 @@ async function openChat(taskId,title,otherName,posterId,doerId){
 }
 
 async function loadChatMessages(taskId){
-  const el=document.getElementById('chat-messages');el.innerHTML=spin();if(!sb)return;
+  const el=document.getElementById('chat-messages');el.innerHTML=spin();if(!sb||!me)return;
   const{data,error}=await sb.from('messages').select('id,body,sender_id,receiver_id,read,created_at').eq('task_id',taskId).order('created_at',{ascending:true});
   if(error){el.innerHTML=emptyState('💬','Start the conversation','Send a message below');return;}
   if(!data?.length){el.innerHTML=emptyState('💬','Start the conversation','Send a message below');return;}
   const pid=myProfileId||me.id;
+  // mark unread messages as read
+  const unreadIds=data.filter(m=>!m.read&&(m.receiver_id===pid||m.receiver_id===me.id)).map(m=>m.id);
+  if(unreadIds.length){
+    await sb.from('messages').update({read:true}).in('id',unreadIds);
+    // refresh messages list badge
+    loadMessages();
+  }
   el.innerHTML=data.map(m=>{const isMe=m.sender_id===pid||m.sender_id===me.id;return`<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div style="max-width:75%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--purple)':'var(--surface2)'};font-size:14px;font-weight:600;line-height:1.4">${esc(m.body||'')}<div style="font-size:10px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;}).join('');
   el.scrollTop=el.scrollHeight;
 }
