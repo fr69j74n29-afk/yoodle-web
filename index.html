@@ -475,13 +475,15 @@ body{
 <div class="modal-ov" id="modal" onclick="closeModal(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div id="m-badge" class="jc-badge">—</div>
     <div class="modal-title" id="m-title">—</div>
     <div class="modal-meta" id="m-meta">—</div>
     <div class="modal-desc" id="m-desc">—</div>
     <div class="modal-grid">
       <div class="modal-pill"><div class="modal-pill-l">Budget</div><div class="modal-pill-v" id="m-budget" style="color:var(--lime)">—</div></div>
-      <div class="modal-pill"><div class="modal-pill-l">Location</div><div class="modal-pill-v" id="m-loc" style="font-size:13px;line-height:1.4">—</div></div>
+      <div class="modal-pill" id="m-poster-pill">
+        <div class="modal-pill-l">Posted by</div>
+        <div id="m-poster" style="display:flex;align-items:center;gap:8px;margin-top:4px">—</div>
+      </div>
     </div>
     <button class="btn-primary" id="m-action" onclick="jobAction()">I Can Help! 🙋</button>
     <button class="btn-destructive" id="m-unclaim" onclick="unclaimJob()" style="display:none;width:100%;padding:16px;border-radius:var(--radius);background:transparent;color:#EF4444;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;border:1.5px solid rgba(239,68,68,.35);cursor:pointer;margin-top:10px">↩️ Unclaim Job</button>
@@ -845,15 +847,32 @@ function listCard(j,profile){
   </div>`;
 }
 
-function openJob(j){
-  activeJob=j;const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
-  document.getElementById('m-badge').textContent=`${emoji} ${j.category||'other'}`;document.getElementById('m-badge').style.color=color;
+async function openJob(j){
+  activeJob=j;const color=CAT_COLOR[j.category]||'#9B59D4';
   document.getElementById('m-title').textContent=j.title;
   const locTag=j.location_verified?'<span style="color:var(--lime);font-size:11px">✅ GPS Verified</span>':'<span style="color:var(--yellow);font-size:11px">⚠️ GPS Unverified</span>';
   document.getElementById('m-meta').innerHTML=`📍 ${esc(j.address||'Nearby')} ${locTag} &nbsp;·&nbsp; ${timeAgo(j.created_at)}`;
   document.getElementById('m-desc').textContent=j.description||'';
   document.getElementById('m-budget').textContent=`$${j.price??'?'}`;
-  document.getElementById('m-loc').innerHTML=`${esc(j.address||'Nearby')}<br><span style="font-size:10px;color:var(--muted);font-weight:700">Neighbourhood only</span>`;
+
+  // fetch poster profile for trust signals
+  document.getElementById('m-poster').innerHTML=`<div class="spinner" style="width:16px;height:16px"></div>`;
+  if(sb){
+    const pid=j.poster_id;
+    const[{data:prof},{count:doneCount}]=await Promise.all([
+      sb.from('profiles').select('name,rating').eq('id',pid).maybeSingle(),
+      sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',pid).eq('status','completed')
+    ]);
+    const pname=prof?.name||'Someone';
+    const prating=prof?.rating?`<span style="color:var(--yellow);font-size:12px;font-weight:800">⭐ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:12px;font-weight:700">New</span>`;
+    const pdone=doneCount?`<span style="color:var(--muted);font-size:11px;font-weight:700">(${doneCount} done)</span>`:'';
+    document.getElementById('m-poster').innerHTML=`
+      <div style="width:32px;height:32px;border-radius:50%;background:${color}33;border:1.5px solid ${color}66;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:${color};flex-shrink:0">${esc(pname[0].toUpperCase())}</div>
+      <div style="min-width:0">
+        <div style="font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
+        <div style="display:flex;align-items:center;gap:5px">${prating}${pdone}</div>
+      </div>`;
+  }
   const isPoster=me&&(j.poster_id===me.id||j.poster_id===myProfileId);
   const btn=document.getElementById('m-action');const unclaimBtn=document.getElementById('m-unclaim');
   btn.disabled=false;btn.style.display='block';unclaimBtn.style.display='none';
