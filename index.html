@@ -822,12 +822,12 @@ async function loadJobs() {
 
   const[{data,error},{data:helpers}]=await Promise.all([
     sb.from('tasks')
-      .select('*, profiles!tasks_poster_id_fkey(id,name,rating)')
+      .select('*, profiles!tasks_poster_id_fkey(id,name,rating,avatar_color)')
       .eq('status', 'open')
       .or(`expires_at.is.null,expires_at.gt.${now}`)
       .order('created_at', { ascending: false }),
     sb.from('profiles')
-      .select('id,name,rating,last_lat,last_lng')
+      .select('id,name,rating,last_lat,last_lng,avatar_color')
       .eq('visible_on_map', true)
       .neq('id', pid||'00000000-0000-0000-0000-000000000000')
   ]);
@@ -880,7 +880,7 @@ function renderSheetContent(){
       const name=h.name||'Helper';
       const rating=h.rating?`⭐ ${h.rating}`:'New';
       return `<div style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;align-items:center;gap:12px">
-        <div style="width:44px;height:44px;border-radius:50%;background:${color}22;border:2px solid ${color};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:${color};flex-shrink:0">${esc(name[0].toUpperCase())}</div>
+        <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0">${avatarImg(name,h.avatar_color)}</div>
         <div style="min-width:0">
           <div style="font-size:15px;font-weight:900">${esc(name)}</div>
           <div style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</div>
@@ -968,20 +968,32 @@ function subscribeToMessages(){
 
 function showDemoApp(){document.getElementById('view-auth').style.display='none';const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';document.getElementById('top-av').textContent='😊';document.getElementById('fab').style.display='flex';}
 
-function setAvatar(){if(!me)return;const av=document.getElementById('top-av');const url=me.user_metadata?.avatar_url;if(url)av.innerHTML=`<img src="${url}" alt="">`;else av.textContent=(me.user_metadata?.full_name||me.email||'?')[0].toUpperCase();}
+async function setAvatar(){
+  if(!me)return;
+  const av=document.getElementById('top-av');
+  const url=me.user_metadata?.avatar_url;
+  if(url){av.innerHTML=`<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover">`;return;}
+  // fetch avatar_color for DiceBear
+  if(sb){
+    const{data}=await sb.from('profiles').select('name,avatar_color').eq('id',myProfileId||me.id).maybeSingle();
+    const name=data?.name||me.email?.split('@')[0]||'Y';
+    av.innerHTML=avatarImg(name,data?.avatar_color);
+  } else {
+    av.textContent=(me.user_metadata?.full_name||me.email||'?')[0].toUpperCase();
+  }
+}
 
 function jobCard(j,profile){
   const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
   const name=profile?.name||'Someone';
   const rating=profile?.rating?`<span style="color:var(--yellow);font-size:11px;font-weight:800">⭐ ${profile.rating}</span>`:`<span style="color:var(--muted);font-size:11px;font-weight:700">New</span>`;
-  const avImg=esc(name[0].toUpperCase());
   const locBadge=j.location_verified?`<span style="color:var(--lime);font-size:10px">✅</span>`:`<span style="color:var(--yellow);font-size:10px">⚠️</span>`;
   return `<div class="job-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="jc-badge">${emoji} ${j.category||'other'}</div>
     <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
     <div class="jc-desc">${esc(j.description||'')}</div>
     <div class="jc-foot">
-      <div class="jc-poster"><div class="poster-av">${avImg}</div><span class="poster-nm">${esc(name)}</span>${rating}</div>
+      <div class="jc-poster"><div class="poster-av">${avatarImg(name,profile?.avatar_color)}</div><span class="poster-nm">${esc(name)}</span>${rating}</div>
       <div class="jc-loc">${locBadge} ${esc(j.address||'Nearby')} · ${timeAgo(j.created_at)}</div>
     </div>
   </div>`;
@@ -1015,7 +1027,7 @@ function listCard(j,profile){
     <div class="lc-desc">${esc(j.description||'')}</div>
     <div class="lc-foot">
       <div class="lc-poster">
-        <div class="lc-av">${esc(name[0].toUpperCase())}</div>
+        <div class="lc-av">${avatarImg(name,profile?.avatar_color)}</div>
         <span class="lc-name">${esc(name)}</span>
         <span style="color:var(--yellow);font-size:11px;font-weight:800;flex-shrink:0">${rating}</span>
       </div>
@@ -1048,14 +1060,14 @@ async function openJob(j){
   if(sb){
     const pid=j.poster_id;
     const[{data:prof},{count:doneCount}]=await Promise.all([
-      sb.from('profiles').select('name,rating').eq('id',pid).maybeSingle(),
+      sb.from('profiles').select('name,rating,avatar_color').eq('id',pid).maybeSingle(),
       sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',pid).eq('status','completed')
     ]);
     const pname=prof?.name||'Someone';
     const prating=prof?.rating?`<span style="color:var(--yellow);font-size:13px;font-weight:800">⭐ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:12px;font-weight:700">New</span>`;
     const previews=`<span style="color:var(--muted);font-size:11px;font-weight:700">(${doneCount||0} reviews)</span>`;
     document.getElementById('m-poster').innerHTML=`
-      <div style="width:38px;height:38px;border-radius:50%;background:${color}33;border:1.5px solid ${color}66;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:${color};flex-shrink:0">${esc(pname[0].toUpperCase())}</div>
+      <div style="width:38px;height:38px;border-radius:50%;overflow:hidden;flex-shrink:0">${avatarImg(pname,prof?.avatar_color)}</div>
       <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
         <div style="font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
         <div style="display:flex;align-items:center;gap:5px">${prating}${previews}</div>
@@ -1214,7 +1226,7 @@ async function openApplicants(taskId,taskTitle){
   if(!sb)return;
   // fetch pending applications with applicant profiles
   const{data,error}=await sb.from('applications')
-    .select('id,applicant_id,status,created_at,profiles!applications_applicant_id_fkey(id,name,rating,bio)')
+    .select('id,applicant_id,status,created_at,profiles!applications_applicant_id_fkey(id,name,rating,bio,avatar_color)')
     .eq('task_id',taskId)
     .eq('status','pending')
     .order('created_at',{ascending:true});
@@ -1228,7 +1240,7 @@ async function openApplicants(taskId,taskTitle){
     return `<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;border:1.5px solid var(--border)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--purple);font-size:15px;flex-shrink:0">${esc(name[0].toUpperCase())}</div>
+          <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0">${avatarImg(name,p.avatar_color)}</div>
           <div>
             <div style="font-size:15px;font-weight:900">${esc(name)}</div>
             <div style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</div>
@@ -1592,12 +1604,23 @@ async function loadProfile(){
   const name=me.user_metadata?.full_name||me.email?.split('@')[0]||'Yoodler';const url=me.user_metadata?.avatar_url;
   document.getElementById('pnm').textContent=name;
   document.getElementById('pem').textContent=me.email||'';
-  const av=document.getElementById('pav');av.innerHTML=url?`<img src="${url}" alt="">`:name[0].toUpperCase();
+  const av=document.getElementById('pav');
+  if(url){av.innerHTML=`<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover">`;}
+  else if(sb){
+    // will be updated after prof fetch below
+    av.innerHTML=name[0].toUpperCase();
+  }
 if(!sb)return;
-const{data:prof}=await sb.from('profiles').select('bio,rating,task_count,name,visible_on_map,last_lat,last_lng,helper_address').eq('id',myProfileId||me.id).maybeSingle();
+const{data:prof}=await sb.from('profiles').select('bio,rating,task_count,name,visible_on_map,last_lat,last_lng,helper_address,avatar_color').eq('id',myProfileId||me.id).maybeSingle();
 document.getElementById('p-bio').value=prof?.bio||'';
 document.getElementById('p-name').value=prof?.name||name;
 if(prof?.name){document.getElementById('pnm').textContent=prof.name;}
+// update avatar with DiceBear if not Google
+if(!url){
+  const pname=prof?.name||name;
+  document.getElementById('pav').innerHTML=avatarImg(pname,prof?.avatar_color);
+  document.getElementById('top-av').innerHTML=avatarImg(pname,prof?.avatar_color);
+}
 // populate helper mode toggle
 const isHelper=prof?.visible_on_map||false;
 const toggle=document.getElementById('helper-toggle');
@@ -1880,6 +1903,14 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 function spin(){return'<div class="loading"><div class="spinner"></div></div>';}
 function emptyState(ico,t,d){return`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-t">${t}</div><div class="empty-d">${d}</div></div>`;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function dicebearUrl(name,color){
+  const seed=encodeURIComponent((name||'Y').trim());
+  const bg=(color||'9B59D4').replace('#','');
+  return`https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundColor=${bg}&fontSize=38&fontFamily=Nunito&bold=true`;
+}
+function avatarImg(name,color,size='100%'){
+  return`<img src="${dicebearUrl(name,color)}" alt="${esc(name)}" style="width:${size};height:${size};object-fit:cover">`;
+}
 function timeAgo(d){const m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
 async function saveBio(){
   if(!sb||!me)return toast('Not signed in');
