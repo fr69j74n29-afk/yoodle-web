@@ -837,7 +837,7 @@ function listCard(j,profile){
         <span style="color:var(--yellow);font-size:11px;font-weight:800;flex-shrink:0">${rating}</span>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
-        ${j.location_verified?`<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.3px">✅ GPS VERIFIED</span>`:`<span style="font-size:10px;font-weight:900;color:var(--yellow);letter-spacing:.3px">⚠️ NOT VERIFIED</span>`}
+        ${j.location_verified?`<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.3px">✅ GPS Verified</span>`:`<span style="font-size:10px;font-weight:900;color:var(--yellow);letter-spacing:.3px">⚠️ GPS Unverified</span>`}
         <span class="lc-meta">📍 ${esc(locLabel)} · ${timeAgo(j.created_at)}</span>
       </div>
     </div>
@@ -848,7 +848,7 @@ function openJob(j){
   activeJob=j;const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
   document.getElementById('m-badge').textContent=`${emoji} ${j.category||'other'}`;document.getElementById('m-badge').style.color=color;
   document.getElementById('m-title').textContent=j.title;
-  const locTag=j.location_verified?'<span style="color:var(--lime);font-size:11px">✅ GPS verified</span>':'<span style="color:var(--yellow);font-size:11px">⚠️ Self-reported</span>';
+  const locTag=j.location_verified?'<span style="color:var(--lime);font-size:11px">✅ GPS Verified</span>':'<span style="color:var(--yellow);font-size:11px">⚠️ GPS Unverified</span>';
   document.getElementById('m-meta').innerHTML=`📍 ${esc(j.address||'Nearby')} ${locTag} &nbsp;·&nbsp; ${timeAgo(j.created_at)}`;
   document.getElementById('m-desc').textContent=j.description||'';
   document.getElementById('m-budget').textContent=`$${j.price??'?'}`;
