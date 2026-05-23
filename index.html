@@ -882,10 +882,18 @@ async function jobAction(){
   if(!sb||!me){toast('🎉 (demo) Action noted!');document.getElementById('modal').classList.remove('open');return;}
   const isPoster=activeJob.poster_id===me.id||activeJob.poster_id===myProfileId;
   if(activeJob.status==='claimed'&&isPoster){
+    const btn=document.getElementById('m-action');
+    btn.disabled=true;btn.textContent='Saving…';
+    // re-fetch status to prevent double completion
+    const{data:current}=await sb.from('tasks').select('status').eq('id',activeJob.id).single();
+    if(current?.status==='completed'){
+      document.getElementById('modal').classList.remove('open');
+      toast('✅ Already completed!');loadMyJobs();loadJobs();return;
+    }
     const{error}=await sb.from('tasks').update({status:'completed'}).eq('id',activeJob.id);
-    if(error)return toast('❌ '+error.message);
+    if(error){btn.disabled=false;btn.textContent='✅ Mark Complete';return toast('❌ '+error.message);}
     document.getElementById('modal').classList.remove('open');
-    toast('✅ Job marked complete!');loadJobs();
+    toast('✅ Job marked complete!');loadJobs();loadMyJobs();
     openRatingModal(activeJob.id,activeJob.doer_id,'How did the helper do?');
   } else if(activeJob.status==='open'&&isPoster){
     const{error}=await sb.from('tasks').update({status:'cancelled'}).eq('id',activeJob.id);
@@ -1499,16 +1507,24 @@ async function chatUnclaim(taskId){
 
 async function chatComplete(taskId,doerId){
   if(!sb||!me)return;
+  // disable all complete buttons immediately to prevent double-tap
+  document.querySelectorAll('button').forEach(b=>{if(b.textContent.includes('Complete'))b.disabled=true;});
   const pid=myProfileId||me.id;
-  const{data:taskData}=await sb.from('tasks').select('poster_id,doer_id').eq('id',taskId).single();
-  if(!taskData)return toast('❌ Could not load job');
+  const{data:taskData}=await sb.from('tasks').select('poster_id,doer_id,status').eq('id',taskId).single();
+  if(!taskData){toast('❌ Could not load job');return;}
+  if(taskData.status==='completed'){
+    document.getElementById('chat-modal').classList.remove('open');
+    toast('✅ Already completed!');loadMyJobs();loadJobs();return;
+  }
   const{error}=await sb.from('tasks').update({status:'completed'}).eq('id',taskId);
-  if(error)return toast('❌ '+error.message);
+  if(error){
+    document.querySelectorAll('button').forEach(b=>{if(b.textContent.includes('Complete'))b.disabled=false;});
+    return toast('❌ '+error.message);
+  }
   await sendSystemMessage(taskId,taskData.poster_id,taskData.doer_id,`✅ Job marked complete by the poster. This conversation is now closed.`);
   document.getElementById('chat-modal').classList.remove('open');
   toast('✅ Job marked complete!');
-  loadMessages();loadJobs();
-  // open rating modal for poster to rate doer
+  loadMessages();loadJobs();loadMyJobs();
   activeJob={id:taskId,poster_id:taskData.poster_id,doer_id:doerId};
   openRatingModal(taskId,doerId,'How did the helper do?');
 }
