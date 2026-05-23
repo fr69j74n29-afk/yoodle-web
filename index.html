@@ -1260,6 +1260,7 @@ async function loadMyJobs(){
       }
       return `<div class="job-card" style="--jc:${color};cursor:default">
         <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:4px">
+          ${appBadge||''}
         </div>
         <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
         <div class="jc-desc">${esc(j.description||'')}</div>
@@ -1315,7 +1316,7 @@ async function loadMyJobs(){
     }
 
     return `<div class="job-card" style="--jc:${color};cursor:default">
-      <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         ${statusBadge}
       </div>
       <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
