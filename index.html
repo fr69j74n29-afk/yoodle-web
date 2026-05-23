@@ -366,13 +366,13 @@ body{
         <label class="form-lbl">Location</label>
         <div class="loc-row">
           <div class="loc-autocomplete-wrap">
-        <input class="form-inp" id="p-loc" type="text" placeholder="Start typing your address…" autocomplete="off"
+            <input class="form-inp" id="p-loc" type="text" placeholder="Start typing your address…" autocomplete="off"
               oninput="onLocInput(this.value)" onfocus="if(this.value.length>2)showLocSuggestions()" onblur="setTimeout(hideLocSuggestions,200)">
             <div class="loc-suggestions" id="loc-suggestions"></div>
           </div>
           <button class="btn-gps" id="gps-btn" onclick="detectLocation()">📍 GPS</button>
         </div>
-        <div class="loc-status" id="loc-status">Type an address and select from suggestions, or tap GPS</div>
+        <div class="loc-status" id="loc-status">Type an address or tap GPS to auto-fill</div>
       </div>
       <button class="btn-primary" id="post-btn" onclick="postJob()">Post Job 🚀</button>
     </div>
@@ -804,18 +804,14 @@ function jobCard(j,profile){
   </div>`;
 }
 
-function haversineKm(lat1,lng1,lat2,lng2){
-  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-
 function listCard(j,profile){
   const color=CAT_COLOR[j.category]||'#9B59D4';
   const emoji=CAT_EMOJI[j.category]||'✨';
   const name=profile?.name||'Someone';
   const rating=profile?.rating?`⭐ ${profile.rating}`:'New';
-  // distance or area/city fallback
+  const gpsTag=j.location_verified
+    ?`<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.3px">✅ GPS VERIFIED</span>`
+    :`<span style="font-size:10px;font-weight:900;color:var(--yellow);letter-spacing:.3px">⚠️ NOT VERIFIED</span>`;
   let locLabel;
   if(userLat&&userLng&&j.lat&&j.lng){
     const d=haversineKm(userLat,userLng,j.lat,j.lng);
@@ -836,7 +832,10 @@ function listCard(j,profile){
         <span class="lc-name">${esc(name)}</span>
         <span style="color:var(--yellow);font-size:11px;font-weight:800;flex-shrink:0">${rating}</span>
       </div>
-      <span class="lc-meta">📍 ${esc(locLabel)} · ${timeAgo(j.created_at)}</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+        ${gpsTag}
+        <span class="lc-meta">📍 ${esc(locLabel)} · ${timeAgo(j.created_at)}</span>
+      </div>
     </div>
   </div>`;
 }
@@ -1078,7 +1077,7 @@ async function fetchLocSuggestions(query){
   const st=document.getElementById('loc-status');
   const sug=document.getElementById('loc-suggestions');
   try{
-    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6&countrycodes=ca,us`;
+    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`;
     const r=await fetch(url,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
     const data=await r.json();
     locSuggestionsData=data;
@@ -1121,11 +1120,7 @@ function hideLocSuggestions(){document.getElementById('loc-suggestions').classLi
 
 async function postJob(){
   const title=document.getElementById('p-title').value.trim();const desc=document.getElementById('p-desc').value.trim();const budget=document.getElementById('p-budget').value;const loc=document.getElementById('p-loc').value.trim();
-  if(!selCatVal)return toast('Pick a category first!');
-  if(!title)return toast('Add a job title!');
-  if(!desc)return toast('Describe the job!');
-  if(!loc)return toast('Add your location!');
-  if(!gpsLat||!gpsLng)return toast('⚠️ Please select an address from the suggestions or use GPS');
+  if(!selCatVal)return toast('Pick a category first!');if(!title)return toast('Add a job title!');if(!desc)return toast('Describe the job!');if(!loc)return toast('Add your location!');
   if(!sb||!me){toast('🚀 Job posted! (demo mode)');resetPost();nav('map');return;}
   const btn=document.getElementById('post-btn');btn.disabled=true;btn.textContent='Posting…';
   const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
