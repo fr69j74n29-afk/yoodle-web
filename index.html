@@ -1039,8 +1039,9 @@ function _setMessageBadge(hasUnread){
 async function refreshUnreadCount(){
   if(!sb||!me)return;
   const pid=myProfileId||me.id;
-  const{count}=await sb.from('messages').select('*',{count:'exact',head:true}).eq('receiver_id',pid).eq('read',false);
-  _setMessageBadge((count||0)>0);
+  const{data}=await sb.rpc('get_conversations',{user_id:pid});
+  const hasAny=(data||[]).some(c=>c.has_unread);
+  _setMessageBadge(hasAny);
 }
 function clearMessageBadge(){_setMessageBadge(false);}
 
@@ -1061,13 +1062,13 @@ function subscribeToMessages(){
     const msg=payload.new;const pid=myProfileId||me.id;
     if(msg.receiver_id===pid&&msg.sender_id!==pid){
       playNotificationSound();
-      refreshUnreadCount();
-      const chatOpen=activeChatTaskId===msg.task_id;
+      const chatOpen=activeChatConvId&&activeChatConvId===msg.conversation_id;
       if(chatOpen){
-        // chat is open — loadChatMessages will mark read and refresh list itself
-        loadChatMessages(msg.task_id);
+        sb.rpc('mark_conversation_read',{p_conversation_id:activeChatConvId,p_user_id:pid})
+          .then(()=>refreshUnreadCount());
+        loadChatMessages();
       } else {
-        // chat not open — just refresh the conversation list if visible
+        refreshUnreadCount();
         const msgView=document.getElementById('app-messages');
         if(msgView?.classList.contains('active'))loadMessages();
       }
@@ -1247,11 +1248,15 @@ async function jobAction(){
   } else if(activeJob.status==='open'&&isPoster){
     const{error}=await sb.from('tasks').update({status:'cancelled'}).eq('id',activeJob.id);
     if(error)return toast('❌ '+error.message);
-    // notify all pending applicants
+    // notify all pending applicants via their conversations then archive
     const{data:apps}=await sb.from('applications').select('applicant_id').eq('task_id',activeJob.id).eq('status','pending');
     const pid=myProfileId||me.id;
     for(const app of (apps||[])){
-      await sb.from('messages').insert({task_id:activeJob.id,sender_id:pid,receiver_id:app.applicant_id,body:'This job has been cancelled by the poster.',read:false});
+      const{data:conv}=await sb.from('conversations').select('id').eq('task_id',activeJob.id).eq('applicant_id',app.applicant_id).eq('status','active').maybeSingle();
+      if(conv){
+        await sb.from('messages').insert({conversation_id:conv.id,task_id:activeJob.id,sender_id:pid,receiver_id:app.applicant_id,body:'This job has been cancelled by the poster.'});
+        await sb.from('conversations').update({status:'archived'}).eq('id',conv.id);
+      }
     }
     await sb.from('applications').update({status:'rejected'}).eq('task_id',activeJob.id).eq('status','pending');
     document.getElementById('modal').classList.remove('open');
@@ -1265,7 +1270,7 @@ async function applyForJob(taskId,posterId,jobTitle){
   const btn=document.getElementById('m-action');
   btn.textContent='✅ Applied';btn.disabled=true;
 
-  // upsert — handles both fresh apply and re-apply after withdraw
+  // upsert application
   const{error}=await sb.from('applications').upsert(
     {task_id:taskId,applicant_id:pid,status:'pending'},
     {onConflict:'task_id,applicant_id'}
@@ -1276,21 +1281,27 @@ async function applyForJob(taskId,posterId,jobTitle){
   const{data:myProf}=await sb.from('profiles').select('name').eq('id',pid).single();
   const myName=myProf?.name||'Someone';
 
-  // send auto intro message — use me.id (auth UID) as sender_id to satisfy RLS
+  // create conversation record — returns conversation_id
+  const{data:convId,error:convErr}=await sb.rpc('create_conversation',{
+    p_task_id:taskId,p_poster_id:posterId,p_applicant_id:pid
+  });
+  if(convErr){console.warn('Conversation create failed:',convErr.message);}
+
+  // send intro message with conversation_id
   const{error:msgErr}=await sb.from('messages').insert({
+    conversation_id:convId,
     task_id:taskId,
     sender_id:me.id,
     receiver_id:posterId,
-    body:`Hi! I'm ${myName} and I'm interested in your job "${jobTitle}". I'd love to help!`,
-    read:false
+    body:`Hi! I'm ${myName} and I'm interested in your job "${jobTitle}". I'd love to help!`
   });
   if(msgErr)console.warn('Message insert failed:',msgErr.message);
 
   document.getElementById('modal').classList.remove('open');
   document.getElementById('applied-job-title').textContent=jobTitle;
-  // store context for chat/withdraw buttons
   document.getElementById('applied-chat-btn').dataset.taskId=taskId;
   document.getElementById('applied-chat-btn').dataset.posterId=posterId;
+  document.getElementById('applied-chat-btn').dataset.convId=convId||'';
   document.getElementById('applied-chat-btn').dataset.posterName=activeJob?.profiles?.name||'Poster';
   document.getElementById('applied-chat-btn').dataset.posterRating=activeJob?.profiles?.rating||'';
   document.getElementById('applied-withdraw-btn').dataset.taskId=taskId;
@@ -1303,11 +1314,12 @@ function openAppliedChat(){
   const btn=document.getElementById('applied-chat-btn');
   const taskId=btn.dataset.taskId;
   const posterId=btn.dataset.posterId;
+  const convId=btn.dataset.convId||'';
   const posterName=btn.dataset.posterName||'Poster';
   const posterRating=btn.dataset.posterRating;
   const jobTitle=document.getElementById('applied-job-title').textContent;
   document.getElementById('applied-modal').classList.remove('open');
-  openChat(taskId,jobTitle,posterName,posterId,posterId,posterRating);
+  openChat(taskId,jobTitle,posterName,posterId,posterId,posterRating,convId);
 }
 
 async function withdrawFromConfirm(){
@@ -1379,19 +1391,28 @@ async function openChatWithApplicant(taskId,applicantName,applicantId){
 async function assignApplicant(taskId,appId,applicantId,applicantName){
   if(!sb||!me)return;
   const pid=myProfileId||me.id;
-  // update task to claimed with this doer
+  // update task to claimed
   const{error}=await sb.from('tasks').update({status:'claimed',doer_id:applicantId}).eq('id',taskId);
   if(error)return toast('❌ '+error.message);
   // mark this application assigned
   await sb.from('applications').update({status:'assigned'}).eq('id',appId);
-  // reject all other pending applicants and notify them
+  // reject other pending applicants
   const{data:others}=await sb.from('applications').select('id,applicant_id').eq('task_id',taskId).eq('status','pending').neq('id',appId);
   for(const other of (others||[])){
     await sb.from('applications').update({status:'rejected'}).eq('id',other.id);
-    await sb.from('messages').insert({task_id:taskId,sender_id:pid,receiver_id:other.applicant_id,body:`Thanks for your interest — someone else was selected for this job.`,read:false});
+    // find their conversation and send notification, then archive
+    const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',other.applicant_id).eq('status','active').maybeSingle();
+    if(conv){
+      await sb.from('messages').insert({conversation_id:conv.id,task_id:taskId,sender_id:pid,receiver_id:other.applicant_id,body:`Thanks for your interest — someone else was selected for this job.`});
+    }
   }
-  // send confirmation to assigned applicant
-  await sb.from('messages').insert({task_id:taskId,sender_id:pid,receiver_id:applicantId,body:`🎉 Great news, ${applicantName}! You've been selected for this job. Let's coordinate the details.`,read:false});
+  // archive losing conversations
+  await sb.rpc('archive_losing_conversations',{p_task_id:taskId,p_keep_applicant_id:applicantId});
+  // send confirmation to assigned applicant via their conversation
+  const{data:winConv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',applicantId).eq('status','active').maybeSingle();
+  if(winConv){
+    await sb.from('messages').insert({conversation_id:winConv.id,task_id:taskId,sender_id:pid,receiver_id:applicantId,body:`🎉 Great news, ${applicantName}! You've been selected for this job. Let's coordinate the details.`});
+  }
   document.getElementById('applicants-modal').classList.remove('open');
   toast(`✅ ${applicantName} assigned!`);
   loadJobs();loadMessages();loadMyJobs();
@@ -1405,11 +1426,15 @@ async function unclaimJob(){
   const doerId=activeJob.doer_id;
   const{error}=await sb.from('tasks').update({status:'open',doer_id:null}).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
-  // reset doer's application to pending so they remain in the pool
   if(doerId){
     await sb.from('applications').update({status:'pending'}).eq('task_id',activeJob.id).eq('applicant_id',doerId);
+    // send notification via conversation then archive it
+    const{data:conv}=await sb.from('conversations').select('id').eq('task_id',activeJob.id).eq('applicant_id',doerId).eq('status','active').maybeSingle();
+    if(conv){
+      await sb.from('messages').insert({conversation_id:conv.id,task_id:activeJob.id,sender_id:pid,receiver_id:doerId,body:`↩️ ${name} has unclaimed this job. It is back to open.`});
+      await sb.from('conversations').update({status:'archived'}).eq('id',conv.id);
+    }
   }
-  await sb.from('messages').insert({task_id:activeJob.id,sender_id:pid,receiver_id:doerId,body:`↩️ ${name} has unclaimed this job. It is back to open.`,read:false});
   document.getElementById('modal').classList.remove('open');
   toast('↩️ Job unclaimed');loadJobs();loadMyJobs();
 }
@@ -1741,9 +1766,12 @@ async function loadMessages(){
   if(!sb||!me){el.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see messages');return;}
   const pid=myProfileId||me.id;
 
-  const{data,error}=await sb.rpc('get_active_conversations',{user_id:pid});
+  const{data,error}=await sb.rpc('get_conversations',{user_id:pid});
   if(error){el.innerHTML=emptyState('😕','Error loading messages',error.message);return;}
   if(!data?.length){el.innerHTML=emptyState('💬','No conversations yet','Express interest in a job to start messaging');return;}
+
+  // update nav dot from same data — no extra query needed
+  _setMessageBadge(data.some(c=>c.has_unread));
 
   el.innerHTML=data.map(t=>{
     const isPoster=t.poster_id===pid;
@@ -1754,16 +1782,15 @@ async function loadMessages(){
     const emoji=CAT_EMOJI[cat]||'✨';
     const preview=t.last_msg_body?esc(t.last_msg_body).slice(0,60):'Tap to open chat';
     const msgTime=t.last_msg_created_at?timeAgo(t.last_msg_created_at):'';
-    // last_msg_read from RPC is already computed as: unread AND sender is not current user
     const isUnread=t.has_unread===true;
     const rowBg=isUnread?'background:rgba(236,72,153,.08);border-color:rgba(236,72,153,.3)':'';
     const unreadBadge=isUnread?`<span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;background:var(--pink);color:#fff;font-size:9px;font-weight:900;letter-spacing:.5px;vertical-align:middle;flex-shrink:0">NEW</span>`:'';
     let statusTag='';
     if(!isPoster){
       if(t.app_status==='pending') statusTag=`<span style="font-size:10px;color:var(--yellow);font-weight:800;margin-left:6px">⏳ Pending</span>`;
-      else if(t.app_status==='assigned'||t.status==='claimed') statusTag=`<span style="font-size:10px;color:var(--teal);font-weight:800;margin-left:6px">🤝 Assigned</span>`;
+      else if(t.app_status==='assigned'||t.task_status==='claimed') statusTag=`<span style="font-size:10px;color:var(--teal);font-weight:800;margin-left:6px">🤝 Assigned</span>`;
     }
-    return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}')">
+    return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
       <div class="conv-icon" style="background:${color}22;border:1.5px solid ${color}44">${emoji}</div>
       <div class="conv-body">
         <div class="conv-top">
@@ -1777,27 +1804,44 @@ async function loadMessages(){
   }).join('');
 }
 
-let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null;
+let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null, activeChatConvId=null;
 function closeChat(){
   document.getElementById('chat-modal').classList.remove('open');
-  // refresh conversation list so NEW badges reflect what was just read
+  activeChatConvId=null;
   const msgView=document.getElementById('app-messages');
   if(msgView?.classList.contains('active')){
-    setTimeout(()=>{refreshUnreadCount();loadMessages();},400);
+    loadMessages();
   } else {
     refreshUnreadCount();
   }
 }
 
-async function openChat(taskId,title,otherName,posterId,otherId,otherRating){
-  activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;
+async function openChat(taskId,title,otherName,posterId,otherId,otherRating,convId){
+  activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;activeChatConvId=convId||null;
   document.getElementById('chat-title').textContent=title;
   const ratingStr=otherRating?` · ⭐ ${otherRating}`:'';
   document.getElementById('chat-other').textContent=otherName+ratingStr;
   document.getElementById('chat-modal').classList.add('open');
-  loadChatMessages(taskId,otherId);
 
-  // fetch current task status to show correct action buttons
+  // if we don't have a convId yet, look it up
+  if(!activeChatConvId&&sb&&me){
+    const pid=myProfileId||me.id;
+    const isP=posterId===pid;
+    const applicantId=isP?otherId:pid;
+    const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',applicantId).eq('status','active').maybeSingle();
+    if(conv)activeChatConvId=conv.id;
+  }
+
+  // mark as read immediately on open
+  if(activeChatConvId&&sb&&me){
+    const pid=myProfileId||me.id;
+    await sb.rpc('mark_conversation_read',{p_conversation_id:activeChatConvId,p_user_id:pid});
+    refreshUnreadCount();
+  }
+
+  loadChatMessages();
+
+  // fetch task status for action buttons
   const actionsEl=document.getElementById('chat-actions');
   actionsEl.innerHTML='';actionsEl.style.display='none';
   if(!sb||!me)return;
@@ -1818,7 +1862,6 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating){
     }
     if(btns){actionsEl.innerHTML=btns;actionsEl.style.display='flex';}
   } else if(task.status==='open'&&!isPoster){
-    // only show re-apply if doer had a withdrawn application
     const{data:app}=await sb.from('applications').select('id,status').eq('task_id',taskId).eq('applicant_id',pid).maybeSingle();
     if(app&&app.status==='withdrawn'){
       actionsEl.innerHTML=`<button onclick="applyForJob('${taskId}','${task.poster_id}',document.getElementById('chat-title').textContent)" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🙋 Re-apply</button>`;
@@ -1827,43 +1870,28 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating){
   }
 }
 
-async function loadChatMessages(taskId,otherId){
-  // otherId may not be passed if called from realtime refresh — fall back to activeChatDoerId
-  const other=otherId||activeChatDoerId;
-  const el=document.getElementById('chat-messages');el.innerHTML=spin();if(!sb||!me)return;
+async function loadChatMessages(){
+  const el=document.getElementById('chat-messages');el.innerHTML=spin();
+  if(!sb||!me||!activeChatConvId)return;
   const pid=myProfileId||me.id;
-  // fetch only messages between this user and the specific other person on this task
-  const{data,error}=await sb.from('messages').select('id,body,sender_id,receiver_id,read,created_at')
-    .eq('task_id',taskId)
-    .or(`and(sender_id.eq.${pid},receiver_id.eq.${other}),and(sender_id.eq.${other},receiver_id.eq.${pid})`)
+
+  const{data,error}=await sb.from('messages')
+    .select('id,body,sender_id,created_at')
+    .eq('conversation_id',activeChatConvId)
     .order('created_at',{ascending:true});
   if(error){el.innerHTML=emptyState('💬','Start the conversation','Send a message below');return;}
   if(!data?.length){el.innerHTML=emptyState('💬','Start the conversation','Send a message below');return;}
-  // mark unread messages as read (only those sent to me in this thread)
-  const unreadIds=data.filter(m=>!m.read&&m.receiver_id===pid).map(m=>m.id);
-  if(unreadIds.length){
-    await sb.from('messages').update({read:true}).in('id',unreadIds);
-    // small delay so the UPDATE is visible before we re-query
-    setTimeout(()=>{
-      refreshUnreadCount();
-      // only re-render the list if it's actually visible (not while chat is open)
-      const chatOpen=document.getElementById('chat-modal')?.classList.contains('open');
-      if(!chatOpen){
-        const msgView=document.getElementById('app-messages');
-        if(msgView?.classList.contains('active'))loadMessages();
-      }
-    },400);
-  }
+
   el.innerHTML=data.map(m=>{
     const isMe=m.sender_id===pid||m.sender_id===me.id;
-    // system messages (sent to self) — centered muted style
-    const isSys=m.sender_id===m.receiver_id||m.body?.startsWith('✅')||m.body?.startsWith('↩️');
+    const isSys=m.body?.startsWith('✅')||m.body?.startsWith('↩️')||m.body?.startsWith('🎉')||m.body?.startsWith('Thanks for');
     if(isSys&&!isMe)return`<div style="text-align:center;margin:10px 0"><span style="font-size:12px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">${esc(m.body||'')}</span></div>`;
     return`<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div style="max-width:75%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--purple)':'var(--surface2)'};font-size:14px;font-weight:600;line-height:1.4">${esc(m.body||'')}<div style="font-size:10px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
   }).join('');
   el.scrollTop=el.scrollHeight;
+
   // lock input if task is completed
-  const{data:taskStatus}=await sb.from('tasks').select('status').eq('id',taskId).single();
+  const{data:taskStatus}=await sb.from('tasks').select('status').eq('id',activeChatTaskId).single();
   const inputBar=document.getElementById('chat-input-bar');
   if(taskStatus?.status==='completed'){
     inputBar.style.display='none';
@@ -1875,15 +1903,21 @@ async function loadChatMessages(taskId,otherId){
 async function sendMessage(){
   const inp=document.getElementById('chat-input');
   const content=inp.value.trim();
-  if(!content||!activeChatTaskId||!sb)return;
+  if(!content||!activeChatTaskId||!activeChatConvId||!sb)return;
   inp.value='';
   const pid=myProfileId||me.id;
   const isPoster=activeChatPosterId===pid;
   const receiverId=isPoster?activeChatDoerId:activeChatPosterId;
   if(!receiverId)return toast('❌ Could not determine recipient');
-  const{error}=await sb.from('messages').insert({task_id:activeChatTaskId,sender_id:me.id,receiver_id:receiverId,body:content,read:false});
+  const{error}=await sb.from('messages').insert({
+    conversation_id:activeChatConvId,
+    task_id:activeChatTaskId,
+    sender_id:me.id,
+    receiver_id:receiverId,
+    body:content
+  });
   if(error){toast('❌ '+error.message);return;}
-  loadChatMessages(activeChatTaskId);
+  loadChatMessages();
 }
 
 async function claimFromChat(taskId){
@@ -1902,9 +1936,9 @@ async function claimFromChat(taskId){
   loadMessages();loadJobs();
 }
 
-async function sendSystemMessage(taskId,posterId,doerId,body){
-  // system messages sent from poster to doer, read:true so no badge
-  await sb.from('messages').insert({task_id:taskId,sender_id:posterId,receiver_id:doerId,body,read:true});
+async function sendSystemMessage(convId,taskId,senderId,receiverId,body){
+  if(!convId)return;
+  await sb.from('messages').insert({conversation_id:convId,task_id:taskId,sender_id:senderId,receiver_id:receiverId,body});
 }
 
 async function chatUnclaim(taskId){
@@ -1918,23 +1952,26 @@ async function chatUnclaim(taskId){
   if(error)return toast('❌ '+error.message);
   const isPoster=taskData.poster_id===pid;
   if(isPoster){
-    // poster unclaimed — reset doer's application to pending so they're still in the pool
     if(taskData.doer_id){
       await sb.from('applications').update({status:'pending'}).eq('task_id',taskId).eq('applicant_id',taskData.doer_id);
     }
   } else {
-    // doer unclaimed — mark their own application as withdrawn
     await sb.from('applications').update({status:'withdrawn'}).eq('task_id',taskId).eq('applicant_id',pid);
   }
-  await sendSystemMessage(taskId,taskData.poster_id,taskData.doer_id,`↩️ ${name} unclaimed this job. It has been returned to open.`);
+  // send message then archive the conversation
+  if(activeChatConvId){
+    const receiverId=isPoster?taskData.doer_id:taskData.poster_id;
+    await sendSystemMessage(activeChatConvId,taskId,pid,receiverId,`↩️ ${name} unclaimed this job. It has been returned to open.`);
+    await sb.from('conversations').update({status:'archived'}).eq('id',activeChatConvId);
+  }
   document.getElementById('chat-modal').classList.remove('open');
+  activeChatConvId=null;
   toast('↩️ Job unclaimed and returned to open');
   loadMessages();loadJobs();loadMyJobs();
 }
 
 async function chatComplete(taskId,doerId){
   if(!sb||!me)return;
-  // disable all complete buttons immediately to prevent double-tap
   document.querySelectorAll('button').forEach(b=>{if(b.textContent.includes('Complete'))b.disabled=true;});
   const pid=myProfileId||me.id;
   const{data:taskData}=await sb.from('tasks').select('poster_id,doer_id,status').eq('id',taskId).single();
@@ -1948,8 +1985,12 @@ async function chatComplete(taskId,doerId){
     document.querySelectorAll('button').forEach(b=>{if(b.textContent.includes('Complete'))b.disabled=false;});
     return toast('❌ '+error.message);
   }
-  await sendSystemMessage(taskId,taskData.poster_id,taskData.doer_id,`✅ Job marked complete by the poster. This conversation is now closed.`);
+  if(activeChatConvId){
+    await sendSystemMessage(activeChatConvId,taskId,taskData.poster_id,taskData.doer_id,`✅ Job marked complete by the poster. This conversation is now closed.`);
+    await sb.from('conversations').update({status:'archived'}).eq('id',activeChatConvId);
+  }
   document.getElementById('chat-modal').classList.remove('open');
+  activeChatConvId=null;
   toast('✅ Job marked complete!');
   loadMessages();loadJobs();loadMyJobs();
   activeJob={id:taskId,poster_id:taskData.poster_id,doer_id:doerId};
