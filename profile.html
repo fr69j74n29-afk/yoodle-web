@@ -88,7 +88,8 @@ function avatarCircle(name, color, size='72px', fontSize='28px'){
 
 async function loadProfile(){
   const params = new URLSearchParams(window.location.search);
-  const userId = params.get('user_id');
+  const userId = params.get('user_id') || sessionStorage.getItem('profileUserId');
+  sessionStorage.removeItem('profileUserId');
   const content = document.getElementById('content');
 
   if(!userId){
@@ -107,7 +108,7 @@ async function loadProfile(){
 
   const prof = profRes.data;
   if(!prof){
-    content.innerHTML = `<div class="error-state">👤 Profile not found.<br><small style="color:var(--muted);font-size:11px">user_id: ${userId}<br>${profRes.error?.message||'No data returned'}</small></div>`;
+    content.innerHTML = `<div class="error-state">👤 Profile not found.</div>`;
     return;
   }
 
