@@ -670,13 +670,21 @@ function initMap() {
   setTimeout(()=>{map.invalidateSize();locateUser();},200);
 }
 
+let lastFetchedRadius=0;
+
 function changeRadius(delta){
   let step = RADIUS_KM >= 5 ? 10 : 1;
   RADIUS_KM = RADIUS_KM + (delta * step);
   RADIUS_KM = Math.min(50, Math.max(1, RADIUS_KM));
   document.getElementById('radius-label').textContent=`${RADIUS_KM} km`;
   centerMapOnUser();
-  updateRadiusCounts();
+  // if new radius is within already-fetched data, just filter client-side
+  // if it exceeds what we fetched, go back to server
+  if(RADIUS_KM <= lastFetchedRadius){
+    updateRadiusCounts();
+  } else {
+    loadJobs();
+  }
 }
 
 function updateRadiusCounts(){
@@ -852,6 +860,7 @@ async function loadJobs() {
   }
 
   allJobs=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
+  lastFetchedRadius=fetchRadius;
   updateRadiusCounts();
   renderListGrid(allJobs.filter(j=>(j.distance_km||haversineKm(userLat,userLng,j.lat,j.lng))<=listRadiusKm));
 }
