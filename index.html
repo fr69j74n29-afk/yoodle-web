@@ -1890,19 +1890,15 @@ async function openChatFromNotification(taskId,convId){
   if(!me||!sb)return;
   nav('messages');
   const pid=myProfileId||me.id;
-  const{data:task}=await sb.from('tasks').select('id,title,poster_id,doer_id').eq('id',taskId).single();
-  if(!task)return;
-  const isPoster=task.poster_id===pid;
-  const otherId=isPoster?task.doer_id:task.poster_id;
+  const{data:conv}=await sb.from('conversations')
+    .select('id,poster_id,applicant_id,tasks(title)')
+    .eq('id',convId).single();
+  if(!conv)return;
+  const isPoster=conv.poster_id===pid;
+  const otherId=isPoster?conv.applicant_id:conv.poster_id;
   if(!otherId)return;
   const{data:other}=await sb.from('profiles').select('name,rating').eq('id',otherId).single();
-  let resolvedConvId=convId;
-  if(!resolvedConvId){
-    const applicantId=isPoster?otherId:pid;
-    const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',applicantId).eq('status','active').maybeSingle();
-    resolvedConvId=conv?.id;
-  }
-  openChat(taskId,task.title,other?.name||'User',task.poster_id,otherId,other?.rating||'',resolvedConvId);
+  openChat(taskId,conv.tasks?.title||'Job',other?.name||'User',conv.poster_id,otherId,other?.rating||'',convId);
 }
 
 async function openChat(taskId,title,otherName,posterId,otherId,otherRating,convId){
