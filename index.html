@@ -676,7 +676,24 @@ function changeRadius(delta){
   RADIUS_KM = Math.min(50, Math.max(1, RADIUS_KM));
   document.getElementById('radius-label').textContent=`${RADIUS_KM} km`;
   centerMapOnUser();
-  loadJobs();
+  loadMapJobs();
+}
+
+async function loadMapJobs(){
+  if(!userLat||!userLng||!sb)return;
+  const pid=myProfileId||me?.id;
+  const{data,error}=await sb.rpc('get_open_jobs_near',{
+    user_lat:userLat,
+    user_lng:userLng,
+    radius_km:RADIUS_KM,
+    lim:50,
+    exclude_user_id:pid||null
+  });
+  if(!error){
+    allJobs=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
+    renderMapPins(allJobs);
+    updateRadiusCounts();
+  }
 }
 
 function updateRadiusCounts(){
@@ -811,7 +828,7 @@ function setListRadius(el,km){
   document.querySelectorAll('.list-radius-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   listRadiusKm=km;
-  loadJobs();
+  loadListJobs();
 }
 
 async function loadJobs() {
@@ -822,39 +839,30 @@ async function loadJobs() {
   }
 
   const pid=myProfileId||me?.id;
-  const g=document.getElementById('list-grid');
-  g.innerHTML=spin();
 
-  // fetch helpers for map (separate, no radius restriction)
+  // fetch helpers for map (no radius restriction)
   const{data:helpers}=await sb.from('profiles')
     .select('id,name,rating,last_lat,last_lng,avatar_color')
     .eq('visible_on_map', true)
     .neq('id', pid||'00000000-0000-0000-0000-000000000000');
   allHelpers=helpers||[];
 
-  // if no user location, show prompt
   if(!userLat||!userLng){
-    g.innerHTML=emptyState('📍','Share your location','Tap the locate button on the map to see nearby jobs');
+    document.getElementById('list-grid').innerHTML=emptyState('📍','Share your location','Tap the locate button on the map to see nearby jobs');
     document.getElementById('list-sub').textContent='Enable location to browse jobs';
     updateRadiusCounts();
     return;
   }
 
-  // fetch map jobs using map radius
-  const{data:mapData,error:mapError}=await sb.rpc('get_open_jobs_near',{
-    user_lat:userLat,
-    user_lng:userLng,
-    radius_km:RADIUS_KM,
-    lim:50,
-    exclude_user_id:pid||null
-  });
-  if(!mapError){
-    allJobs=(mapData||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
-    renderMapPins(allJobs);
-  }
-  updateRadiusCounts();
+  // run map and list fetches in parallel
+  await Promise.all([loadMapJobs(), loadListJobs()]);
+}
 
-  // fetch list jobs using list radius
+async function loadListJobs(){
+  if(!userLat||!userLng)return;
+  const pid=myProfileId||me?.id;
+  const g=document.getElementById('list-grid');
+  g.innerHTML=spin();
   const{data,error}=await sb.rpc('get_open_jobs_near',{
     user_lat:userLat,
     user_lng:userLng,
@@ -862,12 +870,7 @@ async function loadJobs() {
     lim:50,
     exclude_user_id:pid||null
   });
-
-  if(error){
-    g.innerHTML=emptyState('😕','Error loading jobs',error.message);
-    return;
-  }
-
+  if(error){g.innerHTML=emptyState('😕','Error loading jobs',error.message);return;}
   const listJobs=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   renderListGrid(listJobs);
 }
