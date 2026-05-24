@@ -1498,7 +1498,7 @@ async function unclaimJob(){
   const{error}=await sb.from('tasks').update({status:'open',doer_id:null}).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
   if(doerId){
-    await sb.from('applications').update({status:'pending'}).eq('task_id',activeJob.id).eq('applicant_id',doerId);
+    await sb.from('applications').update({status:'withdrawn'}).eq('task_id',activeJob.id).eq('applicant_id',doerId);
     // send notification via conversation then archive it
     const{data:conv}=await sb.from('conversations').select('id').eq('task_id',activeJob.id).eq('applicant_id',doerId).eq('status','active').maybeSingle();
     if(conv){
