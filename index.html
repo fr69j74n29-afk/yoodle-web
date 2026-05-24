@@ -1762,6 +1762,8 @@ async function loadMessages(){
 
   el.innerHTML=tasks.map(t=>{
     const isPoster=t.poster_id===pid;
+    // skip conversations where user withdrew or was rejected
+    if(!isPoster&&(appStatusMap[t.id]==='withdrawn'||appStatusMap[t.id]==='rejected'))return'';
     const otherName=isPoster?(doerNames[t.doer_id]||'Helper'):(t.profiles?.name||'Poster');
     const cat=(t.category||'other').toLowerCase();
     const color=CAT_COLOR[cat]||'#9B59D4';
