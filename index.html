@@ -316,7 +316,7 @@ body{
   <div class="top-bar">
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
     <!-- Notification nudge bar — between logo and avatar -->
-    <div id="notif-nudge" style="display:none;flex:1;margin:0 10px;cursor:pointer" onclick="nav('profile')">
+    <div id="notif-nudge" style="display:none;flex:1;margin:0 10px;cursor:pointer" onclick="requestNotifPermission()">
       <div style="background:linear-gradient(135deg,rgba(155,89,212,.2),rgba(236,72,153,.2));border:1.5px solid rgba(155,89,212,.4);border-radius:100px;padding:5px 12px;display:flex;align-items:center;gap:6px">
         <span style="font-size:14px">🔔</span>
         <span style="font-size:11px;font-weight:900;color:var(--purple);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="notif-nudge-text">Enable notifications</span>
@@ -951,6 +951,7 @@ function nav(view) {
   if(view==='post')resetPost();
   if(view==='messages'){clearMessageBadge();loadMessages();}
   if(view==='profile')loadProfile();
+  updateNotifNudge();
 }
 
 async function signIn(provider) {
@@ -2106,7 +2107,21 @@ function updateNotifNudge(){
     nudge.style.display='flex';
     if(iosNotReady)nudgeText.textContent='Add to Home Screen for notifications';
     else if(Notification?.permission==='denied')nudgeText.textContent='Notifications blocked — tap to fix';
-    else nudgeText.textContent='Enable notifications';
+    else nudgeText.textContent='🔔 Enable notifications';
+  }
+}
+
+async function requestNotifPermission(){
+  if(isIos()&&!isInStandaloneMode()){nav('profile');return;}
+  if(Notification?.permission==='denied'){nav('profile');return;}
+  // trigger OneSignal opt-in
+  if(window.OneSignalDeferred){
+    window.OneSignalDeferred.push(async os=>{
+      await os.User.PushSubscription.optIn();
+      setTimeout(updateNotifNudge,2000);
+    });
+  } else {
+    Notification.requestPermission().then(updateNotifNudge);
   }
 }
 
