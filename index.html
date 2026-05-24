@@ -2123,14 +2123,22 @@ function updateNotifNudge(){
 async function requestNotifPermission(){
   if(isIos()&&!isInStandaloneMode()){nav('profile');return;}
   if(Notification?.permission==='denied'){nav('profile');return;}
-  // trigger OneSignal opt-in
-  if(window.OneSignalDeferred){
-    window.OneSignalDeferred.push(async os=>{
-      await os.User.PushSubscription.optIn();
-      setTimeout(updateNotifNudge,2000);
-    });
-  } else {
-    Notification.requestPermission().then(updateNotifNudge);
+  if(Notification?.permission==='granted'){updateNotifNudge();return;}
+  toast('🔔 Requesting permission…');
+  try{
+    if(window.OneSignalDeferred){
+      window.OneSignalDeferred.push(async os=>{
+        await os.Notifications.requestPermission();
+        setTimeout(updateNotifNudge,2000);
+      });
+    } else {
+      const p=await Notification.requestPermission();
+      if(p==='granted') toast('✅ Notifications enabled!');
+      updateNotifNudge();
+    }
+  }catch(e){
+    toast('❌ Could not enable — try from Profile');
+    nav('profile');
   }
 }
 
