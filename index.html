@@ -676,19 +676,15 @@ function changeRadius(delta){
   RADIUS_KM = Math.min(50, Math.max(1, RADIUS_KM));
   document.getElementById('radius-label').textContent=`${RADIUS_KM} km`;
   centerMapOnUser();
-  updateRadiusCounts();
+  loadJobs();
 }
 
 function updateRadiusCounts(){
   if(!userLat||!userLng)return;
   const pid=myProfileId||me?.id;
-  // filter jobs within radius — exclude own jobs
-  sheetJobs=(allJobs||[]).filter(j=>{
-    if(!j.lat||!j.lng)return false;
-    if(pid&&j.poster_id===pid)return false;
-    return haversineKm(userLat,userLng,j.lat,j.lng)<=RADIUS_KM;
-  });
-  // filter helpers within radius — exclude self
+  // jobs already server-filtered by RADIUS_KM — just exclude own
+  sheetJobs=(allJobs||[]).filter(j=>!(pid&&j.poster_id===pid));
+  // filter helpers within radius client-side — exclude self
   sheetHelpers=(allHelpers||[]).filter(h=>{
     if(!h.last_lat||!h.last_lng)return false;
     if(pid&&h.id===pid)return false;
@@ -835,16 +831,30 @@ async function loadJobs() {
     .eq('visible_on_map', true)
     .neq('id', pid||'00000000-0000-0000-0000-000000000000');
   allHelpers=helpers||[];
-  updateRadiusCounts();
 
   // if no user location, show prompt
   if(!userLat||!userLng){
     g.innerHTML=emptyState('📍','Share your location','Tap the locate button on the map to see nearby jobs');
     document.getElementById('list-sub').textContent='Enable location to browse jobs';
+    updateRadiusCounts();
     return;
   }
 
-  // fetch jobs via RPC — server-side distance filter + sort + limit
+  // fetch map jobs using map radius
+  const{data:mapData,error:mapError}=await sb.rpc('get_open_jobs_near',{
+    user_lat:userLat,
+    user_lng:userLng,
+    radius_km:RADIUS_KM,
+    lim:50,
+    exclude_user_id:pid||null
+  });
+  if(!mapError){
+    allJobs=(mapData||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
+    renderMapPins(allJobs);
+  }
+  updateRadiusCounts();
+
+  // fetch list jobs using list radius
   const{data,error}=await sb.rpc('get_open_jobs_near',{
     user_lat:userLat,
     user_lng:userLng,
@@ -858,8 +868,8 @@ async function loadJobs() {
     return;
   }
 
-  allJobs=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
-  renderListGrid(allJobs);
+  const listJobs=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
+  renderListGrid(listJobs);
 }
 
 
@@ -1745,9 +1755,9 @@ const[
   sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',pid).eq('status','completed'),
   sb.from('applications').select('*',{count:'exact',head:true}).eq('applicant_id',pid),
   sb.from('tasks').select('*',{count:'exact',head:true}).eq('doer_id',pid).eq('status','completed'),
-  // poster ratings = rated as poster (rater was the doer)
+  // poster ratings = rated on tasks where pid was the poster
   sb.from('ratings').select('score').eq('rated_id',pid).in('task_id',(await sb.from('tasks').select('id').eq('poster_id',pid)).data?.map(t=>t.id)||[]),
-  // helper ratings = rated as doer (rater was the poster)
+  // helper ratings = rated on tasks where pid was the doer
   sb.from('ratings').select('score').eq('rated_id',pid).in('task_id',(await sb.from('tasks').select('id').eq('doer_id',pid)).data?.map(t=>t.id)||[])
 ]);
 document.getElementById('s-posted').textContent=posted||0;
