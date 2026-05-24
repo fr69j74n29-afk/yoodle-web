@@ -333,7 +333,7 @@ body{
       <!-- Radius control — fixed at bottom, never overlaps circle content -->
       <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;display:flex;align-items:center;gap:10px;background:rgba(10,10,10,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:100px;padding:7px 16px">
         <button onclick="changeRadius(-1)" style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;line-height:1;flex-shrink:0">−</button>
-        <span id="radius-label" style="font-size:13px;font-weight:900;color:var(--text);min-width:36px;text-align:center">3 km</span>
+        <span id="radius-label" style="font-size:13px;font-weight:900;color:var(--text);min-width:36px;text-align:center">50 km</span>
         <button onclick="changeRadius(1)" style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;line-height:1;flex-shrink:0">+</button>
       </div>
     </div>
@@ -345,12 +345,12 @@ body{
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div class="list-h" style="font-size:15px" id="list-sub">Jobs open nearby</div>
       </div>
-      <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px">
-        <button class="list-radius-btn active" data-km="3" onclick="setListRadius(this,3)">3 km</button>
+<div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px">
+        <button class="list-radius-btn" data-km="3" onclick="setListRadius(this,3)">3 km</button>
         <button class="list-radius-btn" data-km="5" onclick="setListRadius(this,5)">5 km</button>
         <button class="list-radius-btn" data-km="10" onclick="setListRadius(this,10)">10 km</button>
         <button class="list-radius-btn" data-km="25" onclick="setListRadius(this,25)">25 km</button>
-        <button class="list-radius-btn" data-km="50" onclick="setListRadius(this,50)">50 km</button>
+        <button class="list-radius-btn active" data-km="50" onclick="setListRadius(this,50)">50 km</button>
       </div>
     </div>
     <div class="list-scroll"><div class="jobs-grid" id="list-grid"><div class="loading"><div class="spinner"></div></div></div></div>
@@ -659,7 +659,7 @@ function normalizeCategory(cat) {
   if (['moving'].includes(cat)) return 'moving';
   return cat || 'other';
 }
-let RADIUS_KM=3;
+let RADIUS_KM=50;
 let sheetTab='jobs';
 let sheetJobs=[],sheetHelpers=[];
 
@@ -670,7 +670,7 @@ function initMap() {
   setTimeout(()=>{map.invalidateSize();locateUser();},200);
 }
 
-let lastFetchedRadius=0;
+let lastFetchedRadius=50;
 
 function changeRadius(delta){
   let step = RADIUS_KM >= 5 ? 10 : 1;
@@ -840,7 +840,7 @@ function renderMapPins(jobs) {
 
 let allHelpers=[];
 
-let listRadiusKm=3;
+let listRadiusKm=50;
 
 function setListRadius(el,km){
   document.querySelectorAll('.list-radius-btn').forEach(b=>b.classList.remove('active'));
@@ -999,6 +999,15 @@ async function showApp(){
   loadJobs();
   subscribeToMessages();
   registerOneSignal();
+  setTimeout(async()=>{
+    if(window._pendingNotifTaskId){
+      const tid=window._pendingNotifTaskId;
+      const cid=window._pendingNotifConvId;
+      window._pendingNotifTaskId=null;
+      window._pendingNotifConvId=null;
+      await openChatFromNotification(tid,cid);
+    }
+  },1500);
   loadPendingRatings();
   refreshUnreadCount();
   startUnreadPoller();
@@ -1035,6 +1044,18 @@ async function registerOneSignal(){
             const pid=myProfileId||me.id;
             await sb.from('profiles').update({onesignal_id:osId}).eq('id',pid);
             console.log('OneSignal ID saved:',osId);
+          }
+        });
+        os.Notifications.addEventListener('click',async(event)=>{
+          const data=event.notification.additionalData;
+          const taskId=data?.task_id;
+          const convId=data?.conversation_id;
+          if(!taskId)return;
+          if(me&&sb){
+            await openChatFromNotification(taskId,convId);
+          }else{
+            window._pendingNotifTaskId=taskId;
+            window._pendingNotifConvId=convId;
           }
         });
       }
@@ -1847,6 +1868,25 @@ function closeChat(){
   } else {
     refreshUnreadCount();
   }
+}
+
+async function openChatFromNotification(taskId,convId){
+  if(!me||!sb)return;
+  nav('messages');
+  const pid=myProfileId||me.id;
+  const{data:task}=await sb.from('tasks').select('id,title,poster_id,doer_id').eq('id',taskId).single();
+  if(!task)return;
+  const isPoster=task.poster_id===pid;
+  const otherId=isPoster?task.doer_id:task.poster_id;
+  if(!otherId)return;
+  const{data:other}=await sb.from('profiles').select('name,rating').eq('id',otherId).single();
+  let resolvedConvId=convId;
+  if(!resolvedConvId){
+    const applicantId=isPoster?otherId:pid;
+    const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',applicantId).eq('status','active').maybeSingle();
+    resolvedConvId=conv?.id;
+  }
+  openChat(taskId,task.title,other?.name||'User',task.poster_id,otherId,other?.rating||'',resolvedConvId);
 }
 
 async function openChat(taskId,title,otherName,posterId,otherId,otherRating,convId){
