@@ -1247,12 +1247,12 @@ async function openJob(j){
     ]);
     const pname=prof?.name||'Someone';
     const prating=prof?.rating?`<span style="color:var(--yellow);font-size:13px;font-weight:800">⭐ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:12px;font-weight:700">New</span>`;
-    const previews=`<span style="color:var(--muted);font-size:11px;font-weight:700">(${doneCount||0} reviews)</span>`;
+    const pInitial=((pname||'?')[0]).toUpperCase();
     document.getElementById('m-poster').innerHTML=`
-      ${avatarCircle(pname,prof?.avatar_color,'38px','15px')}
+      <div onclick="sessionStorage.setItem('profileUserId','${pid}');window.location.href='/profile.html'" style="width:46px;height:46px;border-radius:50%;border:3px solid #9B59D4;color:#9B59D4;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">${pInitial}</div>
       <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
         <div style="font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
-        <div style="display:flex;align-items:center;gap:5px">${prating}${previews}</div>
+        <div style="display:flex;align-items:center;gap:5px">${prating}</div>
       </div>`;
   }
   const isPoster=me&&(j.poster_id===me.id||j.poster_id===myProfileId);
@@ -1437,7 +1437,7 @@ async function openApplicants(taskId,taskTitle){
     return `<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;border:1.5px solid var(--border)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:8px">
-          ${avatarCircle(name,p.avatar_color,'36px','15px')}
+          <div onclick="sessionStorage.setItem('profileUserId','${app.applicant_id}');window.location.href='/profile.html'" style="width:42px;height:42px;border-radius:50%;border:3px solid #9B59D4;color:#9B59D4;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">${((name||'?')[0]).toUpperCase()}</div>
           <div>
             <div style="font-size:15px;font-weight:900">${esc(name)}</div>
             <div style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</div>
@@ -1495,30 +1495,15 @@ async function unclaimJob(){
   const{data:myProf}=await sb.from('profiles').select('name').eq('id',pid).single();
   const name=myProf?.name||'Someone';
   const doerId=activeJob.doer_id;
-  const taskId=activeJob.id;
-  const{error}=await sb.from('tasks').update({status:'open',doer_id:null}).eq('id',taskId);
+  const{error}=await sb.from('tasks').update({status:'open',doer_id:null}).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
-  // Handle doer (A) — notify and archive their conversation
   if(doerId){
-    await sb.from('applications').update({status:'pending'}).eq('task_id',taskId).eq('applicant_id',doerId);
-    const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',doerId).eq('status','active').maybeSingle();
+    await sb.from('applications').update({status:'pending'}).eq('task_id',activeJob.id).eq('applicant_id',doerId);
+    // send notification via conversation then archive it
+    const{data:conv}=await sb.from('conversations').select('id').eq('task_id',activeJob.id).eq('applicant_id',doerId).eq('status','active').maybeSingle();
     if(conv){
-      await sb.from('messages').insert({conversation_id:conv.id,task_id:taskId,sender_id:pid,receiver_id:doerId,body:`↩️ ${name} has unclaimed this job. It is back to open.`});
+      await sb.from('messages').insert({conversation_id:conv.id,task_id:activeJob.id,sender_id:pid,receiver_id:doerId,body:`↩️ ${name} has unclaimed this job. It is back to open.`});
       await sb.from('conversations').update({status:'archived'}).eq('id',conv.id);
-    }
-  }
-  // Restore rejected applicants (B, etc.) — reactivate their conversations and notify them
-  const{data:rejected}=await sb.from('applications').select('applicant_id').eq('task_id',taskId).eq('status','rejected');
-  if(rejected?.length){
-    const rejectedIds=rejected.map(a=>a.applicant_id);
-    await sb.from('applications').update({status:'pending'}).eq('task_id',taskId).eq('status','rejected');
-    // Reactivate their archived conversations and notify each
-    for(const app of rejected){
-      const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',app.applicant_id).eq('status','archived').maybeSingle();
-      if(conv){
-        await sb.from('conversations').update({status:'active'}).eq('id',conv.id);
-        await sb.from('messages').insert({conversation_id:conv.id,task_id:taskId,sender_id:pid,receiver_id:app.applicant_id,body:`🔄 Good news! The job is open again — you're still in the running.`});
-      }
     }
   }
   document.getElementById('modal').classList.remove('open');
