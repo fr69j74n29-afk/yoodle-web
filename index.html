@@ -316,7 +316,7 @@ body{
   <div class="top-bar">
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
     <!-- Notification nudge bar — between logo and avatar -->
-    <div id="notif-nudge" style="display:none;flex:1;margin:0 10px;cursor:pointer" onclick="requestNotifPermission()">
+    <div id="notif-nudge" style="display:flex;flex:1;margin:0 10px;cursor:pointer" onclick="requestNotifPermission()">
       <div style="background:linear-gradient(135deg,rgba(155,89,212,.2),rgba(236,72,153,.2));border:1.5px solid rgba(155,89,212,.4);border-radius:100px;padding:5px 12px;display:flex;align-items:center;gap:6px">
         <span style="font-size:14px">🔔</span>
         <span style="font-size:11px;font-weight:900;color:var(--purple);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="notif-nudge-text">Enable notifications</span>
@@ -946,7 +946,7 @@ function nav(view) {
   document.getElementById('fab').style.display=view==='map'?'flex':'none';
   // close any open modals when navigating
   document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
-  if(view==='map'){setTimeout(()=>map.invalidateSize(),100);}
+  if(view==='map'){setTimeout(()=>{map.invalidateSize();updateNotifNudge();},100);}
   if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
   if(view==='post')resetPost();
   if(view==='messages'){clearMessageBadge();loadMessages();}
@@ -986,6 +986,7 @@ async function showApp(){
   registerOneSignal();
   loadPendingRatings();
   setTimeout(updateNotifNudge, 2000);
+  setTimeout(updateNotifNudge, 5000);
 }
 
 let oneSignalReady=false;
@@ -1724,7 +1725,7 @@ async function loadMessages(){
 
   // fetch those tasks with poster profile — active only (completed/cancelled go to archive)
   const{data:tasks,error}=await sb.from('tasks')
-    .select('*, profiles!tasks_poster_id_fkey(id,name)')
+    .select('*, profiles!tasks_poster_id_fkey(id,name,rating)')
     .in('id',uniqueTaskIds)
     .in('status',['open','claimed'])
     .order('created_at',{ascending:false});
@@ -1745,9 +1746,10 @@ async function loadMessages(){
   // fetch doer profiles for tasks where current user is the poster
   const doerIds=[...new Set(tasks.filter(t=>t.poster_id===pid&&t.doer_id).map(t=>t.doer_id))];
   const doerNames={};
+  const doerRatings={};
   if(doerIds.length){
-    const{data:doerProfs}=await sb.from('profiles').select('id,name').in('id',doerIds);
-    (doerProfs||[]).forEach(p=>doerNames[p.id]=p.name);
+    const{data:doerProfs}=await sb.from('profiles').select('id,name,rating').in('id',doerIds);
+    (doerProfs||[]).forEach(p=>{doerNames[p.id]=p.name;doerRatings[p.id]=p.rating;});
   }
 
   // fetch application statuses for tasks where current user is NOT the poster
@@ -1791,7 +1793,8 @@ async function loadMessages(){
       else if(appStatus==='withdrawn') statusTag=`<span style="font-size:10px;color:var(--muted);font-weight:800;margin-left:6px">↩️ Withdrawn</span>`;
       else if(appStatus==='assigned'||t.status==='claimed') statusTag=`<span style="font-size:10px;color:var(--teal);font-weight:800;margin-left:6px">🤝 Assigned</span>`;
     }
-    return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.doer_id||''}')">
+    const otherRating=isPoster?doerRatings[t.doer_id]:t.profiles?.rating;
+    return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.doer_id||''}','${otherRating||''}')">
       <div class="conv-icon" style="background:${color}22;border:1.5px solid ${color}44">${emoji}</div>
       <div class="conv-body">
         <div class="conv-top">
