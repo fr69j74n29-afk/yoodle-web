@@ -772,12 +772,10 @@ function centerMapOnUser() {
     weight:2,
     dashArray:'6 4'
   }).addTo(map);
-  // invalidateSize first to fix desktop container sizing, then fitBounds
   map.invalidateSize();
   setTimeout(()=>{
     map.fitBounds(radiusCircle.getBounds(),{padding:[60,60],maxZoom:14});
     document.getElementById('map-counts').style.display='flex';
-    updateRadiusCounts();
   },100);
 }
 
@@ -830,7 +828,6 @@ async function loadJobs() {
     .eq('visible_on_map', true)
     .neq('id', pid||'00000000-0000-0000-0000-000000000000');
   allHelpers=helpers||[];
-  updateRadiusCounts();
 
   // if no user location, show prompt
   if(!userLat||!userLng){
@@ -926,7 +923,7 @@ function nav(view) {
   document.getElementById('fab').style.display=view==='map'?'flex':'none';
   // close any open modals when navigating
   document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
-  if(view==='map'){setTimeout(()=>{map.invalidateSize();updateNotifNudge();},100);}
+  if(view==='map'){setTimeout(()=>{map.invalidateSize();updateRadiusCounts();updateNotifNudge();},100);}
   if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
   if(view==='post')resetPost();
   if(view==='messages'){loadMessages().then(()=>refreshUnreadCount());}
