@@ -1891,13 +1891,13 @@ async function openChatFromNotification(taskId,convId){
   nav('messages');
   const pid=myProfileId||me.id;
   const{data:conv}=await sb.from('conversations')
-    .select('id,poster_id,applicant_id,tasks(title)')
+    .select('id,poster_id,applicant_id,tasks(title),poster:profiles!conversations_poster_id_fkey(name,rating),applicant:profiles!conversations_applicant_id_fkey(name,rating)')
     .eq('id',convId).single();
   if(!conv)return;
   const isPoster=conv.poster_id===pid;
   const otherId=isPoster?conv.applicant_id:conv.poster_id;
+  const other=isPoster?conv.applicant:conv.poster;
   if(!otherId)return;
-  const{data:other}=await sb.from('profiles').select('name,rating').eq('id',otherId).single();
   openChat(taskId,conv.tasks?.title||'Job',other?.name||'User',conv.poster_id,otherId,other?.rating||'',convId);
 }
 
