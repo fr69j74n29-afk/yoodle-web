@@ -736,23 +736,53 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 
+let _geoWatchId=null;
+
 function locateUser() {
   if (!navigator.geolocation) {
     showGeoFallback();
     return;
   }
 
-  navigator.geolocation.getCurrentPosition(
+  // clear any existing watch
+  if(_geoWatchId!==null){
+    navigator.geolocation.clearWatch(_geoWatchId);
+    _geoWatchId=null;
+  }
+
+  let _hasFirstPosition=false;
+
+  _geoWatchId=navigator.geolocation.watchPosition(
     pos => {
-      userLat = pos.coords.latitude;
-      userLng = pos.coords.longitude;
-      centerMapOnUser();
-      loadJobs();
+      const newLat=pos.coords.latitude;
+      const newLng=pos.coords.longitude;
+
+      if(!_hasFirstPosition){
+        // first callback — cached OS position, render immediately
+        _hasFirstPosition=true;
+        userLat=newLat;
+        userLng=newLng;
+        centerMapOnUser();
+        loadJobs();
+      } else {
+        // second callback — refined GPS position
+        // only update if moved more than ~50m to avoid unnecessary reloads
+        const moved=haversineKm(userLat,userLng,newLat,newLng)*1000>50;
+        userLat=newLat;
+        userLng=newLng;
+        if(moved){
+          centerMapOnUser();
+          loadJobs();
+        }
+        // stop watching after refinement — preserves battery
+        navigator.geolocation.clearWatch(_geoWatchId);
+        _geoWatchId=null;
+      }
     },
     err => {
       console.warn("Geolocation failed:", err);
     },
-    { timeout: 8000, enableHighAccuracy: false }
+    { timeout: 8000, enableHighAccuracy: false, maximumAge: 30000 }
   );
 }
 
