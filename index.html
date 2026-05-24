@@ -1247,11 +1247,10 @@ async function openJob(j){
     ]);
     const pname=prof?.name||'Someone';
     const prating=prof?.rating?`<span style="color:var(--yellow);font-size:13px;font-weight:800">⭐ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:12px;font-weight:700">New</span>`;
-    const pBorder=prof?.avatar_color||'#9B59D4';
+    const pColor=prof?.avatar_color||'#9B59D4';
+    const pInitial=((pname||'?')[0]).toUpperCase();
     document.getElementById('m-poster').innerHTML=`
-      <div onclick="sessionStorage.setItem('profileUserId','${pid}');window.location.href='/profile.html'" style="cursor:pointer;flex-shrink:0;border-radius:50%;border:3px solid ${pBorder};padding:2px">
-        ${avatarCircle(pname,prof?.avatar_color,'42px','16px')}
-      </div>
+      <div onclick="sessionStorage.setItem('profileUserId','${pid}');window.location.href='/profile.html'" style="width:46px;height:46px;border-radius:50%;border:3px solid ${pColor};box-shadow:inset 0 0 0 100px ${pColor};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">${pInitial}</div>
       <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
         <div style="font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
         <div style="display:flex;align-items:center;gap:5px">${prating}</div>
@@ -1439,9 +1438,7 @@ async function openApplicants(taskId,taskTitle){
     return `<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;border:1.5px solid var(--border)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:8px">
-          <div onclick="sessionStorage.setItem('profileUserId','${app.applicant_id}');window.location.href='/profile.html'" style="cursor:pointer;flex-shrink:0;border-radius:50%;border:3px solid ${p.avatar_color||'#9B59D4'};padding:2px">
-            ${avatarCircle(name,p.avatar_color,'36px','15px')}
-          </div>
+          <div onclick="sessionStorage.setItem('profileUserId','${app.applicant_id}');window.location.href='/profile.html'" style="width:42px;height:42px;border-radius:50%;border:3px solid ${p.avatar_color||'#9B59D4'};box-shadow:inset 0 0 0 100px ${p.avatar_color||'#9B59D4'};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">${((name||'?')[0]).toUpperCase()}</div>
           <div>
             <div style="font-size:15px;font-weight:900">${esc(name)}</div>
             <div style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</div>
