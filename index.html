@@ -1362,11 +1362,11 @@ async function unclaimJob(){
   const name=myProf?.name||'Someone';
   const{error}=await sb.from('tasks').update({status:'open',doer_id:null}).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
-  // reset application status back to pending so they still appear
-  await sb.from('applications').update({status:'pending'}).eq('task_id',activeJob.id).eq('applicant_id',pid);
+  // set application to withdrawn so job disappears from helping tab
+  await sb.from('applications').update({status:'withdrawn'}).eq('task_id',activeJob.id).eq('applicant_id',pid);
   await sb.from('messages').insert({task_id:activeJob.id,sender_id:pid,receiver_id:activeJob.poster_id,body:`↩️ ${name} has unclaimed this job. It is back to open.`,read:false});
   document.getElementById('modal').classList.remove('open');
-  toast('↩️ Job unclaimed');loadJobs();
+  toast('↩️ Job unclaimed');loadJobs();loadMyJobs();
 }
 function selCat(el){document.querySelectorAll('.cat-opt').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');selCatVal=el.dataset.cat;}
 
@@ -1856,10 +1856,12 @@ async function chatUnclaim(taskId){
   const name=myProfile?.name||me.email?.split('@')[0]||'Someone';
   const{error}=await sb.from('tasks').update({status:'open',doer_id:null}).eq('id',taskId);
   if(error)return toast('❌ '+error.message);
+  // mark application as withdrawn so it disappears from helping tab
+  await sb.from('applications').update({status:'withdrawn'}).eq('task_id',taskId).eq('applicant_id',pid);
   await sendSystemMessage(taskId,taskData.poster_id,taskData.doer_id,`↩️ ${name} unclaimed this job. It has been returned to open.`);
   document.getElementById('chat-modal').classList.remove('open');
   toast('↩️ Job unclaimed and returned to open');
-  loadMessages();loadJobs();
+  loadMessages();loadJobs();loadMyJobs();
 }
 
 async function chatComplete(taskId,doerId){
