@@ -1247,15 +1247,16 @@ async function openJob(j){
     ]);
     const pname=prof?.name||'Someone';
     const prating=prof?.rating?`<span style="color:var(--yellow);font-size:13px;font-weight:800">⭐ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:12px;font-weight:700">New</span>`;
-    const posterAvEl=document.getElementById('m-poster');
-    const pInitial=((pname||'?')[0]).toUpperCase();
     const pColor=prof?.avatar_color||'#9B59D4';
-    posterAvEl.innerHTML=`
-      <div onclick="sessionStorage.setItem('profileUserId','${pid}');window.location.href='/profile.html'" style="width:46px;height:46px;border-radius:50%;background:${pColor};border:3px solid ${pColor};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">${pInitial}</div>
+    const pInitial=((pname||'?')[0]).toUpperCase();
+    document.getElementById('m-poster').innerHTML=`
+      <div data-pav onclick="sessionStorage.setItem('profileUserId','${pid}');window.location.href='/profile.html'" style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">${pInitial}</div>
       <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
         <div style="font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
         <div style="display:flex;align-items:center;gap:5px">${prating}</div>
       </div>`;
+    const pCircle=document.querySelector('[data-pav]');
+    if(pCircle){pCircle.style.background=pColor;pCircle.style.border=`3px solid ${pColor}`;pCircle.style.outline=`2.5px solid ${pColor}`;pCircle.style.outlineOffset='2px';}
   }
   const isPoster=me&&(j.poster_id===me.id||j.poster_id===myProfileId);
   const btn=document.getElementById('m-action');const unclaimBtn=document.getElementById('m-unclaim');
