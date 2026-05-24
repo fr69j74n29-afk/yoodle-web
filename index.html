@@ -726,12 +726,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-function initMap() {
-  map = L.map('map', {center:[43.6532,-79.3832],zoom:15,zoomControl:false,attributionControl:false});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
-  L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
-  locateUser();
-}
+
 
 function locateUser() {
   if (!navigator.geolocation) {
@@ -744,7 +739,7 @@ function locateUser() {
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
       centerMapOnUser();
-      if(allJobs.length) updateRadiusCounts();
+      loadJobs();
     },
     err => {
       console.warn("Geolocation failed:", err);
@@ -844,11 +839,12 @@ async function loadJobs() {
     return;
   }
 
-  // fetch jobs via RPC — server-side distance filter + sort + limit
+  // fetch jobs — use larger of map or list radius so both views are covered
+  const fetchRadius=Math.max(RADIUS_KM, listRadiusKm);
   const{data,error}=await sb.rpc('get_open_jobs_near',{
     user_lat:userLat,
     user_lng:userLng,
-    radius_km:listRadiusKm,
+    radius_km:fetchRadius,
     lim:50,
     exclude_user_id:pid||null
   });
@@ -859,7 +855,8 @@ async function loadJobs() {
   }
 
   allJobs=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
-  renderListGrid(allJobs);
+  updateRadiusCounts();
+  renderListGrid(allJobs.filter(j=>(j.distance_km||haversineKm(userLat,userLng,j.lat,j.lng))<=listRadiusKm));
 }
 
 
