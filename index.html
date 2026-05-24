@@ -1703,14 +1703,15 @@ async function loadMessages(){
 
   el.innerHTML=data.map(t=>{
     const isPoster=t.poster_id===pid;
-    const otherName=isPoster?(t.doer_name||'Helper'):(t.poster_name||'Poster');
-    const otherRating=isPoster?t.doer_rating:t.poster_rating;
+    const otherName=t.other_name||'Someone';
+    const otherRating=t.other_rating;
     const cat=(t.category||'other').toLowerCase();
     const color=CAT_COLOR[cat]||'#9B59D4';
     const emoji=CAT_EMOJI[cat]||'✨';
     const preview=t.last_msg_body?esc(t.last_msg_body).slice(0,60):'Tap to open chat';
     const msgTime=t.last_msg_created_at?timeAgo(t.last_msg_created_at):'';
-    const isUnread=t.last_msg_body&&!t.last_msg_read&&t.last_msg_sender_id!==pid;
+    // last_msg_read from RPC is already computed as: unread AND sender is not current user
+    const isUnread=t.last_msg_read===true;
     const rowBg=isUnread?'background:rgba(236,72,153,.08);border-color:rgba(236,72,153,.3)':'';
     const unreadBadge=isUnread?`<span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;background:var(--pink);color:#fff;font-size:9px;font-weight:900;letter-spacing:.5px;vertical-align:middle;flex-shrink:0">NEW</span>`:'';
     let statusTag='';
