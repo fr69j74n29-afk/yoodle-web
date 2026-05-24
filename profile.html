@@ -107,7 +107,7 @@ async function loadProfile(){
 
   const prof = profRes.data;
   if(!prof){
-    content.innerHTML = `<div class="error-state">👤 Profile not found.</div>`;
+    content.innerHTML = `<div class="error-state">👤 Profile not found.<br><small style="color:var(--muted);font-size:11px">user_id: ${userId}<br>${profRes.error?.message||'No data returned'}</small></div>`;
     return;
   }
 
