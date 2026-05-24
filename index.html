@@ -183,6 +183,8 @@ body{
 .cat-opt{padding:14px 8px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);text-align:center;cursor:pointer;font-size:12px;font-weight:800;color:var(--muted);transition:all .15s;font-family:'Nunito',sans-serif}
 .cat-opt .ce{font-size:22px;display:block;margin-bottom:5px}
 .cat-opt.sel{border-color:var(--purple);color:var(--purple);background:rgba(155,89,212,.1)}
+.list-radius-btn{padding:6px 14px;border-radius:100px;background:var(--surface2);border:1.5px solid var(--border);font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;white-space:nowrap;font-family:'Nunito',sans-serif;transition:all .15s;flex-shrink:0}
+.list-radius-btn.active{background:rgba(155,89,212,.15);border-color:var(--purple);color:var(--purple)}
 .btn-primary{width:100%;padding:16px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;border:none;cursor:pointer;transition:opacity .15s,transform .15s;margin-top:8px}
 .btn-primary:active{transform:scale(.97);opacity:.9}
 .btn-primary:disabled{opacity:.45;cursor:not-allowed}
@@ -357,8 +359,17 @@ body{
 
   <!-- LIST VIEW -->
   <div class="app-view" id="app-list">
-    <div class="list-header" style="padding:12px 20px 8px">
-      <div class="list-h" style="font-size:16px" id="list-sub">Jobs open nearby</div>
+    <div class="list-header" style="padding:10px 16px 8px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="list-h" style="font-size:15px" id="list-sub">Jobs open nearby</div>
+      </div>
+      <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px">
+        <button class="list-radius-btn active" data-km="3" onclick="setListRadius(this,3)">3 km</button>
+        <button class="list-radius-btn" data-km="5" onclick="setListRadius(this,5)">5 km</button>
+        <button class="list-radius-btn" data-km="10" onclick="setListRadius(this,10)">10 km</button>
+        <button class="list-radius-btn" data-km="25" onclick="setListRadius(this,25)">25 km</button>
+        <button class="list-radius-btn" data-km="50" onclick="setListRadius(this,50)">50 km</button>
+      </div>
     </div>
     <div class="list-scroll"><div class="jobs-grid" id="list-grid"><div class="loading"><div class="spinner"></div></div></div></div>
   </div>
@@ -816,6 +827,15 @@ function renderMapPins(jobs) {
 
 let allHelpers=[];
 
+let listRadiusKm=3;
+
+function setListRadius(el,km){
+  document.querySelectorAll('.list-radius-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  listRadiusKm=km;
+  loadJobs();
+}
+
 async function loadJobs() {
   if (!sb) {
     document.getElementById('list-grid').innerHTML =
@@ -823,31 +843,40 @@ async function loadJobs() {
     return;
   }
 
-  const now=new Date().toISOString();
   const pid=myProfileId||me?.id;
+  const g=document.getElementById('list-grid');
+  g.innerHTML=spin();
 
-  const[{data,error},{data:helpers}]=await Promise.all([
-    sb.from('tasks')
-      .select('*, profiles!tasks_poster_id_fkey(id,name,rating,avatar_color)')
-      .eq('status', 'open')
-      .or(`expires_at.is.null,expires_at.gt.${now}`)
-      .order('created_at', { ascending: false }),
-    sb.from('profiles')
-      .select('id,name,rating,last_lat,last_lng,avatar_color')
-      .eq('visible_on_map', true)
-      .neq('id', pid||'00000000-0000-0000-0000-000000000000')
-  ]);
+  // fetch helpers for map (separate, no radius restriction)
+  const{data:helpers}=await sb.from('profiles')
+    .select('id,name,rating,last_lat,last_lng,avatar_color')
+    .eq('visible_on_map', true)
+    .neq('id', pid||'00000000-0000-0000-0000-000000000000');
+  allHelpers=helpers||[];
+  updateRadiusCounts();
 
-  if (error) {
-    document.getElementById('list-grid').innerHTML =
-      emptyState('😕', 'Error loading jobs', error.message);
+  // if no user location, show prompt
+  if(!userLat||!userLng){
+    g.innerHTML=emptyState('📍','Share your location','Tap the locate button on the map to see nearby jobs');
+    document.getElementById('list-sub').textContent='Enable location to browse jobs';
     return;
   }
 
-  allJobs = (data||[]).map(j=>({...j, category:(j.category||'other').toLowerCase()}));
-  allHelpers = helpers||[];
+  // fetch jobs via RPC — server-side distance filter + sort + limit
+  const{data,error}=await sb.rpc('get_open_jobs_near',{
+    user_lat:userLat,
+    user_lng:userLng,
+    radius_km:listRadiusKm,
+    lim:50
+  });
+
+  if(error){
+    g.innerHTML=emptyState('😕','Error loading jobs',error.message);
+    return;
+  }
+
+  allJobs=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   renderListGrid(allJobs);
-  updateRadiusCounts();
 }
 
 
@@ -900,11 +929,14 @@ function renderSheetContent(){
 function renderListGrid(jobs) {
   const pid=myProfileId||me?.id;
   const others=pid?jobs.filter(j=>j.poster_id!==pid):jobs;
-  const filtered=listCatFilter==='all'?others:others.filter(j=>j.category===listCatFilter);
   const g=document.getElementById('list-grid');
-  if(!filtered.length){g.innerHTML=emptyState('🌱','No jobs nearby','Check back soon or post your own!');document.getElementById('list-sub').textContent='0 jobs open nearby';return;}
-  document.getElementById('list-sub').textContent=`${filtered.length} job${filtered.length===1?'':'s'} open nearby`;
-  g.innerHTML=filtered.map(j=>listCard(j,j.profiles)).join('');
+  if(!others.length){
+    g.innerHTML=emptyState('🌱',`No jobs within ${listRadiusKm}km`,'Try a larger radius or check back soon!');
+    document.getElementById('list-sub').textContent=`0 jobs within ${listRadiusKm}km`;
+    return;
+  }
+  document.getElementById('list-sub').textContent=`${others.length} job${others.length===1?'':'s'} within ${listRadiusKm}km`;
+  g.innerHTML=others.map(j=>listCard(j,j.profiles)).join('');
 }
 
 function nav(view) {
@@ -1065,7 +1097,9 @@ function listCard(j,profile){
   const rating=profile?.rating?`⭐ ${profile.rating}`:'New';
   // distance or area/city fallback
   let locLabel;
-  if(userLat&&userLng&&j.lat&&j.lng){
+  if(j.distance_km!=null){
+    locLabel=j.distance_km<1?'Less than 1 km away':`${Number(j.distance_km).toFixed(1)} km away`;
+  } else if(userLat&&userLng&&j.lat&&j.lng){
     const d=haversineKm(userLat,userLng,j.lat,j.lng);
     locLabel=d<=1?'Less than 1 km away':`${d.toFixed(1)} km away`;
   } else {
