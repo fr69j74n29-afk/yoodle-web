@@ -1498,9 +1498,7 @@ async function unclaimJob(){
   const{error}=await sb.from('tasks').update({status:'open',doer_id:null}).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
   if(doerId){
-    // look up doer application by ID then update — same pattern as assignApplicant
-    const{data:doerApp}=await sb.from('applications').select('id').eq('task_id',activeJob.id).eq('applicant_id',doerId).maybeSingle();
-    if(doerApp)await sb.from('applications').update({status:'withdrawn'}).eq('id',doerApp.id);
+    await sb.from('applications').update({status:'withdrawn'}).eq('task_id',activeJob.id).eq('applicant_id',doerId);
     // send notification via conversation then archive it
     const{data:conv}=await sb.from('conversations').select('id').eq('task_id',activeJob.id).eq('applicant_id',doerId).eq('status','active').maybeSingle();
     if(conv){
@@ -2052,7 +2050,9 @@ async function chatUnclaim(taskId){
   const isPoster=taskData.poster_id===pid;
   if(isPoster){
     if(taskData.doer_id){
-      await sb.from('applications').update({status:'pending'}).eq('task_id',taskId).eq('applicant_id',taskData.doer_id);
+      // look up by primary key then update — same approach as doer withdraw which works
+      const{data:doerApp}=await sb.from('applications').select('id').eq('task_id',taskId).eq('applicant_id',taskData.doer_id).maybeSingle();
+      if(doerApp)await sb.from('applications').update({status:'withdrawn'}).eq('id',doerApp.id);
     }
   } else {
     await sb.from('applications').update({status:'withdrawn'}).eq('task_id',taskId).eq('applicant_id',pid);
