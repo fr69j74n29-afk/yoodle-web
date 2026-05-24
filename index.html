@@ -1402,16 +1402,26 @@ async function withdrawFromConfirm(){
   if(!app)return toast('❌ Application not found');
   const{error}=await sb.from('applications').update({status:'withdrawn'}).eq('id',app.id);
   if(error)return toast('❌ '+error.message);
+  // archive the conversation so it disappears from Messages
+  const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',pid).eq('status','active').maybeSingle();
+  if(conv)await sb.from('conversations').update({status:'archived'}).eq('id',conv.id);
   document.getElementById('applied-modal').classList.remove('open');
-  toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();
+  toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();loadMessages();
 }
 
 async function withdrawApplication(appId){
   if(!sb||!me)return;
+  const pid=myProfileId||me.id;
+  const{data:appData}=await sb.from('applications').select('task_id').eq('id',appId).maybeSingle();
   const{error}=await sb.from('applications').update({status:'withdrawn'}).eq('id',appId);
   if(error)return toast('❌ '+error.message);
+  // archive the conversation so it disappears from Messages
+  if(appData?.task_id){
+    const{data:conv}=await sb.from('conversations').select('id').eq('task_id',appData.task_id).eq('applicant_id',pid).eq('status','active').maybeSingle();
+    if(conv)await sb.from('conversations').update({status:'archived'}).eq('id',conv.id);
+  }
   document.getElementById('modal').classList.remove('open');
-  toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();
+  toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();loadMessages();
 }
 
 async function openApplicants(taskId,taskTitle){
@@ -1958,12 +1968,6 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
       btns+=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
     }
     if(btns){actionsEl.innerHTML=btns;actionsEl.style.display='flex';}
-  } else if(task.status==='open'&&!isPoster){
-    const{data:app}=await sb.from('applications').select('id,status').eq('task_id',taskId).eq('applicant_id',pid).maybeSingle();
-    if(app&&app.status==='withdrawn'){
-      actionsEl.innerHTML=`<button onclick="applyForJob('${taskId}','${task.poster_id}',document.getElementById('chat-title').textContent)" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🙋 Re-apply</button>`;
-      actionsEl.style.display='flex';
-    }
   }
 }
 
@@ -2050,9 +2054,7 @@ async function chatUnclaim(taskId){
   const isPoster=taskData.poster_id===pid;
   if(isPoster){
     if(taskData.doer_id){
-      // look up by primary key then update — same approach as doer withdraw which works
-      const{data:doerApp}=await sb.from('applications').select('id').eq('task_id',taskId).eq('applicant_id',taskData.doer_id).maybeSingle();
-      if(doerApp)await sb.from('applications').update({status:'withdrawn'}).eq('id',doerApp.id);
+      await sb.from('applications').update({status:'withdrawn'}).eq('task_id',taskId).eq('applicant_id',taskData.doer_id);
     }
   } else {
     await sb.from('applications').update({status:'withdrawn'}).eq('task_id',taskId).eq('applicant_id',pid);
