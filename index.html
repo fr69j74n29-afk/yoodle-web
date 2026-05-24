@@ -1301,7 +1301,7 @@ function openAppliedChat(){
   const posterRating=btn.dataset.posterRating;
   const jobTitle=document.getElementById('applied-job-title').textContent;
   document.getElementById('applied-modal').classList.remove('open');
-  openChat(taskId,jobTitle,posterName,posterId,myProfileId||me.id,posterRating);
+  openChat(taskId,jobTitle,posterName,posterId,posterId,posterRating);
 }
 
 async function withdrawFromConfirm(){
@@ -1553,7 +1553,7 @@ async function loadMyJobs(){
       } else if(app.status==='assigned'){
         appBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">🤝 Assigned</span>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${pid}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
           <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
         </div>`;
       }
@@ -1754,7 +1754,7 @@ async function loadMessages(){
       if(t.app_status==='pending') statusTag=`<span style="font-size:10px;color:var(--yellow);font-weight:800;margin-left:6px">⏳ Pending</span>`;
       else if(t.app_status==='assigned'||t.status==='claimed') statusTag=`<span style="font-size:10px;color:var(--teal);font-weight:800;margin-left:6px">🤝 Assigned</span>`;
     }
-    return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.doer_id||''}','${otherRating||''}')">
+    return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}')">
       <div class="conv-icon" style="background:${color}22;border:1.5px solid ${color}44">${emoji}</div>
       <div class="conv-body">
         <div class="conv-top">
@@ -1769,13 +1769,13 @@ async function loadMessages(){
 }
 
 let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null;
-async function openChat(taskId,title,otherName,posterId,doerId,otherRating){
-  activeChatTaskId=taskId;activeChatPosterId=posterId;
+async function openChat(taskId,title,otherName,posterId,otherId,otherRating){
+  activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;
   document.getElementById('chat-title').textContent=title;
   const ratingStr=otherRating?` · ⭐ ${otherRating}`:'';
   document.getElementById('chat-other').textContent=otherName+ratingStr;
   document.getElementById('chat-modal').classList.add('open');
-  loadChatMessages(taskId);
+  loadChatMessages(taskId,otherId);
 
   // fetch current task status to show correct action buttons
   const actionsEl=document.getElementById('chat-actions');
@@ -1784,16 +1784,6 @@ async function openChat(taskId,title,otherName,posterId,doerId,otherRating){
   const pid=myProfileId||me.id;
   const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id').eq('id',taskId).single();
   if(!task)return;
-
-  // resolve doerId — use task.doer_id if set, otherwise use passed doerId,
-  // otherwise find from messages (pre-assignment chat)
-  let resolvedDoerId=task.doer_id||doerId||'';
-  if(!resolvedDoerId&&task.poster_id===pid){
-    // poster opened pre-assignment chat — find the applicant from messages
-    const{data:msgs}=await sb.from('messages').select('sender_id,receiver_id').eq('task_id',taskId).neq('sender_id',pid).limit(1);
-    resolvedDoerId=msgs?.[0]?.sender_id||'';
-  }
-  activeChatDoerId=resolvedDoerId;
 
   const isPoster=task.poster_id===pid;
   const isDoer=task.doer_id===pid;
@@ -1817,14 +1807,20 @@ async function openChat(taskId,title,otherName,posterId,doerId,otherRating){
   }
 }
 
-async function loadChatMessages(taskId){
+async function loadChatMessages(taskId,otherId){
+  // otherId may not be passed if called from realtime refresh — fall back to activeChatDoerId
+  const other=otherId||activeChatDoerId;
   const el=document.getElementById('chat-messages');el.innerHTML=spin();if(!sb||!me)return;
-  const{data,error}=await sb.from('messages').select('id,body,sender_id,receiver_id,read,created_at').eq('task_id',taskId).order('created_at',{ascending:true});
+  const pid=myProfileId||me.id;
+  // fetch only messages between this user and the specific other person on this task
+  const{data,error}=await sb.from('messages').select('id,body,sender_id,receiver_id,read,created_at')
+    .eq('task_id',taskId)
+    .or(`and(sender_id.eq.${pid},receiver_id.eq.${other}),and(sender_id.eq.${other},receiver_id.eq.${pid})`)
+    .order('created_at',{ascending:true});
   if(error){el.innerHTML=emptyState('💬','Start the conversation','Send a message below');return;}
   if(!data?.length){el.innerHTML=emptyState('💬','Start the conversation','Send a message below');return;}
-  const pid=myProfileId||me.id;
-  // mark unread messages as read
-  const unreadIds=data.filter(m=>!m.read&&(m.receiver_id===pid||m.receiver_id===me.id)).map(m=>m.id);
+  // mark unread messages as read (only those sent to me in this thread)
+  const unreadIds=data.filter(m=>!m.read&&m.receiver_id===pid).map(m=>m.id);
   if(unreadIds.length){
     await sb.from('messages').update({read:true}).in('id',unreadIds);
     refreshUnreadCount(); // always sync badge to real DB state
