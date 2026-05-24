@@ -724,6 +724,25 @@ window.addEventListener('DOMContentLoaded', () => {
   initMap();
   if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
   }
+
+  // Register OneSignal notification click listener early — before auth —
+  // so cold starts (app opened by tapping a notification) are captured.
+  window.OneSignalDeferred=window.OneSignalDeferred||[];
+  window.OneSignalDeferred.push(function(os){
+    os.Notifications.addEventListener('click',async function(event){
+      const data=event.notification.additionalData;
+      const taskId=data?.task_id;
+      const convId=data?.conversation_id;
+      if(!taskId)return;
+      if(me&&sb){
+        await openChatFromNotification(taskId,convId);
+      }else{
+        window._pendingNotifTaskId=taskId;
+        window._pendingNotifConvId=convId;
+      }
+    });
+  });
+
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   sb.auth.getSession().then(({data:{session}})=>{
     if(session){me=session.user;showApp();}
@@ -1044,18 +1063,6 @@ async function registerOneSignal(){
             const pid=myProfileId||me.id;
             await sb.from('profiles').update({onesignal_id:osId}).eq('id',pid);
             console.log('OneSignal ID saved:',osId);
-          }
-        });
-        os.Notifications.addEventListener('click',async(event)=>{
-          const data=event.notification.additionalData;
-          const taskId=data?.task_id;
-          const convId=data?.conversation_id;
-          if(!taskId)return;
-          if(me&&sb){
-            await openChatFromNotification(taskId,convId);
-          }else{
-            window._pendingNotifTaskId=taskId;
-            window._pendingNotifConvId=convId;
           }
         });
       }
