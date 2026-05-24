@@ -249,7 +249,6 @@ body{
 .loading{text-align:center;padding:50px;color:var(--muted)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spinner{width:22px;height:22px;border:2.5px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .75s linear infinite;display:inline-block}
-.cfg-banner{background:rgba(252,211,77,.08);border:1.5px solid rgba(252,211,77,.25);border-radius:var(--radius-sm);padding:10px 16px;margin:8px 16px 0;font-size:12px;color:var(--yellow);font-weight:800;display:none;line-height:1.6;z-index:101;position:relative;flex-shrink:0}
 
 /* conversation row */
 .conv-row{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border-radius:var(--radius-sm);border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;margin-bottom:8px}
@@ -297,7 +296,6 @@ body{
 </div>
 
 <!-- CONFIG BANNER -->
-<div class="cfg-banner" id="cfg-banner">⚠️ Fill in SUPABASE_URL and SUPABASE_ANON_KEY in the &lt;script&gt; to connect your database.</div>
 
 
 
@@ -717,8 +715,6 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   initMap();
   if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-    document.getElementById('cfg-banner').style.display='block';
-    showDemoApp(); return;
   }
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   sb.auth.getSession().then(({data:{session}})=>{
@@ -961,11 +957,10 @@ async function sendMagicLink() {
 }
 
 async function signOut(){if(sb)await sb.auth.signOut();else showAuthScreen();}
-function showAuthScreen(){document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';document.getElementById('cfg-banner').style.display='none';}
+function showAuthScreen(){document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';}
 
 async function showApp(){
   document.getElementById('view-auth').style.display='none';
-  document.getElementById('cfg-banner').style.display='none';
   const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
   setAvatar();
   if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
@@ -1039,7 +1034,6 @@ function subscribeToMessages(){
   }).subscribe();
 }
 
-function showDemoApp(){document.getElementById('view-auth').style.display='none';const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';document.getElementById('top-av').textContent='😊';document.getElementById('fab').style.display='flex';}
 
 async function setAvatar(){
   if(!me)return;
@@ -1703,86 +1697,28 @@ async function loadMessages(){
   if(!sb||!me){el.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see messages');return;}
   const pid=myProfileId||me.id;
 
-  // fetch all tasks where user has exchanged messages (covers claimed + rejected applicants)
-  const{data:msgTaskIds}=await sb.from('messages')
-    .select('task_id')
-    .or(`sender_id.eq.${pid},receiver_id.eq.${pid}`);
-  const uniqueTaskIds=[...new Set((msgTaskIds||[]).map(m=>m.task_id))];
+  const{data,error}=await sb.rpc('get_active_conversations',{user_id:pid});
+  if(error){el.innerHTML=emptyState('😕','Error loading messages',error.message);return;}
+  if(!data?.length){el.innerHTML=emptyState('💬','No conversations yet','Express interest in a job to start messaging');return;}
 
-  if(!uniqueTaskIds.length){el.innerHTML=emptyState('💬','No conversations yet','Express interest in a job to start messaging');return;}
-
-  // fetch those tasks with poster profile — active only (completed/cancelled go to archive)
-  const{data:tasks,error}=await sb.from('tasks')
-    .select('*, profiles!tasks_poster_id_fkey(id,name,rating)')
-    .in('id',uniqueTaskIds)
-    .in('status',['open','claimed'])
-    .order('created_at',{ascending:false});
-  if(error){el.innerHTML=emptyState('😕','Error',error.message);return;}
-  if(!tasks?.length){el.innerHTML=emptyState('💬','No conversations yet','Express interest in a job to start messaging');return;}
-
-  // fetch last message for each task
-  const taskIds=tasks.map(t=>t.id);
-  const{data:lastMsgs}=await sb.from('messages')
-    .select('task_id,body,sender_id,created_at,read')
-    .in('task_id',taskIds)
-    .order('created_at',{ascending:false});
-
-  // build map of taskId → last message
-  const lastMsgMap={};
-  (lastMsgs||[]).forEach(m=>{if(!lastMsgMap[m.task_id])lastMsgMap[m.task_id]=m;});
-
-  // fetch doer profiles for tasks where current user is the poster
-  const doerIds=[...new Set(tasks.filter(t=>t.poster_id===pid&&t.doer_id).map(t=>t.doer_id))];
-  const doerNames={};
-  const doerRatings={};
-  if(doerIds.length){
-    const{data:doerProfs}=await sb.from('profiles').select('id,name,rating').in('id',doerIds);
-    (doerProfs||[]).forEach(p=>{doerNames[p.id]=p.name;doerRatings[p.id]=p.rating;});
-  }
-
-  // fetch application statuses for tasks where current user is NOT the poster
-  const appStatusMap={};
-  const nonPosterTaskIds=tasks.filter(t=>t.poster_id!==pid).map(t=>t.id);
-  if(nonPosterTaskIds.length){
-    const{data:appData}=await sb.from('applications').select('task_id,status').eq('applicant_id',pid).in('task_id',nonPosterTaskIds);
-    (appData||[]).forEach(a=>appStatusMap[a.task_id]=a.status);
-  }
-
-  // sort tasks by last message time (most recent first)
-  tasks.sort((a,b)=>{
-    const at=lastMsgMap[a.id]?.created_at||a.created_at;
-    const bt=lastMsgMap[b.id]?.created_at||b.created_at;
-    return new Date(bt)-new Date(at);
-  });
-
-  el.innerHTML=tasks.map(t=>{
+  el.innerHTML=data.map(t=>{
     const isPoster=t.poster_id===pid;
-    // skip conversations where user withdrew or was rejected
-    if(!isPoster&&(appStatusMap[t.id]==='withdrawn'||appStatusMap[t.id]==='rejected'))return'';
-    const otherName=isPoster?(doerNames[t.doer_id]||'Helper'):(t.profiles?.name||'Poster');
+    const otherName=isPoster?(t.doer_name||'Helper'):(t.poster_name||'Poster');
+    const otherRating=isPoster?t.doer_rating:t.poster_rating;
     const cat=(t.category||'other').toLowerCase();
     const color=CAT_COLOR[cat]||'#9B59D4';
     const emoji=CAT_EMOJI[cat]||'✨';
-    const lastMsg=lastMsgMap[t.id];
-    const preview=lastMsg?esc(lastMsg.body||'').slice(0,60):'Tap to open chat';
-    const msgTime=lastMsg?timeAgo(lastMsg.created_at):'';
-    const isUnread=lastMsg&&!lastMsg.read&&lastMsg.sender_id!==pid;
+    const preview=t.last_msg_body?esc(t.last_msg_body).slice(0,60):'Tap to open chat';
+    const msgTime=t.last_msg_created_at?timeAgo(t.last_msg_created_at):'';
+    const isUnread=t.last_msg_body&&!t.last_msg_read&&t.last_msg_sender_id!==pid;
     const rowBg=isUnread?'background:rgba(236,72,153,.08);border-color:rgba(236,72,153,.3)':'';
     const unreadBadge=isUnread?`<span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;background:var(--pink);color:#fff;font-size:9px;font-weight:900;letter-spacing:.5px;vertical-align:middle;flex-shrink:0">NEW</span>`:'';
-    // status tag for non-claimed tasks
-    // determine status tag based on application status for non-poster
     let statusTag='';
-    if(t.status==='completed') statusTag=`<span style="font-size:10px;color:var(--lime);font-weight:800;margin-left:6px">✅ Done</span>`;
-    else if(t.status==='cancelled') statusTag=`<span style="font-size:10px;color:var(--muted);font-weight:800;margin-left:6px">🗑️ Cancelled</span>`;
-    else if(!isPoster){
-      const appStatus=appStatusMap[t.id];
-      if(appStatus==='pending') statusTag=`<span style="font-size:10px;color:var(--yellow);font-weight:800;margin-left:6px">⏳ Pending</span>`;
-      else if(appStatus==='rejected') statusTag=`<span style="font-size:10px;color:var(--muted);font-weight:800;margin-left:6px">😔 Not selected</span>`;
-      else if(appStatus==='withdrawn') statusTag=`<span style="font-size:10px;color:var(--muted);font-weight:800;margin-left:6px">↩️ Withdrawn</span>`;
-      else if(appStatus==='assigned'||t.status==='claimed') statusTag=`<span style="font-size:10px;color:var(--teal);font-weight:800;margin-left:6px">🤝 Assigned</span>`;
+    if(!isPoster){
+      if(t.app_status==='pending') statusTag=`<span style="font-size:10px;color:var(--yellow);font-weight:800;margin-left:6px">⏳ Pending</span>`;
+      else if(t.app_status==='assigned'||t.status==='claimed') statusTag=`<span style="font-size:10px;color:var(--teal);font-weight:800;margin-left:6px">🤝 Assigned</span>`;
     }
-    const otherRating=isPoster?doerRatings[t.doer_id]:t.profiles?.rating;
-    return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.doer_id||''}','${otherRating||''}')">
+    return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.doer_id||''}','${otherRating||''}')">
       <div class="conv-icon" style="background:${color}22;border:1.5px solid ${color}44">${emoji}</div>
       <div class="conv-body">
         <div class="conv-top">
