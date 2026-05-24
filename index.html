@@ -1267,6 +1267,8 @@ async function applyForJob(taskId,posterId,jobTitle){
   // store context for chat/withdraw buttons
   document.getElementById('applied-chat-btn').dataset.taskId=taskId;
   document.getElementById('applied-chat-btn').dataset.posterId=posterId;
+  document.getElementById('applied-chat-btn').dataset.posterName=activeJob?.profiles?.name||'Poster';
+  document.getElementById('applied-chat-btn').dataset.posterRating=activeJob?.profiles?.rating||'';
   document.getElementById('applied-withdraw-btn').dataset.taskId=taskId;
   document.getElementById('applied-modal').classList.add('open');
   toast('🙋 Interest expressed!');
@@ -1277,9 +1279,11 @@ function openAppliedChat(){
   const btn=document.getElementById('applied-chat-btn');
   const taskId=btn.dataset.taskId;
   const posterId=btn.dataset.posterId;
+  const posterName=btn.dataset.posterName||'Poster';
+  const posterRating=btn.dataset.posterRating;
   const jobTitle=document.getElementById('applied-job-title').textContent;
   document.getElementById('applied-modal').classList.remove('open');
-  openChat(taskId,jobTitle,'Poster',posterId,myProfileId||me.id);
+  openChat(taskId,jobTitle,posterName,posterId,myProfileId||me.id,posterRating);
 }
 
 async function withdrawFromConfirm(){
@@ -1489,7 +1493,7 @@ async function loadMyJobs(){
     q=sb.from('tasks').select('*').eq('poster_id',pid).in('status',['open','claimed']).order('created_at',{ascending:false});
   } else {
     // fetch applications by this user with task details
-    q=sb.from('applications').select('id,status,created_at,tasks!inner(*)').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','claimed']).order('created_at',{ascending:false});
+    q=sb.from('applications').select('id,status,created_at,tasks!inner(*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color))').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','claimed']).order('created_at',{ascending:false});
   }
   const{data,error}=await q;
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
@@ -1531,7 +1535,7 @@ async function loadMyJobs(){
       } else if(app.status==='assigned'){
         appBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">🤝 Assigned</span>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','Poster','${j.poster_id}','${pid}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${pid}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
           <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
         </div>`;
       }
@@ -1802,10 +1806,11 @@ async function loadMessages(){
 }
 
 let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null;
-async function openChat(taskId,title,otherName,posterId,doerId){
+async function openChat(taskId,title,otherName,posterId,doerId,otherRating){
   activeChatTaskId=taskId;activeChatPosterId=posterId;
   document.getElementById('chat-title').textContent=title;
-  document.getElementById('chat-other').textContent=otherName;
+  const ratingStr=otherRating?` · ⭐ ${otherRating}`:'';
+  document.getElementById('chat-other').textContent=otherName+ratingStr;
   document.getElementById('chat-modal').classList.add('open');
   loadChatMessages(taskId);
 
