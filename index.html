@@ -1479,22 +1479,6 @@ async function loadMyJobs(){
       const{data:appData}=await sb.from('applications').select('task_id').eq('status','pending').in('task_id',openIds);
       (appData||[]).forEach(a=>{applicantCounts[a.task_id]=(applicantCounts[a.task_id]||0)+1;});
     }
-    const completedJobs=data.filter(j=>j.status==='completed');
-    if(completedJobs.length){
-      const completedIds=completedJobs.map(j=>j.id);
-      const{data:rData}=await sb.from('ratings').select('task_id').eq('rater_id',pid).in('task_id',completedIds);
-      ratedTaskIds=new Set((rData||[]).map(r=>r.task_id));
-    }
-  }
-
-  // for helping tab, check which completed tasks already rated
-  if(myTab==='helping'){
-    const completedApps=data.filter(a=>a.tasks?.status==='completed');
-    if(completedApps.length){
-      const completedIds=completedApps.map(a=>a.tasks.id);
-      const{data:rData}=await sb.from('ratings').select('task_id').eq('rater_id',pid).in('task_id',completedIds);
-      ratedTaskIds=new Set((rData||[]).map(r=>r.task_id));
-    }
   }
 
   const now=new Date();
@@ -1535,7 +1519,7 @@ async function loadMyJobs(){
     const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
     const daysLeft=j.expires_at?Math.ceil((new Date(j.expires_at)-now)/(1000*60*60*24)):null;
 
-    const gpsTag=j.status==='open'&&!isExpired?(j.location_verified?` · <span style="color:var(--lime);font-size:11px;font-weight:800">✅ GPS</span>`:`· <span style="color:var(--yellow);font-size:11px;font-weight:800">⚠️ Unverified</span>`):'';
+    const gpsTag=j.status==='open'?(j.location_verified?` · <span style="color:var(--lime);font-size:11px;font-weight:800">✅ GPS</span>`:`· <span style="color:var(--yellow);font-size:11px;font-weight:800">⚠️ Unverified</span>`):'';
     let statusBadge;
     if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">🤝 Active</span>`;
     else statusBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">🟢 Open${daysLeft!==null?` · ${daysLeft}d left`:''}${gpsTag}</span>`;
