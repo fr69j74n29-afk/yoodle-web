@@ -495,9 +495,10 @@ body{
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       Post
     </button>
-    <button class="nav-i" id="ni-myjobs" onclick="nav('myjobs')">
+    <button class="nav-i" id="ni-myjobs" onclick="nav('myjobs')" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       Jobs
+      <span id="rating-badge" onclick="event.stopPropagation();openRatingsSheet()" style="display:none;position:absolute;top:4px;right:6px;background:var(--yellow);color:#000;font-size:9px;font-weight:900;border-radius:100px;padding:2px 5px;line-height:1.2;cursor:pointer"></span>
     </button>
     <button class="nav-i" id="ni-messages" onclick="nav('messages')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -621,6 +622,18 @@ body{
       </div>
     </div>
     <div id="sheet-content" style="flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch"></div>
+  </div>
+</div>
+
+<!-- RATINGS SHEET -->
+<div class="modal-ov" id="ratings-sheet" onclick="if(event.target.id==='ratings-sheet')document.getElementById('ratings-sheet').classList.remove('open')">
+  <div class="modal-sheet" style="max-height:85dvh;display:flex;flex-direction:column;padding:0">
+    <div style="padding:16px 20px 0;flex-shrink:0">
+      <div class="modal-handle"></div>
+      <div style="font-size:20px;font-weight:900;margin-bottom:4px">⭐ Pending Ratings</div>
+      <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:16px">Rate these to complete the job lifecycle</div>
+    </div>
+    <div id="ratings-sheet-list" style="flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch"></div>
   </div>
 </div>
 
@@ -904,7 +917,7 @@ function nav(view) {
   // close any open modals when navigating
   document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
   if(view==='map'){setTimeout(()=>map.invalidateSize(),100);}
-  if(view==='myjobs')loadMyJobs();
+  if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
   if(view==='post')resetPost();
   if(view==='messages'){clearMessageBadge();loadMessages();}
   if(view==='profile')loadProfile();
@@ -940,6 +953,7 @@ async function showApp(){
   loadJobs();
   subscribeToMessages();
   registerOneSignal();
+  loadPendingRatings();
   setTimeout(updateNotifNudge, 2000);
 }
 
@@ -1439,10 +1453,10 @@ async function loadMyJobs(){
   const pid=myProfileId||me.id;
   let q;
   if(myTab==='posted'){
-    q=sb.from('tasks').select('*').eq('poster_id',pid).order('created_at',{ascending:false});
+    q=sb.from('tasks').select('*').eq('poster_id',pid).in('status',['open','claimed']).order('created_at',{ascending:false});
   } else {
     // fetch applications by this user with task details
-    q=sb.from('applications').select('id,status,created_at,tasks(*)').eq('applicant_id',pid).order('created_at',{ascending:false});
+    q=sb.from('applications').select('id,status,created_at,tasks!inner(*)').eq('applicant_id',pid).in('tasks.status',['open','claimed']).order('created_at',{ascending:false});
   }
   const{data,error}=await q;
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
@@ -1494,14 +1508,7 @@ async function loadMyJobs(){
       const color=CAT_COLOR[cat]||'#9B59D4';
       const emoji=CAT_EMOJI[cat]||'✨';
       let appBadge,actionBtn='';
-      if(j.status==='completed'){
-        appBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">✅ Done</span>`;
-        if(ratedTaskIds.has(j.id)){
-          actionBtn=`<button style="margin-top:10px;width:100%;padding:12px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:default" disabled>✅ Rated</button>`;
-        } else {
-          actionBtn=`<button onclick="event.stopPropagation();openRatingModal('${j.id}','${j.poster_id}','How was the job poster?')" style="margin-top:10px;width:100%;padding:12px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">⭐ Rate Poster</button>`;
-        }
-      } else if(app.status==='pending'){
+      if(app.status==='pending'){
         appBadge=`<span style="color:var(--yellow);font-size:12px;font-weight:800">⏳ Pending</span>`;
         actionBtn=`<button onclick="event.stopPropagation();withdrawApplication('${app.id}')" style="margin-top:10px;width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Withdraw Interest</button>`;
       } else if(app.status==='assigned'){
@@ -1510,8 +1517,6 @@ async function loadMyJobs(){
           <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','Poster','${j.poster_id}','${pid}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
           <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
         </div>`;
-      } else if(app.status==='rejected'||app.status==='withdrawn'){
-        appBadge=`<span style="color:var(--muted);font-size:12px;font-weight:800">${app.status==='withdrawn'?'↩️ Withdrawn':'😔 Not selected'}</span>`;
       }
       return `<div class="job-card" style="--jc:${color};cursor:default">
         <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:4px">
@@ -1528,19 +1533,15 @@ async function loadMyJobs(){
   const data2=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   g.innerHTML=data2.map(j=>{
     const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
-    const isExpired=j.expires_at&&new Date(j.expires_at)<now&&j.status==='open';
     const daysLeft=j.expires_at?Math.ceil((new Date(j.expires_at)-now)/(1000*60*60*24)):null;
 
     const gpsTag=j.status==='open'&&!isExpired?(j.location_verified?` · <span style="color:var(--lime);font-size:11px;font-weight:800">✅ GPS</span>`:`· <span style="color:var(--yellow);font-size:11px;font-weight:800">⚠️ Unverified</span>`):'';
     let statusBadge;
-    if(j.status==='completed') statusBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">✅ Done</span>`;
-    else if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">🤝 Active</span>`;
-    else if(j.status==='cancelled') statusBadge=`<span style="color:var(--muted);font-size:12px;font-weight:800">🗑️ Removed</span>`;
-    else if(isExpired) statusBadge=`<span style="color:#EF4444;font-size:12px;font-weight:800">⏰ Expired</span>`;
+    if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">🤝 Active</span>`;
     else statusBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">🟢 Open${daysLeft!==null?` · ${daysLeft}d left`:''}${gpsTag}</span>`;
 
     let actionBtn='';
-    if(j.status==='open'&&!isExpired){
+    if(j.status==='open'){
       const appCount=applicantCounts[j.id]||0;
       const appBadge=appCount>0?`<div style="margin-top:8px;padding:8px 12px;background:rgba(155,89,212,.12);border:1.5px solid rgba(155,89,212,.3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between">
         <span style="font-size:13px;font-weight:800;color:var(--purple)">👥 ${appCount} interested</span>
@@ -1556,17 +1557,6 @@ async function loadMyJobs(){
         <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
         <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
         <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
-      </div>`;
-    } else if(j.status==='completed'){
-      if(ratedTaskIds.has(j.id)){
-        actionBtn=`<button style="margin-top:10px;width:100%;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:default" disabled>✅ Rated</button>`;
-      } else {
-        actionBtn=`<div style="margin-top:10px"><button onclick="event.stopPropagation();checkAndRate('${j.id}','${j.doer_id}','How did the helper do?')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">⭐ Rate Helper</button></div>`;
-      }
-    } else if(isExpired){
-      actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-        <button onclick="event.stopPropagation();renewJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🔄 Renew 14 days</button>
-        <button onclick="event.stopPropagation();removeJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🗑️ Remove</button>
       </div>`;
     }
 
@@ -2123,6 +2113,101 @@ function updateNotifTip(){
     body.innerHTML='Enable notifications to get alerted about new jobs and messages near you.';
   }
   updateNotifNudge();
+}
+
+async function loadPendingRatings(){
+  if(!sb||!me)return;
+  const pid=myProfileId||me.id;
+  const now=new Date().toISOString();
+
+  // Server-side: fetch completed tasks where user was poster OR doer, not yet rated
+  const[{data:postedCompleted},{data:helpedCompleted},{data:alreadyRated}]=await Promise.all([
+    sb.from('tasks').select('id,title,price,doer_id,profiles!tasks_poster_id_fkey(name)')
+      .eq('poster_id',pid).eq('status','completed').not('doer_id','is',null),
+    sb.from('tasks').select('id,title,price,poster_id,profiles!tasks_poster_id_fkey(name)')
+      .eq('doer_id',pid).eq('status','completed'),
+    sb.from('ratings').select('task_id').eq('rater_id',pid)
+  ]);
+
+  const ratedIds=new Set((alreadyRated||[]).map(r=>r.task_id));
+
+  // Build pending list — exclude already rated
+  const pending=[];
+  (postedCompleted||[]).forEach(t=>{
+    if(!ratedIds.has(t.id)) pending.push({taskId:t.id,title:t.title,price:t.price,ratedId:t.doer_id,otherName:'Helper',role:'poster',prompt:'How did the helper do?'});
+  });
+  (helpedCompleted||[]).forEach(t=>{
+    if(!ratedIds.has(t.id)) pending.push({taskId:t.id,title:t.title,price:t.price,ratedId:t.poster_id,otherName:t.profiles?.name||'Poster',role:'doer',prompt:'How was the job poster?'});
+  });
+
+  // Update badge
+  const badge=document.getElementById('rating-badge');
+  if(badge){
+    if(pending.length>0){badge.style.display='inline';badge.textContent=pending.length;}
+    else{badge.style.display='none';}
+  }
+  return pending;
+}
+
+async function openRatingsSheet(){
+  document.getElementById('ratings-sheet').classList.add('open');
+  const el=document.getElementById('ratings-sheet-list');
+  el.innerHTML=spin();
+  const pending=await loadPendingRatings();
+  if(!pending.length){
+    el.innerHTML=emptyState('⭐','All caught up!','No pending ratings — nice work!');
+    return;
+  }
+  el.innerHTML=pending.map((item,idx)=>`
+    <div id="rating-item-${idx}" style="background:var(--surface);border-radius:var(--radius-sm);border:1.5px solid var(--border);padding:16px;margin-bottom:12px">
+      <div style="font-size:15px;font-weight:900;margin-bottom:2px">${esc(item.title)}</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:12px">${item.role==='poster'?'You posted':'You helped'} · ${item.otherName}${item.price?' · $'+item.price:''}</div>
+      <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:8px">${esc(item.prompt)}</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px" id="stars-${idx}">
+        ${[1,2,3,4,5].map(n=>`<span style="font-size:32px;cursor:pointer" onclick="setSheetRating(${idx},${n},'${item.taskId}','${item.ratedId}')" id="star-${idx}-${n}">☆</span>`).join('')}
+      </div>
+      <button id="submit-${idx}" onclick="submitSheetRating(${idx},'${item.taskId}','${item.ratedId}')"
+        style="width:100%;padding:12px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer;opacity:.4" disabled>
+        Submit Rating
+      </button>
+    </div>`).join('');
+}
+
+const sheetRatings={};
+function setSheetRating(idx,score,taskId,ratedId){
+  sheetRatings[idx]=score;
+  for(let n=1;n<=5;n++){
+    const s=document.getElementById(`star-${idx}-${n}`);
+    if(s)s.textContent=n<=score?'⭐':'☆';
+  }
+  const btn=document.getElementById(`submit-${idx}`);
+  if(btn){btn.disabled=false;btn.style.opacity='1';}
+}
+
+async function submitSheetRating(idx,taskId,ratedId){
+  const score=sheetRatings[idx];
+  if(!score||!sb||!me)return;
+  const pid=myProfileId||me.id;
+  const btn=document.getElementById(`submit-${idx}`);
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const{error}=await sb.from('ratings').insert({task_id:taskId,rater_id:pid,rated_id:ratedId,score});
+  if(error){
+    if(btn){btn.disabled=false;btn.textContent='Submit Rating';}
+    if(error.code==='23505'){toast('✅ Already rated!');}
+    else{toast('❌ '+error.message);}
+    return;
+  }
+  // update aggregate rating
+  await sb.rpc('update_profile_rating',{profile_id:ratedId});
+  // remove item from sheet
+  const item=document.getElementById(`rating-item-${idx}`);
+  if(item)item.remove();
+  toast('⭐ Rating submitted!');
+  // refresh badge + check if sheet is empty
+  const pending=await loadPendingRatings();
+  if(!pending.length){
+    document.getElementById('ratings-sheet-list').innerHTML=emptyState('⭐','All caught up!','No pending ratings — nice work!');
+  }
 }
 
 async function submitRating(){
