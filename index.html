@@ -685,7 +685,6 @@ function initMap() {
   map = L.map('map', {center:[43.6532,-79.3832],zoom:11,zoomControl:false,attributionControl:false});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
   L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
-  L.control.zoom({position:'bottomright'}).addTo(map);
   setTimeout(()=>{map.invalidateSize();locateUser();},200);
 }
 
@@ -747,7 +746,6 @@ function initMap() {
   map = L.map('map', {center:[43.6532,-79.3832],zoom:13,zoomControl:false,attributionControl:false});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
   L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
-  L.control.zoom({position:'bottomright'}).addTo(map);
   locateUser();
 }
 
