@@ -1958,11 +1958,19 @@ async function chatUnclaim(taskId){
   } else {
     await sb.from('applications').update({status:'withdrawn'}).eq('task_id',taskId).eq('applicant_id',pid);
   }
-  // send message then archive the conversation
-  if(activeChatConvId){
+  // send message then archive the conversation — look up if not already known
+  let convId=activeChatConvId;
+  if(!convId){
+    const applicantId=isPoster?taskData.doer_id:pid;
+    if(applicantId){
+      const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',applicantId).eq('status','active').maybeSingle();
+      convId=conv?.id||null;
+    }
+  }
+  if(convId){
     const receiverId=isPoster?taskData.doer_id:taskData.poster_id;
-    await sendSystemMessage(activeChatConvId,taskId,pid,receiverId,`↩️ ${name} unclaimed this job. It has been returned to open.`);
-    await sb.from('conversations').update({status:'archived'}).eq('id',activeChatConvId);
+    await sendSystemMessage(convId,taskId,pid,receiverId,`↩️ ${name} unclaimed this job. It has been returned to open.`);
+    await sb.from('conversations').update({status:'archived'}).eq('id',convId);
   }
   document.getElementById('chat-modal').classList.remove('open');
   activeChatConvId=null;
@@ -1985,9 +1993,15 @@ async function chatComplete(taskId,doerId){
     document.querySelectorAll('button').forEach(b=>{if(b.textContent.includes('Complete'))b.disabled=false;});
     return toast('❌ '+error.message);
   }
-  if(activeChatConvId){
-    await sendSystemMessage(activeChatConvId,taskId,taskData.poster_id,taskData.doer_id,`✅ Job marked complete by the poster. This conversation is now closed.`);
-    await sb.from('conversations').update({status:'archived'}).eq('id',activeChatConvId);
+  // look up the active conversation — use activeChatConvId if available, else query
+  let convId=activeChatConvId;
+  if(!convId&&taskData.doer_id){
+    const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',taskData.doer_id).eq('status','active').maybeSingle();
+    convId=conv?.id||null;
+  }
+  if(convId){
+    await sendSystemMessage(convId,taskId,taskData.poster_id,taskData.doer_id,`✅ Job marked complete by the poster. This conversation is now closed.`);
+    await sb.from('conversations').update({status:'archived'}).eq('id',convId);
   }
   document.getElementById('chat-modal').classList.remove('open');
   activeChatConvId=null;
