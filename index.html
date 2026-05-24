@@ -501,12 +501,12 @@ body{
 </div>
 
 <!-- CHAT MODAL -->
-<div class="modal-ov" id="chat-modal" onclick="if(event.target.id==='chat-modal')document.getElementById('chat-modal').classList.remove('open')">
+<div class="modal-ov" id="chat-modal" onclick="if(event.target.id==='chat-modal')closeChat()">
   <div class="modal-sheet" style="height:80vh;display:flex;flex-direction:column;padding:0">
     <div style="padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div style="font-size:17px;font-weight:900" id="chat-title">—</div>
-        <button onclick="document.getElementById('chat-modal').classList.remove('open')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+        <button onclick="closeChat()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
       </div>
       <div style="font-size:12px;color:var(--muted);font-weight:700" id="chat-other">—</div>
     </div>
@@ -1778,6 +1778,17 @@ async function loadMessages(){
 }
 
 let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null;
+function closeChat(){
+  document.getElementById('chat-modal').classList.remove('open');
+  // refresh conversation list so NEW badges reflect what was just read
+  const msgView=document.getElementById('app-messages');
+  if(msgView?.classList.contains('active')){
+    setTimeout(()=>{refreshUnreadCount();loadMessages();},400);
+  } else {
+    refreshUnreadCount();
+  }
+}
+
 async function openChat(taskId,title,otherName,posterId,otherId,otherRating){
   activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;
   document.getElementById('chat-title').textContent=title;
@@ -1833,7 +1844,15 @@ async function loadChatMessages(taskId,otherId){
   if(unreadIds.length){
     await sb.from('messages').update({read:true}).in('id',unreadIds);
     // small delay so the UPDATE is visible before we re-query
-    setTimeout(()=>{refreshUnreadCount();loadMessages();},400);
+    setTimeout(()=>{
+      refreshUnreadCount();
+      // only re-render the list if it's actually visible (not while chat is open)
+      const chatOpen=document.getElementById('chat-modal')?.classList.contains('open');
+      if(!chatOpen){
+        const msgView=document.getElementById('app-messages');
+        if(msgView?.classList.contains('active'))loadMessages();
+      }
+    },400);
   }
   el.innerHTML=data.map(m=>{
     const isMe=m.sender_id===pid||m.sender_id===me.id;
