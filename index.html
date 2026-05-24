@@ -508,7 +508,7 @@ body{
         <div style="font-size:17px;font-weight:900" id="chat-title">—</div>
         <button onclick="closeChat()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
       </div>
-      <div style="font-size:12px;color:var(--muted);font-weight:700" id="chat-other">—</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer" id="chat-other" onclick="if(activeChatDoerId)window.location.href='/profile.html?user_id='+activeChatDoerId">—<span style="font-size:10px;opacity:.5">›</span></div>
     </div>
     <div id="chat-actions" style="display:none;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)"></div>
     <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch"></div>
@@ -1891,13 +1891,13 @@ async function openChatFromNotification(taskId,convId){
   nav('messages');
   const pid=myProfileId||me.id;
   const{data:conv}=await sb.from('conversations')
-    .select('id,poster_id,applicant_id,tasks(title),poster:profiles!conversations_poster_id_fkey(name,rating),applicant:profiles!conversations_applicant_id_fkey(name,rating)')
+    .select('id,poster_id,applicant_id,tasks(title)')
     .eq('id',convId).single();
   if(!conv)return;
   const isPoster=conv.poster_id===pid;
   const otherId=isPoster?conv.applicant_id:conv.poster_id;
-  const other=isPoster?conv.applicant:conv.poster;
   if(!otherId)return;
+  const{data:other}=await sb.from('profiles').select('name,rating').eq('id',otherId).single();
   openChat(taskId,conv.tasks?.title||'Job',other?.name||'User',conv.poster_id,otherId,other?.rating||'',convId);
 }
 
