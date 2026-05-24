@@ -717,6 +717,15 @@ let userLat=null, userLng=null;
 let gpsLat=null, gpsLng=null, locVerified=false;
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Read notification deep-link params (cold start via notification tap)
+  const _notifParams = new URLSearchParams(window.location.search);
+  const _notifTaskId = _notifParams.get('task_id');
+  const _notifConvId = _notifParams.get('conv_id');
+  if(_notifTaskId){
+    window._pendingNotifTaskId = _notifTaskId;
+    window._pendingNotifConvId = _notifConvId;
+    window.history.replaceState({}, '', '/');
+  }
   if(window.navigator.standalone===true||window.matchMedia('(display-mode:standalone)').matches){
     const tip=document.getElementById('ios-pwa-tip');
     if(tip)tip.style.display='block';
