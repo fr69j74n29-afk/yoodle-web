@@ -849,7 +849,8 @@ async function loadJobs() {
     user_lat:userLat,
     user_lng:userLng,
     radius_km:listRadiusKm,
-    lim:50
+    lim:50,
+    exclude_user_id:pid||null
   });
 
   if(error){
@@ -909,16 +910,14 @@ function renderSheetContent(){
 }
 
 function renderListGrid(jobs) {
-  const pid=myProfileId||me?.id;
-  const others=pid?jobs.filter(j=>j.poster_id!==pid):jobs;
   const g=document.getElementById('list-grid');
-  if(!others.length){
+  if(!jobs.length){
     g.innerHTML=emptyState('🌱',`No jobs within ${listRadiusKm}km`,'Try a larger radius or check back soon!');
     document.getElementById('list-sub').textContent=`0 jobs within ${listRadiusKm}km`;
     return;
   }
-  document.getElementById('list-sub').textContent=`${others.length} job${others.length===1?'':'s'} within ${listRadiusKm}km`;
-  g.innerHTML=others.map(j=>listCard(j,j.profiles)).join('');
+  document.getElementById('list-sub').textContent=`${jobs.length} job${jobs.length===1?'':'s'} within ${listRadiusKm}km`;
+  g.innerHTML=jobs.map(j=>listCard(j,j.profiles)).join('');
 }
 
 function nav(view) {
@@ -1711,7 +1710,7 @@ async function loadMessages(){
     const preview=t.last_msg_body?esc(t.last_msg_body).slice(0,60):'Tap to open chat';
     const msgTime=t.last_msg_created_at?timeAgo(t.last_msg_created_at):'';
     // last_msg_read from RPC is already computed as: unread AND sender is not current user
-    const isUnread=t.last_msg_read===true;
+    const isUnread=t.has_unread===true;
     const rowBg=isUnread?'background:rgba(236,72,153,.08);border-color:rgba(236,72,153,.3)':'';
     const unreadBadge=isUnread?`<span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;background:var(--pink);color:#fff;font-size:9px;font-weight:900;letter-spacing:.5px;vertical-align:middle;flex-shrink:0">NEW</span>`:'';
     let statusTag='';
