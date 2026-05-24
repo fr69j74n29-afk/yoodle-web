@@ -1490,7 +1490,7 @@ async function loadMyJobs(){
     q=sb.from('tasks').select('*').eq('poster_id',pid).in('status',['open','claimed']).order('created_at',{ascending:false});
   } else {
     // fetch applications by this user with task details
-    q=sb.from('applications').select('id,status,created_at,tasks!inner(*)').eq('applicant_id',pid).in('tasks.status',['open','claimed']).order('created_at',{ascending:false});
+    q=sb.from('applications').select('id,status,created_at,tasks!inner(*)').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','claimed']).order('created_at',{ascending:false});
   }
   const{data,error}=await q;
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
