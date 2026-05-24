@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Profile — Yoodle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --purple:#9B59D4;--lime:#A3E635;--pink:#EC4899;--teal:#06B6D4;--orange:#F97316;--yellow:#FCD34D;
+  --bg:#0A0A0A;--surface:#161616;--surface2:#1F1F1F;
+  --border:#2A2A2A;--text:#F5F5F5;--muted:#999;
+  --radius:20px;--radius-sm:12px;
+  --sab:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:480px;margin:0 auto}
+
+/* Header */
+.hdr{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10}
+.back-btn{width:36px;height:36px;border-radius:50%;background:var(--surface);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:18px;flex-shrink:0;transition:background .15s}
+.back-btn:active{background:var(--surface2)}
+.wordmark{font-family:'Fredoka One',cursive;font-size:26px;line-height:1}
+.ly{color:var(--purple)}.lo1{color:var(--lime)}.lo2{color:var(--pink)}.ld{color:var(--teal)}.ll{color:var(--orange)}.le{color:var(--yellow)}
+
+/* Scroll area */
+.scroll{overflow-y:auto;padding:24px 20px calc(var(--sab) + 40px);display:flex;flex-direction:column;gap:20px}
+
+/* Hero row */
+.hero{display:flex;align-items:center;gap:16px}
+.av-wrap{position:relative;flex-shrink:0}
+.av{width:72px;height:72px;border-radius:50%;border:3px solid var(--purple);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;flex-shrink:0;outline:3px solid transparent;outline-offset:2px;transition:outline-color .2s}
+.av img{width:100%;height:100%;object-fit:cover}
+.hero-info{flex:1;min-width:0}
+.hero-name{font-size:22px;font-weight:900;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero-new{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:var(--muted);margin-top:4px}
+
+/* Stats card */
+.stats-card{background:var(--surface);border-radius:var(--radius-sm);border:1.5px solid var(--border);overflow:hidden}
+.stats-row{display:grid;grid-template-columns:1fr 1fr}
+.stat-col{padding:16px;display:flex;flex-direction:column;gap:4px}
+.stat-col:first-child{border-right:1px solid var(--border)}
+.stat-role{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat-line{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:baseline;gap:5px}
+.stat-num{color:var(--purple);font-size:18px;font-weight:900}
+.stat-rating{font-size:13px;font-weight:800;color:var(--yellow);margin-top:2px}
+
+/* Bio card */
+.bio-card{background:var(--surface);border-radius:var(--radius-sm);border:1.5px solid var(--border);padding:16px}
+.bio-label{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.bio-text{font-size:14px;font-weight:600;color:#ccc;line-height:1.7}
+.bio-empty{font-size:13px;color:var(--muted);font-style:italic;font-weight:600}
+
+/* Loading / error */
+.loading{display:flex;justify-content:center;padding:60px 0}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-state{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="back-btn" onclick="history.back()">←</div>
+  <div class="wordmark">
+    <span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span>
+  </div>
+</div>
+
+<div class="scroll" id="content">
+  <div class="loading"><div class="spinner"></div></div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5enVndGx0a2JwY3h2b2tkbXBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwOTc1NTQsImV4cCI6MjA2MDY3MzU1NH0.PwDMEHivyKRfgyCXXGpSH0OHBJAakLmUtGZEAJVJB9o';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+
+function avatarCircle(name, color, size='72px', fontSize='28px'){
+  const bg = color || '#9B59D4';
+  const initial = ((name||'?')[0]).toUpperCase();
+  return `<div class="av" style="background:${bg};border-color:${bg}">${esc(initial)}</div>`;
+}
+
+async function loadProfile(){
+  const params = new URLSearchParams(window.location.search);
+  const userId = params.get('user_id');
+  const content = document.getElementById('content');
+
+  if(!userId){
+    content.innerHTML = `<div class="error-state">👤 No profile specified.</div>`;
+    return;
+  }
+
+  // Fetch profile + poster rating + helper rating in parallel
+  const [profRes, posterRatingRes, helperRatingRes, posterStatsRes, helperStatsRes] = await Promise.all([
+    sb.from('profiles').select('id,name,bio,rating,task_count,avatar_color').eq('id', userId).maybeSingle(),
+    sb.rpc('get_poster_rating', {user_id: userId}),
+    sb.rpc('get_helper_rating', {user_id: userId}),
+    sb.from('tasks').select('id,status').eq('poster_id', userId),
+    sb.from('applications').select('id,status').eq('applicant_id', userId)
+  ]);
+
+  const prof = profRes.data;
+  if(!prof){
+    content.innerHTML = `<div class="error-state">👤 Profile not found.</div>`;
+    return;
+  }
+
+  // Poster stats
+  const allPosted = posterStatsRes.data || [];
+  const postedCount = allPosted.length;
+  const postedDone = allPosted.filter(t => t.status === 'completed').length;
+
+  // Helper stats
+  const allApps = helperStatsRes.data || [];
+  const appliedCount = allApps.length;
+
+  // Completed as doer: tasks where doer_id = userId and status = completed
+  const {data: doerDone} = await sb.from('tasks').select('id').eq('doer_id', userId).eq('status','completed');
+  const helperDone = (doerDone||[]).length;
+
+  // Ratings from RPC — returns [{round, count}] or similar
+  const pRating = posterRatingRes.data;
+  const hRating = helperRatingRes.data;
+
+  // Parse rating RPC result (returns array of [avg, count])
+  const pAvg = Array.isArray(pRating) && pRating[0]?.round ? pRating[0].round : null;
+  const pCount = Array.isArray(pRating) && pRating[0]?.count ? pRating[0].count : 0;
+  const hAvg = Array.isArray(hRating) && hRating[0]?.round ? hRating[0].round : null;
+  const hCount = Array.isArray(hRating) && hRating[0]?.count ? hRating[0].count : 0;
+
+  const pRatingStr = pAvg ? `⭐ ${pAvg} <span style="color:var(--muted);font-size:11px;font-weight:700">(${pCount})</span>` : `<span style="color:var(--muted)">⭐ No ratings yet</span>`;
+  const hRatingStr = hAvg ? `⭐ ${hAvg} <span style="color:var(--muted);font-size:11px;font-weight:700">(${hCount})</span>` : `<span style="color:var(--muted)">⭐ No ratings yet</span>`;
+
+  // Avatar — colored circle (Google avatar not stored in profiles)
+  const avHtml = avatarCircle(prof.name, prof.avatar_color);
+
+  // Bio
+  const bioHtml = prof.bio
+    ? `<div class="bio-text">${esc(prof.bio)}</div>`
+    : `<div class="bio-empty">No bio yet.</div>`;
+
+  content.innerHTML = `
+    <!-- Hero -->
+    <div class="hero">
+      <div class="av-wrap">${avHtml}</div>
+      <div class="hero-info">
+        <div class="hero-name">${esc(prof.name||'Yoodler')}</div>
+      </div>
+    </div>
+
+    <!-- Stats card -->
+    <div class="stats-card">
+      <div class="stats-row">
+        <div class="stat-col">
+          <div class="stat-role">As Poster</div>
+          <div class="stat-line"><span class="stat-num">${postedCount}</span> posted</div>
+          <div class="stat-line"><span class="stat-num">${postedDone}</span> completed</div>
+          <div class="stat-rating">${pRatingStr}</div>
+        </div>
+        <div class="stat-col">
+          <div class="stat-role">As Helper</div>
+          <div class="stat-line"><span class="stat-num">${appliedCount}</span> applied</div>
+          <div class="stat-line"><span class="stat-num">${helperDone}</span> completed</div>
+          <div class="stat-rating">${hRatingStr}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bio -->
+    <div class="bio-card">
+      <div class="bio-label">About</div>
+      ${bioHtml}
+    </div>
+  `;
+}
+
+loadProfile();
+</script>
+</body>
+</html>
