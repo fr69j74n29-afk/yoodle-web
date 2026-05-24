@@ -1246,10 +1246,10 @@ async function openJob(j){
     ]);
     const pname=prof?.name||'Someone';
     const prating=prof?.rating?`<span style="color:var(--yellow);font-size:13px;font-weight:800">⭐ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:12px;font-weight:700">New</span>`;
-    const avatarColor=prof?.avatar_color||'#9B59D4';
-    const initial=((pname||'?')[0]).toUpperCase();
     document.getElementById('m-poster').innerHTML=`
-      <div onclick="sessionStorage.setItem('profileUserId','${pid}');window.location.href='/profile.html'" style="width:46px;height:46px;border-radius:50%;background:${avatarColor};border:3px solid ${avatarColor};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">${initial}</div>
+      <div onclick="sessionStorage.setItem('profileUserId','${pid}');window.location.href='/profile.html'" style="cursor:pointer;flex-shrink:0">
+        ${avatarCircle(pname,prof?.avatar_color,'46px','18px')}
+      </div>
       <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
         <div style="font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
         <div style="display:flex;align-items:center;gap:5px">${prating}</div>
