@@ -932,7 +932,7 @@ function nav(view) {
   if(view==='map'){setTimeout(()=>{map.invalidateSize();updateNotifNudge();},100);}
   if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
   if(view==='post')resetPost();
-  if(view==='messages'){clearMessageBadge();loadMessages();}
+  if(view==='messages'){loadMessages().then(()=>refreshUnreadCount());}
   if(view==='profile')loadProfile();
   updateNotifNudge();
 }
@@ -967,6 +967,8 @@ async function showApp(){
   subscribeToMessages();
   registerOneSignal();
   loadPendingRatings();
+  refreshUnreadCount();
+  startUnreadPoller();
   setTimeout(updateNotifNudge, 2000);
   setTimeout(updateNotifNudge, 5000);
 }
@@ -1021,15 +1023,49 @@ function playNotificationSound(){
   try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15].forEach((delay,i)=>{const osc=ctx.createOscillator();const gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.value=i===0?840:1060;osc.type='sine';gain.gain.setValueAtTime(0,ctx.currentTime+delay);gain.gain.linearRampToValueAtTime(.3,ctx.currentTime+delay+.01);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+delay+.4);osc.start(ctx.currentTime+delay);osc.stop(ctx.currentTime+delay+.4);});}catch(e){}
 }
 
-function showMessageBadge(){const btn=document.getElementById('ni-messages');if(!btn)return;if(!btn.querySelector('.msg-badge')){const badge=document.createElement('div');badge.className='msg-badge';badge.style.cssText='position:absolute;top:4px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--pink);';btn.style.position='relative';btn.appendChild(badge);}}
-function clearMessageBadge(){const badge=document.getElementById('ni-messages')?.querySelector('.msg-badge');if(badge)badge.remove();}
+// ── UNREAD BADGE — single source of truth from DB ──
+function _setMessageBadge(hasUnread){
+  const btn=document.getElementById('ni-messages');if(!btn)return;
+  const existing=btn.querySelector('.msg-badge');
+  if(hasUnread&&!existing){
+    const badge=document.createElement('div');badge.className='msg-badge';
+    badge.style.cssText='position:absolute;top:4px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--pink);';
+    btn.style.position='relative';btn.appendChild(badge);
+  } else if(!hasUnread&&existing){
+    existing.remove();
+  }
+}
+// Always query DB — realtime and poller both call this
+async function refreshUnreadCount(){
+  if(!sb||!me)return;
+  const pid=myProfileId||me.id;
+  const{count}=await sb.from('messages').select('*',{count:'exact',head:true}).eq('receiver_id',pid).eq('read',false);
+  _setMessageBadge((count||0)>0);
+}
+function clearMessageBadge(){_setMessageBadge(false);}
+
+let _unreadPollInterval=null;
+function startUnreadPoller(){
+  if(_unreadPollInterval)clearInterval(_unreadPollInterval);
+  _unreadPollInterval=setInterval(refreshUnreadCount,60000);
+  // re-check whenever the tab comes back into focus
+  document.removeEventListener('visibilitychange',_onVisibility);
+  document.addEventListener('visibilitychange',_onVisibility);
+}
+function _onVisibility(){if(document.visibilityState==='visible')refreshUnreadCount();}
 
 function subscribeToMessages(){
   if(!sb||!me)return;
   if(realtimeChannel)sb.removeChannel(realtimeChannel);
   realtimeChannel=sb.channel('messages-notify').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},payload=>{
     const msg=payload.new;const pid=myProfileId||me.id;
-    if(msg.receiver_id===pid&&msg.sender_id!==pid){playNotificationSound();showMessageBadge();if(activeChatTaskId===msg.task_id)loadChatMessages(msg.task_id);const msgView=document.getElementById('app-messages');if(msgView?.classList.contains('active'))loadMessages();}
+    if(msg.receiver_id===pid&&msg.sender_id!==pid){
+      playNotificationSound();
+      refreshUnreadCount(); // DB query — always accurate
+      if(activeChatTaskId===msg.task_id)loadChatMessages(msg.task_id);
+      const msgView=document.getElementById('app-messages');
+      if(msgView?.classList.contains('active'))loadMessages();
+    }
   }).subscribe();
 }
 
@@ -1791,7 +1827,7 @@ async function loadChatMessages(taskId){
   const unreadIds=data.filter(m=>!m.read&&(m.receiver_id===pid||m.receiver_id===me.id)).map(m=>m.id);
   if(unreadIds.length){
     await sb.from('messages').update({read:true}).in('id',unreadIds);
-    // refresh messages list badge
+    refreshUnreadCount(); // always sync badge to real DB state
     loadMessages();
   }
   el.innerHTML=data.map(m=>{
