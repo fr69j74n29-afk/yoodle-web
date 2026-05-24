@@ -1061,10 +1061,16 @@ function subscribeToMessages(){
     const msg=payload.new;const pid=myProfileId||me.id;
     if(msg.receiver_id===pid&&msg.sender_id!==pid){
       playNotificationSound();
-      refreshUnreadCount(); // DB query — always accurate
-      if(activeChatTaskId===msg.task_id)loadChatMessages(msg.task_id);
-      const msgView=document.getElementById('app-messages');
-      if(msgView?.classList.contains('active'))loadMessages();
+      refreshUnreadCount();
+      const chatOpen=activeChatTaskId===msg.task_id;
+      if(chatOpen){
+        // chat is open — loadChatMessages will mark read and refresh list itself
+        loadChatMessages(msg.task_id);
+      } else {
+        // chat not open — just refresh the conversation list if visible
+        const msgView=document.getElementById('app-messages');
+        if(msgView?.classList.contains('active'))loadMessages();
+      }
     }
   }).subscribe();
 }
@@ -1396,11 +1402,14 @@ async function unclaimJob(){
   const pid=myProfileId||me.id;
   const{data:myProf}=await sb.from('profiles').select('name').eq('id',pid).single();
   const name=myProf?.name||'Someone';
+  const doerId=activeJob.doer_id;
   const{error}=await sb.from('tasks').update({status:'open',doer_id:null}).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
-  // set application to withdrawn so job disappears from helping tab
-  await sb.from('applications').update({status:'withdrawn'}).eq('task_id',activeJob.id).eq('applicant_id',pid);
-  await sb.from('messages').insert({task_id:activeJob.id,sender_id:pid,receiver_id:activeJob.poster_id,body:`↩️ ${name} has unclaimed this job. It is back to open.`,read:false});
+  // reset doer's application to pending so they remain in the pool
+  if(doerId){
+    await sb.from('applications').update({status:'pending'}).eq('task_id',activeJob.id).eq('applicant_id',doerId);
+  }
+  await sb.from('messages').insert({task_id:activeJob.id,sender_id:pid,receiver_id:doerId,body:`↩️ ${name} has unclaimed this job. It is back to open.`,read:false});
   document.getElementById('modal').classList.remove('open');
   toast('↩️ Job unclaimed');loadJobs();loadMyJobs();
 }
@@ -1823,8 +1832,8 @@ async function loadChatMessages(taskId,otherId){
   const unreadIds=data.filter(m=>!m.read&&m.receiver_id===pid).map(m=>m.id);
   if(unreadIds.length){
     await sb.from('messages').update({read:true}).in('id',unreadIds);
-    refreshUnreadCount(); // always sync badge to real DB state
-    loadMessages();
+    // small delay so the UPDATE is visible before we re-query
+    setTimeout(()=>{refreshUnreadCount();loadMessages();},400);
   }
   el.innerHTML=data.map(m=>{
     const isMe=m.sender_id===pid||m.sender_id===me.id;
@@ -1888,8 +1897,16 @@ async function chatUnclaim(taskId){
   const name=myProfile?.name||me.email?.split('@')[0]||'Someone';
   const{error}=await sb.from('tasks').update({status:'open',doer_id:null}).eq('id',taskId);
   if(error)return toast('❌ '+error.message);
-  // mark application as withdrawn so it disappears from helping tab
-  await sb.from('applications').update({status:'withdrawn'}).eq('task_id',taskId).eq('applicant_id',pid);
+  const isPoster=taskData.poster_id===pid;
+  if(isPoster){
+    // poster unclaimed — reset doer's application to pending so they're still in the pool
+    if(taskData.doer_id){
+      await sb.from('applications').update({status:'pending'}).eq('task_id',taskId).eq('applicant_id',taskData.doer_id);
+    }
+  } else {
+    // doer unclaimed — mark their own application as withdrawn
+    await sb.from('applications').update({status:'withdrawn'}).eq('task_id',taskId).eq('applicant_id',pid);
+  }
   await sendSystemMessage(taskId,taskData.poster_id,taskData.doer_id,`↩️ ${name} unclaimed this job. It has been returned to open.`);
   document.getElementById('chat-modal').classList.remove('open');
   toast('↩️ Job unclaimed and returned to open');
