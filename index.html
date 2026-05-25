@@ -6,7 +6,33 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Yoodle — Odd Jobs. Real People. Help Each Other.</title>
+<title>Yoodle — Find Local Help for Odd Jobs Near You | Free Neighbourhood App</title>
+<meta name="description" content="Yoodle connects neighbours for odd jobs and local help — lawn care, moving, cleaning, dog walking, and more. Free to post, free to apply. No agency, no fees. Real people helping each other.">
+<meta name="keywords" content="odd jobs near me, hire local help, neighbourhood jobs, find someone to help, hire someone for a day, local task app, community work, small business help, yard work help, snow shovelling, handyman near me">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://yoodle.ca/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yoodle.ca/">
+<meta property="og:title" content="Yoodle — Odd Jobs. Real People. Help Each Other.">
+<meta property="og:description" content="Post a local job and get help in minutes, or browse neighbourhood jobs and start earning. Free for everyone. No passwords, no fees, no agencies.">
+<meta property="og:site_name" content="Yoodle">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Yoodle — Find Local Help or Earn Money Doing Odd Jobs">
+<meta name="twitter:description" content="The free neighbourhood app for odd jobs. Post a task, find local help, or earn money in your community. Real people, real neighbours.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Yoodle",
+  "url": "https://yoodle.ca",
+  "description": "Yoodle is a free neighbourhood app connecting people who need help with local odd jobs to trusted people nearby who want to earn money.",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CAD" },
+  "areaServed": { "@type": "Country", "name": "Canada" },
+  "keywords": "odd jobs, local help, neighbourhood tasks, hire local, community work, earn money local"
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -265,13 +291,88 @@ body{
 @media(min-width:481px){
   body{box-shadow:0 0 0 1px var(--border)}
   html{background:#050505}
+
+  /* Constrain auth buttons on desktop so they don't stretch full viewport */
+  .auth-btns{max-width:380px}
+  .magic-wrap{max-width:380px}
+  .auth-divider{max-width:380px;width:100%}
+  .auth-legal{max-width:420px}
+
+  /* Show desktop intro strip */
+  .desktop-strip{display:flex!important}
 }
+
+/* Desktop intro strip — hidden on mobile, shown on desktop via media query above */
+.desktop-strip{
+  display:none;
+  width:100%;max-width:680px;
+  gap:0;align-items:stretch;
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius);margin-bottom:36px;
+  overflow:hidden;position:relative;z-index:1;flex-shrink:0;
+}
+.ds-step{
+  flex:1;padding:22px 18px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:0
+}
+.ds-num{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  color:#fff;font-size:16px;font-weight:900;font-family:'Fredoka One',cursive;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:10px;flex-shrink:0
+}
+.ds-title{font-size:13px;font-weight:900;margin-bottom:5px;color:var(--text)}
+.ds-desc{font-size:11px;color:var(--muted);font-weight:600;line-height:1.55}
+.ds-div{width:1px;background:var(--border);align-self:stretch;flex-shrink:0}
+.ds-nav{
+  display:none;width:100%;max-width:680px;
+  justify-content:center;gap:24px;
+  margin-bottom:20px;position:relative;z-index:1;flex-shrink:0
+}
+@media(min-width:481px){
+  .ds-nav{display:flex}
+}
+.ds-nav a{
+  color:var(--muted);font-size:12px;font-weight:800;
+  text-decoration:none;transition:color .15s;letter-spacing:.3px
+}
+.ds-nav a:hover{color:var(--purple)}
 </style>
 </head>
 <body>
 
 <!-- AUTH -->
 <div id="view-auth">
+
+  <!-- DESKTOP ONLY: page nav links -->
+  <nav class="ds-nav">
+    <a href="/how-it-works">How It Works</a>
+    <a href="/faq">FAQ</a>
+    <a href="/privacy">Privacy</a>
+  </nav>
+
+  <!-- DESKTOP ONLY: 1-2-3 strip -->
+  <div class="desktop-strip">
+    <div class="ds-step">
+      <div class="ds-num">1</div>
+      <div class="ds-title">Post a Job</div>
+      <div class="ds-desc">Describe what you need, set your budget, and pin your neighbourhood.</div>
+    </div>
+    <div class="ds-div"></div>
+    <div class="ds-step">
+      <div class="ds-num">2</div>
+      <div class="ds-title">Pick Your Helper</div>
+      <div class="ds-desc">Local people apply fast. Browse ratings and choose the right fit.</div>
+    </div>
+    <div class="ds-div"></div>
+    <div class="ds-step">
+      <div class="ds-num">3</div>
+      <div class="ds-title">Get It Done</div>
+      <div class="ds-desc">Chat in the app, confirm the details, and pay directly. No fees.</div>
+    </div>
+  </div>
+
   <div class="wordmark auth-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
   <div class="auth-tag">Odd Jobs · Real People · Help Each Other</div>
   <div class="auth-h">Find help. Earn cash.<br>Build your community.</div>
@@ -290,7 +391,7 @@ body{
       <div class="magic-sent" id="magic-sent">✅ Check your inbox! Link sent to <span id="magic-addr"></span></div>
     </div>
   </div>
-  <div class="auth-legal">By continuing you agree to Yoodle's <a href="/terms" target="_blank">Terms of Service</a><br>and <a href="/privacy" target="_blank">Privacy Policy</a>. No spam, ever.</div>
+  <div class="auth-legal">By continuing you agree to Yoodle's <a href="/terms" target="_blank">Terms of Service</a><br>and <a href="/privacy" target="_blank">Privacy Policy</a>. No spam, ever.<br><a href="/how-it-works" target="_blank">How it works</a> · <a href="/faq" target="_blank">FAQ</a></div>
   <div id="ios-pwa-tip" style="display:none;margin-top:16px;background:rgba(155,89,212,.1);border:1.5px solid rgba(155,89,212,.3);border-radius:12px;padding:12px 16px;font-size:12px;color:#aaa;line-height:1.6;font-weight:700;text-align:center;position:relative;z-index:1">
     📲 <strong style="color:var(--purple)">Using the home screen app?</strong><br>Sign in with Google — magic links open in Safari and won't transfer back to the app.
   </div>
