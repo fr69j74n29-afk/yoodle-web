@@ -921,7 +921,6 @@ async function loadJobs() {
   allJobs=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   lastFetchedRadius=fetchRadius;
   updateRadiusCounts();
-  // fetch user's pending applications to show APPLIED badge
   if(sb&&me){
     const taskIds=allJobs.map(j=>j.id);
     const{data:apps}=await sb.from('applications').select('task_id').eq('applicant_id',myProfileId||me.id).eq('status','pending').in('task_id',taskIds);
@@ -1207,11 +1206,10 @@ function listCard(j,profile){
     const parts=(j.address||'Nearby').split(',').map(s=>s.trim());
     locLabel=parts.length>=3?`${parts[1]}, ${parts[2]}`:(parts[1]||parts[0]||'Nearby');
   }
-  const appliedBadge=myAppliedTaskIds.has(j.id)?`<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.5px;text-transform:uppercase">✓ Applied</span>`:'';
   return `<div class="list-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="lc-top">
       <span class="lc-title">${emoji} ${esc(j.title)}</span>
-      <span class="lc-budget">$${j.price??'?'}</span>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="lc-budget">$${j.price??'?'}</span>${myAppliedTaskIds.has(j.id)?'<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.5px">✓ Applied</span>':''}</div>
     </div>
     <div class="lc-desc">${esc(j.description||'')}</div>
     <div class="lc-foot">
@@ -1223,7 +1221,6 @@ function listCard(j,profile){
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
         ${j.location_verified?`<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.3px">✅ GPS Verified</span>`:`<span style="font-size:10px;font-weight:900;color:var(--yellow);letter-spacing:.3px">⚠️ GPS Unverified</span>`}
         <span class="lc-meta">📍 ${esc(locLabel)} · ${timeAgo(j.created_at)}</span>
-        ${appliedBadge}
       </div>
     </div>
   </div>`;
