@@ -1209,7 +1209,7 @@ function listCard(j,profile){
   return `<div class="list-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="lc-top">
       <span class="lc-title">${emoji} ${esc(j.title)}</span>
-      <div style="display:flex;align-items:baseline;gap:4px;flex-shrink:0">${myAppliedTaskIds.has(j.id)?'<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.5px">Applied-</span>':''}<span class="lc-budget">$${j.price??'?'}</span></div>
+      <div style="display:flex;flex-direction:row;align-items:center;gap:4px;flex-shrink:0">${myAppliedTaskIds.has(j.id)?'<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.5px">Applied-</span>':''}<span class="lc-budget">$${j.price??'?'}</span></div>
     </div>
     <div class="lc-desc">${esc(j.description||'')}</div>
     <div class="lc-foot">
