@@ -713,7 +713,7 @@ function updateRadiusCounts(){
 }
 let sb, me, myProfileId, activeJob, mapCatFilter='all', listCatFilter='all', myTab='posted';
 let ratingTaskId=null, ratingRatedId=null, selectedRating=0;
-let map, userMarker, radiusCircle, jobMarkers=[], allJobs=[];
+let map, userMarker, radiusCircle, jobMarkers=[], allJobs=[], myAppliedTaskIds=new Set();
 let userLat=null, userLng=null;
 let gpsLat=null, gpsLng=null, locVerified=false;
 
@@ -921,6 +921,12 @@ async function loadJobs() {
   allJobs=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   lastFetchedRadius=fetchRadius;
   updateRadiusCounts();
+  // fetch user's pending applications to show APPLIED badge
+  if(sb&&me){
+    const taskIds=allJobs.map(j=>j.id);
+    const{data:apps}=await sb.from('applications').select('task_id').eq('applicant_id',myProfileId||me.id).eq('status','pending').in('task_id',taskIds);
+    myAppliedTaskIds=new Set((apps||[]).map(a=>a.task_id));
+  }
   renderListGrid(allJobs.filter(j=>(j.distance_km||haversineKm(userLat,userLng,j.lat,j.lng))<=listRadiusKm));
 }
 
@@ -1201,6 +1207,7 @@ function listCard(j,profile){
     const parts=(j.address||'Nearby').split(',').map(s=>s.trim());
     locLabel=parts.length>=3?`${parts[1]}, ${parts[2]}`:(parts[1]||parts[0]||'Nearby');
   }
+  const appliedBadge=myAppliedTaskIds.has(j.id)?`<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.5px;text-transform:uppercase">✓ Applied</span>`:'';
   return `<div class="list-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="lc-top">
       <span class="lc-title">${emoji} ${esc(j.title)}</span>
@@ -1216,6 +1223,7 @@ function listCard(j,profile){
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
         ${j.location_verified?`<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.3px">✅ GPS Verified</span>`:`<span style="font-size:10px;font-weight:900;color:var(--yellow);letter-spacing:.3px">⚠️ GPS Unverified</span>`}
         <span class="lc-meta">📍 ${esc(locLabel)} · ${timeAgo(j.created_at)}</span>
+        ${appliedBadge}
       </div>
     </div>
   </div>`;
@@ -1402,26 +1410,16 @@ async function withdrawFromConfirm(){
   if(!app)return toast('❌ Application not found');
   const{error}=await sb.from('applications').update({status:'withdrawn'}).eq('id',app.id);
   if(error)return toast('❌ '+error.message);
-  // archive the conversation so it disappears from Messages
-  const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',pid).eq('status','active').maybeSingle();
-  if(conv)await sb.from('conversations').update({status:'archived'}).eq('id',conv.id);
   document.getElementById('applied-modal').classList.remove('open');
-  toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();loadMessages();
+  toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();
 }
 
 async function withdrawApplication(appId){
   if(!sb||!me)return;
-  const pid=myProfileId||me.id;
-  const{data:appData}=await sb.from('applications').select('task_id').eq('id',appId).maybeSingle();
   const{error}=await sb.from('applications').update({status:'withdrawn'}).eq('id',appId);
   if(error)return toast('❌ '+error.message);
-  // archive the conversation so it disappears from Messages
-  if(appData?.task_id){
-    const{data:conv}=await sb.from('conversations').select('id').eq('task_id',appData.task_id).eq('applicant_id',pid).eq('status','active').maybeSingle();
-    if(conv)await sb.from('conversations').update({status:'archived'}).eq('id',conv.id);
-  }
   document.getElementById('modal').classList.remove('open');
-  toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();loadMessages();
+  toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();
 }
 
 async function openApplicants(taskId,taskTitle){
@@ -1968,6 +1966,12 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
       btns+=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
     }
     if(btns){actionsEl.innerHTML=btns;actionsEl.style.display='flex';}
+  } else if(task.status==='open'&&!isPoster){
+    const{data:app}=await sb.from('applications').select('id,status').eq('task_id',taskId).eq('applicant_id',pid).maybeSingle();
+    if(app&&app.status==='withdrawn'){
+      actionsEl.innerHTML=`<button onclick="applyForJob('${taskId}','${task.poster_id}',document.getElementById('chat-title').textContent)" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🙋 Re-apply</button>`;
+      actionsEl.style.display='flex';
+    }
   }
 }
 
