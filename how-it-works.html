@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<title>How Yoodle Works | Post a Local Job or Find Odd Jobs Near You</title>
+<meta name="description" content="Yoodle makes it simple to find local help or earn money doing odd jobs in your neighbourhood. See how it works in 3 easy steps — free for everyone, no passwords needed.">
+<meta name="keywords" content="how to hire local help, how to find odd jobs near me, neighbourhood task app, post a local job, hire someone for the day, community help app Canada, earn money local jobs">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://yoodle.ca/how-it-works">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yoodle.ca/how-it-works">
+<meta property="og:title" content="How Yoodle Works — Local Help in 3 Simple Steps">
+<meta property="og:description" content="Post a job and get local help in minutes, or browse neighbourhood jobs and start earning. Free for everyone. No passwords, no fees, no agencies.">
+<meta property="og:site_name" content="Yoodle">
+
+<!-- HowTo Schema — Poster -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Find Local Help for Odd Jobs Near You",
+  "description": "Use Yoodle to post a local job and get help from trusted people in your neighbourhood — free and fast.",
+  "totalTime": "PT5M",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "position": 1,
+      "name": "Post Your Job",
+      "text": "Describe what you need done, set your budget, and drop a pin on your neighbourhood. Takes about 2 minutes."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 2,
+      "name": "Review Applicants",
+      "text": "Local people nearby will apply quickly. Browse their profiles, star ratings, and job history to find the right fit."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 3,
+      "name": "Get It Done",
+      "text": "Chat directly in the app to confirm details, meet up, and pay your helper directly. No fees, no middleman."
+    }
+  ]
+}
+</script>
+
+<!-- HowTo Schema — Helper -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Find Odd Jobs and Earn Money in Your Neighbourhood",
+  "description": "Use Yoodle to browse local job postings, apply in seconds, and get paid directly — completely free.",
+  "totalTime": "PT3M",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "position": 1,
+      "name": "Browse Jobs Near You",
+      "text": "See jobs posted in your area on a live map or list. Filter by distance and find tasks that match your skills and schedule."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 2,
+      "name": "Apply in Seconds",
+      "text": "Tap to apply. Your profile and star rating are sent to the poster automatically. No cover letter, no resume required."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 3,
+      "name": "Do the Job, Get Paid",
+      "text": "Chat with the poster to confirm details. Complete the job and get paid directly — cash, e-transfer, your choice."
+    }
+  ]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --purple:#9B59D4;--lime:#A3E635;--pink:#EC4899;
+  --teal:#06B6D4;--orange:#F97316;--yellow:#FCD34D;
+  --bg:#0A0A0A;--surface:#161616;--surface2:#1F1F1F;
+  --border:#2A2A2A;--text:#F5F5F5;--muted:#777;
+  --radius:20px;--radius-sm:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{background:var(--bg)}
+body{
+  font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);
+  max-width:720px;margin:0 auto;padding:40px 24px 80px;
+}
+
+/* Wordmark */
+.wordmark{font-family:'Fredoka One',cursive;font-size:42px;line-height:1;display:inline-block;margin-bottom:8px}
+.ly{color:var(--purple)}.lo1{color:var(--lime)}.lo2{color:var(--pink)}
+.ld{color:var(--teal)}.ll{color:var(--orange)}.le{color:var(--yellow)}
+
+/* Nav */
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:14px;font-weight:700;text-decoration:none;margin-bottom:32px;transition:color .15s}
+.back:hover{color:var(--text)}
+
+/* Header */
+h1{font-size:32px;font-weight:900;margin-bottom:8px}
+.subtitle{font-size:15px;color:var(--muted);margin-bottom:56px;line-height:1.6}
+
+/* Flow header */
+.flow-header{
+  display:flex;align-items:center;gap:14px;margin-bottom:28px
+}
+.flow-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;
+  padding:6px 14px;border-radius:100px
+}
+.badge-purple{background:rgba(155,89,212,.15);color:var(--purple);border:1.5px solid rgba(155,89,212,.3)}
+.badge-lime{background:rgba(163,230,53,.1);color:var(--lime);border:1.5px solid rgba(163,230,53,.25)}
+.flow-title{font-size:22px;font-weight:900}
+
+/* Steps */
+.steps{display:flex;flex-direction:column;gap:12px;margin-bottom:48px}
+.step{
+  display:flex;gap:20px;align-items:flex-start;
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:20px 20px 20px 20px;
+  position:relative;overflow:hidden
+}
+.step-num{
+  width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:900;flex-shrink:0;font-family:'Fredoka One',cursive
+}
+.step-num-purple{background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff}
+.step-num-lime{background:linear-gradient(135deg,var(--lime),var(--teal));color:#0A0A0A}
+.step-body{flex:1;min-width:0}
+.step-title{font-size:16px;font-weight:900;margin-bottom:5px}
+.step-desc{font-size:14px;color:#bbb;line-height:1.65;font-weight:600}
+.step-tip{
+  display:inline-flex;align-items:center;gap:5px;
+  margin-top:10px;font-size:11px;font-weight:800;
+  color:var(--muted);background:var(--surface2);
+  padding:5px 10px;border-radius:8px
+}
+
+/* Connector line between steps */
+.step-connector{
+  display:flex;align-items:center;justify-content:flex-start;
+  padding-left:39px;margin:-4px 0
+}
+.step-connector-line{
+  width:2px;height:16px;background:var(--border);border-radius:2px
+}
+
+/* Divider */
+.section-divider{
+  border:none;border-top:1px solid var(--border);margin:12px 0 48px
+}
+
+/* Side by side on desktop */
+@media(min-width:640px){
+  .flows-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start
+  }
+  .flow-divider{
+    display:none
+  }
+}
+@media(max-width:639px){
+  .flows-grid{display:block}
+  .flow-divider{
+    border:none;border-top:1px solid var(--border);margin:40px 0
+  }
+}
+
+/* Values strip */
+.values{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px;margin-bottom:48px
+}
+.value-c{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:18px 14px;text-align:center
+}
+.value-ico{font-size:28px;margin-bottom:8px}
+.value-t{font-size:13px;font-weight:900;margin-bottom:4px}
+.value-d{font-size:11px;color:var(--muted);font-weight:600;line-height:1.5}
+
+/* Section label */
+.section-label{
+  font-size:10.5px;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--purple);margin:0 0 24px;display:flex;align-items:center;gap:10px
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* CTA */
+.cta-band{
+  border-radius:var(--radius);background:var(--surface);
+  border:1.5px solid var(--border);padding:32px 28px;
+  text-align:center;position:relative;overflow:hidden
+}
+.cta-band::before{
+  content:'';position:absolute;width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(155,89,212,.15) 0%,transparent 65%);
+  top:-100px;right:-80px;pointer-events:none
+}
+.cta-band::after{
+  content:'';position:absolute;width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(163,230,53,.08) 0%,transparent 65%);
+  bottom:-60px;left:-40px;pointer-events:none
+}
+.cta-wm{font-size:36px;margin-bottom:8px;position:relative;z-index:1}
+.cta-h{font-size:22px;font-weight:900;margin-bottom:8px;position:relative;z-index:1}
+.cta-sub{font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.5;position:relative;z-index:1}
+.cta-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;position:relative;z-index:1}
+.btn-primary{
+  padding:14px 28px;border-radius:var(--radius);
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;
+  border:none;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity .15s
+}
+.btn-primary:hover{opacity:.88}
+.btn-outline{
+  padding:14px 28px;border-radius:var(--radius);background:transparent;
+  border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;
+  font-size:15px;font-weight:900;text-decoration:none;display:inline-block;transition:border-color .15s
+}
+.btn-outline:hover{border-color:var(--purple);color:var(--purple)}
+
+/* Footer nav */
+.page-nav{
+  display:flex;gap:16px;justify-content:center;flex-wrap:wrap;
+  margin-top:48px;padding-top:32px;border-top:1px solid var(--border)
+}
+.page-nav a{color:var(--muted);font-size:13px;font-weight:700;text-decoration:none;transition:color .15s}
+.page-nav a:hover{color:var(--purple)}
+</style>
+</head>
+<body>
+
+<a href="/" class="back">← Back to Yoodle</a>
+
+<div>
+  <div class="wordmark"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
+</div>
+
+<h1>How It Works</h1>
+<div class="subtitle">Whether you need a hand or want to earn money, Yoodle connects<br>you with your neighbours in three simple steps. Free, always.</div>
+
+<!-- VALUES STRIP -->
+<div class="values">
+  <div class="value-c">
+    <div class="value-ico">🆓</div>
+    <div class="value-t">Always Free</div>
+    <div class="value-d">No fees, no commissions, no catch</div>
+  </div>
+  <div class="value-c">
+    <div class="value-ico">📍</div>
+    <div class="value-t">Hyperlocal</div>
+    <div class="value-d">Jobs within your neighbourhood</div>
+  </div>
+  <div class="value-c">
+    <div class="value-ico">⭐</div>
+    <div class="value-t">Community Rated</div>
+    <div class="value-d">Real reviews from real neighbours</div>
+  </div>
+  <div class="value-c">
+    <div class="value-ico">💬</div>
+    <div class="value-t">Direct Contact</div>
+    <div class="value-d">Message directly, pay directly</div>
+  </div>
+</div>
+
+<!-- TWO FLOWS -->
+<div class="flows-grid">
+
+  <!-- FLOW 1: NEED HELP -->
+  <div>
+    <div class="section-label">I need help</div>
+    <div class="flow-header">
+      <span class="flow-badge badge-purple">📋 Posting a Job</span>
+    </div>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num step-num-purple">1</div>
+        <div class="step-body">
+          <div class="step-title">Describe what you need</div>
+          <div class="step-desc">Write a short job title, add a description, set your budget, and pin your neighbourhood on the map. No exact address required — your privacy is protected.</div>
+          <div class="step-tip">⏱️ Takes about 2 minutes</div>
+        </div>
+      </div>
+
+      <div class="step-connector"><div class="step-connector-line"></div></div>
+
+      <div class="step">
+        <div class="step-num step-num-purple">2</div>
+        <div class="step-body">
+          <div class="step-title">Pick your helper</div>
+          <div class="step-desc">Local people nearby will see your job and apply. Browse applicant profiles, check their star ratings and completed jobs, and choose the person you feel good about.</div>
+          <div class="step-tip">⚡ Applications arrive fast</div>
+        </div>
+      </div>
+
+      <div class="step-connector"><div class="step-connector-line"></div></div>
+
+      <div class="step">
+        <div class="step-num step-num-purple">3</div>
+        <div class="step-body">
+          <div class="step-title">Get it done</div>
+          <div class="step-desc">Chat directly in the app to confirm timing and details. The job gets done, you pay your helper directly — cash, e-transfer, your choice. Then leave a rating to help the community.</div>
+          <div class="step-tip">💸 No platform fees, ever</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:-28px;padding:16px;background:rgba(155,89,212,.07);border:1.5px solid rgba(155,89,212,.2);border-radius:var(--radius-sm)">
+      <div style="font-size:12px;font-weight:900;color:var(--purple);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Great for</div>
+      <div style="font-size:13px;color:#bbb;font-weight:600;line-height:1.7">Homeowners · Parents · Seniors · Small businesses · Landlords · Anyone who needs an extra pair of hands</div>
+    </div>
+  </div>
+
+  <hr class="flow-divider">
+
+  <!-- FLOW 2: WANT TO EARN -->
+  <div>
+    <div class="section-label">I want to earn</div>
+    <div class="flow-header">
+      <span class="flow-badge badge-lime">💼 Finding Work</span>
+    </div>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num step-num-lime">1</div>
+        <div class="step-body">
+          <div class="step-title">Browse jobs near you</div>
+          <div class="step-desc">Open Yoodle and see local jobs on a live map or scrollable list. Set your search radius and find tasks that fit your skills, your schedule, and your neighbourhood.</div>
+          <div class="step-tip">📍 Sorted by distance</div>
+        </div>
+      </div>
+
+      <div class="step-connector"><div class="step-connector-line"></div></div>
+
+      <div class="step">
+        <div class="step-num step-num-lime">2</div>
+        <div class="step-body">
+          <div class="step-title">Apply in seconds</div>
+          <div class="step-desc">Tap to apply. Your profile and star rating go to the poster automatically — no cover letter, no resume, no hassle. Build your rating with every job you complete.</div>
+          <div class="step-tip">🚀 One tap to apply</div>
+        </div>
+      </div>
+
+      <div class="step-connector"><div class="step-connector-line"></div></div>
+
+      <div class="step">
+        <div class="step-num step-num-lime">3</div>
+        <div class="step-body">
+          <div class="step-title">Do the work, get paid</div>
+          <div class="step-desc">Chat with the poster to confirm the details. Show up, do a great job, and collect your payment directly — cash, e-transfer, or whatever works. Rate each other and build your reputation.</div>
+          <div class="step-tip">⭐ Ratings build trust</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:-28px;padding:16px;background:rgba(163,230,53,.06);border:1.5px solid rgba(163,230,53,.2);border-radius:var(--radius-sm)">
+      <div style="font-size:12px;font-weight:900;color:var(--lime);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Great for</div>
+      <div style="font-size:13px;color:#bbb;font-weight:600;line-height:1.7">Students · Young adults · Anyone with free time · People building work experience · Entrepreneurs building a local client base</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CTA -->
+<div class="cta-band" style="margin-top:56px">
+  <div class="cta-wm wordmark"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
+  <div class="cta-h">Ready? It takes two minutes.</div>
+  <div class="cta-sub">No passwords. No fees. Just your neighbourhood.</div>
+  <div class="cta-btns">
+    <a href="/" class="btn-primary">Post a Job</a>
+    <a href="/" class="btn-outline">Find Work Near Me</a>
+  </div>
+</div>
+
+<!-- Footer Nav -->
+<nav class="page-nav">
+  <a href="/">← Home</a>
+  <a href="/faq">FAQ</a>
+  <a href="/privacy">Privacy Policy</a>
+  <a href="mailto:privacy@yoodle.ca">Contact</a>
+</nav>
+
+</body>
+</html>
