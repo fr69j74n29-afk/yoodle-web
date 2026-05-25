@@ -2324,19 +2324,27 @@ async function loadPendingRatings(){
 
   // Server-side: fetch completed tasks where user was poster OR doer, not yet rated
   const[{data:postedCompleted},{data:helpedCompleted},{data:alreadyRated}]=await Promise.all([
-    sb.from('tasks').select('id,title,price,doer_id,profiles!tasks_doer_id_fkey(name)')
+    sb.from('tasks').select('id,title,price,doer_id')
       .eq('poster_id',pid).eq('status','completed').not('doer_id','is',null),
     sb.from('tasks').select('id,title,price,poster_id,profiles!tasks_poster_id_fkey(name)')
       .eq('doer_id',pid).eq('status','completed'),
     sb.from('ratings').select('task_id').eq('rater_id',pid)
   ]);
 
+  // look up doer names separately
+  const doerIds=[...new Set((postedCompleted||[]).map(t=>t.doer_id).filter(Boolean))];
+  const doerNames={};
+  if(doerIds.length){
+    const{data:doerProfiles}=await sb.from('profiles').select('id,name').in('id',doerIds);
+    (doerProfiles||[]).forEach(p=>doerNames[p.id]=p.name);
+  }
+
   const ratedIds=new Set((alreadyRated||[]).map(r=>r.task_id));
 
   // Build pending list — exclude already rated
   const pending=[];
   (postedCompleted||[]).forEach(t=>{
-    if(!ratedIds.has(t.id)) pending.push({taskId:t.id,title:t.title,price:t.price,ratedId:t.doer_id,otherName:t.profiles?.name||'Helper',role:'poster',prompt:'How did the helper do?'});
+    if(!ratedIds.has(t.id)) pending.push({taskId:t.id,title:t.title,price:t.price,ratedId:t.doer_id,otherName:doerNames[t.doer_id]||'Helper',role:'poster',prompt:'How did the helper do?'});
   });
   (helpedCompleted||[]).forEach(t=>{
     if(!ratedIds.has(t.id)) pending.push({taskId:t.id,title:t.title,price:t.price,ratedId:t.poster_id,otherName:t.profiles?.name||'Poster',role:'doer',prompt:'How was the job poster?'});
