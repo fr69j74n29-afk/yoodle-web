@@ -1954,19 +1954,20 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   const isPoster=task.poster_id===pid;
   const isDoer=task.doer_id===pid;
 
+  const withdrawBtn=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Withdraw</button>`;
   if(task.status==='claimed'){
     let btns='';
     if(isPoster){
       btns+=`<button onclick="chatComplete('${taskId}','${task.doer_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Mark Complete</button>`;
       btns+=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
     } else if(isDoer){
-      btns+=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
+      btns+=withdrawBtn;
     }
     if(btns){actionsEl.innerHTML=btns;actionsEl.style.display='flex';}
   } else if(task.status==='open'&&!isPoster){
     const{data:app}=await sb.from('applications').select('id,status').eq('task_id',taskId).eq('applicant_id',pid).maybeSingle();
-    if(app&&app.status==='withdrawn'){
-      actionsEl.innerHTML=`<button onclick="applyForJob('${taskId}','${task.poster_id}',document.getElementById('chat-title').textContent)" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🙋 Re-apply</button>`;
+    if(app&&app.status==='pending'){
+      actionsEl.innerHTML=withdrawBtn;
       actionsEl.style.display='flex';
     }
   }
