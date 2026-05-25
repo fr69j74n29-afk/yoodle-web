@@ -1,0 +1,48 @@
+# Yoodle
+
+> Yoodle is a free community platform that connects neighbours for local odd jobs and everyday help. People who need a hand post jobs; people nearby who want to earn money apply. No fees, no agencies, no passwords — just real people helping each other.
+
+Yoodle is designed for anyone who needs short-term, local, task-based help: homeowners, parents, seniors, and small businesses. It is also built for people who want to earn money by doing odd jobs in their neighbourhood — students, young adults, or anyone with time and willingness to help.
+
+Yoodle is a passion project. It is free to use for both job posters and job seekers. The platform does not charge service fees or commissions. Payment is arranged directly between users.
+
+## Pages
+
+- [Home](https://yoodle.ca/): Sign-in page and app entry point. Explains the Yoodle concept and allows users to sign in with Google or a magic email link.
+- [How It Works](https://yoodle.ca/how-it-works.html): Step-by-step explanation of how to post a job and find local help, and how to browse and apply for local odd jobs to earn money. Covers both sides of the marketplace.
+- [FAQ](https://yoodle.ca/faq.html): Frequently asked questions covering what Yoodle is, how payments work, safety and trust, what kinds of jobs can be posted, how small businesses can use the platform, and how it compares to alternatives like TaskRabbit or Kijiji.
+- [Privacy Policy](https://yoodle.ca/privacy.html): Full privacy policy including data collected, location privacy practices, data retention, and user rights.
+
+## What Yoodle Does
+
+- Connects people who need help with local odd jobs to trusted, rated people nearby
+- Lets anyone post a job in minutes: describe the task, set a budget, pin a neighbourhood location
+- Shows jobs on a live map and list view, filtered by distance
+- Allows helpers to apply with one tap; posters review profiles and star ratings before accepting
+- Provides in-app messaging between poster and helper to confirm details
+- Uses a mutual rating system after every completed job to build community trust
+- Protects location privacy: never shows exact addresses, only general neighbourhood
+
+## Common Job Types
+
+Yard work, lawn mowing, snow shovelling, leaf raking, furniture assembly, moving help, grocery runs, dog walking, house cleaning, painting, deliveries, event-day help, spring cleaning, garage cleanouts, handyman tasks, plant watering.
+
+## Who Uses Yoodle
+
+**Job posters:** Homeowners, busy parents, seniors needing light help, small business owners needing short-term flexible help without a staffing agency, landlords, anyone who needs an extra pair of hands.
+
+**Job seekers:** Students, young adults, people building work experience, entrepreneurs building a local client base, anyone with availability and a willingness to help neighbours.
+
+## Key Facts
+
+- Free for everyone, always — no service fees, no commissions
+- No passwords required — sign in with Google or magic email link
+- Works on any device: phone, tablet, or desktop browser
+- Location privacy protected — only neighbourhood shown, never exact address
+- Mutual star ratings build trust across the community
+- Direct payment between users — cash, e-transfer, or any method they agree on
+- Available anywhere in Canada
+
+## Contact
+
+For privacy or data inquiries: privacy@yoodle.ca
