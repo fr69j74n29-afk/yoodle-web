@@ -1215,14 +1215,11 @@ function listCard(j,profile){
     <div class="lc-desc">${esc(j.description||'')}</div>
     <div class="lc-foot">
       <div class="lc-poster">
-        <div class="lc-av">${avatarCircle(name,profile?.avatar_color,'20px','9px')}</div>
+        <div class="lc-av">${avatarCircle(name,profile?.avatar_color,'20px','9px',false)}</div>
         <span class="lc-name">${esc(name)}</span>
         <span style="color:var(--yellow);font-size:11px;font-weight:800;flex-shrink:0">${rating}</span>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
-        ${j.location_verified?`<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.3px">✅ GPS Verified</span>`:`<span style="font-size:10px;font-weight:900;color:var(--yellow);letter-spacing:.3px">⚠️ GPS Unverified</span>`}
-        <span class="lc-meta">📍 ${esc(locLabel)} · ${timeAgo(j.created_at)}</span>
-      </div>
+      <span class="lc-meta">📍 ${esc(locLabel)} · ${timeAgo(j.created_at)}</span>
     </div>
   </div>`;
 }
@@ -2119,10 +2116,11 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 function spin(){return'<div class="loading"><div class="spinner"></div></div>';}
 function emptyState(ico,t,d){return`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-t">${t}</div><div class="empty-d">${d}</div></div>`;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function avatarCircle(name,color,size='36px',fontSize='14px'){
+function avatarCircle(name,color,size='36px',fontSize='14px',border=true){
   const bg=color||'#9B59D4';
   const initial=((name||'?')[0]).toUpperCase();
-  return`<div style="width:${size};height:${size};border-radius:50%;background:${bg};border:3px solid ${bg};outline:2.5px solid ${bg};outline-offset:2px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:${fontSize};color:#fff;flex-shrink:0;font-family:'Nunito',sans-serif">${esc(initial)}</div>`;
+  const b=border?`border:3px solid ${bg};outline:2.5px solid ${bg};outline-offset:2px;`:'';
+  return`<div style="width:${size};height:${size};border-radius:50%;background:${bg};${b}display:flex;align-items:center;justify-content:center;font-weight:900;font-size:${fontSize};color:#fff;flex-shrink:0;font-family:'Nunito',sans-serif">${esc(initial)}</div>`;
 }
 function timeAgo(d){const m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
 async function saveBio(){
