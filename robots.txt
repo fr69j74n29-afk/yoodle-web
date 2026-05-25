@@ -1,0 +1,80 @@
+# robots.txt — Yoodle (yoodle.ca)
+# Last updated: May 2025
+
+# ── Allow all well-behaved crawlers on public pages ──────────────────────────
+User-agent: *
+Allow: /$
+Allow: /index.html
+Allow: /faq.html
+Allow: /how-it-works.html
+Allow: /privacy.html
+
+# Private, auth-gated, or technical files — no indexing value
+Disallow: /profile.html
+Disallow: /sw.js
+Disallow: /OneSignalSDKWorker.js
+Disallow: /manifest.json
+Disallow: /CNAME
+Disallow: /icon-192.png
+Disallow: /icon-512.png
+Disallow: /favicon.ico
+
+# ── Google ────────────────────────────────────────────────────────────────────
+User-agent: Googlebot
+Allow: /$
+Allow: /faq.html
+Allow: /how-it-works.html
+Allow: /privacy.html
+Disallow: /profile.html
+Disallow: /sw.js
+Disallow: /OneSignalSDKWorker.js
+Disallow: /manifest.json
+
+# ── OpenAI ────────────────────────────────────────────────────────────────────
+User-agent: GPTBot
+Allow: /$
+Allow: /faq.html
+Allow: /how-it-works.html
+Allow: /privacy.html
+Disallow: /profile.html
+
+# ── Anthropic (Claude) ────────────────────────────────────────────────────────
+User-agent: ClaudeBot
+Allow: /$
+Allow: /faq.html
+Allow: /how-it-works.html
+Allow: /privacy.html
+Disallow: /profile.html
+
+User-agent: anthropic-ai
+Allow: /$
+Allow: /faq.html
+Allow: /how-it-works.html
+Allow: /privacy.html
+Disallow: /profile.html
+
+# ── Perplexity ────────────────────────────────────────────────────────────────
+User-agent: PerplexityBot
+Allow: /$
+Allow: /faq.html
+Allow: /how-it-works.html
+Allow: /privacy.html
+Disallow: /profile.html
+
+# ── Meta (Llama) ──────────────────────────────────────────────────────────────
+User-agent: FacebookBot
+Allow: /$
+Allow: /faq.html
+Allow: /how-it-works.html
+Disallow: /profile.html
+
+# ── Common Crawl (trains many open models) ────────────────────────────────────
+User-agent: CCBot
+Allow: /$
+Allow: /faq.html
+Allow: /how-it-works.html
+Allow: /privacy.html
+Disallow: /profile.html
+
+# ── Sitemap ───────────────────────────────────────────────────────────────────
+Sitemap: https://yoodle.ca/sitemap.xml
