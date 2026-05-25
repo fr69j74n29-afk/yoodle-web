@@ -301,12 +301,12 @@ body{
   /* Show desktop intro strip */
   .desktop-strip{display:flex!important}
 
-  /* Reorder: move wordmark + tagline below auth-h on desktop only */
+  /* Reorder desktop: nav → wordmark → tagline → headline → 1-2-3 → sign-in */
   .ds-nav{order:1}
-  .desktop-strip{order:2}
-  .auth-h{order:3}
-  .auth-wm{order:4}
-  .auth-tag{order:5}
+  .auth-wm{order:2}
+  .auth-tag{order:3}
+  .auth-h{order:4}
+  .desktop-strip{order:5}
   .auth-sub{order:6}
   .auth-btns{order:7}
   .auth-legal{order:8}
