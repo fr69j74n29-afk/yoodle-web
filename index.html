@@ -300,6 +300,17 @@ body{
 
   /* Show desktop intro strip */
   .desktop-strip{display:flex!important}
+
+  /* Reorder: move wordmark + tagline below auth-h on desktop only */
+  .ds-nav{order:1}
+  .desktop-strip{order:2}
+  .auth-h{order:3}
+  .auth-wm{order:4}
+  .auth-tag{order:5}
+  .auth-sub{order:6}
+  .auth-btns{order:7}
+  .auth-legal{order:8}
+  #ios-pwa-tip{order:9}
 }
 
 /* Desktop intro strip — hidden on mobile, shown on desktop via media query above */
@@ -391,7 +402,7 @@ body{
       <div class="magic-sent" id="magic-sent">✅ Check your inbox! Link sent to <span id="magic-addr"></span></div>
     </div>
   </div>
-  <div class="auth-legal">By continuing you agree to Yoodle's <a href="/terms" target="_blank">Terms of Service</a><br>and <a href="/privacy" target="_blank">Privacy Policy</a>. No spam, ever.<br><a href="/how-it-works" target="_blank">How it works</a> · <a href="/faq" target="_blank">FAQ</a></div>
+  <div class="auth-legal">By continuing you agree to Yoodle's <a href="/terms" target="_blank">Terms of Service</a><br>and <a href="/privacy" target="_blank">Privacy Policy</a>. No spam, ever.<br><a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a></div>
   <div id="ios-pwa-tip" style="display:none;margin-top:16px;background:rgba(155,89,212,.1);border:1.5px solid rgba(155,89,212,.3);border-radius:12px;padding:12px 16px;font-size:12px;color:#aaa;line-height:1.6;font-weight:700;text-align:center;position:relative;z-index:1">
     📲 <strong style="color:var(--purple)">Using the home screen app?</strong><br>Sign in with Google — magic links open in Safari and won't transfer back to the app.
   </div>
