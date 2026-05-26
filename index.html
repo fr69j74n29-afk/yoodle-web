@@ -836,6 +836,11 @@ function initMap() {
   _ring.style.cssText='position:absolute;pointer-events:none;z-index:451;border-radius:50%;border:4px dashed rgba(155,89,212,0.85);box-sizing:border-box;';
   document.getElementById('map').appendChild(_ring);
 
+  const _label=document.createElement('div');
+  _label.id='map-radius-label';
+  _label.style.cssText='position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;z-index:452;color:#fff;font-family:Nunito,sans-serif;font-size:13px;font-weight:900;text-shadow:0 1px 5px rgba(0,0,0,.85);white-space:nowrap;';
+  document.getElementById('map').appendChild(_label);
+
   let _moveEndTimer=null;
   map.on('move',updateCircleOverlay);
   map.on('zoomend',()=>{
@@ -849,7 +854,12 @@ function initMap() {
     const c=map.getCenter();
     userLat=c.lat; userLng=c.lng;
     localStorage.setItem('yoodle_map',JSON.stringify({lat:c.lat,lng:c.lng,zoom:map.getZoom()}));
-    updateZoomLimits(); // latitude shift slightly changes km↔zoom mapping
+    updateZoomLimits();
+    // If GPS was active but user dragged map away, switch ring to grey
+    if(locationSource==='gps'&&gpsLat!==null){
+      if(haversineKm(userLat,userLng,gpsLat,gpsLng)*1000>100) locationSource='manual';
+    }
+    updateCircleOverlay();
     clearTimeout(_moveEndTimer);
     _moveEndTimer=setTimeout(()=>{if(me)loadJobs();},600);
   });
@@ -991,11 +1001,13 @@ function locateUser() {
         gpsLat=newLat; gpsLng=newLng;
         locationSource='gps';
         if(btn){btn.classList.remove('locating');btn.classList.add('located');}
+        updateGpsDot();
         map.flyTo([newLat,newLng],map.getZoom()); // moveend handles userLat/userLng + loadJobs
       } else {
         _resolved=true;
         clearTimeout(_safetyTimer);
         gpsLat=newLat; gpsLng=newLng;
+        updateGpsDot();
         if(haversineKm(userLat,userLng,newLat,newLng)*1000>50)
           map.flyTo([newLat,newLng],map.getZoom());
         navigator.geolocation.clearWatch(_geoWatchId);
@@ -1029,6 +1041,13 @@ function showGeoFallback() {
 
 
 // Pixel radius: circle fills ~88% of the shorter screen dimension
+function updateGpsDot() {
+  if(userMarker){map.removeLayer(userMarker);userMarker=null;}
+  if(!gpsLat||!gpsLng||!map)return;
+  const icon=L.divIcon({className:'yoodle-pin',html:'<div class="user-ring"></div>',iconSize:[20,20],iconAnchor:[10,10]});
+  userMarker=L.marker([gpsLat,gpsLng],{icon,zIndexOffset:1000}).addTo(map);
+}
+
 function getPixelRadius() {
   const el=document.getElementById('map');
   return Math.min(el.clientWidth,el.clientHeight)*0.44;
@@ -1074,6 +1093,13 @@ function updateCircleOverlay() {
   ring.style.top='50%';
   ring.style.marginLeft=(-r)+'px';
   ring.style.marginTop=(-r)+'px';
+  // Label: "Postings within Xkm" — sits just above the circle top edge
+  const lbl=document.getElementById('map-radius-label');
+  if(lbl){
+    const mapH=document.getElementById('map').clientHeight;
+    lbl.style.top=(mapH/2-r-26)+'px';
+    lbl.textContent=`Postings within ${RADIUS_KM}km`;
+  }
 }
 
 // Max ~80m fuzzy offset — enough for privacy, not enough to jump streets
