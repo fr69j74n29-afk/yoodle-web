@@ -864,7 +864,7 @@ function updateRadiusCounts(){
 }
 let sb, me, myProfileId, activeJob, mapCatFilter='all', listCatFilter='all', myTab='posted';
 let ratingTaskId=null, ratingRatedId=null, selectedRating=0;
-let map, userMarker, radiusCircle, jobMarkers=[], allJobs=[], myAppliedTaskIds=new Set();
+let map, userMarker, radiusCircle, _maskLayer=null, jobMarkers=[], allJobs=[], myAppliedTaskIds=new Set();
 let userLat=null, userLng=null;
 let gpsLat=null, gpsLng=null, locVerified=false;
 
@@ -1008,18 +1008,37 @@ function showGeoFallback() {
 
 function centerMapOnUser() {
   if (!userLat||!map) return;
-  if(userMarker)map.removeLayer(userMarker);
+  if(userMarker){map.removeLayer(userMarker);userMarker=null;}
   if(radiusCircle)map.removeLayer(radiusCircle);
-  const icon=L.divIcon({className:'yoodle-pin',html:`<div class="user-ring"></div>`,iconSize:[20,20],iconAnchor:[10,10]});
-  userMarker=L.marker([userLat,userLng],{icon,zIndexOffset:1000}).addTo(map);
+  if(_maskLayer){map.removeLayer(_maskLayer);_maskLayer=null;}
+
+  // Inverted mask: world rectangle with circular hole punched out
+  const pts=64;
+  const cosLat=Math.cos(userLat*Math.PI/180);
+  const holeRing=[];
+  for(let i=0;i<pts;i++){
+    const a=(i/pts)*2*Math.PI;
+    holeRing.push([
+      userLng+(RADIUS_KM/(111.32*cosLat))*Math.sin(a),
+      userLat+(RADIUS_KM/111.32)*Math.cos(a)
+    ]);
+  }
+  holeRing.push(holeRing[0]);
+  const worldRing=[[-180,-90],[180,-90],[180,90],[-180,90],[-180,-90]];
+  _maskLayer=L.geoJSON({type:'Feature',geometry:{type:'Polygon',
+    coordinates:[worldRing,holeRing]
+  }},{style:{fillColor:'#000',fillOpacity:0.38,stroke:false,interactive:false}}).addTo(map);
+
+  // Border only — thicker dashed ring, no fill
   radiusCircle=L.circle([userLat,userLng],{
     radius:RADIUS_KM*1000,
     color:'#9B59D4',
-    fillColor:'#9B59D4',
-    fillOpacity:0.07,
-    weight:2,
-    dashArray:'6 4'
+    fillOpacity:0,
+    weight:4,
+    dashArray:'7 5',
+    interactive:false
   }).addTo(map);
+
   map.invalidateSize();
   setTimeout(()=>{
     map.fitBounds(radiusCircle.getBounds(),{padding:[60,60],maxZoom:14});
