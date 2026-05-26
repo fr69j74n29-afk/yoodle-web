@@ -312,7 +312,7 @@ body{
 .op-bio-text{font-size:14px;font-weight:600;color:#ccc;line-height:1.7}
 .op-bio-empty{font-size:13px;color:var(--muted);font-style:italic;font-weight:600}
 
-@media(hover:hover) and (pointer:fine){
+@media(min-width:481px){
   body{box-shadow:0 0 0 1px var(--border)}
   html{background:#050505}
 
@@ -365,7 +365,7 @@ body{
   justify-content:center;gap:24px;
   margin-bottom:20px;position:relative;z-index:1;flex-shrink:0
 }
-@media(hover:hover) and (pointer:fine){
+@media(min-width:481px){
   .ds-nav{display:flex}
 }
 .ds-nav a{
@@ -472,7 +472,7 @@ body{
       <!-- Radius control — fixed at bottom, never overlaps circle content -->
       <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;display:flex;align-items:center;gap:10px;background:rgba(10,10,10,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:100px;padding:7px 16px">
         <button onclick="changeRadius(-1)" style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;line-height:1;flex-shrink:0">−</button>
-        <span id="radius-label" style="font-size:13px;font-weight:900;color:var(--text);min-width:36px;text-align:center">50 km</span>
+        <span id="radius-label" style="font-size:13px;font-weight:900;color:var(--text);min-width:36px;text-align:center">25 km</span>
         <button onclick="changeRadius(1)" style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;line-height:1;flex-shrink:0">+</button>
       </div>
     </div>
@@ -488,8 +488,7 @@ body{
         <button class="list-radius-btn" data-km="3" onclick="setListRadius(this,3)">3 km</button>
         <button class="list-radius-btn" data-km="5" onclick="setListRadius(this,5)">5 km</button>
         <button class="list-radius-btn" data-km="10" onclick="setListRadius(this,10)">10 km</button>
-        <button class="list-radius-btn" data-km="25" onclick="setListRadius(this,25)">25 km</button>
-        <button class="list-radius-btn active" data-km="50" onclick="setListRadius(this,50)">50 km</button>
+        <button class="list-radius-btn active" data-km="25" onclick="setListRadius(this,25)">25 km</button>
       </div>
     </div>
     <div class="list-scroll"><div class="jobs-grid" id="list-grid"><div class="loading"><div class="spinner"></div></div></div></div>
@@ -812,7 +811,7 @@ function normalizeCategory(cat) {
   if (['moving'].includes(cat)) return 'moving';
   return cat || 'other';
 }
-let RADIUS_KM=50;
+let RADIUS_KM=25;
 let sheetTab='jobs';
 let sheetJobs=[],sheetHelpers=[];
 
@@ -820,15 +819,15 @@ function initMap() {
   map = L.map('map', {center:[43.6532,-79.3832],zoom:15,zoomControl:false,attributionControl:false});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
   L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
-  setTimeout(()=>{map.invalidateSize();locateUser();},200);
+  setTimeout(()=>{map.invalidateSize();applyFallbackLocation();},200);
 }
 
-let lastFetchedRadius=50;
+let lastFetchedRadius=25;
 
 function changeRadius(delta){
   let step = RADIUS_KM >= 5 ? 10 : 1;
   RADIUS_KM = RADIUS_KM + (delta * step);
-  RADIUS_KM = Math.min(50, Math.max(1, RADIUS_KM));
+  RADIUS_KM = Math.min(25, Math.max(1, RADIUS_KM));
   document.getElementById('radius-label').textContent=`${RADIUS_KM} km`;
   centerMapOnUser();
   // if new radius is within already-fetched data, just filter client-side
@@ -917,6 +916,26 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 
+let locationSource='preset'; // 'gps' | 'ip' | 'preset'
+
+async function applyFallbackLocation(){
+  // Try IP geolocation first — city-level, no API key needed
+  try{
+    const r=await fetch('https://ipinfo.io/json');
+    const d=await r.json();
+    if(d.loc){
+      const[lat,lng]=d.loc.split(',').map(Number);
+      if(!isNaN(lat)&&!isNaN(lng)){
+        userLat=lat;userLng=lng;locationSource='ip';
+      }
+    }
+  }catch(e){}
+  // Fall back to Toronto if IP lookup failed or returned nothing
+  if(!userLat){userLat=43.6532;userLng=-79.3832;locationSource='preset';}
+  centerMapOnUser();
+  // loadJobs is called by showApp after auth — no call needed here
+}
+
 let _geoWatchId=null;
 
 function locateUser() {
@@ -946,6 +965,7 @@ function locateUser() {
         _hasFirstPosition=true;
         userLat=newLat;
         userLng=newLng;
+        locationSource='gps';
         if(btn){btn.classList.remove('locating');btn.classList.add('located');}
         centerMapOnUser();
         loadJobs();
@@ -1026,7 +1046,7 @@ function renderMapPins(jobs) {
 
 let allHelpers=[];
 
-let listRadiusKm=50;
+let listRadiusKm=25;
 
 function setListRadius(el,km){
   document.querySelectorAll('.list-radius-btn').forEach(b=>b.classList.remove('active'));
@@ -1135,12 +1155,13 @@ function renderSheetContent(){
 
 function renderListGrid(jobs) {
   const g=document.getElementById('list-grid');
+  const locNote=locationSource==='gps'?'':(locationSource==='ip'?' · estimated area':' · Toronto default');
   if(!jobs.length){
     g.innerHTML=emptyState('🌱',`No jobs within ${listRadiusKm}km`,'Try a larger radius or check back soon!');
-    document.getElementById('list-sub').textContent=`0 jobs within ${listRadiusKm}km`;
+    document.getElementById('list-sub').textContent=`0 jobs within ${listRadiusKm}km${locNote}`;
     return;
   }
-  document.getElementById('list-sub').textContent=`${jobs.length} job${jobs.length===1?'':'s'} within ${listRadiusKm}km`;
+  document.getElementById('list-sub').textContent=`${jobs.length} job${jobs.length===1?'':'s'} within ${listRadiusKm}km${locNote}`;
   g.innerHTML=jobs.map(j=>listCard(j,j.profiles)).join('');
 }
 
@@ -1268,6 +1289,7 @@ async function showApp(){
   loadJobs();
   subscribeToMessages();
   registerOneSignal();
+  setTimeout(locateUser, 3000);
   setTimeout(async()=>{
     if(window._pendingNotifTaskId){
       const tid=window._pendingNotifTaskId;
