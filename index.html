@@ -820,7 +820,7 @@ function initMap() {
   // Set coords immediately so loadJobs works on first showApp call
   userLat=_startLat; userLng=_startLng;
 
-  map=L.map('map',{center:[_startLat,_startLng],zoom:_startZoom,zoomControl:false,attributionControl:false});
+  map=L.map('map',{center:[_startLat,_startLng],zoom:_startZoom,zoomSnap:0,zoomControl:false,attributionControl:false});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
   L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
 
@@ -838,17 +838,25 @@ function initMap() {
 
   let _moveEndTimer=null;
   map.on('move',updateCircleOverlay);
-  map.on('zoomend',updateCircleOverlay);
+  map.on('zoomend',()=>{
+    // Reverse-project fixed pixel circle to km, round to 1km integer, clamp 1–25
+    const raw=getCircleKm();
+    RADIUS_KM=Math.min(25,Math.max(1,Math.round(raw)));
+    updateZoomLimits();
+    updateCircleOverlay();
+  });
   map.on('moveend',()=>{
     const c=map.getCenter();
     userLat=c.lat; userLng=c.lng;
     localStorage.setItem('yoodle_map',JSON.stringify({lat:c.lat,lng:c.lng,zoom:map.getZoom()}));
+    updateZoomLimits(); // latitude shift slightly changes km↔zoom mapping
     clearTimeout(_moveEndTimer);
     _moveEndTimer=setTimeout(()=>{if(me)loadJobs();},600);
   });
 
   setTimeout(()=>{
     map.invalidateSize();
+    updateZoomLimits();
     updateCircleOverlay();
     if(!_saved)applyFallbackLocation(); // first-ever visit only
   },200);
@@ -1020,20 +1028,45 @@ function showGeoFallback() {
 }
 
 
+// Pixel radius: circle fills ~88% of the shorter screen dimension
+function getPixelRadius() {
+  const el=document.getElementById('map');
+  return Math.min(el.clientWidth,el.clientHeight)*0.44;
+}
+
+// Reverse-project fixed pixel radius → km at current zoom + latitude
+function getCircleKm() {
+  if(!map)return RADIUS_KM;
+  const r=getPixelRadius();
+  const s=map.getSize();
+  const northLL=map.containerPointToLatLng(L.point(s.x/2,s.y/2-r));
+  const c=map.getCenter();
+  return haversineKm(c.lat,c.lng,northLL.lat,northLL.lng);
+}
+
+// Convert km radius to Leaflet zoom level at given latitude (256px tiles)
+function kmToZoom(km,lat) {
+  const r=getPixelRadius();
+  const mpp=(km*1000)/r;
+  return Math.log2(40075016.686*Math.cos(lat*Math.PI/180)/(mpp*256));
+}
+
+// Hard-stop zoom: can't zoom out past 25km or in past 1km
+function updateZoomLimits() {
+  if(!map)return;
+  const lat=map.getCenter().lat;
+  map.setMinZoom(kmToZoom(25,lat));
+  map.setMaxZoom(kmToZoom(1,lat));
+}
+
 function updateCircleOverlay() {
   if(!map)return;
   const mask=document.getElementById('map-overlay-mask');
   const ring=document.getElementById('map-overlay-ring');
   if(!mask||!ring)return;
-  const c=map.getCenter();
-  const north=L.latLng(c.lat+(RADIUS_KM/111.32),c.lng);
-  const cPx=map.latLngToContainerPoint(c);
-  const nPx=map.latLngToContainerPoint(north);
-  const r=Math.abs(cPx.y-nPx.y);
+  const r=getPixelRadius(); // fixed size — circle fills screen edge-to-edge
   const d=r*2;
-  // No fill — no inside or outside shading
   mask.style.background='none';
-  // Ring colour: teal = GPS active, grey = manual / estimated / preset
   ring.style.borderColor=locationSource==='gps'?'rgba(6,182,212,0.9)':'rgba(150,150,160,0.65)';
   ring.style.width=d+'px';
   ring.style.height=d+'px';
