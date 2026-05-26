@@ -986,7 +986,11 @@ function locateUser() {
     },
     err => {
       if(btn){btn.classList.remove('locating');}
-      console.warn("Geolocation failed:", err);
+      if(err.code===1){
+        toast('📍 Location blocked — go to Settings → Safari → yoodle.ca to allow');
+      } else {
+        toast('📍 Could not get location — try again');
+      }
     },
     { timeout: 8000, enableHighAccuracy: false, maximumAge: 30000 }
   );
@@ -1289,7 +1293,6 @@ async function showApp(){
   loadJobs();
   subscribeToMessages();
   registerOneSignal();
-  setTimeout(locateUser, 3000);
   setTimeout(async()=>{
     if(window._pendingNotifTaskId){
       const tid=window._pendingNotifTaskId;
