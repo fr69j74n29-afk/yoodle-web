@@ -120,10 +120,12 @@ body{
 #map{flex:1;width:100%;background:#1a1a1a;z-index:1;min-height:0}
 .leaflet-container{background:#1a1a1a!important;font-family:'Nunito',sans-serif}
 .leaflet-tile{filter:brightness(.85) saturate(.7) hue-rotate(180deg) invert(1)}
-.map-locate-btn{position:absolute;bottom:20px;right:16px;z-index:10;width:44px;height:44px;border-radius:50%;background:rgba(22,22,22,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:all;transition:all .2s;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.4)}
-.map-locate-btn:active{border-color:var(--teal);background:rgba(6,182,212,.12);transform:scale(.93)}
-.map-locate-btn.locating svg{animation:spin .8s linear infinite}
-.map-locate-btn.located svg{color:var(--teal)}
+.map-controls{position:absolute;top:12px;left:12px;right:12px;z-index:10;display:flex;gap:8px;pointer-events:none}
+.map-search-bar{flex:1;display:flex;align-items:center;gap:8px;background:rgba(22,22,22,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;pointer-events:all}
+.map-search-bar input{flex:1;background:none;border:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:16px;font-weight:600;outline:none}
+.map-search-bar input::placeholder{color:var(--muted)}
+.map-locate-btn{width:44px;height:44px;border-radius:50%;background:rgba(22,22,22,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);color:var(--teal);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:all;transition:all .15s;flex-shrink:0}
+.map-locate-btn:active{border-color:var(--teal);background:rgba(6,182,212,.1)}
 .yoodle-pin{background:none;border:none}
 .pin-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid rgba(10,10,10,.6);box-shadow:0 3px 12px rgba(0,0,0,.5);cursor:pointer;transition:transform .15s}
 .pin-dot:active{transform:scale(1.15)}
@@ -448,12 +450,10 @@ body{
   <div class="app-view active" id="app-map">
     <div style="position:relative;flex:1;display:flex;flex-direction:column;min-height:0">
       <div id="map"></div>
-      <!-- Locate button — bottom right, like Google/Apple Maps -->
-      <button class="map-locate-btn" onclick="locateUser()" title="Find my location" id="map-locate-btn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:var(--teal);transition:color .2s">
-          <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="currentColor"/>
-        </svg>
-      </button>
+      <!-- Floating locate button -->
+      <div class="map-controls">
+        <button class="map-locate-btn" onclick="locateUser()" title="Find my location">📍</button>
+      </div>
       <!-- Count text floating inside circle - no background -->
       <div id="map-counts" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;pointer-events:all;display:none;flex-direction:column;align-items:center;gap:0">
         <button onclick="openRadiusSheet()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 12px">
@@ -925,9 +925,6 @@ function locateUser() {
     return;
   }
 
-  const btn=document.getElementById('map-locate-btn');
-  if(btn){btn.classList.add('locating');btn.classList.remove('located');}
-
   // clear any existing watch
   if(_geoWatchId!==null){
     navigator.geolocation.clearWatch(_geoWatchId);
@@ -946,7 +943,6 @@ function locateUser() {
         _hasFirstPosition=true;
         userLat=newLat;
         userLng=newLng;
-        if(btn){btn.classList.remove('locating');btn.classList.add('located');}
         centerMapOnUser();
         loadJobs();
       } else {
@@ -965,7 +961,6 @@ function locateUser() {
       }
     },
     err => {
-      if(btn){btn.classList.remove('locating');}
       console.warn("Geolocation failed:", err);
     },
     { timeout: 8000, enableHighAccuracy: false, maximumAge: 30000 }
@@ -1144,22 +1139,11 @@ function renderListGrid(jobs) {
   g.innerHTML=jobs.map(j=>listCard(j,j.profiles)).join('');
 }
 
-let _opParentModal=null;
-
 function closeOtherProfile(){
   document.getElementById('op-modal').classList.remove('open');
-  if(_opParentModal){
-    _opParentModal.classList.add('open');
-    _opParentModal=null;
-  }
 }
 
 async function openOtherProfile(userId){
-  // Remember whichever modal is currently open so we can restore it on close
-  _opParentModal=document.querySelector('.modal-ov.open')||null;
-  // Hide it so only the profile modal shows
-  if(_opParentModal)_opParentModal.classList.remove('open');
-
   const modal=document.getElementById('op-modal');
   const content=document.getElementById('op-content');
   content.innerHTML='<div class="loading"><div class="spinner"></div></div>';
