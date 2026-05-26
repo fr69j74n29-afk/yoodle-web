@@ -954,9 +954,21 @@ function locateUser() {
   }
 
   let _hasFirstPosition=false;
+  let _resolved=false;
+
+  // iOS safety net — watchPosition timeout option is unreliable on iOS;
+  // if neither callback fires in 10s, clean up and tell the user
+  const _safetyTimer=setTimeout(()=>{
+    if(_resolved) return;
+    _resolved=true;
+    if(_geoWatchId!==null){navigator.geolocation.clearWatch(_geoWatchId);_geoWatchId=null;}
+    if(btn){btn.classList.remove('locating');}
+    toast('📍 Location timed out — try again');
+  }, 10000);
 
   _geoWatchId=navigator.geolocation.watchPosition(
     pos => {
+      if(_resolved) return;
       const newLat=pos.coords.latitude;
       const newLng=pos.coords.longitude;
 
@@ -967,24 +979,26 @@ function locateUser() {
         userLng=newLng;
         locationSource='gps';
         if(btn){btn.classList.remove('locating');btn.classList.add('located');}
-        centerMapOnUser();
+        centerMapOnUser(); // always re-centre so user sees clear feedback
         loadJobs();
       } else {
-        // second callback — refined GPS position
-        // only update if moved more than ~50m to avoid unnecessary reloads
+        // second callback — refined GPS position; clear safety timer
+        _resolved=true;
+        clearTimeout(_safetyTimer);
         const moved=haversineKm(userLat,userLng,newLat,newLng)*1000>50;
         userLat=newLat;
         userLng=newLng;
-        if(moved){
-          centerMapOnUser();
-          loadJobs();
-        }
+        if(moved){centerMapOnUser();loadJobs();}
         // stop watching after refinement — preserves battery
         navigator.geolocation.clearWatch(_geoWatchId);
         _geoWatchId=null;
       }
     },
     err => {
+      if(_resolved) return;
+      _resolved=true;
+      clearTimeout(_safetyTimer);
+      if(_geoWatchId!==null){navigator.geolocation.clearWatch(_geoWatchId);_geoWatchId=null;}
       if(btn){btn.classList.remove('locating');}
       if(err.code===1){
         toast('📍 Tap AA in address bar → Website Settings → Location → Allow');
@@ -992,7 +1006,7 @@ function locateUser() {
         toast('📍 Location unavailable — try again');
       }
     },
-    { timeout: 8000, enableHighAccuracy: false, maximumAge: 30000 }
+    { timeout: 9000, enableHighAccuracy: false, maximumAge: 30000 }
   );
 }
 
