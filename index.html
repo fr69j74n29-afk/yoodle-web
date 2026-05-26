@@ -464,7 +464,7 @@ body{
           <div style="width:1px;height:32px;background:rgba(255,255,255,.25)"></div>
           <div style="text-align:center">
             <div style="font-size:26px;font-weight:900;color:#fff;line-height:1;text-shadow:0 1px 8px rgba(0,0,0,.8)" id="map-helpers-count">0</div>
-            <div style="font-size:10px;font-weight:900;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.8px;text-shadow:0 1px 4px rgba(0,0,0,.8)">Helpers</div>
+            <div style="font-size:10px;font-weight:900;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.8px;text-shadow:0 1px 4px rgba(0,0,0,.8)">Help</div>
           </div>
         </button>
       </div>
@@ -745,7 +745,7 @@ body{
       <!-- Tabs -->
       <div style="display:flex;gap:0;background:var(--surface2);border-radius:var(--radius-sm);padding:4px;margin-bottom:16px">
         <button id="sheet-tab-jobs" onclick="switchSheetTab('jobs')" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">📋 Jobs <span id="sheet-jobs-count" style="color:var(--purple)">0</span></button>
-        <button id="sheet-tab-helpers" onclick="switchSheetTab('helpers')" style="flex:1;padding:10px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">💪 Helpers <span id="sheet-helpers-count" style="color:var(--lime)">0</span></button>
+        <button id="sheet-tab-helpers" onclick="switchSheetTab('helpers')" style="flex:1;padding:10px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">💪 Help <span id="sheet-helpers-count" style="color:var(--lime)">0</span></button>
       </div>
     </div>
     <div id="sheet-content" style="flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch"></div>
@@ -1025,14 +1025,16 @@ function updateCircleOverlay() {
   const mask=document.getElementById('map-overlay-mask');
   const ring=document.getElementById('map-overlay-ring');
   if(!mask||!ring)return;
-  // Project RADIUS_KM north of centre to get pixel radius at current zoom
   const c=map.getCenter();
   const north=L.latLng(c.lat+(RADIUS_KM/111.32),c.lng);
   const cPx=map.latLngToContainerPoint(c);
   const nPx=map.latLngToContainerPoint(north);
   const r=Math.abs(cPx.y-nPx.y);
   const d=r*2;
-  mask.style.background=`radial-gradient(circle at 50% 50%, transparent ${r}px, rgba(0,0,0,0.38) ${r}px)`;
+  // No fill — no inside or outside shading
+  mask.style.background='none';
+  // Ring colour: teal = GPS active, grey = manual / estimated / preset
+  ring.style.borderColor=locationSource==='gps'?'rgba(6,182,212,0.9)':'rgba(150,150,160,0.65)';
   ring.style.width=d+'px';
   ring.style.height=d+'px';
   ring.style.left='50%';
