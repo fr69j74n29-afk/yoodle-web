@@ -754,9 +754,12 @@ function show(id) {
 
 // ── AUTH ──
 async function signInGoogle() {
+  // Use only origin + pathname — never include query params or hash,
+  // which could carry stale OAuth codes and cause redirect loops.
+  const redirectTo = window.location.origin + window.location.pathname;
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: { redirectTo }
   });
   if (error) alert('Sign-in error: ' + error.message);
 }
@@ -988,35 +991,41 @@ function renderGrowthChart(profiles) {
   });
 }
 
-// ── SINGLE AUTH HANDLER — covers both INITIAL_SESSION and SIGNED_IN ──
-// Guard against re-processing the same user (TOKEN_REFRESHED fires repeatedly
-// and would otherwise flash the loading screen on every token refresh).
-let currentUserId = null;
+// ── AUTH STATE HANDLER ──
+// Supabase v2 fires INITIAL_SESSION (possibly null) before the OAuth code
+// exchange completes, then SIGNED_IN once tokens are ready. TOKEN_REFRESHED
+// and USER_UPDATED fire silently in the background — ignore them.
+// dashboardReady prevents the loading screen from flashing on every event
+// once the dashboard is already showing.
+let dashboardReady = false;
 
 show('screen-loading');
 
 sb.auth.onAuthStateChange(async (_event, session) => {
-  // Only act on these three lifecycle events — ignore TOKEN_REFRESHED, USER_UPDATED, etc.
-  if (!['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT'].includes(_event)) return;
+  if (_event === 'TOKEN_REFRESHED' || _event === 'USER_UPDATED') return;
 
   if (session) {
-    // Already showing dashboard for this user — do nothing
-    if (currentUserId === session.user.id) return;
-    currentUserId = session.user.id;
-
+    if (dashboardReady) return; // already showing dashboard — do nothing
     show('screen-loading');
-    const isAdmin = await checkAdmin(session.user);
-    if (!isAdmin) {
-      currentUserId = null;
-      document.getElementById('denied-email-display').textContent = session.user.email;
-      show('screen-denied');
-      return;
+    try {
+      const isAdmin = await checkAdmin(session.user);
+      if (!isAdmin) {
+        dashboardReady = false;
+        document.getElementById('denied-email-display').textContent = session.user.email;
+        show('screen-denied');
+        return;
+      }
+      dashboardReady = true;
+      populateUser(session.user);
+      show('screen-dashboard');
+      loadStats();
+    } catch (err) {
+      console.error('Auth handler error:', err);
+      dashboardReady = false;
+      show('screen-auth');
     }
-    populateUser(session.user);
-    show('screen-dashboard');
-    loadStats();
   } else {
-    currentUserId = null;
+    dashboardReady = false;
     show('screen-auth');
   }
 });
