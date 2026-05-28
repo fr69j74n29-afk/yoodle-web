@@ -989,16 +989,25 @@ function renderGrowthChart(profiles) {
 }
 
 // ── SINGLE AUTH HANDLER — covers both INITIAL_SESSION and SIGNED_IN ──
-// Supabase v2 fires INITIAL_SESSION on page load if a session already exists,
-// and SIGNED_IN after an OAuth redirect. Handling both here replaces the old
-// init() + onAuthStateChange split that caused the stuck spinner on reload.
+// Guard against re-processing the same user (TOKEN_REFRESHED fires repeatedly
+// and would otherwise flash the loading screen on every token refresh).
+let currentUserId = null;
+
 show('screen-loading');
 
 sb.auth.onAuthStateChange(async (_event, session) => {
+  // Only act on these three lifecycle events — ignore TOKEN_REFRESHED, USER_UPDATED, etc.
+  if (!['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT'].includes(_event)) return;
+
   if (session) {
+    // Already showing dashboard for this user — do nothing
+    if (currentUserId === session.user.id) return;
+    currentUserId = session.user.id;
+
     show('screen-loading');
     const isAdmin = await checkAdmin(session.user);
     if (!isAdmin) {
+      currentUserId = null;
       document.getElementById('denied-email-display').textContent = session.user.email;
       show('screen-denied');
       return;
@@ -1006,7 +1015,8 @@ sb.auth.onAuthStateChange(async (_event, session) => {
     populateUser(session.user);
     show('screen-dashboard');
     loadStats();
-  } else if (_event === 'SIGNED_OUT' || _event === 'INITIAL_SESSION') {
+  } else {
+    currentUserId = null;
     show('screen-auth');
   }
 });
