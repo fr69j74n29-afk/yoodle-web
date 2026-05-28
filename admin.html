@@ -686,7 +686,7 @@ async function signInGoogle() {
 
 async function signOut() {
   await sb.auth.signOut();
-  show('screen-auth');
+  // onAuthStateChange SIGNED_OUT will call show('screen-auth')
 }
 
 // ── ADMIN CHECK ──
@@ -696,7 +696,6 @@ async function checkAdmin(user) {
     .select('email')
     .eq('email', user.email)
     .maybeSingle();
-
   return !error && data !== null;
 }
 
@@ -719,7 +718,6 @@ async function loadStats() {
   btn.classList.add('spinning');
   btn.textContent = '↻ Loading…';
 
-  // Set number cells back to loading state
   ['stat-users','stat-tasks','stat-convs'].forEach(id => {
     const el = document.getElementById(id);
     el.textContent = '—';
@@ -741,18 +739,16 @@ async function loadStats() {
       sb.from('conversations').select('status')
     ]);
 
-    // Top cards
     animateNumber('stat-users', userCount ?? 0);
     animateNumber('stat-tasks', taskCount ?? 0);
     animateNumber('stat-convs', convCount ?? 0);
 
-    // Task status breakdown
     const tCounts = { open: 0, claimed: 0, completed: 0, cancelled: 0 };
     (taskStatuses || []).forEach(t => {
       const s = t.status?.toLowerCase();
       if (s in tCounts) tCounts[s]++;
     });
-    const tTotal = Object.values(tCounts).reduce((a, b) => a + b, 1); // avoid div/0
+    const tTotal = Math.max(1, Object.values(tCounts).reduce((a, b) => a + b, 0));
     Object.entries(tCounts).forEach(([status, count]) => {
       document.getElementById(`cnt-${status}`).textContent = count;
       setTimeout(() => {
@@ -760,13 +756,12 @@ async function loadStats() {
       }, 200);
     });
 
-    // Conversation status breakdown
     const cCounts = { active: 0, archived: 0 };
     (convStatuses || []).forEach(c => {
       const s = c.status?.toLowerCase();
       if (s in cCounts) cCounts[s]++;
     });
-    const cTotal = Object.values(cCounts).reduce((a, b) => a + b, 1);
+    const cTotal = Math.max(1, Object.values(cCounts).reduce((a, b) => a + b, 0));
     Object.entries(cCounts).forEach(([status, count]) => {
       document.getElementById(`cnt-conv-${status}`).textContent = count;
       setTimeout(() => {
@@ -774,7 +769,6 @@ async function loadStats() {
       }, 200);
     });
 
-    // Timestamp
     const now = new Date();
     document.getElementById('last-updated').textContent = 'Last updated: ' + now.toLocaleTimeString();
     document.getElementById('dash-timestamp').textContent =
@@ -800,33 +794,14 @@ function animateNumber(id, target) {
   }, 20);
 }
 
-// ── INIT ──
-async function init() {
-  show('screen-loading');
-
-  const { data: { session } } = await sb.auth.getSession();
-
-  if (!session) {
-    show('screen-auth');
-    return;
-  }
-
-  const user = session.user;
-  const isAdmin = await checkAdmin(user);
-
-  if (!isAdmin) {
-    document.getElementById('denied-email-display').textContent = user.email;
-    show('screen-denied');
-    return;
-  }
-
-  populateUser(user);
-  show('screen-dashboard');
-  loadStats();
-}
+// ── SINGLE AUTH HANDLER — covers both INITIAL_SESSION and SIGNED_IN ──
+// Supabase v2 fires INITIAL_SESSION on page load if a session already exists,
+// and SIGNED_IN after an OAuth redirect. Handling both here replaces the old
+// init() + onAuthStateChange split that caused the stuck spinner on reload.
+show('screen-loading');
 
 sb.auth.onAuthStateChange(async (_event, session) => {
-  if (_event === 'SIGNED_IN' && session) {
+  if (session) {
     show('screen-loading');
     const isAdmin = await checkAdmin(session.user);
     if (!isAdmin) {
@@ -837,12 +812,10 @@ sb.auth.onAuthStateChange(async (_event, session) => {
     populateUser(session.user);
     show('screen-dashboard');
     loadStats();
-  } else if (_event === 'SIGNED_OUT') {
+  } else if (_event === 'SIGNED_OUT' || _event === 'INITIAL_SESSION') {
     show('screen-auth');
   }
 });
-
-init();
 </script>
 </body>
 </html>
