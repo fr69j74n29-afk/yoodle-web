@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Yoodle · Internal Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -519,6 +520,65 @@ body::before {
 }
 .btn-refresh:hover { background: rgba(155,89,212,.15); border-color: var(--purple); }
 .btn-refresh.spinning { opacity: .5; pointer-events: none; }
+/* GROWTH CHART */
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 28px 20px;
+  margin-bottom: 32px;
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.chart-card-header h3 {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.chart-card-header p {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: .5px;
+}
+
+.chart-total {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.chart-total-num {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--purple);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.chart-total-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 160px;
+}
 </style>
 </head>
 <body>
@@ -652,6 +712,23 @@ body::before {
 
     </div>
 
+    <!-- NEW ACCOUNTS CHART -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <h3>New Accounts — Last 14 Days</h3>
+          <p>SIGNUPS PER DAY · profiles.created_at</p>
+        </div>
+        <div class="chart-total">
+          <div class="chart-total-num" id="chart-total">—</div>
+          <div class="chart-total-label">Total New</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="growth-chart"></canvas>
+      </div>
+    </div>
+
     <div class="dash-footer">
       <div class="last-updated" id="last-updated">—</div>
       <button class="btn-refresh" id="refresh-btn" onclick="loadStats()">↻ Refresh</button>
@@ -730,13 +807,18 @@ async function loadStats() {
       { count: taskCount },
       { count: convCount },
       { data: taskStatuses },
-      { data: convStatuses }
+      { data: convStatuses },
+      { data: recentProfiles }
     ] = await Promise.all([
       sb.from('profiles').select('*', { count: 'exact', head: true }),
       sb.from('tasks').select('*', { count: 'exact', head: true }),
       sb.from('conversations').select('*', { count: 'exact', head: true }),
       sb.from('tasks').select('status'),
-      sb.from('conversations').select('status')
+      sb.from('conversations').select('status'),
+      sb.from('profiles')
+        .select('created_at')
+        .gte('created_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: true })
     ]);
 
     animateNumber('stat-users', userCount ?? 0);
@@ -774,6 +856,9 @@ async function loadStats() {
     document.getElementById('dash-timestamp').textContent =
       now.toLocaleDateString('en-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
+    // Growth chart
+    renderGrowthChart(recentProfiles || []);
+
   } catch (err) {
     console.error('Stats error:', err);
   }
@@ -792,6 +877,115 @@ function animateNumber(id, target) {
     el.textContent = current.toLocaleString();
     if (current >= target) clearInterval(interval);
   }, 20);
+}
+
+let growthChartInstance = null;
+
+function renderGrowthChart(profiles) {
+  // Build a map of date string → count for last 14 days
+  const days = [];
+  const counts = [];
+  const today = new Date();
+
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10); // "YYYY-MM-DD"
+    days.push(key);
+    counts.push(0);
+  }
+
+  profiles.forEach(p => {
+    const key = p.created_at.slice(0, 10);
+    const idx = days.indexOf(key);
+    if (idx !== -1) counts[idx]++;
+  });
+
+  const total = counts.reduce((a, b) => a + b, 0);
+  document.getElementById('chart-total').textContent = total;
+
+  // Short labels: "May 28" style
+  const labels = days.map(d => {
+    const dt = new Date(d + 'T12:00:00');
+    return dt.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+  });
+
+  const ctx = document.getElementById('growth-chart').getContext('2d');
+
+  // Destroy previous instance on refresh to avoid canvas reuse warning
+  if (growthChartInstance) {
+    growthChartInstance.destroy();
+    growthChartInstance = null;
+  }
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, 160);
+  gradient.addColorStop(0,   'rgba(155, 89, 212, 0.35)');
+  gradient.addColorStop(1,   'rgba(155, 89, 212, 0.0)');
+
+  growthChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: counts,
+        backgroundColor: counts.map((_, i) =>
+          i === counts.length - 1 ? '#A3E635' : 'rgba(155, 89, 212, 0.55)'
+        ),
+        borderColor: counts.map((_, i) =>
+          i === counts.length - 1 ? '#A3E635' : '#9B59D4'
+        ),
+        borderWidth: 0,
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 600, easing: 'easeOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1C1C21',
+          borderColor: '#2A2A32',
+          borderWidth: 1,
+          titleColor: '#A3E635',
+          bodyColor: '#F0F0F5',
+          titleFont: { family: 'Space Mono', size: 10 },
+          bodyFont: { family: 'Space Mono', size: 12, weight: '700' },
+          padding: 10,
+          callbacks: {
+            title: items => items[0].label,
+            label: item => ` ${item.raw} new account${item.raw !== 1 ? 's' : ''}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: {
+            color: '#666680',
+            font: { family: 'Space Mono', size: 9 },
+            maxRotation: 0,
+            // Show only every other label to avoid crowding
+            callback: (val, i) => i % 2 === 0 ? labels[i] : ''
+          }
+        },
+        y: {
+          grid: { color: 'rgba(42,42,50,0.8)', drawBorder: false },
+          border: { display: false, dash: [4, 4] },
+          ticks: {
+            color: '#666680',
+            font: { family: 'Space Mono', size: 9 },
+            stepSize: 1,
+            precision: 0
+          },
+          beginAtZero: true
+        }
+      }
+    }
+  });
 }
 
 // ── SINGLE AUTH HANDLER — covers both INITIAL_SESSION and SIGNED_IN ──
