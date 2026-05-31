@@ -1205,7 +1205,7 @@ async function loadJobs() {
 
   // fetch helpers for map (separate, no radius restriction)
   const{data:helpers}=await sb.from('profiles')
-    .select('id,name,rating,last_lat,last_lng,avatar_color')
+    .select('id,name,rating,last_lat,last_lng,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type')
     .eq('visible_on_map', true)
     .neq('id', pid||'00000000-0000-0000-0000-000000000000');
   allHelpers=helpers||[];
@@ -1274,13 +1274,22 @@ function renderSheetContent(){
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">${sheetHelpers.map(h=>{
       const name=h.name||'Helper';
       const rating=h.rating?`⭐ ${h.rating}`:'New';
-      return `<div onclick="openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer">
-        ${avatarCircle(name,h.avatar_color,'44px','18px')}
-        <div style="min-width:0">
-          <div style="font-size:15px;font-weight:900">${esc(name)}</div>
-          <div style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</div>
+      const cats=(h.helper_categories||[]).slice(0,4).map(c=>`<span style="font-size:10px;font-weight:800;color:var(--purple);background:rgba(155,89,212,.12);border:1px solid rgba(155,89,212,.25);border-radius:100px;padding:2px 8px;white-space:nowrap">${c}</span>`).join('');
+      const rateLabel=h.helper_rate_type==='free'||!h.helper_rate?'🤝 Free':
+        `💰 $${h.helper_rate}${h.helper_rate_type==='hourly'?'/hr':h.helper_rate_type==='daily'?'/day':' flat'}`;
+      return `<div onclick="openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:12px">
+          ${avatarCircle(name,h.avatar_color,'44px','18px')}
+          <div style="min-width:0;flex:1">
+            <div style="font-size:15px;font-weight:900">${esc(name)}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</span>
+              <span style="font-size:12px;color:var(--lime);font-weight:800">${rateLabel}</span>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);font-weight:800;flex-shrink:0">View ›</div>
         </div>
-        <div style="margin-left:auto;font-size:12px;color:var(--lime);font-weight:800">Available ›</div>
+        ${cats?`<div style="display:flex;flex-wrap:wrap;gap:4px">${cats}</div>`:''}
       </div>`;
     }).join('')}</div>`;
   }
@@ -1319,7 +1328,7 @@ async function openOtherProfile(userId){
   modal.classList.add('open');
 
   const [profRes,posterRatingRes,helperRatingRes,posterStatsRes,helperStatsRes]=await Promise.all([
-    sb.from('profiles').select('id,name,bio,rating,task_count,avatar_color').eq('id',userId).maybeSingle(),
+    sb.from('profiles').select('id,name,bio,rating,task_count,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,visible_on_map').eq('id',userId).maybeSingle(),
     sb.rpc('get_poster_rating',{user_id:userId}),
     sb.rpc('get_helper_rating',{user_id:userId}),
     sb.from('tasks').select('id,status').eq('poster_id',userId),
@@ -1372,7 +1381,19 @@ async function openOtherProfile(userId){
     <div class="op-bio">
       <div class="op-bio-lbl">About</div>
       ${prof.bio?`<div class="op-bio-text">${esc(prof.bio)}</div>`:`<div class="op-bio-empty">No bio yet.</div>`}
-    </div>`;
+    </div>
+    ${prof.visible_on_map?(()=>{
+      const cats=(prof.helper_categories||[]);
+      const rateLabel=prof.helper_rate_type==='free'||!prof.helper_rate
+        ?'🤝 Willing to help free of charge'
+        :`💰 $${prof.helper_rate}${prof.helper_rate_type==='hourly'?' / hour':prof.helper_rate_type==='daily'?' / day':' flat rate'}`;
+      return `<div class="op-bio" style="margin-top:12px;border-top:1px solid var(--border);padding-top:16px">
+        <div class="op-bio-lbl" style="color:var(--lime)">💪 Available as Helper</div>
+        ${cats.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${cats.map(c=>`<span style="font-size:11px;font-weight:800;color:var(--purple);background:rgba(155,89,212,.12);border:1px solid rgba(155,89,212,.25);border-radius:100px;padding:3px 10px">${c}</span>`).join('')}</div>`:''}
+        ${prof.helper_bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(prof.helper_bio)}</div>`:''}
+        <div style="font-size:13px;font-weight:800;color:var(--lime)">${rateLabel}</div>
+      </div>`;
+    })():''}`;
 }
 
 function nav(view) {
