@@ -1009,6 +1009,7 @@ function locateUser() {
         locationSource='gps';
         if(btn){btn.classList.remove('locating');btn.classList.add('located');}
         updateGpsDot();
+        map.invalidateSize(); // iOS: ensure tiles fill the map before flyTo
         map.flyTo([newLat,newLng],map.getZoom()); // moveend handles userLat/userLng + loadJobs
       } else {
         _resolved=true;
@@ -1370,6 +1371,13 @@ function showAuthScreen(){document.getElementById('view-auth').style.display='fl
 async function showApp(){
   document.getElementById('view-auth').style.display='none';
   const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
+  // Force Leaflet to recalculate map size now that the container is visible
+  // iOS Safari needs longer — layout settles later than Android/desktop
+  if(map){
+    setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},100);
+    setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},500);
+    setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},1200);
+  }
   setAvatar();
   if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
   loadJobs();
