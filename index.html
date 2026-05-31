@@ -1204,7 +1204,7 @@ function renderMapPins(){
   helperMarkers.forEach(m=>map.removeLayer(m));helperMarkers=[];
 
   // ── JOB BUBBLES (tasks with show_on_map=true) ──
-  const publicJobs=(allJobs||[]).filter(j=>j.show_on_map&&j.lat&&j.lng&&j.status==='open');
+  const publicJobs=(allJobs||[]).filter(j=>j.show_on_map&&j.lat&&j.lng&&j.status==='open'&&j.poster_id!==FEATURED_POSTER_ID);
   publicJobs.forEach(job=>{
     const color=CAT_COLOR[job.category]||'#9B59D4';
     const emoji=CAT_EMOJI[job.category]||'✨';
