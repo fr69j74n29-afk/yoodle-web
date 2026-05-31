@@ -884,7 +884,6 @@ function initMap() {
     map.invalidateSize();
     updateZoomLimits();
     updateCircleOverlay();
-    if(!_saved)applyFallbackLocation(); // first-ever visit only
   },200);
 }
 
@@ -973,24 +972,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 
-let locationSource='preset'; // 'gps' | 'ip' | 'preset'
+let locationSource='preset'; // 'gps' | 'preset'
 
-async function applyFallbackLocation(){
-  // Only called on first-ever visit (no localStorage entry)
-  try{
-    const r=await fetch('https://ipinfo.io/json');
-    const d=await r.json();
-    if(d.loc){
-      const[lat,lng]=d.loc.split(',').map(Number);
-      if(!isNaN(lat)&&!isNaN(lng)){
-        locationSource='ip';
-        map.flyTo([lat,lng],13); // moveend updates userLat/userLng + saves localStorage
-        return;
-      }
-    }
-  }catch(e){}
-  locationSource='preset'; // map already at Toronto from initMap default
-}
+// No IP lookup — first visit defaults to downtown Toronto (instant).
+// GPS updates locationSource to 'gps' when user taps locate.
 
 let _geoWatchId=null;
 
