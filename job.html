@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<!-- yoodle v001 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Yoodle — Local Job</title>
+<meta name="description" content="Someone near you needs help. See the job and apply on Yoodle — free, no fees, just your neighbourhood.">
+<meta property="og:site_name" content="Yoodle">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://yoodle.ca/og-image.png">
+<link rel="icon" href="https://yoodle.ca/favicon.ico">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0e0e0e;--surface:#1a1a1a;--surface2:#222;--border:#2a2a2a;
+    --text:#f0f0f0;--muted:#888;
+    --purple:#9B59D4;--lime:#A3E635;--pink:#EC4899;
+    --teal:#06B6D4;--orange:#F97316;--yellow:#FCD34D;
+    --radius:18px;
+  }
+  body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100dvh;display:flex;flex-direction:column;}
+  a{color:inherit;text-decoration:none;}
+
+  /* ── WORDMARK ── */
+  .wordmark{font-family:'Fredoka One',cursive;line-height:1;font-size:28px;}
+  .ly{color:var(--purple)}.lo1{color:var(--lime)}.lo2{color:var(--pink)}
+  .ld{color:var(--teal)}.ll{color:var(--orange)}.le{color:var(--yellow)}
+
+  /* ── HEADER ── */
+  .top-bar{
+    padding:14px 20px;display:flex;align-items:center;justify-content:space-between;
+    background:var(--bg);border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:100;
+  }
+  .open-app-btn{
+    background:linear-gradient(135deg,var(--purple),var(--pink));
+    color:#fff;border:none;border-radius:100px;
+    padding:8px 18px;font-size:13px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .container{max-width:520px;margin:0 auto;width:100%;padding:24px 20px;flex:1;}
+
+  /* ── LOADING / ERROR ── */
+  .state-box{text-align:center;padding:60px 20px;}
+  .state-box .icon{font-size:48px;margin-bottom:16px;}
+  .state-box h2{font-size:20px;font-weight:900;margin-bottom:8px;}
+  .state-box p{color:var(--muted);font-size:14px;line-height:1.5;}
+  .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ── JOB CARD ── */
+  .job-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px;}
+  .job-card-accent{height:4px;background:linear-gradient(90deg,var(--purple),var(--teal));}
+  .job-card-body{padding:22px 22px 18px;}
+  .job-category{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+  .job-title{font-size:24px;font-weight:900;line-height:1.2;margin-bottom:14px;}
+  .job-meta-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+  .job-badge{display:inline-flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:5px 12px;font-size:12px;font-weight:800;}
+  .job-badge.price{color:var(--lime);}
+  .job-desc{font-size:15px;line-height:1.65;color:rgba(240,240,240,.85);margin-bottom:20px;}
+  .job-poster{display:flex;align-items:center;gap:10px;padding-top:16px;border-top:1px solid var(--border);}
+  .poster-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0;}
+  .poster-info{display:flex;flex-direction:column;gap:2px;}
+  .poster-name{font-size:13px;font-weight:800;}
+  .poster-rating{font-size:11px;color:var(--muted);}
+
+  /* ── CTA SECTION ── */
+  .cta-section{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:20px;text-align:center;}
+  .cta-section h3{font-size:18px;font-weight:900;margin-bottom:6px;}
+  .cta-section p{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:18px;}
+  .cta-btn{display:block;width:100%;padding:15px;border-radius:100px;font-size:16px;font-weight:900;font-family:'Nunito',sans-serif;cursor:pointer;border:none;margin-bottom:10px;transition:opacity .15s;}
+  .cta-btn:active{opacity:.8;}
+  .cta-btn.primary{background:linear-gradient(135deg,var(--purple),var(--teal));color:#fff;}
+  .cta-btn.secondary{background:var(--surface2);color:var(--text);border:1.5px solid var(--border);}
+
+  /* ── TRUST PILLS ── */
+  .trust-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:24px;}
+  .trust-pill{font-size:11px;font-weight:800;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:4px 10px;}
+
+  /* ── HOW IT WORKS TEASER ── */
+  .hiw-teaser{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;}
+  .hiw-teaser h4{font-size:13px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px;}
+  .hiw-steps{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+  .hiw-step{display:flex;align-items:flex-start;gap:12px;font-size:13px;line-height:1.4;}
+  .hiw-num{width:22px;height:22px;border-radius:50%;background:var(--purple);color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  .hiw-link{display:block;text-align:center;font-size:13px;font-weight:800;color:var(--purple);padding-top:4px;}
+
+  /* ── FOOTER ── */
+  .footer{padding:20px;text-align:center;font-size:12px;color:var(--muted);border-top:1px solid var(--border);}
+  .footer a{color:var(--muted);margin:0 8px;}
+
+  /* ── NO-JOB (direct visit) ── */
+  .home-hero{text-align:center;padding:40px 0 32px;}
+  .home-hero .wordmark-lg{font-family:'Fredoka One',cursive;font-size:52px;display:block;margin-bottom:10px;}
+  .home-hero p{font-size:16px;color:var(--muted);line-height:1.6;max-width:320px;margin:0 auto 28px;}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="https://yoodle.ca">
+    <div class="wordmark"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
+  </a>
+  <button class="open-app-btn" onclick="goToApp()">Open App</button>
+</div>
+
+<div class="container" id="main-content">
+  <!-- Loading state -->
+  <div class="state-box" id="state-loading">
+    <div class="spinner"></div>
+    <p>Loading job details…</p>
+  </div>
+  <!-- Error state -->
+  <div class="state-box" id="state-error" style="display:none">
+    <div class="icon">😕</div>
+    <h2>Job not found</h2>
+    <p>This job may have been filled or removed.<br>There are plenty more near you.</p>
+    <br>
+    <button class="cta-btn primary" style="max-width:280px;margin:0 auto" onclick="goToApp()">Browse Jobs Near Me</button>
+  </div>
+  <!-- Job detail -->
+  <div id="state-job" style="display:none">
+    <div class="job-card">
+      <div class="job-card-accent"></div>
+      <div class="job-card-body">
+        <div class="job-category" id="j-category"></div>
+        <div class="job-title" id="j-title"></div>
+        <div class="job-meta-row">
+          <span class="job-badge price" id="j-price"></span>
+          <span class="job-badge" id="j-area"></span>
+          <span class="job-badge" id="j-posted"></span>
+        </div>
+        <div class="job-desc" id="j-desc"></div>
+        <div class="job-poster">
+          <div class="poster-av" id="j-av"></div>
+          <div class="poster-info">
+            <span class="poster-name" id="j-poster-name"></span>
+            <span class="poster-rating" id="j-poster-rating"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-section">
+      <h3>Interested in this job?</h3>
+      <p>Join Yoodle free — no fees, no passwords,<br>just you and your neighbours.</p>
+      <button class="cta-btn primary" id="j-apply-btn" onclick="goToApp()">Sign Up &amp; Apply — It's Free</button>
+      <button class="cta-btn secondary" onclick="goToApp()">I Already Have an Account</button>
+    </div>
+
+    <div class="trust-row">
+      <span class="trust-pill">🆓 Always free</span>
+      <span class="trust-pill">📍 Hyperlocal</span>
+      <span class="trust-pill">⭐ Community rated</span>
+      <span class="trust-pill">💬 Direct contact</span>
+    </div>
+
+    <div class="hiw-teaser">
+      <h4>How Yoodle works</h4>
+      <div class="hiw-steps">
+        <div class="hiw-step"><div class="hiw-num">1</div><span>Sign up free — no password needed, just Google or Apple</span></div>
+        <div class="hiw-step"><div class="hiw-num">2</div><span>Tap Apply on this job — your profile goes to the poster instantly</span></div>
+        <div class="hiw-step"><div class="hiw-num">3</div><span>Chat, show up, get paid — cash or e-transfer, no platform fees</span></div>
+      </div>
+      <a class="hiw-link" href="https://yoodle.ca/how-it-works">Learn more about Yoodle →</a>
+    </div>
+  </div>
+
+  <!-- No job ID — direct visit -->
+  <div id="state-home" style="display:none">
+    <div class="home-hero">
+      <div class="wordmark-lg wordmark"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
+      <p>Find local help or earn money doing odd jobs in your neighbourhood. Free, always.</p>
+      <button class="cta-btn primary" style="max-width:300px;margin:0 auto 12px" onclick="goToApp()">Browse Jobs Near Me</button>
+      <button class="cta-btn secondary" style="max-width:300px;margin:0 auto" onclick="window.location.href='https://yoodle.ca/how-it-works'">How It Works</button>
+    </div>
+    <div class="trust-row">
+      <span class="trust-pill">🆓 Always free</span>
+      <span class="trust-pill">📍 Hyperlocal</span>
+      <span class="trust-pill">⭐ Community rated</span>
+      <span class="trust-pill">💬 Direct contact</span>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <a href="https://yoodle.ca">Home</a>
+  <a href="https://yoodle.ca/how-it-works">How It Works</a>
+  <a href="https://yoodle.ca/faq">FAQ</a>
+  <a href="https://yoodle.ca/privacy">Privacy</a>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const CAT_EMOJI = {cleaning:'🧹',gardening:'🌿',moving:'📦',tech:'💻',pets:'🐾',cooking:'🍳',errands:'🛒',repairs:'🔧',tutoring:'📚',other:'✨'};
+const AVATAR_COLORS = ['#9B59D4','#06B6D4','#EC4899','#A3E635','#FCD34D','#F97316'];
+
+function goToApp(){
+  const taskId=new URLSearchParams(window.location.search).get('job');
+  const base='https://yoodle.ca/';
+  window.location.href=taskId?`${base}?task_id=${taskId}`:base;
+}
+
+function show(id){
+  ['state-loading','state-error','state-job','state-home']
+    .forEach(s=>document.getElementById(s).style.display=s===id?'block':'none');
+}
+
+function timeAgo(ts){
+  const s=Math.floor((Date.now()-new Date(ts))/1000);
+  if(s<60)return'just now';
+  if(s<3600)return`${Math.floor(s/60)}m ago`;
+  if(s<86400)return`${Math.floor(s/3600)}h ago`;
+  return`${Math.floor(s/86400)}d ago`;
+}
+
+function avatarBg(name,color){
+  return color||(AVATAR_COLORS[name?.charCodeAt(0)%AVATAR_COLORS.length]||'#9B59D4');
+}
+
+function formatPrice(price,url){
+  if(url)return'🔗 See listing';
+  if(price==null)return'💬 Call for price';
+  return`💰 $${price}`;
+}
+
+async function areaLabel(lat,lng){
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10`,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
+    const d=await r.json();
+    return d.address?.city||d.address?.town||d.address?.suburb||'Nearby';
+  }catch{return'Nearby';}
+}
+
+async function loadJob(taskId){
+  const{data:job,error}=await sb.from('tasks')
+    .select('id,title,description,price,category,lat,lng,created_at,poster_id,url,status')
+    .eq('id',taskId)
+    .maybeSingle();
+
+  if(error||!job||job.status==='cancelled'){show('state-error');return;}
+
+  const{data:poster}=await sb.from('profiles')
+    .select('name,rating,avatar_color,task_count')
+    .eq('id',job.poster_id)
+    .maybeSingle();
+
+  document.title=`${job.title} — Yoodle`;
+  document.querySelector('meta[name="description"]')
+    ?.setAttribute('content',`${job.description?.slice(0,120)||'Local job near you'}. Apply free on Yoodle.`);
+
+  const emoji=CAT_EMOJI[job.category]||'✨';
+  document.getElementById('j-category').textContent=`${emoji} ${job.category||'General'}`;
+  document.getElementById('j-title').textContent=job.title;
+  document.getElementById('j-price').textContent=formatPrice(job.price,job.url);
+  document.getElementById('j-posted').textContent=timeAgo(job.created_at);
+  document.getElementById('j-desc').textContent=
+    job.url?'Visit the listing link for full details.':(job.description||'No description provided.');
+
+  if(job.lat&&job.lng){
+    document.getElementById('j-area').textContent='📍 …';
+    areaLabel(job.lat,job.lng).then(area=>{
+      document.getElementById('j-area').textContent=`📍 ${area}`;
+    });
+  } else {
+    document.getElementById('j-area').style.display='none';
+  }
+
+  const name=poster?.name||'A neighbour';
+  const color=avatarBg(name,poster?.avatar_color);
+  document.getElementById('j-av').textContent=name.charAt(0).toUpperCase();
+  document.getElementById('j-av').style.background=color;
+  document.getElementById('j-poster-name').textContent=name;
+  document.getElementById('j-poster-rating').textContent=
+    poster?.rating?`⭐ ${poster.rating} · ${poster.task_count||0} jobs`:'New to Yoodle';
+
+  if(job.url){
+    const btn=document.getElementById('j-apply-btn');
+    btn.textContent='View Full Listing';
+    btn.onclick=()=>window.open(job.url,'_blank','noopener,noreferrer');
+  }
+
+  show('state-job');
+}
+
+const taskId=new URLSearchParams(window.location.search).get('job');
+if(taskId){loadJob(taskId);}else{show('state-home');}
+</script>
+</body>
+</html>
