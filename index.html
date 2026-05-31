@@ -1126,8 +1126,8 @@ function locateUser() {
 }
 
 function showDbError() {
-  document.getElementById('list-grid').innerHTML =
-    emptyState('🔌', 'Database not connected', 'Check Supabase configuration');
+  const ltc=document.getElementById('list-tab-content');
+  if(ltc)ltc.innerHTML=emptyState('🔌', 'Database not connected', 'Check Supabase configuration');
 }
 
 function showGeoFallback() {
@@ -1248,14 +1248,14 @@ function setListRadius(el,km){
 
 async function loadJobs() {
   if (!sb) {
-    document.getElementById('list-grid').innerHTML =
-      emptyState('🔌', 'No database connection', 'Check Supabase config');
+    const ltc=document.getElementById('list-tab-content');
+    if(ltc)ltc.innerHTML=emptyState('🔌', 'No database connection', 'Check Supabase config');
     return;
   }
 
   const pid=myProfileId||me?.id;
-  const g=document.getElementById('list-grid');
-  g.innerHTML=spin();
+  const ltc=document.getElementById('list-tab-content');
+  if(ltc)ltc.innerHTML=spin();
 
   // Show loading state in corner card
   const _countsEl=document.getElementById('map-counts');
@@ -1274,8 +1274,9 @@ async function loadJobs() {
 
   // if no user location, show prompt
   if(!userLat||!userLng){
-    g.innerHTML=emptyState('📍','Share your location','Tap the locate button on the map to see nearby jobs');
-    document.getElementById('list-sub').textContent='Enable location to browse jobs';
+    if(ltc)ltc.innerHTML=emptyState('📍','Share your location','Tap the locate button on the map to see nearby jobs');
+    const lbl=document.getElementById('list-sub');
+    if(lbl)lbl.textContent='Enable location to browse jobs';
     return;
   }
 
@@ -1288,7 +1289,7 @@ async function loadJobs() {
   });
 
   if(error){
-    g.innerHTML=emptyState('😕','Error loading jobs',error.message);
+    if(ltc)ltc.innerHTML=emptyState('😕','Error loading jobs',error.message);
     return;
   }
 
@@ -1299,7 +1300,7 @@ async function loadJobs() {
     const{data:apps}=await sb.from('applications').select('task_id').eq('applicant_id',myProfileId||me.id).eq('status','pending').in('task_id',taskIds);
     myAppliedTaskIds=new Set((apps||[]).map(a=>a.task_id));
   }
-  renderListGrid(allJobs.filter(j=>(j.distance_km||haversineKm(userLat,userLng,j.lat,j.lng))<=listRadiusKm));
+  renderListTabContent();
   renderMapPins();
 }
 
