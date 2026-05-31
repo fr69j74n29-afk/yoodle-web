@@ -465,24 +465,17 @@ body{
           <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="currentColor"/>
         </svg>
       </button>
-      <!-- Corner count card — bottom left -->
-      <div id="map-counts" style="position:absolute;bottom:24px;left:16px;z-index:10;pointer-events:all;display:none">
-        <button onclick="openRadiusSheet()" style="background:rgba(22,22,22,.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:16px;padding:10px 14px;cursor:pointer;display:flex;flex-direction:column;gap:7px;min-width:148px;box-shadow:0 4px 16px rgba(0,0,0,.45)">
-          <div style="font-size:9px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px" id="map-radius-corner">WITHIN — KM</div>
-          <div id="map-counts-loading" style="display:none;font-size:11px;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:6px">
-            <div class="spinner" style="width:12px;height:12px;border-width:2px"></div> Loading…
+      <!-- Count text floating inside circle - no background -->
+      <div id="map-counts" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;pointer-events:all;display:none;flex-direction:column;align-items:center;gap:0">
+        <button onclick="openRadiusSheet()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 12px">
+          <div style="text-align:center">
+            <div style="font-size:26px;font-weight:900;color:#fff;line-height:1;text-shadow:0 1px 8px rgba(0,0,0,.8)" id="map-jobs-count">0</div>
+            <div style="font-size:10px;font-weight:900;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.8px;text-shadow:0 1px 4px rgba(0,0,0,.8)">Jobs</div>
           </div>
-          <div id="map-counts-data" style="display:flex;flex-direction:column;gap:6px">
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0;display:inline-block"></span>
-              <span style="font-size:15px;font-weight:900;color:var(--text)" id="map-jobs-count">0</span>
-              <span style="font-size:12px;font-weight:700;color:var(--muted)">need help</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="width:10px;height:10px;border-radius:50%;background:#22C55E;flex-shrink:0;display:inline-block"></span>
-              <span style="font-size:15px;font-weight:900;color:var(--text)" id="map-helpers-count">0</span>
-              <span style="font-size:12px;font-weight:700;color:var(--muted)">offering help</span>
-            </div>
+          <div style="width:1px;height:32px;background:rgba(255,255,255,.25)"></div>
+          <div style="text-align:center">
+            <div style="font-size:26px;font-weight:900;color:#fff;line-height:1;text-shadow:0 1px 8px rgba(0,0,0,.8)" id="map-helpers-count">0</div>
+            <div style="font-size:10px;font-weight:900;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.8px;text-shadow:0 1px 4px rgba(0,0,0,.8)">Help</div>
           </div>
         </button>
       </div>
@@ -857,6 +850,11 @@ function initMap() {
   _ring.style.cssText='position:absolute;pointer-events:none;z-index:451;border-radius:50%;border:4px dashed rgba(155,89,212,0.85);box-sizing:border-box;';
   document.getElementById('map').appendChild(_ring);
 
+  const _label=document.createElement('div');
+  _label.id='map-radius-label';
+  _label.style.cssText='position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;z-index:452;color:#fff;font-family:Nunito,sans-serif;font-size:13px;font-weight:900;text-shadow:0 1px 5px rgba(0,0,0,.85);white-space:nowrap;';
+  document.getElementById('map').appendChild(_label);
+
   let _moveEndTimer=null;
   map.on('move',updateCircleOverlay);
   map.on('zoomend',()=>{
@@ -911,13 +909,7 @@ function updateRadiusCounts(){
   document.getElementById('map-helpers-count').textContent=helperCount;
   document.getElementById('sheet-jobs-count').textContent=jobCount;
   document.getElementById('sheet-helpers-count').textContent=helperCount;
-  // swap loading → data in corner card
-  const loadingEl=document.getElementById('map-counts-loading');
-  const dataEl=document.getElementById('map-counts-data');
-  const countsEl=document.getElementById('map-counts');
-  if(loadingEl){loadingEl.style.display='none';}
-  if(dataEl){dataEl.style.display='flex';}
-  if(countsEl){countsEl.style.display='block';}
+  document.getElementById('map-counts').style.display='flex';
 }
 let sb, me, myProfileId, activeJob, mapCatFilter='all', listCatFilter='all', myTab='posted';
 let ratingTaskId=null, ratingRatedId=null, selectedRating=0;
@@ -1115,9 +1107,13 @@ function updateCircleOverlay() {
   ring.style.top='50%';
   ring.style.marginLeft=(-r)+'px';
   ring.style.marginTop=(-r)+'px';
-  // Update corner card radius label
-  const corner=document.getElementById('map-radius-corner');
-  if(corner)corner.textContent=`WITHIN ${RADIUS_KM} KM`;
+  // Label: "Postings within Xkm" — sits just above the circle top edge
+  const lbl=document.getElementById('map-radius-label');
+  if(lbl){
+    const mapH=document.getElementById('map').clientHeight;
+    lbl.style.top=(mapH/2-r-26)+'px';
+    lbl.textContent=`Postings within ${RADIUS_KM}km`;
+  }
 }
 
 // Max ~80m fuzzy offset — enough for privacy, not enough to jump streets
@@ -1162,14 +1158,6 @@ async function loadJobs() {
   const pid=myProfileId||me?.id;
   const g=document.getElementById('list-grid');
   g.innerHTML=spin();
-
-  // Show loading state in corner card
-  const countsEl=document.getElementById('map-counts');
-  const loadingEl=document.getElementById('map-counts-loading');
-  const dataEl=document.getElementById('map-counts-data');
-  if(countsEl){countsEl.style.display='block';}
-  if(loadingEl){loadingEl.style.display='flex';}
-  if(dataEl){dataEl.style.display='none';}
 
   // fetch helpers for map (separate, no radius restriction)
   const{data:helpers}=await sb.from('profiles')
