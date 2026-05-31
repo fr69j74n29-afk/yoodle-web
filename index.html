@@ -533,6 +533,21 @@ body{
         </div>
         <div class="loc-status" id="loc-status">Type an address and select from suggestions, or tap GPS</div>
       </div>
+
+      <!-- MAP PIN VISIBILITY -->
+      <div class="form-g">
+        <label class="form-lbl">📍 Map pin visibility</label>
+        <div style="display:flex;gap:8px">
+          <button id="p-vis-public" onclick="setPostVisibility(true)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--lime);background:rgba(163,230,53,.12);color:var(--lime);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">
+            📌 Show pin on map
+          </button>
+          <button id="p-vis-private" onclick="setPostVisibility(false)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">
+            🔒 List only
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">Pin on map shows your approximate location. List only keeps your address private.</div>
+      </div>
+
       <button class="btn-primary" id="post-btn" onclick="postJob()">Post Job 🚀</button>
     </div>
   </div>
@@ -668,6 +683,20 @@ body{
       <!-- EXPIRY NOTICE -->
       <div style="background:rgba(155,89,212,.08);border:1.5px solid rgba(155,89,212,.25);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:20px;font-size:12px;color:#aaa;font-weight:700;line-height:1.6">
         🕐 Helper listings are active for <strong style="color:var(--purple)">30 days</strong>. After that your profile is automatically hidden — just toggle back on to renew.
+      </div>
+
+      <!-- MAP PIN VISIBILITY -->
+      <div class="form-g">
+        <label class="form-lbl">📍 Map pin visibility</label>
+        <div style="display:flex;gap:8px">
+          <button id="hp-vis-public" onclick="setHelperVisibility(true)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--lime);background:rgba(163,230,53,.12);color:var(--lime);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">
+            📌 Show pin on map
+          </button>
+          <button id="hp-vis-private" onclick="setHelperVisibility(false)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">
+            🔒 List only
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">Pin on map shows your approximate location. List only keeps your address private.</div>
       </div>
 
       <!-- ACTION BUTTONS -->
@@ -1167,22 +1196,43 @@ function updateCircleOverlay() {
 // Max ~80m fuzzy offset — enough for privacy, not enough to jump streets
 function fuzzyCoords(lat,lng){return[lat+(Math.random()-.5)*.0014,lng+(Math.random()-.5)*.0018];}
 
-function renderMapPins(jobs) {
-  jobMarkers.forEach(m=>map.removeLayer(m));
-  jobMarkers=[];
-  const visible=jobs.filter(j=>(mapCatFilter==='all'||j.category===mapCatFilter)&&j.lat&&j.lng);
-  const filtered=visible;
-  filtered.forEach(job=>{
+let helperMarkers=[];
+
+function renderMapPins(){
+  // clear existing
+  jobMarkers.forEach(m=>map.removeLayer(m));jobMarkers=[];
+  helperMarkers.forEach(m=>map.removeLayer(m));helperMarkers=[];
+
+  // ── JOB BUBBLES (tasks with show_on_map=true) ──
+  const publicJobs=(allJobs||[]).filter(j=>j.show_on_map&&j.lat&&j.lng&&j.status==='open');
+  publicJobs.forEach(job=>{
     const color=CAT_COLOR[job.category]||'#9B59D4';
     const emoji=CAT_EMOJI[job.category]||'✨';
-    const[fLat,fLng]=job._fuzzy||fuzzyCoords(job.lat,job.lng);
-    job._fuzzy=[fLat,fLng];
-    const icon=L.divIcon({className:'yoodle-pin',html:`<div class="pin-dot" style="background:${color};border-color:rgba(10,10,10,.5)">${emoji}</div>`,iconSize:[36,36],iconAnchor:[18,18]});
+    const[fLat,fLng]=job._fuzzy||(job._fuzzy=fuzzyCoords(job.lat,job.lng));
+    const icon=L.divIcon({
+      className:'',
+      html:`<div style="width:38px;height:38px;border-radius:50%;background:${color};border:3px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:pointer">${emoji}</div>`,
+      iconSize:[38,38],iconAnchor:[19,19]
+    });
     const marker=L.marker([fLat,fLng],{icon}).addTo(map).on('click',()=>openJob(job));
     jobMarkers.push(marker);
   });
-  const pill=document.getElementById('job-count-pill');
-  pill.textContent=filtered.length===0?'No tasks open in this area yet':`${filtered.length} task${filtered.length===1?'':'s'} open`;
+
+  // ── HELPER PINS (profiles with visible_on_map=true AND show_on_map=true) ──
+  const publicHelpers=(allHelpers||[]).filter(h=>h.show_on_map&&h.last_lat&&h.last_lng);
+  publicHelpers.forEach(h=>{
+    const name=h.name||'Helper';
+    const initial=name.charAt(0).toUpperCase();
+    const color=h.avatar_color||'#9B59D4';
+    const[fLat,fLng]=h._fuzzy||(h._fuzzy=fuzzyCoords(h.last_lat,h.last_lng));
+    const icon=L.divIcon({
+      className:'',
+      html:`<div style="width:38px;height:38px;border-radius:50%;background:${color};border:3px solid var(--lime);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:pointer;font-family:'Nunito',sans-serif">${initial}</div>`,
+      iconSize:[38,38],iconAnchor:[19,19]
+    });
+    const marker=L.marker([fLat,fLng],{icon}).addTo(map).on('click',()=>openOtherProfile(h.id));
+    helperMarkers.push(marker);
+  });
 }
 
 let allHelpers=[];
@@ -1217,7 +1267,7 @@ async function loadJobs() {
 
   // fetch helpers for map (separate, no radius restriction)
   const{data:helpers}=await sb.from('profiles')
-    .select('id,name,rating,last_lat,last_lng,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type')
+    .select('id,name,rating,last_lat,last_lng,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,show_on_map')
     .eq('visible_on_map', true)
     .neq('id', pid||'00000000-0000-0000-0000-000000000000');
   allHelpers=helpers||[];
@@ -1250,6 +1300,7 @@ async function loadJobs() {
     myAppliedTaskIds=new Set((apps||[]).map(a=>a.task_id));
   }
   renderListGrid(allJobs.filter(j=>(j.distance_km||haversineKm(userLat,userLng,j.lat,j.lng))<=listRadiusKm));
+  renderMapPins();
 }
 
 
@@ -2056,6 +2107,28 @@ function selectLocSuggestion(i){
 function showLocSuggestions(){document.getElementById('loc-suggestions').classList.add('open');}
 function hideLocSuggestions(){document.getElementById('loc-suggestions').classList.remove('open');}
 
+let postShowOnMap=true;
+function setPostVisibility(val){
+  postShowOnMap=val;
+  document.getElementById('p-vis-public').style.cssText+=val
+    ?';border-color:var(--lime);background:rgba(163,230,53,.12);color:var(--lime)'
+    :';border-color:var(--border);background:var(--surface2);color:var(--muted)';
+  document.getElementById('p-vis-private').style.cssText+=!val
+    ?';border-color:var(--teal);background:rgba(6,182,212,.12);color:var(--teal)'
+    :';border-color:var(--border);background:var(--surface2);color:var(--muted)';
+}
+
+let helperShowOnMap=true;
+function setHelperVisibility(val){
+  helperShowOnMap=val;
+  document.getElementById('hp-vis-public').style.cssText+=val
+    ?';border-color:var(--lime);background:rgba(163,230,53,.12);color:var(--lime)'
+    :';border-color:var(--border);background:var(--surface2);color:var(--muted)';
+  document.getElementById('hp-vis-private').style.cssText+=!val
+    ?';border-color:var(--teal);background:rgba(6,182,212,.12);color:var(--teal)'
+    :';border-color:var(--border);background:var(--surface2);color:var(--muted)';
+}
+
 async function postJob(){
   const title=document.getElementById('p-title').value.trim();const desc=document.getElementById('p-desc').value.trim();const budget=document.getElementById('p-budget').value;const loc=document.getElementById('p-loc').value.trim();
   if(!title)return toast('Add a job title!');
@@ -2065,13 +2138,15 @@ async function postJob(){
   if(!sb||!me){toast('🚀 Job posted! (demo mode)');resetPost();nav('browse');return;}
   const btn=document.getElementById('post-btn');btn.disabled=true;btn.textContent='Posting…';
   const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
-  const{error}=await sb.from('tasks').insert({poster_id:myProfileId||me.id,title,description:desc,category:'other',price:budget?parseFloat(budget):0,address:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open',expires_at:expiresAt});
+  const{error}=await sb.from('tasks').insert({poster_id:myProfileId||me.id,title,description:desc,category:'other',price:budget?parseFloat(budget):0,address:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open',expires_at:expiresAt,show_on_map:postShowOnMap});
   btn.disabled=false;btn.textContent='Post Job 🚀';
   if(error)return toast('❌ '+error.message);
   toast('🎉 Job posted! Expires in 14 days.');resetPost();nav('browse');
 }
 
 function resetPost(){
+  postShowOnMap=true;
+  setPostVisibility(true);
   gpsLat=null;gpsLng=null;locVerified=false;
   ['p-title','p-desc','p-budget'].forEach(id=>document.getElementById(id).value='');
   const loc=document.getElementById('p-loc');loc.value='';loc.placeholder='Start typing your address…';
@@ -2667,6 +2742,7 @@ async function openHelperScreen(){
   if(prof?.helper_bio) document.getElementById('hp-bio').value=prof.helper_bio;
   if(prof?.helper_rate) document.getElementById('hp-rate').value=prof.helper_rate;
   if(prof?.helper_rate_type) setHPRateType(prof.helper_rate_type);
+  setHelperVisibility(prof?.show_on_map!==false);
 
   // restore selected categories
   hpSelectedCategories=new Set(prof?.helper_categories||[]);
@@ -2775,6 +2851,7 @@ async function saveHelperProfile(){
   const expiresAt=new Date(Date.now()+30*24*60*60*1000).toISOString();
   const{error}=await sb.from('profiles').update({
     visible_on_map:true,
+    show_on_map:helperShowOnMap,
     last_lat:hpLat,last_lng:hpLng,
     helper_address:address,
     helper_lat:hpLat,helper_lng:hpLng,
