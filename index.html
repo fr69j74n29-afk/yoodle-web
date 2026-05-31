@@ -493,20 +493,19 @@ body{
   </div>
 
   <!-- LIST VIEW -->
-  <div class="app-view" id="app-list" style="position:relative">
-    <div class="list-header" style="padding:10px 16px 8px;display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div class="list-h" style="font-size:15px" id="list-sub">Jobs open nearby</div>
-      </div>
-<div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px">
-        <button class="list-radius-btn" data-km="3" onclick="setListRadius(this,3)">3 km</button>
-        <button class="list-radius-btn" data-km="5" onclick="setListRadius(this,5)">5 km</button>
-        <button class="list-radius-btn" data-km="10" onclick="setListRadius(this,10)">10 km</button>
-        <button class="list-radius-btn active" data-km="25" onclick="setListRadius(this,25)">25 km</button>
+  <div class="app-view" id="app-list" style="position:relative;display:flex;flex-direction:column">
+    <!-- Header -->
+    <div style="padding:12px 16px 0;flex-shrink:0">
+      <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:10px" id="list-sub">Within — km · map area</div>
+      <!-- Tabs -->
+      <div style="display:flex;gap:6px;background:var(--surface2);border-radius:12px;padding:4px">
+        <button id="list-tab-jobs" onclick="switchListTab('jobs')" style="flex:1;padding:9px;border-radius:8px;border:none;background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">📋 Jobs <span id="list-jobs-count" style="color:var(--purple)">0</span></button>
+        <button id="list-tab-helpers" onclick="switchListTab('helpers')" style="flex:1;padding:9px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">💪 Help <span id="list-helpers-count" style="color:var(--lime)">0</span></button>
       </div>
     </div>
-    <div class="list-scroll"><div class="jobs-grid" id="list-grid"><div class="loading"><div class="spinner"></div></div></div></div>
-    <!-- Map/List toggle pill — bottom center, matching map view position -->
+    <!-- Scrollable content -->
+    <div id="list-tab-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px 80px"></div>
+    <!-- Map toggle pill -->
     <button onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(22,22,22,.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:100px;padding:10px 22px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.45)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
       <span style="font-size:14px;font-weight:900;color:var(--text);font-family:'Nunito',sans-serif">Map</span>
@@ -1005,6 +1004,8 @@ function updateRadiusCounts(){
   if(countsEl)countsEl.style.display='block';
   if(loadingEl)loadingEl.style.display='none';
   if(dataEl)dataEl.style.display='flex';
+  // also refresh list view if visible
+  renderListTabContent();
 }
 let sb, me, myProfileId, activeJob, mapCatFilter='all', listCatFilter='all', myTab='posted';
 let ratingTaskId=null, ratingRatedId=null, selectedRating=0;
@@ -1358,15 +1359,66 @@ function renderSheetContent(){
   }
 }
 
-function renderListGrid(jobs) {
-  const g=document.getElementById('list-grid');
-  if(!jobs.length){
-    g.innerHTML=emptyState('🌱',`No jobs within ${listRadiusKm}km`,'Try a larger radius or check back soon!');
-    document.getElementById('list-sub').textContent=`0 jobs within ${listRadiusKm}km · map area`;
-    return;
+let listTab='jobs';
+
+function switchListTab(tab){
+  listTab=tab;
+  const jobBtn=document.getElementById('list-tab-jobs');
+  const helpBtn=document.getElementById('list-tab-helpers');
+  if(!jobBtn)return;
+  if(tab==='jobs'){
+    jobBtn.style.background='var(--surface)';jobBtn.style.color='var(--text)';
+    helpBtn.style.background='transparent';helpBtn.style.color='var(--muted)';
+  } else {
+    helpBtn.style.background='var(--surface)';helpBtn.style.color='var(--text)';
+    jobBtn.style.background='transparent';jobBtn.style.color='var(--muted)';
   }
-  document.getElementById('list-sub').textContent=`${jobs.length} job${jobs.length===1?'':'s'} within ${listRadiusKm}km · map area`;
-  g.innerHTML=jobs.map(j=>listCard(j,j.profiles)).join('');
+  renderListTabContent();
+}
+
+function renderListTabContent(){
+  const el=document.getElementById('list-tab-content');
+  if(!el)return;
+  // update header label
+  const lbl=document.getElementById('list-sub');
+  if(lbl)lbl.textContent=`Within ${RADIUS_KM} km · map area`;
+  // update counts
+  const jc=document.getElementById('list-jobs-count');
+  const hc=document.getElementById('list-helpers-count');
+  if(jc)jc.textContent=sheetJobs.length;
+  if(hc)hc.textContent=sheetHelpers.length;
+
+  if(listTab==='jobs'){
+    if(!sheetJobs.length){el.innerHTML=emptyState('🌱','No jobs in this area','Move the map or try a larger radius');return;}
+    el.innerHTML=`<div class="jobs-grid">${sheetJobs.map(j=>listCard(j,j.profiles)).join('')}</div>`;
+  } else {
+    if(!sheetHelpers.length){el.innerHTML=emptyState('💪','No helpers nearby','Helpers can enable visibility in their profile');return;}
+    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px">${sheetHelpers.map(h=>{
+      const name=h.name||'Helper';
+      const rating=h.rating?`⭐ ${h.rating}`:'New';
+      const cats=(h.helper_categories||[]).slice(0,4).map(c=>`<span style="font-size:10px;font-weight:800;color:var(--purple);background:rgba(155,89,212,.12);border:1px solid rgba(155,89,212,.25);border-radius:100px;padding:2px 8px;white-space:nowrap">${c}</span>`).join('');
+      const rateLabel=h.helper_rate_type==='free'||!h.helper_rate?'🤝 Free':`💰 $${h.helper_rate}${h.helper_rate_type==='hourly'?'/hr':h.helper_rate_type==='daily'?'/day':' flat'}`;
+      return `<div onclick="openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:12px">
+          ${avatarCircle(name,h.avatar_color,'44px','18px')}
+          <div style="min-width:0;flex:1">
+            <div style="font-size:15px;font-weight:900">${esc(name)}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</span>
+              <span style="font-size:12px;color:var(--lime);font-weight:800">${rateLabel}</span>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);font-weight:800;flex-shrink:0">View ›</div>
+        </div>
+        ${cats?`<div style="display:flex;flex-wrap:wrap;gap:4px">${cats}</div>`:''}
+      </div>`;
+    }).join('')}</div>`;
+  }
+}
+
+function renderListGrid(jobs){
+  // legacy — kept for compatibility, now delegates to tab renderer
+  renderListTabContent();
 }
 
 let _opParentModal=null;
