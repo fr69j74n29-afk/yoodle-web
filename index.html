@@ -2585,10 +2585,15 @@ let hpLat=null,hpLng=null,hpLocSuggestionsData=[],hpLocDebounceTimer=null;
 let hpRateType='free',hpSelectedCategories=new Set();
 
 async function openHelperScreen(){
-  // fetch categories from DB
-  const{data:cats}=await sb.from('helper_categories').select('*').eq('active',true).order('sort_order');
+  // show loading in categories
   const container=document.getElementById('hp-categories');
-  if(cats&&container){
+  if(container)container.innerHTML='<span style="font-size:12px;color:var(--muted)">Loading categories…</span>';
+
+  // fetch categories from DB
+  const{data:cats,error:catErr}=await sb.from('helper_categories').select('*').eq('active',true).order('sort_order');
+  if(catErr){
+    if(container)container.innerHTML=`<span style="font-size:12px;color:#EF4444">Could not load categories — check RLS policy on helper_categories table.</span>`;
+  } else if(cats&&container){
     container.innerHTML=cats.map(c=>`
       <button id="hpcat-${c.id}" onclick="toggleHPCategory('${c.name}',${c.id})"
         style="padding:8px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .15s">
