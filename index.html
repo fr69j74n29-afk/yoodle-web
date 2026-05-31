@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- yoodle v001 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -684,7 +685,10 @@ body{
         <div id="m-poster" style="display:flex;align-items:center;gap:8px;margin-top:8px">—</div>
       </div>
     </div>
-    <button class="btn-primary" id="m-action" onclick="jobAction()">I Can Help! 🙋</button>
+    <div style="display:flex;gap:10px;align-items:stretch">
+      <button class="btn-primary" id="m-action" onclick="jobAction()" style="flex:1">I Can Help! 🙋</button>
+      <button onclick="shareJob()" title="Share this job" style="width:52px;height:52px;border-radius:var(--radius);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">🔗</button>
+    </div>
     <button class="btn-destructive" id="m-unclaim" onclick="unclaimJob()" style="display:none;width:100%;padding:16px;border-radius:var(--radius);background:transparent;color:#EF4444;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;border:1.5px solid rgba(239,68,68,.35);cursor:pointer;margin-top:10px">↩️ Unclaim Job</button>
   </div>
 </div>
@@ -1653,6 +1657,21 @@ async function openJob(j){
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(e){if(e.target.id==='modal')document.getElementById('modal').classList.remove('open');}
+
+function shareJob(){
+  if(!activeJob)return;
+  const url=`${window.location.origin}/job.html?job=${activeJob.id}`;
+  const title=activeJob.title||'Local job on Yoodle';
+  const text=`Someone near you needs help: "${title}". Apply free on Yoodle.`;
+  if(navigator.share){
+    navigator.share({title,text,url}).catch(()=>{});
+  } else {
+    // fallback: copy to clipboard
+    navigator.clipboard?.writeText(url).then(()=>toast('🔗 Link copied!')).catch(()=>{
+      prompt('Copy this link:',url);
+    });
+  }
+}
 
 async function jobAction(){
   if(!sb||!me){toast('🎉 (demo) Action noted!');document.getElementById('modal').classList.remove('open');return;}
