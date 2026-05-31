@@ -246,6 +246,8 @@ body{
 }
 .nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.3px;transition:color .15s;flex:1;min-height:44px;justify-content:center;white-space:nowrap}
 .nav-i.active{color:var(--purple)}
+.nav-i.nav-post{color:var(--muted)}
+.nav-i.nav-post.active{color:var(--muted)}
 .nav-i svg{width:22px;height:22px;flex-shrink:0}
 
 /* FAB */
@@ -447,8 +449,6 @@ body{
 <div id="view-main">
   <div class="top-bar">
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
-    <!-- Notification nudge bar — between logo and avatar -->
-    <div class="top-avatar" onclick="nav('profile')" id="top-av">?</div>
   </div>
 
   <!-- MAP VIEW -->
@@ -460,6 +460,11 @@ body{
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:var(--teal);transition:color .2s">
           <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="currentColor"/>
         </svg>
+      </button>
+      <!-- Map/List toggle pill — bottom center -->
+      <button id="browse-toggle" onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;pointer-events:all;background:rgba(22,22,22,.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:100px;padding:10px 22px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.45)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <span style="font-size:14px;font-weight:900;color:var(--text);font-family:'Nunito',sans-serif">List</span>
       </button>
       <!-- Corner count card — bottom left -->
       <div id="map-counts" style="position:absolute;top:24px;left:16px;z-index:10;pointer-events:all;display:none">
@@ -492,6 +497,10 @@ body{
     <div class="list-header" style="padding:10px 16px 8px;display:flex;flex-direction:column;gap:8px">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div class="list-h" style="font-size:15px" id="list-sub">Jobs open nearby</div>
+        <button onclick="toggleBrowseMode()" style="background:rgba(22,22,22,.93);border:1.5px solid var(--border);border-radius:100px;padding:6px 14px;cursor:pointer;display:flex;align-items:center;gap:6px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          <span style="font-size:12px;font-weight:900;color:var(--text);font-family:'Nunito',sans-serif">Map</span>
+        </button>
       </div>
 <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px">
         <button class="list-radius-btn" data-km="3" onclick="setListRadius(this,3)">3 km</button>
@@ -671,26 +680,28 @@ body{
 
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
-    <button class="nav-i active" id="ni-map" onclick="nav('map')">
+    <button class="nav-i active" id="ni-map" onclick="nav('browse')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-      Map
-    </button>
-    <button class="nav-i" id="ni-list" onclick="nav('list')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-      List
-    </button>
-    <button class="nav-i" id="ni-post" onclick="nav('post')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      Post
+      Browse
     </button>
     <button class="nav-i" id="ni-myjobs" onclick="nav('myjobs')" style="position:relative">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      Jobs
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Activity
       <span id="rating-badge" onclick="event.stopPropagation();openRatingsSheet()" style="display:none;position:absolute;top:4px;right:6px;background:var(--yellow);color:#000;font-size:9px;font-weight:900;border-radius:100px;padding:2px 5px;line-height:1.2;cursor:pointer"></span>
     </button>
-    <button class="nav-i" id="ni-messages" onclick="nav('messages')">
+    <button class="nav-i nav-post" id="ni-post" onclick="nav('post')">
+      <div style="width:46px;height:46px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:-10px 0 -2px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+    </button>
+    <button class="nav-i" id="ni-messages" onclick="nav('messages')" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      Msgs
+      Messages
+      <span id="unread-badge" style="display:none;position:absolute;top:4px;right:6px;background:#EF4444;color:#fff;font-size:9px;font-weight:900;border-radius:100px;padding:2px 5px;line-height:1.2"></span>
+    </button>
+    <button class="nav-i" id="ni-profile" onclick="nav('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
     </button>
   </nav>
 </div>
@@ -1396,16 +1407,34 @@ async function openOtherProfile(userId){
     })():''}`;
 }
 
+let browseMode='map'; // 'map' | 'list'
+
+function toggleBrowseMode(){
+  browseMode=browseMode==='map'?'list':'map';
+  nav('browse');
+}
+
 function nav(view) {
   document.querySelectorAll('.app-view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-i').forEach(n=>n.classList.remove('active'));
-  document.getElementById('app-'+view).classList.add('active');
-  const navBtn=document.getElementById('ni-'+view);
-  if(navBtn)navBtn.classList.add('active');
+
+  // Handle 'browse' — shows map or list based on browseMode
+  if(view==='browse'){
+    document.getElementById('app-'+browseMode).classList.add('active');
+    document.getElementById('ni-map').classList.add('active');
+  } else if(view==='map'||view==='list'){
+    browseMode=view;
+    document.getElementById('app-'+view).classList.add('active');
+    document.getElementById('ni-map').classList.add('active');
+  } else {
+    document.getElementById('app-'+view).classList.add('active');
+    const navBtn=document.getElementById('ni-'+view);
+    if(navBtn)navBtn.classList.add('active');
+  }
 
   // close any open modals when navigating
   document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
-  if(view==='map'){setTimeout(()=>{map.invalidateSize();updateCircleOverlay();updateRadiusCounts();updateNotifNudge();},100);}
+  if(view==='map'||(view==='browse'&&browseMode==='map')){setTimeout(()=>{map.invalidateSize();updateCircleOverlay();updateRadiusCounts();updateNotifNudge();},100);}
   if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
   if(view==='post')resetPost();
   if(view==='messages'){loadMessages().then(()=>refreshUnreadCount());}
@@ -1574,9 +1603,9 @@ function subscribeToMessages(){
 async function setAvatar(){
   if(!me)return;
   const av=document.getElementById('top-av');
+  if(!av)return;
   const url=me.user_metadata?.avatar_url;
   if(url){av.innerHTML=`<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover">`;return;}
-  // fetch avatar_color for DiceBear
   if(sb){
     const{data}=await sb.from('profiles').select('name,avatar_color').eq('id',myProfileId||me.id).maybeSingle();
     const name=data?.name||me.email?.split('@')[0]||'Y';
@@ -2032,13 +2061,13 @@ async function postJob(){
   if(!desc)return toast('Describe the job!');
   if(!loc)return toast('Add your location!');
   if(!gpsLat||!gpsLng)return toast('⚠️ Please select an address from the suggestions or use GPS');
-  if(!sb||!me){toast('🚀 Job posted! (demo mode)');resetPost();nav('map');return;}
+  if(!sb||!me){toast('🚀 Job posted! (demo mode)');resetPost();nav('browse');return;}
   const btn=document.getElementById('post-btn');btn.disabled=true;btn.textContent='Posting…';
   const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
   const{error}=await sb.from('tasks').insert({poster_id:myProfileId||me.id,title,description:desc,category:'other',price:budget?parseFloat(budget):0,address:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open',expires_at:expiresAt});
   btn.disabled=false;btn.textContent='Post Job 🚀';
   if(error)return toast('❌ '+error.message);
-  toast('🎉 Job posted! Expires in 14 days.');resetPost();nav('map');
+  toast('🎉 Job posted! Expires in 14 days.');resetPost();nav('browse');
 }
 
 function resetPost(){
@@ -2226,7 +2255,8 @@ document.getElementById('p-name').value=name;
 // update avatar with DiceBear if not Google
 if(!url){
   document.getElementById('pav').innerHTML=avatarCircle(name,prof?.avatar_color,'64px','26px');
-  document.getElementById('top-av').innerHTML=avatarCircle(name,prof?.avatar_color,'36px','14px');
+  const _topAv=document.getElementById('top-av');
+  if(_topAv)_topAv.innerHTML=avatarCircle(name,prof?.avatar_color,'36px','14px');
 }
 // populate helper mode toggle
 const isHelper=prof?.visible_on_map||false;
