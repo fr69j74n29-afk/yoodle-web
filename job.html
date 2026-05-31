@@ -227,8 +227,7 @@ function avatarBg(name,color){
   return color||(AVATAR_COLORS[name?.charCodeAt(0)%AVATAR_COLORS.length]||'#9B59D4');
 }
 
-function formatPrice(price,url){
-  if(url)return'🔗 See listing';
+function formatPrice(price){
   if(price==null)return'💬 Call for price';
   return`💰 $${price}`;
 }
@@ -261,10 +260,10 @@ async function loadJob(taskId){
   const emoji=CAT_EMOJI[job.category]||'✨';
   document.getElementById('j-category').textContent=`${emoji} ${job.category||'General'}`;
   document.getElementById('j-title').textContent=job.title;
-  document.getElementById('j-price').textContent=formatPrice(job.price,job.url);
+  document.getElementById('j-price').textContent=formatPrice(job.price);
   document.getElementById('j-posted').textContent=timeAgo(job.created_at);
   document.getElementById('j-desc').textContent=
-    job.url?'Visit the listing link for full details.':(job.description||'No description provided.');
+    job.description||'No description provided.';
 
   if(job.lat&&job.lng){
     document.getElementById('j-area').textContent='📍 …';
@@ -282,12 +281,6 @@ async function loadJob(taskId){
   document.getElementById('j-poster-name').textContent=name;
   document.getElementById('j-poster-rating').textContent=
     poster?.rating?`⭐ ${poster.rating} · ${poster.task_count||0} jobs`:'New to Yoodle';
-
-  if(job.url){
-    const btn=document.getElementById('j-apply-btn');
-    btn.textContent='View Full Listing';
-    btn.onclick=()=>window.open(job.url,'_blank','noopener,noreferrer');
-  }
 
   show('state-job');
 }
