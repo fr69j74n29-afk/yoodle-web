@@ -155,6 +155,13 @@ body{
 .lc-meta{font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0}
 
 /* ── SPONSORED / FEATURED CARD (poster c89896db) ── */
+.list-card.sponsored{background:linear-gradient(135deg,rgba(14,30,60,.95),rgba(10,20,50,.95));border-color:rgba(59,130,246,.55);--jc:#3B82F6;}
+.list-card.sponsored::before{background:linear-gradient(180deg,#3B82F6,#60A5FA);}
+.list-card.sponsored .lc-title{color:#E0EEFF;}
+.list-card.sponsored .lc-budget{color:#60A5FA;}
+.sponsored-badge{display:inline-block;font-size:9px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;color:#3B82F6;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.35);border-radius:100px;padding:2px 7px;margin-left:6px;vertical-align:middle;flex-shrink:0;white-space:nowrap;}
+
+/* ── SPONSORED / FEATURED CARD (poster c89896db) ── */
 .list-card.sponsored{
   background:linear-gradient(135deg,rgba(14,30,60,.95),rgba(10,20,50,.95));
   border-color:rgba(59,130,246,.55);
@@ -938,6 +945,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const tip=document.getElementById('ios-pwa-tip');
     if(tip)tip.style.display='block';
   }
+  initMap();
   if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
   }
 
@@ -1008,7 +1016,6 @@ function locateUser() {
         locationSource='gps';
         if(btn){btn.classList.remove('locating');btn.classList.add('located');}
         updateGpsDot();
-        map.invalidateSize(); // iOS: ensure tiles fill the map before flyTo
         map.flyTo([newLat,newLng],map.getZoom()); // moveend handles userLat/userLng + loadJobs
       } else {
         _resolved=true;
@@ -1338,10 +1345,7 @@ function nav(view) {
 
   // close any open modals when navigating
   document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
-  if(view==='map'){
-    setTimeout(()=>{map.invalidateSize();updateCircleOverlay();updateRadiusCounts();updateNotifNudge();},100);
-    setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},500);
-  }
+  if(view==='map'){setTimeout(()=>{map.invalidateSize();updateCircleOverlay();updateRadiusCounts();updateNotifNudge();},100);}
   if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
   if(view==='post')resetPost();
   if(view==='messages'){loadMessages().then(()=>refreshUnreadCount());}
@@ -1373,21 +1377,9 @@ function showAuthScreen(){document.getElementById('view-auth').style.display='fl
 async function showApp(){
   document.getElementById('view-auth').style.display='none';
   const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
-  // Delay initMap so iOS has finished painting layout before Leaflet measures the container
-  if(!map){
-    setTimeout(()=>{
-      initMap();
-      setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},200);
-      setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},600);
-    },150);
-  } else {
-    setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},100);
-    setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},500);
-  }
   setAvatar();
   if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
-  // Delay loadJobs slightly so initMap (deferred 150ms above) has run first
-  setTimeout(()=>loadJobs(), 200);
+  loadJobs();
   subscribeToMessages();
   registerOneSignal();
   setTimeout(async()=>{
@@ -1489,10 +1481,11 @@ function startUnreadPoller(){
 function _onVisibility(){
   if(document.visibilityState==='visible'){
     refreshUnreadCount();
-    // Recalculate map size after idle — browser may have resized the container
+    // Handles: return from another app (iOS), minimize+restore (desktop)
+    // Two calls because iOS Safari address bar animation may still be in progress at 150ms
     if(map){
-      setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},100);
-      setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},500);
+      setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},150);
+      setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},600);
     }
   }
 }
