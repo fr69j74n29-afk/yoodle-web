@@ -1338,7 +1338,10 @@ function nav(view) {
 
   // close any open modals when navigating
   document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
-  if(view==='map'){setTimeout(()=>{map.invalidateSize();updateCircleOverlay();updateRadiusCounts();updateNotifNudge();},100);}
+  if(view==='map'){
+    setTimeout(()=>{map.invalidateSize();updateCircleOverlay();updateRadiusCounts();updateNotifNudge();},100);
+    setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},500);
+  }
   if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
   if(view==='post')resetPost();
   if(view==='messages'){loadMessages().then(()=>refreshUnreadCount());}
@@ -1483,7 +1486,16 @@ function startUnreadPoller(){
   document.removeEventListener('visibilitychange',_onVisibility);
   document.addEventListener('visibilitychange',_onVisibility);
 }
-function _onVisibility(){if(document.visibilityState==='visible')refreshUnreadCount();}
+function _onVisibility(){
+  if(document.visibilityState==='visible'){
+    refreshUnreadCount();
+    // Recalculate map size after idle — browser may have resized the container
+    if(map){
+      setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},100);
+      setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},500);
+    }
+  }
+}
 
 function subscribeToMessages(){
   if(!sb||!me)return;
