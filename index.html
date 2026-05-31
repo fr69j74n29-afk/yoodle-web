@@ -1224,16 +1224,15 @@ function renderSheetContent(){
   } else {
     if(!sheetHelpers.length){el.innerHTML=emptyState('💪','No helpers visible nearby','Helpers can enable visibility in their profile');return;}
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">${sheetHelpers.map(h=>{
-      const color='#9B59D4';
       const name=h.name||'Helper';
       const rating=h.rating?`⭐ ${h.rating}`:'New';
-      return `<div style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;align-items:center;gap:12px">
+      return `<div onclick="openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer">
         ${avatarCircle(name,h.avatar_color,'44px','18px')}
         <div style="min-width:0">
           <div style="font-size:15px;font-weight:900">${esc(name)}</div>
           <div style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</div>
         </div>
-        <div style="margin-left:auto;font-size:12px;color:var(--lime);font-weight:800">Available</div>
+        <div style="margin-left:auto;font-size:12px;color:var(--lime);font-weight:800">Available ›</div>
       </div>`;
     }).join('')}</div>`;
   }
