@@ -558,24 +558,11 @@ body{
                 <span id="helper-toggle-thumb" style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none"></span>
               </label>
             </div>
-            <button id="helper-location-label" onclick="toggleHelperInput()" style="background:none;border:none;font-size:11px;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;padding:0;text-align:left">Off</button>
+            <button id="helper-location-label" onclick="nav('helper')" style="background:none;border:none;font-size:11px;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;padding:0;text-align:left">Off</button>
           </div>
         </div>
       </div>
 
-      <!-- Helper location input (hidden until toggled or change tapped) -->
-      <div id="helper-location-wrap" style="display:none;background:var(--surface);border-radius:var(--radius-sm);border:1.5px solid var(--border);padding:14px;margin-bottom:16px">
-        <div style="font-size:12px;color:var(--yellow);font-weight:700;margin-bottom:10px;line-height:1.5">
-          📍 Enter the area where you're available to help. Remember to keep this updated to where you currently are.
-        </div>
-        <div style="position:relative">
-          <input class="form-inp" id="helper-loc" type="text" placeholder="Start typing your address…" autocomplete="off"
-            oninput="onHelperLocInput(this.value)" onfocus="if(this.value.length>2)showHelperSuggestions()" onblur="setTimeout(hideHelperSuggestions,200)">
-          <div class="loc-suggestions" id="helper-loc-suggestions"></div>
-        </div>
-        <div class="loc-status" id="helper-loc-status">Select your area from the suggestions</div>
-        <button class="btn-primary" onclick="saveHelperMode()" style="margin-top:12px">Save Location ✨</button>
-      </div>
       <div class="stats-row" style="grid-template-columns:1fr 1fr">
         <div class="stat-c" style="text-align:left;padding:16px">
           <div style="font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">As Poster</div>
@@ -615,6 +602,67 @@ body{
     <div class="myjobs-inner">
       <div class="section-h" style="margin-bottom:16px">Messages 💬</div>
       <div id="conversations-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- HELPER PROFILE SCREEN -->
+  <div class="app-view" id="app-helper">
+    <div class="myjobs-inner" style="padding-bottom:40px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <button onclick="nav('profile')" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>
+        <div class="section-h" style="margin-bottom:0">💪 Helper Profile</div>
+      </div>
+
+      <!-- ADDRESS -->
+      <div class="form-g">
+        <label class="form-lbl">📍 Your available area</label>
+        <div style="position:relative">
+          <input class="form-inp" id="hp-loc" type="text" placeholder="Start typing your address…" autocomplete="off"
+            oninput="onHPLocInput(this.value)" onfocus="if(this.value.length>2)showHPSuggestions()" onblur="setTimeout(hideHPSuggestions,200)">
+          <div class="loc-suggestions" id="hp-loc-suggestions"></div>
+        </div>
+        <div class="loc-status" id="hp-loc-status">Select your area from suggestions</div>
+        <div style="font-size:11px;color:var(--yellow);font-weight:700;margin-top:8px;line-height:1.5">⚠️ Remember to update your location if you move — e.g. going to your cottage for the weekend.</div>
+      </div>
+
+      <!-- CATEGORIES -->
+      <div class="form-g">
+        <label class="form-lbl">What can you help with?</label>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Select all that apply</div>
+        <div id="hp-categories" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+
+      <!-- BIO -->
+      <div class="form-g">
+        <label class="form-lbl">Describe your help</label>
+        <textarea class="form-ta" id="hp-bio" placeholder="Your experience, what you offer, availability… e.g. 'Student looking to earn for tuition, available weekends, have own tools'" style="height:110px"></textarea>
+      </div>
+
+      <!-- RATE -->
+      <div class="form-g">
+        <label class="form-lbl">Your rate</label>
+        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;min-width:120px">
+            <span style="font-size:15px;font-weight:900;color:var(--muted)">$</span>
+            <input id="hp-rate" type="number" min="0" placeholder="0" style="background:none;border:none;outline:none;font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;color:var(--text);width:80px" oninput="onHPRateInput()">
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="hp-rate-type active" id="hprt-free" onclick="setHPRateType('free')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--lime);background:rgba(163,230,53,.12);color:var(--lime);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🤝 Free</button>
+            <button class="hp-rate-type" id="hprt-hourly" onclick="setHPRateType('hourly')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">Per hour</button>
+            <button class="hp-rate-type" id="hprt-daily" onclick="setHPRateType('daily')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">Per day</button>
+            <button class="hp-rate-type" id="hprt-flat" onclick="setHPRateType('flat')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">Flat rate</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXPIRY NOTICE -->
+      <div style="background:rgba(155,89,212,.08);border:1.5px solid rgba(155,89,212,.25);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:20px;font-size:12px;color:#aaa;font-weight:700;line-height:1.6">
+        🕐 Helper listings are active for <strong style="color:var(--purple)">30 days</strong>. After that your profile is automatically hidden — just toggle back on to renew.
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <button class="btn-primary" onclick="saveHelperProfile()">Save Helper Profile ✨</button>
+      <button onclick="cancelHelperProfile()" style="width:100%;padding:14px;margin-top:10px;border-radius:var(--radius);background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;border:1.5px solid var(--border);cursor:pointer">Cancel</button>
     </div>
   </div>
 
@@ -1341,6 +1389,7 @@ function nav(view) {
   if(view==='post')resetPost();
   if(view==='messages'){loadMessages().then(()=>refreshUnreadCount());}
   if(view==='profile')loadProfile();
+  if(view==='helper')openHelperScreen();
   updateNotifNudge();
 }
 
@@ -2168,9 +2217,8 @@ if(isHelper&&prof?.helper_address){
   lbl.textContent=`📍 ${prof.helper_address} · Change`;
   lbl.style.color='var(--lime)';
 } else if(isHelper){
-  lbl.textContent='⚠️ Add your location';
+  lbl.textContent='⚠️ Complete your helper profile';
   lbl.style.color='var(--yellow)';
-  document.getElementById('helper-location-wrap').style.display='block';
 } else {
   lbl.textContent='Off';
   lbl.style.color='var(--muted)';
@@ -2520,13 +2568,11 @@ function onHelperToggle(){
   const on=document.getElementById('helper-toggle').checked;
   updateHelperToggleUI(on);
   if(on){
-    document.getElementById('helper-location-label').textContent='⚠️ Add your location';
-    document.getElementById('helper-location-label').style.color='var(--yellow)';
-    document.getElementById('helper-location-wrap').style.display='block';
+    // navigate to helper profile screen
+    nav('helper');
   } else {
-    document.getElementById('helper-location-label').textContent='Off';
-    document.getElementById('helper-location-label').style.color='var(--muted)';
-    document.getElementById('helper-location-wrap').style.display='none';
+    const lbl=document.getElementById('helper-location-label');
+    lbl.textContent='Off';lbl.style.color='var(--muted)';
     if(sb&&me) sb.from('profiles').update({visible_on_map:false}).eq('id',myProfileId||me.id).then(({error})=>{
       if(error)toast('❌ '+error.message);
       else{toast('Helper mode off');loadJobs();}
@@ -2534,39 +2580,117 @@ function onHelperToggle(){
   }
 }
 
-function onHelperLocInput(val){
-  helperLat=null;helperLng=null;
-  clearTimeout(helperLocDebounceTimer);
-  const sug=document.getElementById('helper-loc-suggestions');
-  if(val.length<3){sug.classList.remove('open');return;}
-  helperLocDebounceTimer=setTimeout(()=>fetchHelperLocSuggestions(val),400);
+// ── HELPER PROFILE SCREEN ──
+let hpLat=null,hpLng=null,hpLocSuggestionsData=[],hpLocDebounceTimer=null;
+let hpRateType='free',hpSelectedCategories=new Set();
+
+async function openHelperScreen(){
+  // fetch categories from DB
+  const{data:cats}=await sb.from('helper_categories').select('*').eq('active',true).order('sort_order');
+  const container=document.getElementById('hp-categories');
+  if(cats&&container){
+    container.innerHTML=cats.map(c=>`
+      <button id="hpcat-${c.id}" onclick="toggleHPCategory('${c.name}',${c.id})"
+        style="padding:8px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .15s">
+        ${c.emoji||''} ${c.name}
+      </button>`).join('');
+  }
+
+  // pre-populate from saved profile
+  const{data:prof}=await sb.from('profiles')
+    .select('helper_address,helper_lat,helper_lng,helper_bio,helper_rate,helper_rate_type,helper_categories')
+    .eq('id',myProfileId||me.id).maybeSingle();
+
+  if(prof?.helper_address){
+    document.getElementById('hp-loc').value=prof.helper_address;
+    hpLat=prof.helper_lat;hpLng=prof.helper_lng;
+    const st=document.getElementById('hp-loc-status');
+    st.textContent=`📍 ${prof.helper_address}`;st.className='loc-status verified';
+  }
+  if(prof?.helper_bio) document.getElementById('hp-bio').value=prof.helper_bio;
+  if(prof?.helper_rate) document.getElementById('hp-rate').value=prof.helper_rate;
+  if(prof?.helper_rate_type) setHPRateType(prof.helper_rate_type);
+
+  // restore selected categories
+  hpSelectedCategories=new Set(prof?.helper_categories||[]);
+  hpSelectedCategories.forEach(name=>{
+    const cat=cats?.find(c=>c.name===name);
+    if(cat) applyHPCategoryStyle(cat.id,true);
+  });
 }
 
-async function fetchHelperLocSuggestions(query){
-  const sug=document.getElementById('helper-loc-suggestions');
-  const st=document.getElementById('helper-loc-status');
+function toggleHPCategory(name,id){
+  if(hpSelectedCategories.has(name)){
+    hpSelectedCategories.delete(name);
+    applyHPCategoryStyle(id,false);
+  } else {
+    hpSelectedCategories.add(name);
+    applyHPCategoryStyle(id,true);
+  }
+}
+
+function applyHPCategoryStyle(id,selected){
+  const btn=document.getElementById(`hpcat-${id}`);
+  if(!btn)return;
+  if(selected){
+    btn.style.borderColor='var(--lime)';btn.style.background='rgba(163,230,53,.12)';btn.style.color='var(--lime)';
+  } else {
+    btn.style.borderColor='var(--border)';btn.style.background='var(--surface2)';btn.style.color='var(--muted)';
+  }
+}
+
+function setHPRateType(type){
+  hpRateType=type;
+  ['free','hourly','daily','flat'].forEach(t=>{
+    const btn=document.getElementById(`hprt-${t}`);
+    if(!btn)return;
+    const active=t===type;
+    btn.style.borderColor=active?'var(--lime)':'var(--border)';
+    btn.style.background=active?'rgba(163,230,53,.12)':'var(--surface2)';
+    btn.style.color=active?'var(--lime)':'var(--muted)';
+  });
+  // hide price input if free
+  document.getElementById('hp-rate').style.display=type==='free'?'none':'block';
+}
+
+function onHPRateInput(){
+  if(parseFloat(document.getElementById('hp-rate').value)>0&&hpRateType==='free'){
+    setHPRateType('hourly');
+  }
+}
+
+function onHPLocInput(val){
+  hpLat=null;hpLng=null;
+  clearTimeout(hpLocDebounceTimer);
+  const sug=document.getElementById('hp-loc-suggestions');
+  if(val.length<3){sug.classList.remove('open');return;}
+  hpLocDebounceTimer=setTimeout(()=>fetchHPLocSuggestions(val),400);
+}
+
+async function fetchHPLocSuggestions(query){
+  const sug=document.getElementById('hp-loc-suggestions');
+  const st=document.getElementById('hp-loc-status');
   try{
     const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6&countrycodes=ca,us`;
     const r=await fetch(url,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
     const data=await r.json();
-    helperLocSuggestionsData=data;
+    hpLocSuggestionsData=data;
     if(!data.length){sug.classList.remove('open');st.textContent='No addresses found — try different search';st.className='loc-status manual';return;}
     sug.innerHTML=data.map((item,i)=>{
       const a=item.address||{};
       const main=a.house_number?`${a.house_number} ${a.road||''}`.trim():(a.road||a.neighbourhood||a.suburb||item.display_name.split(',')[0]);
       const parts=[a.suburb||a.neighbourhood,a.city||a.town||a.village,a.state_code||a.state].filter(Boolean);
-      return`<div class="loc-suggestion" onclick="selectHelperSuggestion(${i})">
+      return`<div class="loc-suggestion" onclick="selectHPSuggestion(${i})">
         <div class="sug-main">${esc(main.trim())}</div>
         <div class="sug-sub">${esc(parts.join(', '))}</div>
       </div>`;
     }).join('');
-    sug.classList.add('open');
-    st.textContent='';st.className='loc-status';
+    sug.classList.add('open');st.textContent='';st.className='loc-status';
   }catch(e){st.textContent='Could not search — check connection';st.className='loc-status manual';}
 }
 
-function selectHelperSuggestion(i){
-  const item=helperLocSuggestionsData[i];if(!item)return;
+function selectHPSuggestion(i){
+  const item=hpLocSuggestionsData[i];if(!item)return;
   const a=item.address||{};
   const road=a.house_number?`${a.house_number} ${a.road||''}`.trim():(a.road||'');
   const area=a.suburb||a.neighbourhood||a.city_district||'';
@@ -2574,35 +2698,61 @@ function selectHelperSuggestion(i){
   const prov=a.state_code||a.state||'';
   const seen=new Set();
   const display=[road,area,city,prov].filter(v=>{if(!v||seen.has(v))return false;seen.add(v);return true;}).join(', ');
-  document.getElementById('helper-loc').value=display||item.display_name.split(',').slice(0,3).join(',').trim();
-  helperLat=parseFloat(item.lat);helperLng=parseFloat(item.lon);
-  const st=document.getElementById('helper-loc-status');
-  st.textContent=`📍 ${esc(city||area||display)}`;
-  st.className='loc-status verified';
-  document.getElementById('helper-loc-suggestions').classList.remove('open');
+  document.getElementById('hp-loc').value=display||item.display_name.split(',').slice(0,3).join(',').trim();
+  hpLat=parseFloat(item.lat);hpLng=parseFloat(item.lon);
+  const st=document.getElementById('hp-loc-status');
+  st.textContent=`📍 ${esc(city||area||display)}`;st.className='loc-status verified';
+  document.getElementById('hp-loc-suggestions').classList.remove('open');
 }
 
-function showHelperSuggestions(){document.getElementById('helper-loc-suggestions').classList.add('open');}
-function hideHelperSuggestions(){document.getElementById('helper-loc-suggestions').classList.remove('open');}
+function showHPSuggestions(){document.getElementById('hp-loc-suggestions').classList.add('open');}
+function hideHPSuggestions(){document.getElementById('hp-loc-suggestions').classList.remove('open');}
 
-async function saveHelperMode(){
+async function saveHelperProfile(){
   if(!sb||!me)return toast('Not signed in');
-  if(!helperLat||!helperLng)return toast('⚠️ Please select an address from the suggestions');
-  const helperAddress=document.getElementById('helper-loc').value||'';
-  const{error}=await sb.from('profiles').update({visible_on_map:true,last_lat:helperLat,last_lng:helperLng,helper_address:helperAddress}).eq('id',myProfileId||me.id);
+  if(!hpLat||!hpLng)return toast('⚠️ Please select your area from suggestions');
+  const address=document.getElementById('hp-loc').value||'';
+  const bio=document.getElementById('hp-bio').value||'';
+  const rate=hpRateType==='free'?null:parseFloat(document.getElementById('hp-rate').value)||null;
+  const categories=Array.from(hpSelectedCategories);
+  const expiresAt=new Date(Date.now()+30*24*60*60*1000).toISOString();
+  const{error}=await sb.from('profiles').update({
+    visible_on_map:true,
+    last_lat:hpLat,last_lng:hpLng,
+    helper_address:address,
+    helper_lat:hpLat,helper_lng:hpLng,
+    helper_bio:bio,
+    helper_rate:rate,
+    helper_rate_type:hpRateType,
+    helper_categories:categories,
+    helper_expires_at:expiresAt
+  }).eq('id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
-  document.getElementById('helper-location-wrap').style.display='none';
+  // update toggle UI
   const lbl=document.getElementById('helper-location-label');
-  lbl.textContent=`📍 ${helperAddress} · Change`;
-  lbl.style.color='var(--lime)';
-  toast('✅ Helper mode enabled!');
+  lbl.textContent=`📍 ${address} · Change`;lbl.style.color='var(--lime)';
+  updateHelperToggleUI(true);
+  document.getElementById('helper-toggle').checked=true;
+  toast('✅ Helper profile saved!');
   loadJobs();
+  nav('profile');
 }
 
-function toggleHelperInput(){
-  const wrap=document.getElementById('helper-location-wrap');
-  wrap.style.display=wrap.style.display==='none'?'block':'none';
+function cancelHelperProfile(){
+  // if turning off (was off before navigating here), uncheck toggle
+  const toggle=document.getElementById('helper-toggle');
+  if(toggle.checked){
+    toggle.checked=false;
+    updateHelperToggleUI(false);
+    if(sb&&me) sb.from('profiles').update({visible_on_map:false}).eq('id',myProfileId||me.id);
+  }
+  nav('profile');
 }
+
+// old functions kept as no-ops to avoid any stale references
+function saveHelperMode(){}
+function toggleHelperInput(){}
+
 function openRatingModal(taskId, ratedId, prompt){
   ratingTaskId=taskId;ratingRatedId=ratedId;selectedRating=0;
   document.getElementById('rating-prompt').textContent=prompt;
