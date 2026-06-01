@@ -242,7 +242,7 @@ body{
   padding:8px 0 max(8px,var(--sab));
   background:rgba(14,14,14,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-top:1px solid var(--border);z-index:200;flex-shrink:0;
-  position:relative;/* own stacking context — fixes Android compositing overlap */
+  position:relative;overflow:visible;
 }
 .nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.3px;transition:color .15s;flex:1;min-height:44px;justify-content:center;white-space:nowrap}
 .nav-i.active{color:var(--purple)}
@@ -731,8 +731,8 @@ body{
       Activity
       <span id="rating-badge" onclick="event.stopPropagation();openRatingsSheet()" style="display:none;position:absolute;top:4px;right:6px;background:var(--yellow);color:#000;font-size:9px;font-weight:900;border-radius:100px;padding:2px 5px;line-height:1.2;cursor:pointer"></span>
     </button>
-    <button class="nav-i nav-post" id="ni-post" onclick="nav('post')">
-      <div style="width:46px;height:46px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:-10px 0 -2px">
+    <button class="nav-i nav-post" id="ni-post" onclick="nav('post')" style="position:relative">
+      <div style="width:46px;height:46px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;position:absolute;top:-14px;left:50%;transform:translateX(-50%);box-shadow:0 4px 12px rgba(249,115,22,.4)">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </div>
     </button>
