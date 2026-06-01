@@ -1608,31 +1608,41 @@ function toggleBrowseMode(){
 }
 
 function nav(view) {
-  document.querySelectorAll('.app-view').forEach(v=>v.classList.remove('active'));
-  document.querySelectorAll('.nav-i').forEach(n=>n.classList.remove('active'));
-
-  // Handle 'browse' — shows map or list based on browseMode
+  // Resolve the actual target view
+  let targetView;
   if(view==='browse'){
-    document.getElementById('app-'+browseMode).classList.add('active');
-    document.getElementById('ni-map').classList.add('active');
+    targetView=browseMode; // 'map' or 'list'
   } else if(view==='map'||view==='list'){
     browseMode=view;
-    document.getElementById('app-'+view).classList.add('active');
-    document.getElementById('ni-map').classList.add('active');
+    targetView=view;
   } else {
-    document.getElementById('app-'+view).classList.add('active');
-    const navBtn=document.getElementById('ni-'+view);
-    if(navBtn)navBtn.classList.add('active');
+    targetView=view;
   }
 
-  // close any open modals when navigating
+  const targetEl=document.getElementById('app-'+targetView);
+  const currentEl=document.querySelector('.app-view.active');
+
+  // Skip if already showing the target
+  if(currentEl===targetEl)return;
+
+  // Switch views — add new before removing old to prevent zero-height flicker
+  if(targetEl)targetEl.classList.add('active');
+  if(currentEl)currentEl.classList.remove('active');
+
+  // Highlight correct nav button
+  document.querySelectorAll('.nav-i').forEach(n=>n.classList.remove('active'));
+  const navId=(view==='browse'||view==='map'||view==='list')?'ni-map':'ni-'+targetView;
+  const navBtn=document.getElementById(navId);
+  if(navBtn)navBtn.classList.add('active');
+
+  // Close any open modals when navigating
   document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
-  if(view==='map'||(view==='browse'&&browseMode==='map')){setTimeout(()=>{map.invalidateSize();updateCircleOverlay();updateRadiusCounts();updateNotifNudge();},100);}
-  if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
-  if(view==='post')resetPost();
-  if(view==='messages'){loadMessages().then(()=>refreshUnreadCount());}
-  if(view==='profile')loadProfile();
-  if(view==='helper')openHelperScreen();
+  if(targetView==='map'){setTimeout(()=>{if(map){map.invalidateSize();updateCircleOverlay();updateRadiusCounts();}updateNotifNudge();},100);}
+  if(targetView==='myjobs'){loadMyJobs();loadPendingRatings();}
+  if(targetView==='post')resetPost();
+  if(targetView==='messages'){loadMessages().then(()=>refreshUnreadCount());}
+  if(targetView==='profile')loadProfile();
+  if(targetView==='helper')openHelperScreen();
   updateNotifNudge();
 }
 
