@@ -2310,7 +2310,15 @@ async function loadMyJobs(){
   }
   const{data,error}=await q;
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
-  if(!data?.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
+
+  // for helping tab, also fetch help_offer tasks where I'm the doer
+  let helpOfferTasks=[];
+  if(myTab==='helping'){
+    const{data:hoData}=await sb.from('tasks').select('*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color)').eq('doer_id',pid).eq('type','help_offer').in('status',['claimed']).order('created_at',{ascending:false});
+    helpOfferTasks=hoData||[];
+  }
+
+  if(!data?.length&&!helpOfferTasks.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
 
   // for posted tab, fetch doer names, applicant counts, and rated task IDs
   let doerNames={};
@@ -2335,7 +2343,7 @@ async function loadMyJobs(){
 
   // for helping tab, render application rows
   if(myTab==='helping'){
-    g.innerHTML=data.map(app=>{
+    const appCards=(data||[]).map(app=>{
       const j=app.tasks;
       if(!j)return'';
       const cat=(j.category||'other').toLowerCase();
@@ -2361,6 +2369,25 @@ async function loadMyJobs(){
         ${actionBtn}
       </div>`;
     }).join('');
+
+    // render help_offer tasks (direct contacts where I'm the helper)
+    const hoCards=helpOfferTasks.map(j=>{
+      const color=CAT_COLOR['other']||'#9B59D4';
+      const posterName=j.profiles?.name||'Neighbour';
+      return `<div class="job-card" style="--jc:${color};cursor:default">
+        <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:4px">
+          <span style="color:var(--teal);font-size:12px;font-weight:800">💬 Help Request</span>
+        </div>
+        <div class="jc-top"><div class="jc-title">${esc(j.title)}</div></div>
+        <div class="jc-desc">${esc(j.description||'')}</div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+          <button onclick="event.stopPropagation();cancelHelpOffer('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">❌ Cancel</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    g.innerHTML=appCards+hoCards;
     return;
   }
 
@@ -2387,11 +2414,19 @@ async function loadMyJobs(){
       </div>${appBadge}`;
     } else if(j.status==='claimed'){
       const doerName=doerNames[j.doer_id]||'Helper';
-      actionBtn=`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
-        <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
-        <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
-      </div>`;
+      if(isHelperContact(j)){
+        actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+          <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
+          <button onclick="event.stopPropagation();cancelHelpOffer('${j.id}')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">❌ Cancel</button>
+        </div>`;
+      } else {
+        actionBtn=`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+          <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
+          <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
+        </div>`;
+      }
     }
 
     return `<div class="job-card" style="--jc:${color};cursor:default">
@@ -2633,20 +2668,22 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   actionsEl.innerHTML='';actionsEl.style.display='none';
   if(!sb||!me)return;
   const pid=myProfileId||me.id;
-  const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id').eq('id',taskId).single();
+  const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id,type').eq('id',taskId).single();
   if(!task)return;
 
   const isPoster=task.poster_id===pid;
   const isDoer=task.doer_id===pid;
+  const isHO=isHelperContact(task);
 
   const withdrawBtn=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Withdraw</button>`;
+  const cancelHOBtn=`<button onclick="cancelHelpOffer('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">❌ Cancel</button>`;
   if(task.status==='claimed'){
     let btns='';
     if(isPoster){
       btns+=`<button onclick="chatComplete('${taskId}','${task.doer_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Mark Complete</button>`;
-      btns+=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
+      btns+=isHO?cancelHOBtn:`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
     } else if(isDoer){
-      btns+=withdrawBtn;
+      btns+=isHO?cancelHOBtn:withdrawBtn;
     }
     if(btns){actionsEl.innerHTML=btns;actionsEl.style.display='flex';}
   } else if(task.status==='open'&&!isPoster){
@@ -2727,6 +2764,35 @@ async function claimFromChat(taskId){
 async function sendSystemMessage(convId,taskId,senderId,receiverId,body){
   if(!convId)return;
   await sb.from('messages').insert({conversation_id:convId,task_id:taskId,sender_id:senderId,receiver_id:receiverId,body});
+}
+
+async function cancelHelpOffer(taskId){
+  if(!sb||!me)return;
+  const pid=myProfileId||me.id;
+  const{data:taskData}=await sb.from('tasks').select('poster_id,doer_id,title,type').eq('id',taskId).single();
+  if(!taskData)return toast('❌ Could not load task');
+  const{data:myProfile}=await sb.from('profiles').select('name').eq('id',pid).single();
+  const name=myProfile?.name||'Someone';
+  const{error}=await sb.from('tasks').update({status:'cancelled'}).eq('id',taskId);
+  if(error)return toast('❌ '+error.message);
+  // archive conversation
+  let convId=activeChatConvId;
+  if(!convId){
+    const applicantId=taskData.poster_id===pid?taskData.doer_id:pid;
+    if(applicantId){
+      const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',applicantId).eq('status','active').maybeSingle();
+      convId=conv?.id||null;
+    }
+  }
+  if(convId){
+    const receiverId=taskData.poster_id===pid?taskData.doer_id:taskData.poster_id;
+    await sendSystemMessage(convId,taskId,pid,receiverId,`❌ ${name} cancelled this request.`);
+    await sb.from('conversations').update({status:'archived'}).eq('id',convId);
+  }
+  document.getElementById('chat-modal').classList.remove('open');
+  activeChatConvId=null;
+  toast('❌ Request cancelled');
+  loadMessages();loadJobs();loadMyJobs();
 }
 
 async function chatUnclaim(taskId){
