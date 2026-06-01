@@ -2382,7 +2382,7 @@ async function loadMyJobs(){
         <div class="jc-desc">${esc(j.description||'')}</div>
         <div style="display:flex;gap:8px;margin-top:10px">
           <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
-          <button onclick="event.stopPropagation();cancelHelpOffer('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">❌ Cancel</button>
+          <button onclick="event.stopPropagation();cancelHelpOffer('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🚫 Decline</button>
         </div>
       </div>`;
     }).join('');
@@ -2676,7 +2676,8 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   const isHO=isHelperContact(task);
 
   const withdrawBtn=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Withdraw</button>`;
-  const cancelHOBtn=`<button onclick="cancelHelpOffer('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">❌ Cancel</button>`;
+  const cancelHOLabel=isPoster?'❌ Cancel':'🚫 Decline';
+  const cancelHOBtn=`<button onclick="cancelHelpOffer('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">${cancelHOLabel}</button>`;
   if(task.status==='claimed'){
     let btns='';
     if(isPoster){
@@ -2785,13 +2786,16 @@ async function cancelHelpOffer(taskId){
     }
   }
   if(convId){
-    const receiverId=taskData.poster_id===pid?taskData.doer_id:taskData.poster_id;
-    await sendSystemMessage(convId,taskId,pid,receiverId,`❌ ${name} cancelled this request.`);
+    const isPoster=taskData.poster_id===pid;
+    const receiverId=isPoster?taskData.doer_id:taskData.poster_id;
+    const sysMsg=isPoster?`❌ ${name} cancelled this request.`:`🚫 ${name} declined this request.`;
+    await sendSystemMessage(convId,taskId,pid,receiverId,sysMsg);
     await sb.from('conversations').update({status:'archived'}).eq('id',convId);
   }
   document.getElementById('chat-modal').classList.remove('open');
   activeChatConvId=null;
-  toast('❌ Request cancelled');
+  const isPosterFinal=taskData.poster_id===pid;
+  toast(isPosterFinal?'❌ Request cancelled':'🚫 Request declined');
   loadMessages();loadJobs();loadMyJobs();
 }
 
