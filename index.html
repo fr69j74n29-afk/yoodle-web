@@ -2314,7 +2314,8 @@ async function loadMyJobs(){
   // for helping tab, also fetch help_offer tasks where I'm the doer
   let helpOfferTasks=[];
   if(myTab==='helping'){
-    const{data:hoData}=await sb.from('tasks').select('*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color)').eq('doer_id',pid).eq('type','help_offer').in('status',['claimed']).order('created_at',{ascending:false});
+    const{data:hoData,error:hoErr}=await sb.from('tasks').select('*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color)').eq('doer_id',pid).eq('type','help_offer').in('status',['claimed']).order('created_at',{ascending:false});
+    if(hoErr)console.warn('help_offer query error:',hoErr.message);
     helpOfferTasks=hoData||[];
   }
 
