@@ -884,6 +884,21 @@ body{
   </div>
 </div>
 
+<!-- CONTACT HELPER MODAL -->
+<div class="modal-ov" id="contact-modal" onclick="if(event.target.id==='contact-modal')document.getElementById('contact-modal').classList.remove('open')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="margin-bottom:4px">💬 Ask a Question</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Send a message to <strong style="color:var(--text)" id="contact-helper-name">—</strong></div>
+    <div class="form-g">
+      <label class="form-lbl">Your message</label>
+      <textarea class="form-ta" id="contact-msg" placeholder="Hi! I saw your profile and wanted to ask about…" style="min-height:100px"></textarea>
+    </div>
+    <button class="btn-primary" onclick="submitContactHelper()">Send Message 💬</button>
+    <button onclick="document.getElementById('contact-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -905,6 +920,78 @@ const CAT_EMOJI = {
   errands: '🏃',
   other: '✨'
 };
+
+function isHelperContact(task){
+  return task?.type === 'help_offer';
+}
+
+let contactHelperId=null;
+let contactHelperName='';
+
+function openContactModal(helperId, helperName){
+  if(!sb||!me)return toast('Sign in to contact helpers');
+  if(helperId===me.id||helperId===myProfileId)return toast("That's you!");
+  contactHelperId=helperId;
+  contactHelperName=helperName;
+  document.getElementById('contact-helper-name').textContent=helperName;
+  document.getElementById('contact-msg').value='';
+  document.getElementById('contact-modal').classList.add('open');
+  document.getElementById('op-modal').classList.remove('open');
+}
+
+async function submitContactHelper(){
+  if(!sb||!me||!contactHelperId)return;
+  const msg=document.getElementById('contact-msg').value.trim();
+  if(!msg)return toast('Please write a message');
+  const btn=document.querySelector('#contact-modal .btn-primary');
+  btn.disabled=true;btn.textContent='Sending…';
+  const pid=myProfileId||me.id;
+
+  // get my name + helper's location for the task anchor
+  const [{data:myProf},{data:helperProf}]=await Promise.all([
+    sb.from('profiles').select('name').eq('id',pid).single(),
+    sb.from('profiles').select('last_lat,last_lng,helper_address').eq('id',contactHelperId).single()
+  ]);
+  const myName=myProf?.name||'Someone';
+
+  // create task anchor: type=help_offer, status=claimed, poster=me, doer=helper
+  const{data:task,error:taskErr}=await sb.from('tasks').insert({
+    poster_id:pid,
+    doer_id:contactHelperId,
+    title:'Help request to '+contactHelperName,
+    description:msg,
+    price:0,
+    category:'other',
+    type:'help_offer',
+    status:'claimed',
+    lat:helperProf?.last_lat||userLat||0,
+    lng:helperProf?.last_lng||userLng||0,
+    address:helperProf?.helper_address||'',
+    expires_at:new Date(Date.now()+30*24*60*60*1000).toISOString()
+  }).select('id').single();
+
+  if(taskErr){btn.disabled=false;btn.textContent='Send Message 💬';return toast('❌ '+taskErr.message);}
+
+  // create conversation: poster=me, applicant=helper
+  const{data:convId,error:convErr}=await sb.rpc('create_conversation',{
+    p_task_id:task.id, p_poster_id:pid, p_applicant_id:contactHelperId
+  });
+  if(convErr)console.warn('Conv error:',convErr.message);
+
+  // send first message
+  await sb.from('messages').insert({
+    conversation_id:convId,
+    task_id:task.id,
+    sender_id:pid,
+    receiver_id:contactHelperId,
+    body:msg
+  });
+
+  document.getElementById('contact-modal').classList.remove('open');
+  btn.disabled=false;btn.textContent='Send Message 💬';
+  toast('✅ Message sent to '+contactHelperName+'!');
+  loadMessages();loadMyJobs();
+}
 
 function normalizeCategory(cat) {
   if (['handyman', 'tech'].includes(cat)) return 'assembly';
@@ -1503,11 +1590,13 @@ async function openOtherProfile(userId){
       const rateLabel=prof.helper_rate_type==='free'||!prof.helper_rate
         ?'🤝 Willing to help free of charge'
         :`💰 $${prof.helper_rate}${prof.helper_rate_type==='hourly'?' / hour':prof.helper_rate_type==='daily'?' / day':' flat rate'}`;
+      const isMe=userId===(myProfileId||me?.id);
       return `<div class="op-bio" style="margin-top:12px;border-top:1px solid var(--border);padding-top:16px">
         <div class="op-bio-lbl" style="color:var(--lime)">💪 Available as Helper</div>
         ${cats.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${cats.map(c=>`<span style="font-size:11px;font-weight:800;color:var(--purple);background:rgba(155,89,212,.12);border:1px solid rgba(155,89,212,.25);border-radius:100px;padding:3px 10px">${c}</span>`).join('')}</div>`:''}
         ${prof.helper_bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(prof.helper_bio)}</div>`:''}
         <div style="font-size:13px;font-weight:800;color:var(--lime)">${rateLabel}</div>
+        ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Helper')}')" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer">💬 Contact Helper</button>`:''}
       </div>`;
     })():''}`;
 }
