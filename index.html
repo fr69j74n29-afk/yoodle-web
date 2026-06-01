@@ -703,6 +703,20 @@ body{
     </div>
   </div>
 
+  <!-- CONTACT HELPER MODAL -->
+  <div class="modal-ov" id="contact-helper-modal" onclick="if(event.target.id==='contact-helper-modal')closeContactHelper()">
+    <div class="modal-sheet">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="modal-handle" style="margin:0"></div>
+        <button onclick="closeContactHelper()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900;line-height:1">✕</button>
+      </div>
+      <div class="modal-title">Contact Helper 💬</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">Introduce yourself and describe what you need help with. This starts a private conversation.</div>
+      <textarea id="contact-helper-msg" class="form-ta" placeholder="Hi! I need help with…" style="height:120px;margin-bottom:16px"></textarea>
+      <button class="btn-primary" id="contact-helper-btn" onclick="submitContactHelper()">Send Message 🚀</button>
+    </div>
+  </div>
+
   <!-- FAB -->
 
 
@@ -1508,11 +1522,85 @@ async function openOtherProfile(userId){
         ${cats.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${cats.map(c=>`<span style="font-size:11px;font-weight:800;color:var(--purple);background:rgba(155,89,212,.12);border:1px solid rgba(155,89,212,.25);border-radius:100px;padding:3px 10px">${c}</span>`).join('')}</div>`:''}
         ${prof.helper_bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(prof.helper_bio)}</div>`:''}
         <div style="font-size:13px;font-weight:800;color:var(--lime)">${rateLabel}</div>
-      </div>`;
+      </div>
+      <button onclick="openContactHelper('${userId}','${esc(prof.name||'Helper')}')" style="width:100%;padding:15px;margin-top:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--teal));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer">💬 Contact Helper</button>`;
     })():''}`;
 }
 
-let browseMode='map'; // 'map' | 'list'
+function isHelperContact(task){
+  return task?.type==='help_offer';
+}
+
+let _contactHelperId=null,_contactHelperName=null;
+
+function openContactHelper(helperId, helperName){
+  _contactHelperId=helperId;
+  _contactHelperName=helperName;
+  document.getElementById('contact-helper-msg').value='';
+  document.getElementById('contact-helper-modal').classList.add('open');
+}
+
+function closeContactHelper(){
+  document.getElementById('contact-helper-modal').classList.remove('open');
+  _contactHelperId=null;_contactHelperName=null;
+}
+
+async function submitContactHelper(){
+  if(!sb||!me)return toast('Not signed in');
+  const msg=document.getElementById('contact-helper-msg').value.trim();
+  if(!msg)return toast('Please write a message first');
+  const btn=document.getElementById('contact-helper-btn');
+  btn.disabled=true;btn.textContent='Sending…';
+
+  const pid=myProfileId||me.id;
+  const expiresAt=new Date(Date.now()+30*24*60*60*1000).toISOString();
+
+  // fetch helper location for task coords
+  const{data:helperProf}=await sb.from('profiles').select('last_lat,last_lng,name').eq('id',_contactHelperId).maybeSingle();
+
+  // create task
+  const{data:task,error:taskErr}=await sb.from('tasks').insert({
+    poster_id:pid,
+    doer_id:_contactHelperId,
+    type:'help_offer',
+    status:'claimed',
+    title:`Help request for ${helperProf?.name||_contactHelperName}`,
+    description:msg,
+    category:'other',
+    price:null,
+    lat:helperProf?.last_lat||null,
+    lng:helperProf?.last_lng||null,
+    show_on_map:false,
+    expires_at:expiresAt
+  }).select().single();
+
+  if(taskErr){btn.disabled=false;btn.textContent='Send Message 🚀';return toast('❌ '+taskErr.message);}
+
+  // create conversation
+  const{data:conv,error:convErr}=await sb.from('conversations').insert({
+    task_id:task.id,
+    applicant_id:_contactHelperId,
+    status:'active'
+  }).select().single();
+
+  if(convErr){btn.disabled=false;btn.textContent='Send Message 🚀';return toast('❌ '+convErr.message);}
+
+  // send first message
+  await sb.from('messages').insert({
+    conversation_id:conv.id,
+    task_id:task.id,
+    sender_id:pid,
+    receiver_id:_contactHelperId,
+    body:msg
+  });
+
+  btn.disabled=false;btn.textContent='Send Message 🚀';
+  closeContactHelper();
+  document.getElementById('op-modal').classList.remove('open');
+  toast('✅ Message sent!');
+  openChat(task.id,`Chat with ${_contactHelperName||helperProf?.name}`,helperProf?.name||_contactHelperName,pid,_contactHelperId,'',conv.id);
+  loadMyJobs();loadMessages();
+}
 
 function toggleBrowseMode(){
   browseMode=browseMode==='map'?'list':'map';
@@ -2216,12 +2304,23 @@ async function loadMyJobs(){
   if(myTab==='posted'){
     q=sb.from('tasks').select('*').eq('poster_id',pid).in('status',['open','claimed']).order('created_at',{ascending:false});
   } else {
-    // fetch applications by this user with task details
     q=sb.from('applications').select('id,status,created_at,tasks!inner(*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color))').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','claimed']).order('created_at',{ascending:false});
   }
   const{data,error}=await q;
   if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
-  if(!data?.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
+
+  // also fetch help_offer tasks where I am the doer (no application row)
+  let helpOfferTasks=[];
+  if(myTab==='helping'){
+    const{data:hot}=await sb.from('tasks')
+      .select('*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color)')
+      .eq('doer_id',pid).eq('type','help_offer').eq('status','claimed')
+      .order('created_at',{ascending:false});
+    helpOfferTasks=hot||[];
+  }
+
+  const combinedData=[...(data||[]),...(myTab==='helping'?helpOfferTasks:[])];
+  if(!combinedData.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
 
   // for posted tab, fetch doer names, applicant counts, and rated task IDs
   let doerNames={};
@@ -2244,30 +2343,37 @@ async function loadMyJobs(){
 
   const now=new Date();
 
-  // for helping tab, render application rows
+  // for helping tab, render application rows + help_offer tasks
   if(myTab==='helping'){
-    g.innerHTML=data.map(app=>{
-      const j=app.tasks;
+    g.innerHTML=combinedData.map(item=>{
+      // help_offer task (direct, no application wrapper)
+      const isHelpOffer=item.type==='help_offer';
+      const j=isHelpOffer?item:item.tasks;
       if(!j)return'';
       const cat=(j.category||'other').toLowerCase();
       const color=CAT_COLOR[cat]||'#9B59D4';
-      const emoji=CAT_EMOJI[cat]||'✨';
+      const poster=isHelpOffer?item.profiles:item.tasks?.profiles;
+
       let appBadge,actionBtn='';
-      if(app.status==='pending'){
+      if(isHelpOffer){
+        appBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">💬 Active</span>`;
+        actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(poster?.name||'Poster')}','${j.poster_id}','${pid}','${poster?.rating||''}','${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+          <button onclick="event.stopPropagation();cancelHelperContact('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">❌ Cancel</button>
+        </div>`;
+      } else if(item.status==='pending'){
         appBadge=`<span style="color:var(--yellow);font-size:12px;font-weight:800">⏳ Pending</span>`;
-        actionBtn=`<button onclick="event.stopPropagation();withdrawApplication('${app.id}')" style="margin-top:10px;width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Withdraw Interest</button>`;
-      } else if(app.status==='assigned'){
+        actionBtn=`<button onclick="event.stopPropagation();withdrawApplication('${item.id}')" style="margin-top:10px;width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Withdraw Interest</button>`;
+      } else if(item.status==='assigned'){
         appBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">🤝 Assigned</span>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(poster?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${poster?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
           <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
         </div>`;
       }
       return `<div class="job-card" style="--jc:${color};cursor:default">
-        <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:4px">
-          ${appBadge||''}
-        </div>
-        <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
+        <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:4px">${appBadge||''}</div>
+        <div class="jc-top"><div class="jc-title">${esc(j.title)}</div>${j.price!=null?`<div class="jc-budget">$${j.price}</div>`:''}</div>
         <div class="jc-desc">${esc(j.description||'')}</div>
         ${actionBtn}
       </div>`;
@@ -2275,18 +2381,24 @@ async function loadMyJobs(){
     return;
   }
 
-  const data2=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
+  const data2=(combinedData||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   g.innerHTML=data2.map(j=>{
-    const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
+    const color=CAT_COLOR[j.category]||'#9B59D4';
     const daysLeft=j.expires_at?Math.ceil((new Date(j.expires_at)-now)/(1000*60*60*24)):null;
-
     const gpsTag=j.status==='open'?(j.location_verified?` · <span style="color:var(--lime);font-size:11px;font-weight:800">✅ GPS</span>`:`· <span style="color:var(--yellow);font-size:11px;font-weight:800">⚠️ Unverified</span>`):'';
     let statusBadge;
-    if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">🤝 Active</span>`;
+    if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">${isHelperContact(j)?'💬 Active':'🤝 Active'}</span>`;
     else statusBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">🟢 Open${daysLeft!==null?` · ${daysLeft}d left`:''}${gpsTag}</span>`;
 
     let actionBtn='';
-    if(j.status==='open'){
+    if(isHelperContact(j)){
+      // help_offer task — only Chat + Cancel
+      const doerName=doerNames[j.doer_id]||'Helper';
+      actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+        <button onclick="event.stopPropagation();cancelHelperContact('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">❌ Cancel</button>
+      </div>`;
+    } else if(j.status==='open'){
       const appCount=applicantCounts[j.id]||0;
       const appBadge=appCount>0?`<div style="margin-top:8px;padding:8px 12px;background:rgba(155,89,212,.12);border:1.5px solid rgba(155,89,212,.3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between">
         <span style="font-size:13px;font-weight:800;color:var(--purple)">👥 ${appCount} interested</span>
@@ -2306,10 +2418,8 @@ async function loadMyJobs(){
     }
 
     return `<div class="job-card" style="--jc:${color};cursor:default">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        ${statusBadge}
-      </div>
-      <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">${statusBadge}</div>
+      <div class="jc-top"><div class="jc-title">${esc(j.title)}</div>${j.price!=null?`<div class="jc-budget">$${j.price}</div>`:''}</div>
       <div class="jc-desc">${esc(j.description||'')}</div>
       ${actionBtn}
     </div>`;
@@ -2544,23 +2654,37 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   actionsEl.innerHTML='';actionsEl.style.display='none';
   if(!sb||!me)return;
   const pid=myProfileId||me.id;
-  const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id').eq('id',taskId).single();
+  const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id,type').eq('id',taskId).single();
   if(!task)return;
 
   const isPoster=task.poster_id===pid;
   const isDoer=task.doer_id===pid;
+  const helpOffer=isHelperContact(task);
 
   const withdrawBtn=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Withdraw</button>`;
+  const cancelBtn=`<button onclick="cancelHelperContact('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">❌ Cancel</button>`;
+
   if(task.status==='claimed'){
     let btns='';
-    if(isPoster){
-      btns+=`<button onclick="chatComplete('${taskId}','${task.doer_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Mark Complete</button>`;
-      btns+=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
-    } else if(isDoer){
-      btns+=withdrawBtn;
+    if(helpOffer){
+      // both parties can cancel, poster can also mark complete
+      if(isPoster){
+        btns+=`<button onclick="chatComplete('${taskId}','${task.doer_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Mark Complete</button>`;
+        btns+=cancelBtn;
+      } else if(isDoer){
+        btns+=`<button onclick="chatComplete('${taskId}','${pid}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Mark Complete</button>`;
+        btns+=cancelBtn;
+      }
+    } else {
+      if(isPoster){
+        btns+=`<button onclick="chatComplete('${taskId}','${task.doer_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Mark Complete</button>`;
+        btns+=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
+      } else if(isDoer){
+        btns+=withdrawBtn;
+      }
     }
     if(btns){actionsEl.innerHTML=btns;actionsEl.style.display='flex';}
-  } else if(task.status==='open'&&!isPoster){
+  } else if(task.status==='open'&&!isPoster&&!helpOffer){
     const{data:app}=await sb.from('applications').select('id,status').eq('task_id',taskId).eq('applicant_id',pid).maybeSingle();
     if(app&&app.status==='pending'){
       actionsEl.innerHTML=withdrawBtn;
@@ -2633,6 +2757,16 @@ async function claimFromChat(taskId){
     actionsEl.style.display='flex';
   }
   loadMessages();loadJobs();
+}
+
+async function cancelHelperContact(taskId){
+  if(!sb||!me)return;
+  if(!confirm('Cancel this help request? No rating will be given.'))return;
+  const{error}=await sb.from('tasks').update({status:'cancelled'}).eq('id',taskId);
+  if(error)return toast('❌ '+error.message);
+  toast('Help request cancelled');
+  document.getElementById('chat-modal').classList.remove('open');
+  loadMyJobs();loadMessages();
 }
 
 async function sendSystemMessage(convId,taskId,senderId,receiverId,body){
