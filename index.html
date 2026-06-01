@@ -1576,6 +1576,7 @@ async function submitContactHelper(){
 
   const{data:conv,error:convErr}=await sb.from('conversations').insert({
     task_id:task.id,
+    poster_id:pid,
     applicant_id:_contactHelperId,
     status:'active'
   }).select().single();
