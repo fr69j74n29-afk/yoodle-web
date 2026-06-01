@@ -2417,7 +2417,6 @@ async function loadMyJobs(){
       const doerName=doerNames[j.doer_id]||'Helper';
       if(isHelperContact(j)){
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
           <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
           <button onclick="event.stopPropagation();cancelHelpOffer('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">❌ Cancel</button>
         </div>`;
