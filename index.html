@@ -1014,7 +1014,15 @@ function initMap() {
   // Set coords immediately so loadJobs works on first showApp call
   userLat=_startLat; userLng=_startLng;
 
-  map=L.map('map',{center:[_startLat,_startLng],zoom:_startZoom,zoomSnap:0,zoomControl:false,attributionControl:false});
+  // Restore cached GPS if fresh — avoids re-tap after reload/idle
+  const _cachedGps=_restoreCachedGps();
+  if(_cachedGps){
+    gpsLat=_cachedGps.lat; gpsLng=_cachedGps.lng;
+    userLat=gpsLat; userLng=gpsLng;
+    locationSource='gps';
+  }
+
+  map=L.map('map',{center:[userLat,userLng],zoom:_startZoom,zoomSnap:0,zoomControl:false,attributionControl:false});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
   L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
 
@@ -1057,6 +1065,12 @@ function initMap() {
     map.invalidateSize();
     updateZoomLimits();
     updateCircleOverlay();
+    // Show GPS dot + located state if restored from cache
+    if(gpsLat&&gpsLng){
+      updateGpsDot();
+      const _btn=document.getElementById('map-locate-btn');
+      if(_btn)_btn.classList.add('located');
+    }
   },200);
 }
 
@@ -1098,6 +1112,20 @@ let ratingTaskId=null, ratingRatedId=null, selectedRating=0;
 let map, userMarker, radiusCircle, jobMarkers=[], allJobs=[], myAppliedTaskIds=new Set();
 let userLat=null, userLng=null;
 let gpsLat=null, gpsLng=null, locVerified=false;
+
+// ── GPS localStorage cache (survives idle / background) ──
+const GPS_CACHE_KEY='yoodle_gps';
+const GPS_CACHE_MAX_AGE=30*60*1000; // 30 min
+function _cacheGps(lat,lng){
+  try{localStorage.setItem(GPS_CACHE_KEY,JSON.stringify({lat,lng,ts:Date.now()}));}catch(e){}
+}
+function _restoreCachedGps(){
+  try{
+    const s=JSON.parse(localStorage.getItem(GPS_CACHE_KEY)||'null');
+    if(s&&s.lat&&s.lng&&(Date.now()-s.ts)<GPS_CACHE_MAX_AGE) return s;
+  }catch(e){}
+  return null;
+}
 
 window.addEventListener('DOMContentLoaded', () => {
   // Read notification deep-link params (cold start via notification tap)
@@ -1181,6 +1209,7 @@ function locateUser() {
       if(!_hasFirstPosition){
         _hasFirstPosition=true;
         gpsLat=newLat; gpsLng=newLng;
+        _cacheGps(newLat,newLng);
         locationSource='gps';
         if(btn){btn.classList.remove('locating');btn.classList.add('located');}
         updateGpsDot();
@@ -1189,6 +1218,7 @@ function locateUser() {
         _resolved=true;
         clearTimeout(_safetyTimer);
         gpsLat=newLat; gpsLng=newLng;
+        _cacheGps(newLat,newLng);
         updateGpsDot();
         if(haversineKm(userLat,userLng,newLat,newLng)*1000>50)
           map.flyTo([newLat,newLng],map.getZoom());
@@ -1765,9 +1795,20 @@ function startUnreadPoller(){
 function _onVisibility(){
   if(document.visibilityState==='visible'){
     refreshUnreadCount();
+    // Restore GPS cache if in-memory was lost (e.g. post-form reset)
+    if(!gpsLat||!gpsLng){
+      const _c=_restoreCachedGps();
+      if(_c){gpsLat=_c.lat;gpsLng=_c.lng;locationSource='gps';}
+    }
     if(map){
+      // Re-anchor to GPS so map doesn't drift
+      if(gpsLat&&gpsLng){
+        userLat=gpsLat;userLng=gpsLng;
+        map.setView([gpsLat,gpsLng],map.getZoom(),{animate:false});
+        updateGpsDot();
+      }
       setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},150);
-      setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},600);
+      setTimeout(()=>{map.invalidateSize();updateCircleOverlay();if(me)loadJobs();},600);
     }
   }
 }
