@@ -1658,7 +1658,11 @@ function nav(view) {
 
   // close any open modals when navigating
   document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
-  if(view==='map'||(view==='browse'&&browseMode==='map')){setTimeout(()=>{map.invalidateSize();updateCircleOverlay();updateRadiusCounts();updateNotifNudge();},100);}
+  if(view==='map'||(view==='browse'&&browseMode==='map')){setTimeout(()=>{
+    // Re-anchor to GPS before invalidateSize to prevent drift
+    if(gpsLat&&gpsLng){userLat=gpsLat;userLng=gpsLng;map.setView([gpsLat,gpsLng],map.getZoom(),{animate:false});updateGpsDot();}
+    map.invalidateSize();updateCircleOverlay();updateRadiusCounts();updateNotifNudge();
+  },100);}
   if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
   if(view==='post')resetPost();
   if(view==='messages'){loadMessages().then(()=>refreshUnreadCount());}
@@ -1801,14 +1805,18 @@ function _onVisibility(){
       if(_c){gpsLat=_c.lat;gpsLng=_c.lng;locationSource='gps';}
     }
     if(map){
-      // Re-anchor to GPS so map doesn't drift
-      if(gpsLat&&gpsLng){
-        userLat=gpsLat;userLng=gpsLng;
-        map.setView([gpsLat,gpsLng],map.getZoom(),{animate:false});
-        updateGpsDot();
+      const _mapActive=document.getElementById('app-map')?.classList.contains('active');
+      if(_mapActive){
+        // Re-anchor to GPS so map doesn't drift
+        if(gpsLat&&gpsLng){
+          userLat=gpsLat;userLng=gpsLng;
+          map.setView([gpsLat,gpsLng],map.getZoom(),{animate:false});
+          updateGpsDot();
+        }
+        setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},150);
+        setTimeout(()=>{map.invalidateSize();updateCircleOverlay();if(me)loadJobs();},600);
       }
-      setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},150);
-      setTimeout(()=>{map.invalidateSize();updateCircleOverlay();if(me)loadJobs();},600);
+      // If map tab is hidden, nav() will re-anchor when user switches to it
     }
   }
 }
