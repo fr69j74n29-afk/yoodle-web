@@ -579,6 +579,291 @@ body::before {
   position: relative;
   height: 160px;
 }
+
+/* ACTIVITY SECTION */
+.activity-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.activity-tab {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.activity-tab:hover { border-color: rgba(155,89,212,.4); color: var(--text); }
+.activity-tab.active { background: rgba(155,89,212,.12); border-color: var(--purple); color: var(--purple); }
+
+.activity-panel { min-height: 60px; }
+
+.activity-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 10px;
+  transition: border-color .2s;
+}
+.activity-card:hover { border-color: rgba(155,89,212,.3); }
+
+.ac-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.ac-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ac-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 100px;
+  flex-shrink: 0;
+}
+.ac-badge.open { background: rgba(163,230,53,.12); color: #A3E635; border: 1px solid rgba(163,230,53,.25); }
+.ac-badge.claimed { background: rgba(6,182,212,.12); color: #06B6D4; border: 1px solid rgba(6,182,212,.25); }
+.ac-badge.completed { background: rgba(155,89,212,.12); color: #9B59D4; border: 1px solid rgba(155,89,212,.25); }
+.ac-badge.cancelled { background: rgba(102,102,128,.12); color: #666680; border: 1px solid rgba(102,102,128,.25); }
+
+.ac-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.ac-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ac-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.btn-admin-msg {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(155,89,212,.3);
+  background: rgba(155,89,212,.08);
+  color: var(--purple);
+  cursor: pointer;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.btn-admin-msg:hover { background: rgba(155,89,212,.18); border-color: var(--purple); }
+
+.ac-helper-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ac-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.ac-helper-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ac-helper-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.ac-helper-detail {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.ac-helper-bio {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+.activity-empty .ae-icon { font-size: 36px; margin-bottom: 10px; }
+.activity-empty .ae-title { font-size: 14px; font-weight: 800; margin-bottom: 4px; color: var(--text); }
+.activity-empty .ae-sub { font-size: 12px; }
+
+/* ADMIN MESSAGE MODAL */
+.admin-msg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.admin-msg-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.admin-msg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.admin-msg-header h3 {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.admin-msg-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+}
+.admin-msg-close:hover { border-color: var(--purple); color: var(--text); }
+
+.admin-msg-context {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.admin-msg-textarea {
+  width: 100%;
+  min-height: 100px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  resize: vertical;
+  outline: none;
+  transition: border-color .15s;
+  margin-bottom: 16px;
+}
+.admin-msg-textarea:focus { border-color: var(--purple); }
+
+.btn-send-admin-msg {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, var(--purple), #7C3AED);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: opacity .15s, transform .15s;
+}
+.btn-send-admin-msg:hover { opacity: .9; transform: translateY(-1px); }
+.btn-send-admin-msg:disabled { opacity: .4; pointer-events: none; }
+
+.admin-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  z-index: 300;
+  transition: transform .3s ease;
+  pointer-events: none;
+}
+.admin-toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -729,6 +1014,17 @@ body::before {
       </div>
     </div>
 
+    <!-- RECENT ACTIVITY -->
+    <div class="section-title">RECENT ACTIVITY — LAST 48 HOURS</div>
+
+    <div class="activity-tabs">
+      <button class="activity-tab active" onclick="switchActivityTab(this,'jobs')">📋 Jobs <span id="activity-jobs-count" style="opacity:.5"></span></button>
+      <button class="activity-tab" onclick="switchActivityTab(this,'helpers')">🙋 Helpers <span id="activity-helpers-count" style="opacity:.5"></span></button>
+    </div>
+
+    <div id="activity-jobs" class="activity-panel"></div>
+    <div id="activity-helpers" class="activity-panel" style="display:none"></div>
+
     <div class="dash-footer">
       <div class="last-updated" id="last-updated">—</div>
       <button class="btn-refresh" id="refresh-btn" onclick="loadStats()">↻ Refresh</button>
@@ -736,6 +1032,22 @@ body::before {
 
   </div>
 </div>
+
+<!-- ADMIN MESSAGE MODAL -->
+<div class="admin-msg-overlay" id="admin-msg-modal" style="display:none">
+  <div class="admin-msg-card">
+    <div class="admin-msg-header">
+      <h3 id="admin-msg-title">Send Message</h3>
+      <button class="admin-msg-close" onclick="closeAdminMsg()">✕</button>
+    </div>
+    <div class="admin-msg-context" id="admin-msg-context"></div>
+    <textarea class="admin-msg-textarea" id="admin-msg-body" placeholder="Type your message…"></textarea>
+    <button class="btn-send-admin-msg" id="admin-msg-send" onclick="sendAdminMsg()">Send Message</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="admin-toast" id="admin-toast"></div>
 
 <script>
 const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
@@ -861,6 +1173,9 @@ async function loadStats() {
 
     // Growth chart
     renderGrowthChart(recentProfiles || []);
+
+    // Reload activity section
+    loadRecentActivity();
 
   } catch (err) {
     console.error('Stats error:', err);
@@ -991,6 +1306,226 @@ function renderGrowthChart(profiles) {
   });
 }
 
+// ── ADMIN TOAST ──
+function adminToast(msg) {
+  const t = document.getElementById('admin-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function timeAgo(d) {
+  const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+
+// ── RECENT ACTIVITY ──
+let recentJobs = [];
+let recentHelpers = [];
+let currentActivityTab = 'jobs';
+let adminUserId = null;   // set after auth
+
+function switchActivityTab(btn, tab) {
+  document.querySelectorAll('.activity-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentActivityTab = tab;
+  document.getElementById('activity-jobs').style.display = tab === 'jobs' ? 'block' : 'none';
+  document.getElementById('activity-helpers').style.display = tab === 'helpers' ? 'block' : 'none';
+}
+
+async function loadRecentActivity() {
+  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const jobsEl = document.getElementById('activity-jobs');
+  const helpersEl = document.getElementById('activity-helpers');
+  jobsEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  helpersEl.innerHTML = jobsEl.innerHTML;
+
+  try {
+    const [{ data: jobs, error: jobErr }, { data: helpers, error: helpErr }] = await Promise.all([
+      sb.from('tasks')
+        .select('id, title, description, price, status, address, created_at, poster_id, category')
+        .gte('created_at', cutoff)
+        .order('created_at', { ascending: false }),
+      sb.from('profiles')
+        .select('id, name, rating, task_count, bio, helper_address, avatar_color, phone, created_at, visible_on_map')
+        .eq('visible_on_map', true)
+        .gte('created_at', cutoff)
+        .order('created_at', { ascending: false })
+    ]);
+
+    recentJobs = jobs || [];
+    recentHelpers = helpers || [];
+
+    // Fetch poster profiles for jobs
+    const posterIds = [...new Set(recentJobs.map(j => j.poster_id).filter(Boolean))];
+    const posterProfiles = {};
+    if (posterIds.length) {
+      const { data: profiles } = await sb.from('profiles').select('id, name, rating, avatar_color, phone').in('id', posterIds);
+      (profiles || []).forEach(p => posterProfiles[p.id] = p);
+    }
+
+    // Render jobs
+    document.getElementById('activity-jobs-count').textContent = recentJobs.length ? `(${recentJobs.length})` : '';
+    if (!recentJobs.length) {
+      jobsEl.innerHTML = '<div class="activity-empty"><div class="ae-icon">📋</div><div class="ae-title">No jobs posted</div><div class="ae-sub">No new job posts in the last 48 hours</div></div>';
+    } else {
+      jobsEl.innerHTML = recentJobs.map(j => {
+        const poster = posterProfiles[j.poster_id] || {};
+        const statusClass = (j.status || 'open').toLowerCase();
+        const price = j.price ? `$${Number(j.price).toFixed(0)}` : 'Free';
+        return `<div class="activity-card">
+          <div class="ac-top">
+            <div class="ac-title">${esc(j.title || 'Untitled')}</div>
+            <span class="ac-badge ${statusClass}">${statusClass}</span>
+          </div>
+          <div class="ac-meta">
+            <span>👤 ${esc(poster.name || 'Unknown')}</span>
+            <span>${poster.rating ? '⭐ ' + Number(poster.rating).toFixed(1) : 'No rating'}</span>
+            <span>💰 ${price}</span>
+            <span>🕐 ${timeAgo(j.created_at)}</span>
+          </div>
+          ${j.description ? `<div class="ac-desc">${esc(j.description)}</div>` : ''}
+          <div class="ac-footer">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${j.address ? '📍 ' + esc(j.address) : ''}</span>
+            <button class="btn-admin-msg" onclick="openAdminMsg('job','${j.poster_id}','${escAttr(poster.name || 'User')}','${j.id}','${escAttr(j.title || '')}')">💬 Message Poster</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Render helpers
+    document.getElementById('activity-helpers-count').textContent = recentHelpers.length ? `(${recentHelpers.length})` : '';
+    if (!recentHelpers.length) {
+      helpersEl.innerHTML = '<div class="activity-empty"><div class="ae-icon">🙋</div><div class="ae-title">No new helpers</div><div class="ae-sub">No new helper profiles in the last 48 hours</div></div>';
+    } else {
+      helpersEl.innerHTML = recentHelpers.map(h => {
+        const color = h.avatar_color || '#9B59D4';
+        const initial = (h.name || '?')[0].toUpperCase();
+        return `<div class="activity-card">
+          <div class="ac-helper-row">
+            <div class="ac-avatar" style="background:${color}">${initial}</div>
+            <div class="ac-helper-info">
+              <div class="ac-helper-name">${esc(h.name || 'Unknown')}</div>
+              <div class="ac-helper-detail">
+                ${h.rating ? '⭐ ' + Number(h.rating).toFixed(1) : 'No rating'}
+                ${h.task_count ? ' · ' + h.task_count + ' tasks' : ''}
+                · Joined ${timeAgo(h.created_at)}
+                ${h.phone ? ' · 📱 ' + esc(h.phone) : ''}
+              </div>
+            </div>
+            <button class="btn-admin-msg" onclick="openAdminMsg('helper','${h.id}','${escAttr(h.name || 'Helper')}','','')">💬 Message</button>
+          </div>
+          ${h.helper_address ? `<div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:8px;margin-left:54px">📍 ${esc(h.helper_address)}</div>` : ''}
+          ${h.bio ? `<div class="ac-helper-bio" style="margin-left:54px">${esc(h.bio)}</div>` : ''}
+        </div>`;
+      }).join('');
+    }
+  } catch (err) {
+    console.error('Activity load error:', err);
+    jobsEl.innerHTML = '<div class="activity-empty"><div class="ae-icon">😕</div><div class="ae-title">Error loading</div><div class="ae-sub">' + esc(err.message) + '</div></div>';
+    helpersEl.innerHTML = jobsEl.innerHTML;
+  }
+}
+
+// ── ADMIN MESSAGING ──
+let adminMsgData = null;
+
+function openAdminMsg(type, userId, userName, taskId, taskTitle) {
+  adminMsgData = { type, userId, userName, taskId, taskTitle };
+  const titleEl = document.getElementById('admin-msg-title');
+  const ctxEl = document.getElementById('admin-msg-context');
+  const bodyEl = document.getElementById('admin-msg-body');
+  bodyEl.value = '';
+
+  if (type === 'job') {
+    titleEl.textContent = 'Message Job Poster';
+    ctxEl.innerHTML = `TO: ${esc(userName)}<br>RE: "${esc(taskTitle)}"<br><span style="font-size:9px;opacity:.6">This message will appear in their Messages tab, linked to this job.</span>`;
+  } else {
+    titleEl.textContent = 'Message Helper';
+    ctxEl.innerHTML = `TO: ${esc(userName)}<br>RE: Helper profile<br><span style="font-size:9px;opacity:.6">This will create a conversation in their Messages tab.</span>`;
+  }
+  document.getElementById('admin-msg-modal').style.display = 'flex';
+  bodyEl.focus();
+}
+
+function closeAdminMsg() {
+  document.getElementById('admin-msg-modal').style.display = 'none';
+  adminMsgData = null;
+}
+
+async function sendAdminMsg() {
+  if (!adminMsgData || !adminUserId) return;
+  const body = document.getElementById('admin-msg-body').value.trim();
+  if (!body) return adminToast('⚠️ Message cannot be empty');
+
+  const btn = document.getElementById('admin-msg-send');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    const { type, userId, userName, taskId, taskTitle } = adminMsgData;
+    let targetTaskId = taskId;
+    let posterId, applicantId;
+
+    if (type === 'helper') {
+      // Create a lightweight help_offer task for the conversation
+      const { data: newTask, error: taskErr } = await sb.from('tasks').insert({
+        poster_id: adminUserId,
+        title: 'Message from Yoodle Team',
+        description: 'A message from the Yoodle admin team about your helper profile.',
+        price: 0,
+        category: 'other',
+        status: 'claimed',
+        doer_id: userId,
+        lat: 43.6532,
+        lng: -79.3832
+      }).select('id').single();
+      if (taskErr) throw taskErr;
+      targetTaskId = newTask.id;
+      posterId = adminUserId;
+      applicantId = userId;
+    } else {
+      // Job: admin is the applicant reaching out to the poster
+      posterId = userId;
+      applicantId = adminUserId;
+    }
+
+    // Create conversation
+    const { data: convId, error: convErr } = await sb.rpc('create_conversation', {
+      p_task_id: targetTaskId,
+      p_poster_id: posterId,
+      p_applicant_id: applicantId
+    });
+    if (convErr) throw convErr;
+
+    // Insert message
+    const { error: msgErr } = await sb.from('messages').insert({
+      conversation_id: convId,
+      task_id: targetTaskId,
+      sender_id: adminUserId,
+      receiver_id: userId,
+      body: body
+    });
+    if (msgErr) throw msgErr;
+
+    closeAdminMsg();
+    adminToast('✅ Message sent to ' + userName);
+  } catch (err) {
+    console.error('Send admin message error:', err);
+    adminToast('❌ ' + (err.message || 'Failed to send'));
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Send Message';
+}
+
 // ── AUTH STATE HANDLER ──
 // Supabase v2 fires INITIAL_SESSION (possibly null) before the OAuth code
 // exchange completes, then SIGNED_IN once tokens are ready. TOKEN_REFRESHED
@@ -1016,9 +1551,11 @@ sb.auth.onAuthStateChange(async (_event, session) => {
         return;
       }
       dashboardReady = true;
+      adminUserId = session.user.id;
       populateUser(session.user);
       show('screen-dashboard');
       loadStats();
+      loadRecentActivity();
     } catch (err) {
       console.error('Auth handler error:', err);
       dashboardReady = false;
