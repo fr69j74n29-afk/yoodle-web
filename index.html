@@ -109,8 +109,42 @@ body{
   border-bottom:1px solid var(--border);z-index:100;flex-shrink:0;
 }
 .top-wm{font-size:30px}
+.top-right{display:flex;align-items:center;gap:8px}
+.pts-badge{display:flex;align-items:center;gap:5px;background:var(--surface2);border:1.5px solid var(--border);border-radius:100px;padding:6px 14px 6px 10px;cursor:pointer;transition:transform .15s}
+.pts-badge:active{transform:scale(.95)}
+.pts-ico{font-size:16px;line-height:1}
+.pts-val{font-size:14px;font-weight:900;color:var(--yellow)}
+.pts-new{font-size:9px;font-weight:900;color:var(--bg);background:var(--lime);border-radius:100px;padding:2px 6px;text-transform:uppercase;letter-spacing:.5px;animation:pts-pulse 2s ease-in-out infinite}
+@keyframes pts-pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .top-avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--purple);overflow:hidden;cursor:pointer;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:var(--purple);flex-shrink:0}
 .top-avatar img{width:100%;height:100%;object-fit:cover}
+
+/* ── REFERRAL MODAL ── */
+.ref-modal{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:1100;display:none;align-items:flex-end;justify-content:center}
+.ref-modal.open{display:flex}
+.ref-sheet{width:100%;max-width:480px;background:var(--surface);border-radius:28px 28px 0 0;padding:28px 24px max(28px,calc(var(--sab) + 16px));max-height:85dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ref-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.ref-title{font-size:22px;font-weight:900}
+.ref-close{width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900}
+.ref-balance{text-align:center;background:linear-gradient(135deg,rgba(155,89,212,.15),rgba(6,182,212,.15));border:1.5px solid rgba(155,89,212,.3);border-radius:20px;padding:24px;margin-bottom:20px}
+.ref-pts-big{font-size:48px;font-weight:900;color:var(--yellow);line-height:1}
+.ref-pts-label{font-size:13px;color:var(--muted);font-weight:800;margin-top:4px}
+.ref-stats{display:flex;gap:10px;margin-bottom:20px}
+.ref-stat{flex:1;background:var(--surface2);border-radius:14px;padding:14px;text-align:center}
+.ref-stat-v{font-size:20px;font-weight:900;color:var(--lime)}
+.ref-stat-l{font-size:11px;color:var(--muted);font-weight:800;margin-top:2px}
+.ref-how{margin-bottom:20px}
+.ref-how-t{font-size:15px;font-weight:900;margin-bottom:10px}
+.ref-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+.ref-step-n{width:24px;height:24px;border-radius:50%;background:var(--purple);color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ref-step-t{font-size:13px;color:var(--muted);font-weight:700;line-height:1.5}
+.ref-link-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ref-link-url{flex:1;font-size:13px;font-weight:800;color:var(--text);word-break:break-all}
+.ref-copy-btn{background:var(--purple);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:900;cursor:pointer;white-space:nowrap;font-family:inherit}
+.ref-share-btn{width:100%;background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit}
+.ref-coming{background:var(--surface2);border-radius:14px;padding:16px;margin-top:16px}
+.ref-coming-t{font-size:13px;font-weight:900;margin-bottom:6px;color:var(--teal)}
+.ref-coming-d{font-size:12px;color:var(--muted);font-weight:700;line-height:1.5}
 
 /* VIEWS */
 .app-view{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden}
@@ -459,6 +493,13 @@ body{
 <div id="view-main">
   <div class="top-bar">
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
+    <div class="top-right">
+      <div class="pts-badge" onclick="openReferralModal()" id="pts-badge" style="display:none">
+        <span class="pts-ico">✨</span>
+        <span class="pts-val" id="pts-val">0</span>
+        <span class="pts-new" id="pts-new">New</span>
+      </div>
+    </div>
   </div>
 
   <!-- MAP VIEW -->
@@ -919,7 +960,45 @@ body{
       <textarea class="form-ta" id="contact-msg" placeholder="Hi! I saw your profile and wanted to ask about…" style="min-height:100px"></textarea>
     </div>
     <button class="btn-primary" onclick="submitContactHelper()">Send Message 💬</button>
-    <button onclick="document.getElementById('contact-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<!-- REFERRAL POINTS MODAL -->
+<div class="ref-modal" id="ref-modal" onclick="if(event.target.id==='ref-modal')closeReferralModal()">
+  <div class="ref-sheet">
+    <div class="ref-header">
+      <div class="ref-title">✨ Yoodle Points</div>
+      <button class="ref-close" onclick="closeReferralModal()">✕</button>
+    </div>
+    <div class="ref-balance">
+      <div class="ref-pts-big" id="ref-pts-big">0</div>
+      <div class="ref-pts-label">points</div>
+    </div>
+    <div class="ref-stats">
+      <div class="ref-stat">
+        <div class="ref-stat-v" id="ref-count">0</div>
+        <div class="ref-stat-l">Friends Referred</div>
+      </div>
+      <div class="ref-stat">
+        <div class="ref-stat-v" id="ref-earned">0</div>
+        <div class="ref-stat-l">Points Earned</div>
+      </div>
+    </div>
+    <div class="ref-how">
+      <div class="ref-how-t">How It Works</div>
+      <div class="ref-step"><div class="ref-step-n">1</div><div class="ref-step-t">Share your link with friends and neighbours</div></div>
+      <div class="ref-step"><div class="ref-step-n">2</div><div class="ref-step-t">They sign up using your link — you <strong style="color:var(--lime)">both</strong> get <strong style="color:var(--yellow)">10 points</strong></div></div>
+      <div class="ref-step"><div class="ref-step-n">3</div><div class="ref-step-t">Use points to boost job posts and unlock perks (coming soon!)</div></div>
+    </div>
+    <div class="ref-link-box">
+      <div class="ref-link-url" id="ref-link-url">yoodle.ca?ref=...</div>
+      <button class="ref-copy-btn" onclick="copyRefLink()">Copy</button>
+    </div>
+    <button class="ref-share-btn" onclick="shareRefLink()">Share Your Link 🚀</button>
+    <div class="ref-coming">
+      <div class="ref-coming-t">🔜 Coming Soon</div>
+      <div class="ref-coming-d">Bump up your job posts so more helpers see them, priority badges, and more ways to earn and spend points.</div>
+    </div>
   </div>
 </div>
 
@@ -1152,13 +1231,19 @@ function _restoreCachedGps(){
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Read notification deep-link params (cold start via notification tap)
+  // Read URL params (notification deep-link + referral code)
   const _notifParams = new URLSearchParams(window.location.search);
   const _notifTaskId = _notifParams.get('task_id');
   const _notifConvId = _notifParams.get('conv_id');
+  const _refCode = _notifParams.get('ref');
+  if(_refCode){
+    localStorage.setItem('yoodle_ref', _refCode);
+  }
   if(_notifTaskId){
     window._pendingNotifTaskId = _notifTaskId;
     window._pendingNotifConvId = _notifConvId;
+  }
+  if(_notifTaskId || _refCode){
     window.history.replaceState({}, '', '/');
   }
   if(window.navigator.standalone===true||window.matchMedia('(display-mode:standalone)').matches){
@@ -1724,6 +1809,8 @@ async function showApp(){
   loadJobs();
   subscribeToMessages();
   registerOneSignal();
+  processReferral();
+  loadPoints();
   setTimeout(async()=>{
     if(window._pendingNotifTaskId){
       const tid=window._pendingNotifTaskId;
@@ -3481,6 +3568,94 @@ async function submitRating(){
   document.getElementById('rating-modal').classList.remove('open');
   toast('⭐ Rating submitted!');
   loadMyJobs();
+}
+
+// ── REFERRAL POINTS SYSTEM ──
+let myPoints=0, myRefCode='', myRefCount=0;
+const REF_SEEN_KEY='yoodle_pts_seen';
+
+async function processReferral(){
+  if(!sb||!me)return;
+  const refCode=localStorage.getItem('yoodle_ref');
+  if(!refCode)return;
+  localStorage.removeItem('yoodle_ref');
+  try{
+    const pid=myProfileId||me.id;
+    const{data}=await sb.rpc('process_referral',{ref_code:refCode,new_user_id:pid});
+    if(data?.ok){
+      toast('🎉 Welcome bonus! You got 10 points!');
+      loadPoints();
+    }
+  }catch(e){console.log('Referral processing:',e);}
+}
+
+async function loadPoints(){
+  if(!sb||!me)return;
+  const pid=myProfileId||me.id;
+  try{
+    const{data}=await sb.from('profiles').select('points,referral_code').eq('id',pid).maybeSingle();
+    if(!data)return;
+    myPoints=data.points||0;
+    myRefCode=data.referral_code||'';
+    // count referrals
+    const{count}=await sb.from('referrals').select('id',{count:'exact',head:true}).eq('referrer_id',pid);
+    myRefCount=count||0;
+    // update UI
+    const badge=document.getElementById('pts-badge');
+    const valEl=document.getElementById('pts-val');
+    const newEl=document.getElementById('pts-new');
+    if(badge){
+      badge.style.display='flex';
+      valEl.textContent=myPoints;
+      // show "New" badge until user has opened the modal once
+      const seen=localStorage.getItem(REF_SEEN_KEY);
+      newEl.style.display=seen?'none':'inline';
+    }
+  }catch(e){console.log('loadPoints:',e);}
+}
+
+function openReferralModal(){
+  // mark as seen
+  localStorage.setItem(REF_SEEN_KEY,'1');
+  const newEl=document.getElementById('pts-new');
+  if(newEl)newEl.style.display='none';
+  // populate modal
+  document.getElementById('ref-pts-big').textContent=myPoints;
+  document.getElementById('ref-count').textContent=myRefCount;
+  document.getElementById('ref-earned').textContent=myRefCount*10;
+  const link='yoodle.ca?ref='+myRefCode;
+  document.getElementById('ref-link-url').textContent=link;
+  document.getElementById('ref-modal').classList.add('open');
+}
+
+function closeReferralModal(){
+  document.getElementById('ref-modal').classList.remove('open');
+}
+
+function copyRefLink(){
+  const link='https://yoodle.ca?ref='+myRefCode;
+  navigator.clipboard.writeText(link).then(()=>{
+    toast('📋 Link copied!');
+  }).catch(()=>{
+    // fallback
+    const ta=document.createElement('textarea');
+    ta.value=link;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('📋 Link copied!');
+  });
+}
+
+async function shareRefLink(){
+  const link='https://yoodle.ca?ref='+myRefCode;
+  const text='Join me on Yoodle — the free neighbourhood app for odd jobs! We both get 10 points when you sign up 🎉';
+  if(navigator.share){
+    try{
+      await navigator.share({title:'Join Yoodle!',text:text,url:link});
+    }catch(e){}
+  }else{
+    copyRefLink();
+  }
 }
 </script>
 
