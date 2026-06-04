@@ -829,15 +829,16 @@ body{
   </div>
 </div>
 
-<!-- CANCEL JOB CONFIRMATION MODAL -->
+<!-- CANCEL CONFIRMATION MODAL -->
 <div class="modal-ov" id="cancel-confirm-modal" onclick="if(event.target.id==='cancel-confirm-modal')document.getElementById('cancel-confirm-modal').classList.remove('open')">
   <div class="modal-sheet" style="text-align:center">
     <div class="modal-handle"></div>
     <div style="font-size:40px;margin-bottom:12px">🗑️</div>
-    <div class="modal-title" style="margin-bottom:8px">Cancel this job?</div>
-    <div style="font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.5">This will remove the job from the map and notify anyone who applied. This can't be undone.</div>
+    <div class="modal-title" style="margin-bottom:8px" id="cancel-confirm-title">Cancel this job?</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.5" id="cancel-confirm-desc">This will remove the job from the map and notify anyone who applied. This can't be undone.</div>
     <input type="hidden" id="cancel-confirm-job-id">
-    <button onclick="confirmCancelJob()" style="width:100%;padding:16px;border-radius:var(--radius);background:#EF4444;border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer">Yes, cancel job</button>
+    <input type="hidden" id="cancel-confirm-type" value="job">
+    <button onclick="confirmCancelJob()" style="width:100%;padding:16px;border-radius:var(--radius);background:#EF4444;border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer" id="cancel-confirm-btn">Yes, cancel job</button>
     <button onclick="document.getElementById('cancel-confirm-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Keep it</button>
   </div>
 </div>
@@ -2447,15 +2448,20 @@ async function loadMyJobs(){
     const hoCards=helpOfferTasks.map(j=>{
       const color=CAT_COLOR['other']||'#9B59D4';
       const posterName=j.profiles?.name||'Neighbour';
-      return `<div class="job-card" style="--jc:${color};cursor:default">
-        <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:4px">
+      return `<div class="job-card" style="--jc:${color};cursor:default;overflow:visible">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
           <span style="color:var(--teal);font-size:12px;font-weight:800">💬 Help Request</span>
+          <div class="card-menu-wrap">
+            <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-ho-${j.id}')" aria-label="More options">⋮</button>
+            <div class="card-menu-drop" id="cm-ho-${j.id}">
+              <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','help_offer')">🚫 Decline</button>
+            </div>
+          </div>
         </div>
         <div class="jc-top"><div class="jc-title">${esc(j.title)}</div></div>
         <div class="jc-desc">${esc(j.description||'')}</div>
         <div style="display:flex;gap:8px;margin-top:10px">
           <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
-          <button onclick="event.stopPropagation();cancelHelpOffer('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🚫 Decline</button>
         </div>
       </div>`;
     }).join('');
@@ -2494,9 +2500,14 @@ async function loadMyJobs(){
     } else if(j.status==='claimed'){
       const doerName=doerNames[j.doer_id]||'Helper';
       if(isHelperContact(j)){
+        cardMenu=`<div class="card-menu-wrap">
+          <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-${j.id}')" aria-label="More options">⋮</button>
+          <div class="card-menu-drop" id="cm-${j.id}">
+            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','help_offer')">❌ Cancel</button>
+          </div>
+        </div>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
           <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
-          <button onclick="event.stopPropagation();cancelHelpOffer('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">❌ Cancel</button>
         </div>`;
       } else {
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
@@ -2553,14 +2564,28 @@ function toggleCardMenu(e,menuId){
 function closeAllCardMenus(){document.querySelectorAll('.card-menu-drop.open').forEach(m=>m.classList.remove('open'));}
 document.addEventListener('click',()=>closeAllCardMenus());
 
-function openCancelConfirm(jobId){
+function openCancelConfirm(jobId,type){
+  type=type||'job';
   document.getElementById('cancel-confirm-job-id').value=jobId;
+  document.getElementById('cancel-confirm-type').value=type;
+  if(type==='help_offer'){
+    document.getElementById('cancel-confirm-title').textContent='Cancel this help request?';
+    document.getElementById('cancel-confirm-desc').textContent='This will end the conversation and remove the request. This can\u2019t be undone.';
+    document.getElementById('cancel-confirm-btn').textContent='Yes, cancel it';
+  } else {
+    document.getElementById('cancel-confirm-title').textContent='Cancel this job?';
+    document.getElementById('cancel-confirm-desc').textContent='This will remove the job from the map and notify anyone who applied. This can\u2019t be undone.';
+    document.getElementById('cancel-confirm-btn').textContent='Yes, cancel job';
+  }
   document.getElementById('cancel-confirm-modal').classList.add('open');
 }
 async function confirmCancelJob(){
   const jobId=document.getElementById('cancel-confirm-job-id').value;
+  const type=document.getElementById('cancel-confirm-type').value;
   document.getElementById('cancel-confirm-modal').classList.remove('open');
-  if(jobId)await cancelJob(jobId);
+  if(!jobId)return;
+  if(type==='help_offer') await cancelHelpOffer(jobId);
+  else await cancelJob(jobId);
 }
 
 async function checkAndRate(taskId,ratedId,prompt){
