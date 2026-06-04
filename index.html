@@ -3648,10 +3648,10 @@ function copyRefLink(){
 
 async function shareRefLink(){
   const link='https://yoodle.ca?ref='+myRefCode;
-  const text='Join me on Yoodle — the free neighbourhood app for odd jobs! We both get 10 points when you sign up 🎉';
+  const text='Join me on Yoodle — the free neighbourhood app for odd jobs! We both get 10 points when you sign up 🎉\n\n'+link;
   if(navigator.share){
     try{
-      await navigator.share({title:'Join Yoodle!',text:text,url:link});
+      await navigator.share({text:text});
     }catch(e){}
   }else{
     copyRefLink();
