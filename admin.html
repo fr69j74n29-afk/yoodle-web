@@ -326,7 +326,7 @@ body::before {
 /* STAT CARDS GRID */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin-bottom: 32px;
 }
@@ -920,7 +920,7 @@ body::before {
     <div class="dash-user">
       <div class="dash-avatar" id="dash-avatar">?</div>
       <span class="dash-name" id="dash-name"></span>
-      <button class="btn-out" onclick="signOut()">Sign out</button>
+      <button class="btn-refresh" id="refresh-btn" onclick="loadStats()">↻ Refresh</button>
     </div>
   </div>
 
@@ -931,22 +931,17 @@ body::before {
       <p id="dash-timestamp">Loading…</p>
     </div>
 
-    <!-- TOP 3 STATS -->
-    <div class="stats-grid">
+    <!-- TOP STATS -->
+    <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
       <div class="stat-card users">
         <div class="stat-label"><span class="stat-icon">👤</span> Registered Users</div>
         <div class="stat-num loading-val" id="stat-users">—</div>
         <div class="stat-sub">Total profiles created</div>
       </div>
-      <div class="stat-card jobs">
-        <div class="stat-label"><span class="stat-icon">📋</span> Total Job Posts</div>
-        <div class="stat-num loading-val" id="stat-tasks">—</div>
-        <div class="stat-sub">All task records (all statuses)</div>
-      </div>
-      <div class="stat-card convs">
-        <div class="stat-label"><span class="stat-icon">💬</span> Conversations</div>
-        <div class="stat-num loading-val" id="stat-convs">—</div>
-        <div class="stat-sub">Total conversation threads</div>
+      <div class="stat-card helpers" style="--accent: linear-gradient(90deg, #A3E635, #FCD34D);">
+        <div class="stat-label"><span class="stat-icon">🙋</span> Active Helpers</div>
+        <div class="stat-num loading-val" id="stat-helpers">—</div>
+        <div class="stat-sub" id="stat-helpers-detail">Mapped · List-only</div>
       </div>
     </div>
 
@@ -1027,7 +1022,7 @@ body::before {
 
     <div class="dash-footer">
       <div class="last-updated" id="last-updated">—</div>
-      <button class="btn-refresh" id="refresh-btn" onclick="loadStats()">↻ Refresh</button>
+      <button class="btn-out" onclick="signOut()">Sign out</button>
     </div>
 
   </div>
@@ -1110,25 +1105,25 @@ async function loadStats() {
   btn.classList.add('spinning');
   btn.textContent = '↻ Loading…';
 
-  ['stat-users','stat-tasks','stat-convs'].forEach(id => {
+  ['stat-users','stat-helpers'].forEach(id => {
     const el = document.getElementById(id);
     el.textContent = '—';
     el.classList.add('loading-val');
   });
 
   try {
+    const EXCLUDED_POSTER = 'c89896db-b2ab-4c4c-88fa-650823e63303';
+
     const [
       { count: userCount },
-      { count: taskCount },
-      { count: convCount },
+      { data: helpers },
       { data: taskStatuses },
       { data: convStatuses },
       { data: recentProfiles }
     ] = await Promise.all([
       sb.from('profiles').select('*', { count: 'exact', head: true }),
-      sb.from('tasks').select('*', { count: 'exact', head: true }),
-      sb.from('conversations').select('*', { count: 'exact', head: true }),
-      sb.from('tasks').select('status'),
+      sb.from('profiles').select('id, visible_on_map, last_lat, last_lng').eq('visible_on_map', true),
+      sb.from('tasks').select('status, poster_id').neq('poster_id', EXCLUDED_POSTER),
       sb.from('conversations').select('status'),
       sb.from('profiles')
         .select('created_at')
@@ -1137,8 +1132,14 @@ async function loadStats() {
     ]);
 
     animateNumber('stat-users', userCount ?? 0);
-    animateNumber('stat-tasks', taskCount ?? 0);
-    animateNumber('stat-convs', convCount ?? 0);
+
+    // Active helpers breakdown
+    const allHelpers = helpers || [];
+    const mappedHelpers = allHelpers.filter(h => h.last_lat && h.last_lng);
+    const listOnlyHelpers = allHelpers.length - mappedHelpers.length;
+    animateNumber('stat-helpers', allHelpers.length);
+    document.getElementById('stat-helpers-detail').textContent =
+      `${mappedHelpers.length} mapped · ${listOnlyHelpers} list-only`;
 
     const tCounts = { open: 0, claimed: 0, completed: 0, cancelled: 0 };
     (taskStatuses || []).forEach(t => {
@@ -1348,20 +1349,22 @@ async function loadRecentActivity() {
   helpersEl.innerHTML = jobsEl.innerHTML;
 
   try {
-    const [{ data: jobs, error: jobErr }, { data: helpers, error: helpErr }] = await Promise.all([
+    const [{ data: jobs, error: jobErr }, { data: helpers2, error: helpErr }] = await Promise.all([
       sb.from('tasks')
         .select('id, title, description, price, status, address, created_at, poster_id, category')
         .gte('created_at', cutoff)
-        .order('created_at', { ascending: false }),
+        .order('created_at', { ascending: false })
+        .limit(5),
       sb.from('profiles')
         .select('id, name, rating, task_count, bio, helper_address, avatar_color, phone, created_at, visible_on_map')
         .eq('visible_on_map', true)
         .gte('created_at', cutoff)
         .order('created_at', { ascending: false })
+        .limit(5)
     ]);
 
     recentJobs = jobs || [];
-    recentHelpers = helpers || [];
+    recentHelpers = helpers2 || [];
 
     // Fetch poster profiles for jobs
     const posterIds = [...new Set(recentJobs.map(j => j.poster_id).filter(Boolean))];
