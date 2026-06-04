@@ -2147,10 +2147,26 @@ async function withdrawFromConfirm(){
 
 async function withdrawApplication(appId){
   if(!sb||!me)return;
+  const pid=myProfileId||me.id;
+  // look up application to get task_id and poster
+  const{data:appData}=await sb.from('applications').select('task_id').eq('id',appId).single();
+  if(!appData)return toast('❌ Could not find application');
+  const taskId=appData.task_id;
   const{error}=await sb.from('applications').update({status:'withdrawn'}).eq('id',appId);
   if(error)return toast('❌ '+error.message);
+  // archive conversation and send system message
+  const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',pid).eq('status','active').maybeSingle();
+  if(conv){
+    const{data:taskData}=await sb.from('tasks').select('poster_id').eq('id',taskId).single();
+    const{data:myProfile}=await sb.from('profiles').select('name').eq('id',pid).single();
+    const name=myProfile?.name||'Someone';
+    if(taskData){
+      await sendSystemMessage(conv.id,taskId,pid,taskData.poster_id,`↩️ ${name} withdrew their interest.`);
+    }
+    await sb.from('conversations').update({status:'archived'}).eq('id',conv.id);
+  }
   document.getElementById('modal').classList.remove('open');
-  toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();
+  toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();loadMessages();
 }
 
 async function openApplicants(taskId,taskTitle){
