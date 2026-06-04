@@ -2423,20 +2423,31 @@ async function loadMyJobs(){
       const cat=(j.category||'other').toLowerCase();
       const color=CAT_COLOR[cat]||'#9B59D4';
       const emoji=CAT_EMOJI[cat]||'✨';
-      let appBadge,actionBtn='';
+      let appBadge,actionBtn='',appMenu='';
       if(app.status==='pending'){
         appBadge=`<span style="color:var(--yellow);font-size:12px;font-weight:800">⏳ Pending</span>`;
-        actionBtn=`<button onclick="event.stopPropagation();withdrawApplication('${app.id}')" style="margin-top:10px;width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Withdraw Interest</button>`;
+        appMenu=`<div class="card-menu-wrap">
+          <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-app-${app.id}')" aria-label="More options">⋮</button>
+          <div class="card-menu-drop" id="cm-app-${app.id}">
+            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${app.id}','withdraw')">↩️ Withdraw Interest</button>
+          </div>
+        </div>`;
       } else if(app.status==='assigned'){
         appBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">🤝 Assigned</span>`;
+        appMenu=`<div class="card-menu-wrap">
+          <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-app-${app.id}')" aria-label="More options">⋮</button>
+          <div class="card-menu-drop" id="cm-app-${app.id}">
+            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','unclaim')">↩️ Unclaim</button>
+          </div>
+        </div>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
           <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
-          <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
         </div>`;
       }
-      return `<div class="job-card" style="--jc:${color};cursor:default">
-        <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:4px">
+      return `<div class="job-card" style="--jc:${color};cursor:default;overflow:visible">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
           ${appBadge||''}
+          ${appMenu}
         </div>
         <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
         <div class="jc-desc">${esc(j.description||'')}</div>
@@ -2510,10 +2521,15 @@ async function loadMyJobs(){
           <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
         </div>`;
       } else {
-        actionBtn=`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        cardMenu=`<div class="card-menu-wrap">
+          <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-${j.id}')" aria-label="More options">⋮</button>
+          <div class="card-menu-drop" id="cm-${j.id}">
+            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','unclaim')">↩️ Unclaim</button>
+          </div>
+        </div>`;
+        actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
           <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
           <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
-          <button onclick="event.stopPropagation();chatUnclaim('${j.id}')" style="width:100%;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>
         </div>`;
       }
     }
@@ -2564,28 +2580,41 @@ function toggleCardMenu(e,menuId){
 function closeAllCardMenus(){document.querySelectorAll('.card-menu-drop.open').forEach(m=>m.classList.remove('open'));}
 document.addEventListener('click',()=>closeAllCardMenus());
 
-function openCancelConfirm(jobId,type){
+function openCancelConfirm(id,type){
   type=type||'job';
-  document.getElementById('cancel-confirm-job-id').value=jobId;
+  document.getElementById('cancel-confirm-job-id').value=id;
   document.getElementById('cancel-confirm-type').value=type;
+  const t=document.getElementById('cancel-confirm-title');
+  const d=document.getElementById('cancel-confirm-desc');
+  const b=document.getElementById('cancel-confirm-btn');
   if(type==='help_offer'){
-    document.getElementById('cancel-confirm-title').textContent='Cancel this help request?';
-    document.getElementById('cancel-confirm-desc').textContent='This will end the conversation and remove the request. This can\u2019t be undone.';
-    document.getElementById('cancel-confirm-btn').textContent='Yes, cancel it';
+    t.textContent='Cancel this help request?';
+    d.textContent='This will end the conversation and remove the request. This can\u2019t be undone.';
+    b.textContent='Yes, cancel it';
+  } else if(type==='unclaim'){
+    t.textContent='Unclaim this job?';
+    d.textContent='This will return the job to open status and remove the current assignment.';
+    b.textContent='Yes, unclaim';
+  } else if(type==='withdraw'){
+    t.textContent='Withdraw your interest?';
+    d.textContent='This will remove your application. You can re-apply later if the job is still open.';
+    b.textContent='Yes, withdraw';
   } else {
-    document.getElementById('cancel-confirm-title').textContent='Cancel this job?';
-    document.getElementById('cancel-confirm-desc').textContent='This will remove the job from the map and notify anyone who applied. This can\u2019t be undone.';
-    document.getElementById('cancel-confirm-btn').textContent='Yes, cancel job';
+    t.textContent='Cancel this job?';
+    d.textContent='This will remove the job from the map and notify anyone who applied. This can\u2019t be undone.';
+    b.textContent='Yes, cancel job';
   }
   document.getElementById('cancel-confirm-modal').classList.add('open');
 }
 async function confirmCancelJob(){
-  const jobId=document.getElementById('cancel-confirm-job-id').value;
+  const id=document.getElementById('cancel-confirm-job-id').value;
   const type=document.getElementById('cancel-confirm-type').value;
   document.getElementById('cancel-confirm-modal').classList.remove('open');
-  if(!jobId)return;
-  if(type==='help_offer') await cancelHelpOffer(jobId);
-  else await cancelJob(jobId);
+  if(!id)return;
+  if(type==='help_offer') await cancelHelpOffer(id);
+  else if(type==='unclaim') await chatUnclaim(id);
+  else if(type==='withdraw') await withdrawApplication(id);
+  else await cancelJob(id);
 }
 
 async function checkAndRate(taskId,ratedId,prompt){
