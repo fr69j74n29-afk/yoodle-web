@@ -1122,7 +1122,7 @@ async function loadStats() {
       { data: recentProfiles }
     ] = await Promise.all([
       sb.from('profiles').select('*', { count: 'exact', head: true }),
-      sb.from('profiles').select('id, visible_on_map, last_lat, last_lng').eq('visible_on_map', true),
+      sb.from('profiles').select('id, visible_on_map, show_on_map').eq('visible_on_map', true),
       sb.from('tasks').select('status, poster_id').neq('poster_id', EXCLUDED_POSTER),
       sb.from('conversations').select('status'),
       sb.from('profiles')
@@ -1135,7 +1135,7 @@ async function loadStats() {
 
     // Active helpers breakdown
     const allHelpers = helpers || [];
-    const mappedHelpers = allHelpers.filter(h => h.last_lat && h.last_lng);
+    const mappedHelpers = allHelpers.filter(h => h.show_on_map === true);
     const listOnlyHelpers = allHelpers.length - mappedHelpers.length;
     animateNumber('stat-helpers', allHelpers.length);
     document.getElementById('stat-helpers-detail').textContent =
