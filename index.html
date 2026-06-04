@@ -170,6 +170,16 @@ body{
 .jc-title{font-size:16px;font-weight:900;line-height:1.3;flex:1;padding-right:10px}
 .jc-budget{font-size:18px;font-weight:900;color:var(--lime);white-space:nowrap}
 .jc-desc{font-size:13px;color:#bbb;line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* 3-dot overflow menu */
+.card-menu-wrap{position:relative;z-index:10}
+.card-menu-btn{width:32px;height:32px;border-radius:50%;background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;line-height:1;padding:0}
+.card-menu-btn:hover,.card-menu-btn:active{background:var(--surface2)}
+.card-menu-drop{display:none;position:absolute;top:36px;right:0;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4);overflow:hidden;z-index:20}
+.card-menu-drop.open{display:block}
+.card-menu-drop button{width:100%;padding:13px 16px;background:none;border:none;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;text-align:left;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .12s}
+.card-menu-drop button:active{background:var(--surface)}
+.card-menu-drop button.destructive{color:#EF4444}
+.card-menu-drop .menu-divider{height:1px;background:var(--border);margin:0}
 .jc-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px}
 .jc-poster{display:flex;align-items:center;gap:6px}
 .poster-av{width:26px;height:26px;border-radius:50%;background:var(--surface2);overflow:hidden;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--muted);flex-shrink:0}
@@ -816,6 +826,19 @@ body{
     </div>
     <button class="btn-primary" onclick="saveEdit()">Save Changes ✨</button>
     <button onclick="document.getElementById('edit-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<!-- CANCEL JOB CONFIRMATION MODAL -->
+<div class="modal-ov" id="cancel-confirm-modal" onclick="if(event.target.id==='cancel-confirm-modal')document.getElementById('cancel-confirm-modal').classList.remove('open')">
+  <div class="modal-sheet" style="text-align:center">
+    <div class="modal-handle"></div>
+    <div style="font-size:40px;margin-bottom:12px">🗑️</div>
+    <div class="modal-title" style="margin-bottom:8px">Cancel this job?</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.5">This will remove the job from the map and notify anyone who applied. This can't be undone.</div>
+    <input type="hidden" id="cancel-confirm-job-id">
+    <button onclick="confirmCancelJob()" style="width:100%;padding:16px;border-radius:var(--radius);background:#EF4444;border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer">Yes, cancel job</button>
+    <button onclick="document.getElementById('cancel-confirm-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Keep it</button>
   </div>
 </div>
 
@@ -2452,16 +2475,22 @@ async function loadMyJobs(){
     else statusBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">🟢 Open${daysLeft!==null?` · ${daysLeft}d left`:''}${gpsTag}</span>`;
 
     let actionBtn='';
+    let cardMenu='';
     if(j.status==='open'){
       const appCount=applicantCounts[j.id]||0;
       const appBadge=appCount>0?`<div style="margin-top:8px;padding:8px 12px;background:rgba(155,89,212,.12);border:1.5px solid rgba(155,89,212,.3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between">
         <span style="font-size:13px;font-weight:800;color:var(--purple)">👥 ${appCount} interested</span>
         <button onclick="event.stopPropagation();openApplicants('${j.id}','${esc(j.title)}')" style="padding:6px 14px;border-radius:100px;background:var(--purple);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;cursor:pointer">Review →</button>
       </div>`:'';
-      actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-        <button onclick="event.stopPropagation();openEditModal('${j.id}','${esc(j.title)}','${esc(j.description||'')}','${j.price??0}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✏️ Edit</button>
-        <button onclick="event.stopPropagation();cancelJob('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🗑️ Cancel</button>
-      </div>${appBadge}`;
+      cardMenu=`<div class="card-menu-wrap">
+        <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-${j.id}')" aria-label="More options">⋮</button>
+        <div class="card-menu-drop" id="cm-${j.id}">
+          <button onclick="event.stopPropagation();closeAllCardMenus();openEditModal('${j.id}','${esc(j.title)}','${esc(j.description||'')}','${j.price??0}')">✏️ Edit</button>
+          <div class="menu-divider"></div>
+          <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}')">🗑️ Cancel Job</button>
+        </div>
+      </div>`;
+      actionBtn=appBadge;
     } else if(j.status==='claimed'){
       const doerName=doerNames[j.doer_id]||'Helper';
       if(isHelperContact(j)){
@@ -2478,9 +2507,10 @@ async function loadMyJobs(){
       }
     }
 
-    return `<div class="job-card" style="--jc:${color};cursor:default">
+    return `<div class="job-card" style="--jc:${color};cursor:default;${cardMenu?'overflow:visible':''}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         ${statusBadge}
+        ${cardMenu}
       </div>
       <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
       <div class="jc-desc">${esc(j.description||'')}</div>
@@ -2509,6 +2539,28 @@ async function cancelJob(jobId){
   const{error}=await sb.from('tasks').update({status:'cancelled'}).eq('id',jobId).eq('poster_id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
   toast('🗑️ Job cancelled.');loadMyJobs();loadJobs();
+}
+
+/* ── Card 3-dot menu helpers ── */
+function toggleCardMenu(e,menuId){
+  e.stopPropagation();
+  const menu=document.getElementById(menuId);
+  if(!menu)return;
+  const wasOpen=menu.classList.contains('open');
+  closeAllCardMenus();
+  if(!wasOpen)menu.classList.add('open');
+}
+function closeAllCardMenus(){document.querySelectorAll('.card-menu-drop.open').forEach(m=>m.classList.remove('open'));}
+document.addEventListener('click',()=>closeAllCardMenus());
+
+function openCancelConfirm(jobId){
+  document.getElementById('cancel-confirm-job-id').value=jobId;
+  document.getElementById('cancel-confirm-modal').classList.add('open');
+}
+async function confirmCancelJob(){
+  const jobId=document.getElementById('cancel-confirm-job-id').value;
+  document.getElementById('cancel-confirm-modal').classList.remove('open');
+  if(jobId)await cancelJob(jobId);
 }
 
 async function checkAndRate(taskId,ratedId,prompt){
