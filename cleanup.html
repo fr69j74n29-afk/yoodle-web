@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yoodle – Job Cleanup</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --purple: #9B59D4;
+    --lime: #A3E635;
+    --bg: #0A0A0A;
+    --surface: #161616;
+    --surface2: #1F1F1F;
+    --border: #2A2A2A;
+    --text: #F5F5F5;
+    --muted: #999;
+    --red: #EF4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--text);
+    padding: 40px; max-width: 900px; margin: 0 auto;
+  }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .toolbar {
+    display: flex; gap: 12px; align-items: center;
+    margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .toolbar label { font-size: 13px; color: var(--muted); }
+  .toolbar input[type="text"] {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 12px; border-radius: 8px;
+    font-size: 13px; width: 260px;
+  }
+  .toolbar input[type="text"]:focus { outline: none; border-color: var(--purple); }
+  button {
+    font-family: inherit; cursor: pointer; border: none; border-radius: 8px;
+    padding: 8px 16px; font-size: 13px; font-weight: 600;
+  }
+  .btn-delete {
+    background: var(--red); color: #fff;
+  }
+  .btn-delete:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-refresh { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-select { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); font-size: 12px; }
+  .count { font-size: 13px; color: var(--muted); margin-left: auto; }
+  table {
+    width: 100%; border-collapse: collapse;
+    background: var(--surface); border-radius: 12px; overflow: hidden;
+  }
+  th {
+    text-align: left; padding: 12px 14px; font-size: 12px;
+    color: var(--muted); text-transform: uppercase; letter-spacing: .5px;
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+    font-size: 13px; vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .title-cell { font-weight: 600; }
+  .desc-cell { color: var(--muted); max-width: 400px; }
+  .status-pill {
+    display: inline-block; padding: 2px 8px; border-radius: 100px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+  }
+  .status-open { background: rgba(163,230,53,.15); color: var(--lime); }
+  .status-claimed { background: rgba(155,89,212,.15); color: var(--purple); }
+  .status-completed { background: rgba(6,182,212,.15); color: #06B6D4; }
+  .status-cancelled { background: rgba(239,68,68,.15); color: var(--red); }
+  .status-expired { background: rgba(153,153,153,.15); color: var(--muted); }
+  .date-cell { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  input[type="checkbox"] {
+    width: 16px; height: 16px; accent-color: var(--purple); cursor: pointer;
+  }
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .spinner { text-align: center; padding: 60px; color: var(--muted); }
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: var(--surface2); color: var(--text); padding: 10px 20px;
+    border-radius: 10px; font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); z-index: 999;
+    opacity: 0; transition: opacity .3s;
+  }
+  .toast.show { opacity: 1; }
+  .key-section {
+    margin-bottom: 24px; padding: 16px; background: var(--surface);
+    border-radius: 12px; border: 1px solid var(--border);
+  }
+  .key-section p { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .key-section input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 12px; border-radius: 8px;
+    font-size: 13px; font-family: monospace;
+  }
+  .key-section input:focus { outline: none; border-color: var(--purple); }
+  .price-cell { font-weight: 600; color: var(--lime); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>🧹 Yoodle Job Cleanup</h1>
+<p class="subtitle">Bulk delete jobs for poster <code>c89896db-b2ab-4c4c-88fa-650823e63303</code></p>
+
+<div class="key-section">
+  <p>Paste your Supabase <strong>service_role</strong> key below to bypass RLS for deletes (find it in Supabase → Settings → API):</p>
+  <input type="text" id="svc-key" placeholder="eyJhbGci..." value="">
+  <p style="margin-top:8px">If left blank, the publishable anon key is used (deletes may fail if RLS blocks them).</p>
+</div>
+
+<div class="toolbar">
+  <button class="btn-refresh" onclick="loadJobs()">↻ Refresh</button>
+  <button class="btn-select" onclick="selectAll()">Select All</button>
+  <button class="btn-select" onclick="selectNone()">Deselect All</button>
+  <label><input type="checkbox" id="filter-open" checked onchange="loadJobs()"> open</label>
+  <label><input type="checkbox" id="filter-claimed" checked onchange="loadJobs()"> claimed</label>
+  <label><input type="checkbox" id="filter-completed" onchange="loadJobs()"> completed</label>
+  <label><input type="checkbox" id="filter-cancelled" onchange="loadJobs()"> cancelled</label>
+  <label><input type="checkbox" id="filter-expired" onchange="loadJobs()"> expired</label>
+  <span class="count" id="count-label">—</span>
+</div>
+
+<div class="toolbar">
+  <button class="btn-delete" id="del-btn" disabled onclick="bulkDelete()">🗑 Delete Selected (<span id="sel-count">0</span>)</button>
+</div>
+
+<div id="table-wrap">
+  <div class="spinner">Loading…</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
+const ANON_KEY      = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
+const POSTER_ID     = 'c89896db-b2ab-4c4c-88fa-650823e63303';
+
+let jobs = [];
+let selected = new Set();
+
+function getClient() {
+  const svc = document.getElementById('svc-key').value.trim();
+  const key = svc || ANON_KEY;
+  return window.supabase.createClient(SUPABASE_URL, key);
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function getActiveStatuses() {
+  const s = [];
+  if (document.getElementById('filter-open').checked)      s.push('open');
+  if (document.getElementById('filter-claimed').checked)    s.push('claimed');
+  if (document.getElementById('filter-completed').checked)  s.push('completed');
+  if (document.getElementById('filter-cancelled').checked)  s.push('cancelled');
+  if (document.getElementById('filter-expired').checked)    s.push('expired');
+  return s;
+}
+
+async function loadJobs() {
+  const wrap = document.getElementById('table-wrap');
+  wrap.innerHTML = '<div class="spinner">Loading…</div>';
+  selected.clear();
+  updateSelCount();
+
+  const sb = getClient();
+  const statuses = getActiveStatuses();
+
+  if (!statuses.length) {
+    wrap.innerHTML = '<div class="empty">No status filters selected</div>';
+    document.getElementById('count-label').textContent = '—';
+    return;
+  }
+
+  const { data, error } = await sb
+    .from('tasks')
+    .select('id, title, description, status, price, created_at')
+    .eq('poster_id', POSTER_ID)
+    .in('status', statuses)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    wrap.innerHTML = `<div class="empty" style="color:var(--red)">Error: ${error.message}</div>`;
+    return;
+  }
+
+  jobs = data || [];
+  document.getElementById('count-label').textContent = `${jobs.length} job${jobs.length !== 1 ? 's' : ''}`;
+
+  if (!jobs.length) {
+    wrap.innerHTML = '<div class="empty">No jobs found for this user with selected filters.</div>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table>
+      <thead><tr>
+        <th style="width:36px"><input type="checkbox" id="chk-all" onchange="toggleAll(this)"></th>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>Price</th>
+        <th>Created</th>
+      </tr></thead>
+      <tbody>${jobs.map(j => `
+        <tr id="row-${j.id}">
+          <td><input type="checkbox" data-id="${j.id}" onchange="toggleRow(this)"></td>
+          <td class="title-cell">${esc(j.title || '—')}</td>
+          <td class="desc-cell">${esc((j.description || '').slice(0, 120))}${(j.description||'').length > 120 ? '…' : ''}</td>
+          <td><span class="status-pill status-${j.status}">${j.status}</span></td>
+          <td class="price-cell">${j.price ? '$' + Number(j.price).toFixed(0) : '—'}</td>
+          <td class="date-cell">${new Date(j.created_at).toLocaleDateString('en-CA')}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function esc(s) {
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+function toggleRow(cb) {
+  if (cb.checked) selected.add(cb.dataset.id);
+  else selected.delete(cb.dataset.id);
+  updateSelCount();
+}
+
+function toggleAll(cb) {
+  document.querySelectorAll('tbody input[type="checkbox"]').forEach(c => {
+    c.checked = cb.checked;
+    if (cb.checked) selected.add(c.dataset.id);
+    else selected.delete(c.dataset.id);
+  });
+  updateSelCount();
+}
+
+function selectAll() {
+  const hdr = document.getElementById('chk-all');
+  if (hdr) hdr.checked = true;
+  document.querySelectorAll('tbody input[type="checkbox"]').forEach(c => {
+    c.checked = true; selected.add(c.dataset.id);
+  });
+  updateSelCount();
+}
+
+function selectNone() {
+  const hdr = document.getElementById('chk-all');
+  if (hdr) hdr.checked = false;
+  document.querySelectorAll('tbody input[type="checkbox"]').forEach(c => {
+    c.checked = false;
+  });
+  selected.clear();
+  updateSelCount();
+}
+
+function updateSelCount() {
+  document.getElementById('sel-count').textContent = selected.size;
+  document.getElementById('del-btn').disabled = selected.size === 0;
+}
+
+async function bulkDelete() {
+  const ids = [...selected];
+  if (!ids.length) return;
+  if (!confirm(`Permanently delete ${ids.length} job${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
+
+  const btn = document.getElementById('del-btn');
+  btn.disabled = true; btn.textContent = '🗑 Deleting…';
+
+  const sb = getClient();
+
+  // Delete related records first to avoid FK violations
+  // applications, messages, ratings, reports referencing these tasks
+  await sb.from('applications').delete().in('task_id', ids);
+  await sb.from('messages').delete().in('task_id', ids);
+  await sb.from('ratings').delete().in('task_id', ids);
+  await sb.from('reports').delete().in('task_id', ids);
+
+  const { error } = await sb.from('tasks').delete().in('id', ids);
+
+  if (error) {
+    toast('❌ Delete failed: ' + error.message);
+    btn.disabled = false;
+    btn.innerHTML = '🗑 Delete Selected (<span id="sel-count">' + selected.size + '</span>)';
+    return;
+  }
+
+  toast(`✅ Deleted ${ids.length} job${ids.length > 1 ? 's' : ''}`);
+  loadJobs();
+}
+
+// Init
+loadJobs();
+</script>
+</body>
+</html>
