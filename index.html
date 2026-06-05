@@ -1432,7 +1432,7 @@ function renderMapPins(){
   // ── JOB BUBBLES (tasks with show_on_map=true) ──
   const publicJobs=(allJobs||[]).filter(j=>j.show_on_map&&j.lat&&j.lng&&j.status==='open'&&j.poster_id!==FEATURED_POSTER_ID);
   publicJobs.forEach(job=>{
-    const color=CAT_COLOR[job.category]||'#9B59D4';
+    const color='#EF4444';
     const emoji=CAT_EMOJI[job.category]||'✨';
     const[fLat,fLng]=job._fuzzy||(job._fuzzy=fuzzyCoords(job.lat,job.lng));
     const icon=L.divIcon({
@@ -1449,11 +1449,10 @@ function renderMapPins(){
   publicHelpers.forEach(h=>{
     const name=h.name||'Helper';
     const initial=name.charAt(0).toUpperCase();
-    const color=h.avatar_color||'#9B59D4';
     const[fLat,fLng]=h._fuzzy||(h._fuzzy=fuzzyCoords(h.last_lat,h.last_lng));
     const icon=L.divIcon({
       className:'',
-      html:`<div style="width:38px;height:38px;border-radius:50%;background:${color};border:3px solid var(--lime);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:pointer;font-family:'Nunito',sans-serif">${initial}</div>`,
+      html:`<div style="width:38px;height:38px;border-radius:50%;background:#22C55E;border:3px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:pointer;font-family:'Nunito',sans-serif">${initial}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
     const marker=L.marker([fLat,fLng],{icon}).addTo(map).on('click',()=>openOtherProfile(h.id));
