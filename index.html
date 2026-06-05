@@ -1806,7 +1806,16 @@ async function showApp(){
   const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
   // Container just became visible — Leaflet needs to recalc tile positions
   if(map){
-    setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},150);
+    const _hasSavedZoom=!!JSON.parse(localStorage.getItem('yoodle_map')||'null')?.zoom;
+    setTimeout(()=>{
+      map.invalidateSize();
+      // First load (no saved zoom) — zoom out to show 25 km radius
+      if(!_hasSavedZoom){
+        const z=kmToZoom(25,map.getCenter().lat);
+        map.setZoom(z,{animate:false});
+      }
+      updateCircleOverlay();
+    },150);
     setTimeout(()=>{map.invalidateSize();updateCircleOverlay();},600);
   }
   setAvatar();
