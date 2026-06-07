@@ -188,13 +188,6 @@ body{
 .lc-av{width:20px;height:20px;border-radius:50%;background:var(--surface2);font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--muted);flex-shrink:0}
 .lc-name{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lc-meta{font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0}
-/* ── SPONSORED / FEATURED CARD (poster c89896db) ── */
-.list-card.sponsored{background:linear-gradient(135deg,rgba(14,30,60,.95),rgba(10,20,50,.95));border-color:rgba(59,130,246,.55);--jc:#3B82F6;}
-.list-card.sponsored::before{background:linear-gradient(180deg,#3B82F6,#60A5FA);}
-.list-card.sponsored .lc-title{color:#E0EEFF;}
-.list-card.sponsored .lc-budget{color:#60A5FA;}
-.sponsored-badge{display:inline-block;font-size:9px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;color:#3B82F6;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.35);border-radius:100px;padding:2px 7px;margin-left:6px;vertical-align:middle;flex-shrink:0;white-space:nowrap;}
-
 /* JOB CARD */
 .job-card{background:var(--surface);border-radius:var(--radius);padding:18px 18px 16px;border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;position:relative;overflow:hidden;flex-shrink:0}
 .job-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--jc,var(--purple))}
@@ -570,7 +563,7 @@ body{
       <div style="font-size:22px;font-weight:900;color:var(--text);margin-bottom:32px;font-family:'Fredoka One',cursive">What would you like to post?</div>
 
       <!-- Needs help card -->
-      <button onclick="nav('postjob')" style="width:100%;max-width:400px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(249,115,22,.90);background:var(--surface);cursor:pointer;margin-bottom:16px;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
+      <button onclick="nav('postjob')" style="width:100%;max-width:400px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(249,115,22,.35);background:var(--surface);cursor:pointer;margin-bottom:16px;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
         <div style="width:52px;height:52px;border-radius:14px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         </div>
@@ -2040,8 +2033,7 @@ function haversineKm(lat1,lng1,lat2,lng2){
 const FEATURED_POSTER_ID='c89896db-b2ab-4c4c-88fa-650823e63303';
 
 function listCard(j,profile){
-  const isFeatured=j.poster_id===FEATURED_POSTER_ID;
-  const color=isFeatured?'#3B82F6':(CAT_COLOR[j.category]||'#9B59D4');
+  const color=CAT_COLOR[j.category]||'#9B59D4';
   const emoji=CAT_EMOJI[j.category]||'✨';
   const name=profile?.name||'Someone';
   const rating=profile?.rating?`⭐ ${profile.rating}`:'New';
@@ -2051,10 +2043,9 @@ function listCard(j,profile){
     const d=haversineKm(gpsLat,gpsLng,j.lat,j.lng);
     locLabel=d<=1?'Less than 1 km away':`${d.toFixed(1)} km away`;
   }
-  const sponsoredBadge=isFeatured?`<span class="sponsored-badge">Featured</span>`:'';
-  return `<div class="list-card${isFeatured?' sponsored':''}" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
+  return `<div class="list-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="lc-top">
-      <span class="lc-title">${emoji} ${esc(j.title)}${sponsoredBadge}</span>
+      <span class="lc-title">${emoji} ${esc(j.title)}</span>
       <div style="display:flex;flex-direction:row;align-items:center;gap:4px;flex-shrink:0">${myAppliedTaskIds.has(j.id)?'<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.5px">Applied-</span>':''}<span class="lc-budget">$${j.price??'?'}</span></div>
     </div>
     <div class="lc-desc">${esc(j.description||'')}</div>
@@ -2071,11 +2062,6 @@ function listCard(j,profile){
 
 async function openJob(j){
   activeJob=j;const color=CAT_COLOR[j.category]||'#9B59D4';
-  // If url field not returned by RPC, fetch it directly
-  if(j.url===undefined&&sb&&j.poster_id===FEATURED_POSTER_ID){
-    const{data:taskRow}=await sb.from('tasks').select('url').eq('id',j.id).maybeSingle();
-    if(taskRow)j.url=taskRow.url;
-  }
   document.getElementById('m-title').textContent=j.title;
   const locTag=j.location_verified?'<span style="color:var(--lime);font-size:11px">✅ GPS Verified</span>':'<span style="color:var(--yellow);font-size:11px">⚠️ GPS Unverified</span>';
   let modalLocLabel=null;
@@ -2130,12 +2116,6 @@ async function openJob(j){
       btn.textContent='Checking…';btn.disabled=true;
       if(sb&&me){
         const pid=myProfileId||me.id;
-        // Featured poster: always show external URL button instead of apply
-        if(j.poster_id===FEATURED_POSTER_ID&&j.url){
-          btn.textContent='🔗 Apply on Website';
-          btn.disabled=false;
-          btn.onclick=()=>{window.open(j.url,'_blank','noopener,noreferrer');};
-        } else {
           sb.from('applications').select('id,status').eq('task_id',j.id).eq('applicant_id',pid).maybeSingle().then(({data})=>{
             if(data&&data.status==='pending'){
               btn.textContent='↩️ Withdraw Interest';btn.disabled=false;
@@ -2147,7 +2127,6 @@ async function openJob(j){
               btn.onclick=()=>applyForJob(j.id,j.poster_id,j.title);
             }
           });
-        }
       }
     }
   }
