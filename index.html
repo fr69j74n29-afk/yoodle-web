@@ -223,6 +223,7 @@ body{
 
 /* ── POST JOB ── */
 #app-post{overflow:hidden}
+#app-postjob{overflow:hidden}
 .post-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 20px calc(var(--sab) + 20px);-webkit-overflow-scrolling:touch}
 .section-h{font-size:22px;font-weight:900;margin-bottom:20px}
 .form-g{margin-bottom:16px}
@@ -562,10 +563,35 @@ body{
     </button>
   </div>
 
-  <!-- POST JOB -->
+  <!-- POST FORK (+ button landing) -->
   <div class="app-view" id="app-post">
+    <div class="post-scroll" style="display:flex;flex-direction:column;align-items:center;padding-top:36px">
+      <div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px">New Listing</div>
+      <div style="font-size:22px;font-weight:900;color:var(--text);margin-bottom:32px;font-family:'Fredoka One',cursive">What would you like to post?</div>
+
+      <!-- Needs help card -->
+      <button onclick="nav('postjob')" style="width:100%;max-width:400px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;margin-bottom:16px;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
+        <div style="width:52px;height:52px;border-radius:14px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        </div>
+        <div>
+          <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:2px">Needs help</div>
+          <div style="font-size:13px;font-weight:700;color:var(--muted)">I have a task that needs doing</div>
+        </div>
+      </button>
+
+      <!-- Offering help card (dynamic state) -->
+      <div id="fork-helper-card" style="width:100%;max-width:400px"></div>
+    </div>
+  </div>
+
+  <!-- POST JOB FORM -->
+  <div class="app-view" id="app-postjob">
     <div class="post-scroll">
-      <div class="section-h">Post a Job 📋</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+        <button onclick="nav('post')" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>
+        <div class="section-h" style="margin-bottom:0">Post a Job 📋</div>
+      </div>
       <input type="hidden" id="p-cat" value="other">
       <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="p-title" type="text" placeholder="e.g. Help me move a couch"></div>
       <div class="form-g"><label class="form-lbl">Description</label><textarea class="form-ta" id="p-desc" placeholder="Describe what needs doing, when, any requirements…"></textarea></div>
@@ -616,24 +642,12 @@ body{
   <!-- PROFILE -->
   <div class="app-view" id="app-profile">
     <div class="profile-scroll">
-      <!-- Hero: avatar left, name + toggle right -->
+      <!-- Hero: avatar left, name right -->
       <div style="display:flex;align-items:center;gap:16px;padding:20px 0 16px">
         <div class="profile-av" id="pav" style="margin:0;flex-shrink:0">?</div>
         <div style="flex:1;min-width:0">
           <div class="profile-nm" id="pnm" style="margin-bottom:2px">—</div>
-          <div id="pem" style="font-size:12px;color:var(--muted);margin-bottom:6px">—</div>
-          <!-- Helper toggle inline -->
-          <div style="display:flex;flex-direction:column;gap:2px">
-            <div style="display:flex;align-items:center;gap:8px">
-              <div style="font-size:13px;font-weight:800;color:var(--text)">💪 Available as Helper</div>
-              <label style="position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0">
-                <input type="checkbox" id="helper-toggle" onchange="onHelperToggle()" style="opacity:0;width:0;height:0">
-                <span id="helper-toggle-track" style="position:absolute;inset:0;border-radius:100px;background:var(--border);transition:background .2s;cursor:pointer"></span>
-                <span id="helper-toggle-thumb" style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none"></span>
-              </label>
-            </div>
-            <button id="helper-location-label" onclick="nav('helper')" style="background:none;border:none;font-size:11px;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;padding:0;text-align:left">Off</button>
-          </div>
+          <div id="pem" style="font-size:12px;color:var(--muted)">—</div>
         </div>
       </div>
 
@@ -655,6 +669,10 @@ body{
           </div>
         </div>
       </div>
+
+      <!-- Helper status block (populated by loadProfile) -->
+      <div id="helper-status-block" style="margin-bottom:12px"></div>
+
 	<div style="margin-bottom:8px">
         <label class="form-lbl">Display Name</label>
         <input class="form-inp" id="p-name" type="text" placeholder="Your name" style="margin-bottom:8px">
@@ -683,7 +701,7 @@ body{
   <div class="app-view" id="app-helper">
     <div class="myjobs-inner" style="padding-bottom:40px">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-        <button onclick="nav('profile')" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>
+        <button onclick="nav(helperEnteredFromFork?'post':'profile')" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>
         <div class="section-h" style="margin-bottom:0">💪 Helper Profile</div>
       </div>
 
@@ -751,6 +769,12 @@ body{
       <!-- ACTION BUTTONS -->
       <button class="btn-primary" onclick="saveHelperProfile()">Save Helper Profile ✨</button>
       <button onclick="cancelHelperProfile()" style="width:100%;padding:14px;margin-top:10px;border-radius:var(--radius);background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;border:1.5px solid var(--border);cursor:pointer">Cancel</button>
+
+      <!-- Pause listing (shown only when active) -->
+      <div id="hp-pause-section" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+        <button id="hp-pause-btn" onclick="confirmPauseHelper()" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;color:var(--yellow);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;border:1.5px solid rgba(234,179,8,.3);cursor:pointer">⏸️ Pause My Listing</button>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center;line-height:1.5">This will hide you from searches. You can resume anytime.</div>
+      </div>
     </div>
   </div>
 
@@ -1761,6 +1785,10 @@ function nav(view) {
     browseMode=view;
     document.getElementById('app-'+view).classList.add('active');
     document.getElementById('ni-map').classList.add('active');
+  } else if(view==='postjob'){
+    document.getElementById('app-postjob').classList.add('active');
+    const navBtn=document.getElementById('ni-post');
+    if(navBtn)navBtn.classList.add('active');
   } else {
     document.getElementById('app-'+view).classList.add('active');
     const navBtn=document.getElementById('ni-'+view);
@@ -1780,7 +1808,8 @@ function nav(view) {
     updateCircleOverlay();updateRadiusCounts();updateNotifNudge();
   },100);}
   if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
-  if(view==='post')resetPost();
+  if(view==='post')updateForkHelperCard();
+  if(view==='postjob')resetPost();
   if(view==='messages'){loadMessages().then(()=>refreshUnreadCount());}
   if(view==='profile')loadProfile();
   if(view==='helper')openHelperScreen();
@@ -2775,7 +2804,7 @@ async function loadProfile(){
   const av=document.getElementById('pav');
   if(url){av.innerHTML=`<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover">`;}
 if(!sb)return;
-const{data:prof}=await sb.from('profiles').select('bio,rating,task_count,name,visible_on_map,last_lat,last_lng,helper_address,avatar_color').eq('id',myProfileId||me.id).maybeSingle();
+const{data:prof}=await sb.from('profiles').select('bio,rating,task_count,name,visible_on_map,last_lat,last_lng,helper_address,avatar_color,helper_categories,helper_expires_at,helper_bio,helper_rate,helper_rate_type').eq('id',myProfileId||me.id).maybeSingle();
 const name=prof?.name||authName;
 document.getElementById('pnm').textContent=name;
 document.getElementById('p-bio').value=prof?.bio||'';
@@ -2786,22 +2815,8 @@ if(!url){
   const _topAv=document.getElementById('top-av');
   if(_topAv)_topAv.innerHTML=avatarCircle(name,prof?.avatar_color,'36px','14px');
 }
-// populate helper mode toggle
-const isHelper=prof?.visible_on_map||false;
-const toggle=document.getElementById('helper-toggle');
-toggle.checked=isHelper;
-updateHelperToggleUI(isHelper);
-const lbl=document.getElementById('helper-location-label');
-if(isHelper&&prof?.helper_address){
-  lbl.textContent=`📍 ${prof.helper_address} · Change`;
-  lbl.style.color='var(--lime)';
-} else if(isHelper){
-  lbl.textContent='⚠️ Complete your helper profile';
-  lbl.style.color='var(--yellow)';
-} else {
-  lbl.textContent='Off';
-  lbl.style.color='var(--muted)';
-}
+// populate helper status block
+updateProfileHelperBlock(prof);
 const pid=myProfileId||me.id;
 // fetch all stats in parallel
 const[
@@ -2986,8 +3001,8 @@ async function loadChatMessages(){
   el.innerHTML=data.map(m=>{
     const isMe=m.sender_id===pid||m.sender_id===me.id;
     const isSys=m.body?.startsWith('✅')||m.body?.startsWith('↩️')||m.body?.startsWith('🎉')||m.body?.startsWith('Thanks for');
-    if(isSys&&!isMe)return`<div style="text-align:center;margin:10px 0"><span style="font-size:12px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">${esc(m.body||'')}</span></div>`;
-    return`<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div style="max-width:75%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--purple)':'var(--surface2)'};font-size:14px;font-weight:600;line-height:1.4">${esc(m.body||'')}<div style="font-size:10px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
+    if(isSys&&!isMe)return`<div style="text-align:center;margin:10px 0"><span style="font-size:12px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">${linkify(esc(m.body||''))}</span></div>`;
+    return`<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div style="max-width:75%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--purple)':'var(--surface2)'};font-size:14px;font-weight:600;line-height:1.4">${linkify(esc(m.body||''))}<div style="font-size:10px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
   }).join('');
   el.scrollTop=el.scrollHeight;
 
@@ -3148,6 +3163,7 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 function spin(){return'<div class="loading"><div class="spinner"></div></div>';}
 function emptyState(ico,t,d){return`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-t">${t}</div><div class="empty-d">${d}</div></div>`;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function linkify(s){return s.replace(/(https?:\/\/[^\s<&]+(?:&amp;[^\s<&]+)*|www\.[^\s<&]+(?:&amp;[^\s<&]+)*)/gi,function(url){const href=url.startsWith('www.')?'https://'+url:url;return'<a href="'+href+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;word-break:break-all">'+url+'</a>';});}
 function avatarCircle(name,color,size='36px',fontSize='14px',border=true){
   const bg=color||'#9B59D4';
   const initial=((name||'?')[0]).toUpperCase();
@@ -3170,29 +3186,138 @@ async function saveBio(){
 let helperLat=null,helperLng=null;
 let helperLocSuggestionsData=[];
 let helperLocDebounceTimer=null;
+let helperEnteredFromFork=false;
 
-function updateHelperToggleUI(on){
-  const track=document.getElementById('helper-toggle-track');
-  const thumb=document.getElementById('helper-toggle-thumb');
-  track.style.background=on?'var(--purple)':'var(--border)';
-  thumb.style.transform=on?'translateX(20px)':'translateX(0)';
-}
+// ── FORK SCREEN: "Offering help" card state ──
+async function updateForkHelperCard(){
+  const el=document.getElementById('fork-helper-card');
+  if(!el)return;
 
-function onHelperToggle(){
-  const on=document.getElementById('helper-toggle').checked;
-  updateHelperToggleUI(on);
-  if(on){
-    // navigate to helper profile screen
-    nav('helper');
+  // Not signed in — show default tappable card
+  if(!sb||!me){
+    el.innerHTML=forkHelperCardNew();
+    return;
+  }
+
+  const{data:prof}=await sb.from('profiles')
+    .select('visible_on_map,helper_address,helper_categories,helper_expires_at')
+    .eq('id',myProfileId||me.id).maybeSingle();
+
+  if(!prof||(!prof.helper_address&&!(prof.helper_categories||[]).length)){
+    // Never set up
+    el.innerHTML=forkHelperCardNew();
+  } else if(prof.visible_on_map){
+    // Active
+    const expiry=prof.helper_expires_at?new Date(prof.helper_expires_at):null;
+    const expiresLabel=expiry?`Expires ${expiry.toLocaleDateString('en-CA',{month:'short',day:'numeric'})}`:'Active';
+    el.innerHTML=`
+      <div style="width:100%;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(163,230,53,.25);background:rgba(163,230,53,.06)">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(163,230,53,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="font-size:24px">✅</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:2px">You're listed as a helper</div>
+          <div style="font-size:13px;font-weight:700;color:var(--lime)">${expiresLabel}</div>
+          <button onclick="nav('profile')" style="background:none;border:none;padding:0;margin-top:6px;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;text-decoration:underline">Manage in Profile →</button>
+        </div>
+      </div>`;
   } else {
-    const lbl=document.getElementById('helper-location-label');
-    lbl.textContent='Off';lbl.style.color='var(--muted)';
-    if(sb&&me) sb.from('profiles').update({visible_on_map:false}).eq('id',myProfileId||me.id).then(({error})=>{
-      if(error)toast('❌ '+error.message);
-      else{toast('Helper mode off');loadJobs();}
-    });
+    // Paused or expired — offer renew right here
+    const expired=prof.helper_expires_at&&new Date(prof.helper_expires_at)<new Date();
+    const statusLabel=expired?'Your Helper Listing has expired':'Your Helper Listing is paused';
+    el.innerHTML=`
+      <div style="width:100%;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid var(--yellow);background:rgba(234,179,8,.06)">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(234,179,8,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="font-size:24px">⏸️</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:900;color:var(--text);margin-bottom:2px">${statusLabel}</div>
+          <button onclick="helperEnteredFromFork=true;nav('helper')" style="margin-top:8px;padding:10px 20px;border-radius:100px;border:none;background:var(--lime);color:#000;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">Renew Listing ✨</button>
+        </div>
+      </div>`;
   }
 }
+
+function forkHelperCardNew(){
+  return `
+    <button onclick="helperEnteredFromFork=true;nav('helper')" style="width:100%;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(163,230,53,.35);background:rgba(163,230,53,.06);cursor:pointer;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
+      <div style="width:52px;height:52px;border-radius:14px;background:var(--lime);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <div>
+        <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:2px">Offering help</div>
+        <div style="font-size:13px;font-weight:700;color:var(--muted)">I want to offer a skill or service</div>
+      </div>
+    </button>`;
+}
+
+
+function updateHelperToggleUI(){}  // no-op — toggle removed
+
+function updateProfileHelperBlock(prof){
+  const el=document.getElementById('helper-status-block');
+  if(!el)return;
+
+  const hasProfile=prof?.helper_address||(prof?.helper_categories||[]).length;
+
+  if(!hasProfile){
+    // Never set up
+    el.innerHTML=`
+      <button onclick="nav('helper')" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-family:'Nunito',sans-serif;text-align:left">
+        <div style="width:42px;height:42px;border-radius:12px;background:rgba(163,230,53,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="font-size:20px">💪</span>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:900;color:var(--text)">Become a Helper</div>
+          <div style="font-size:12px;font-weight:700;color:var(--muted)">Offer your skills to neighbours nearby</div>
+        </div>
+        <span style="font-size:18px;color:var(--muted)">›</span>
+      </button>`;
+    return;
+  }
+
+  if(prof.visible_on_map){
+    // Active
+    const expiry=prof.helper_expires_at?new Date(prof.helper_expires_at):null;
+    const expiresLabel=expiry?`Expires ${expiry.toLocaleDateString('en-CA',{month:'short',day:'numeric'})}`:'';
+    const cats=(prof.helper_categories||[]).slice(0,3);
+    const catsHtml=cats.length?cats.map(c=>`<span style="font-size:10px;font-weight:800;color:var(--purple);background:rgba(155,89,212,.12);border:1px solid rgba(155,89,212,.25);border-radius:100px;padding:2px 8px">${esc(c)}</span>`).join(' '):'';
+    el.innerHTML=`
+      <div style="border-radius:var(--radius);border:1.5px solid rgba(163,230,53,.25);background:rgba(163,230,53,.04);padding:16px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:${catsHtml?'10px':'0'}">
+          <div style="width:42px;height:42px;border-radius:12px;background:rgba(163,230,53,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="font-size:20px">✅</span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:900;color:var(--lime)">Helper listing active</div>
+            ${expiresLabel?`<div style="font-size:11px;font-weight:700;color:var(--muted)">${expiresLabel}</div>`:''}
+          </div>
+        </div>
+        ${catsHtml?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${catsHtml}</div>`:''}
+        <button onclick="nav('helper')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Edit Helper Profile</button>
+      </div>`;
+  } else {
+    // Paused or expired
+    const expired=prof.helper_expires_at&&new Date(prof.helper_expires_at)<new Date();
+    const label=expired?'Helper Listing expired':'Helper Listing paused';
+    const icon=expired?'⏰':'⏸️';
+    el.innerHTML=`
+      <div style="border-radius:var(--radius);border:1.5px solid rgba(234,179,8,.25);background:rgba(234,179,8,.04);padding:16px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="width:42px;height:42px;border-radius:12px;background:rgba(234,179,8,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="font-size:20px">${icon}</span>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:900;color:var(--text)">${label}</div>
+            <div style="font-size:11px;font-weight:700;color:var(--muted)">Your profile is hidden from searches</div>
+          </div>
+        </div>
+        <button onclick="nav('helper')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:none;background:var(--lime);color:#000;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">${expired?'Renew Listing ✨':'Resume Listing ✨'}</button>
+      </div>`;
+  }
+}
+
+function onHelperToggle(){}  // no-op — toggle removed
 
 // ── HELPER PROFILE SCREEN ──
 let hpLat=null,hpLng=null,hpLocSuggestionsData=[],hpLocDebounceTimer=null;
@@ -3217,7 +3342,7 @@ async function openHelperScreen(){
 
   // pre-populate from saved profile
   const{data:prof}=await sb.from('profiles')
-    .select('helper_address,helper_lat,helper_lng,helper_bio,helper_rate,helper_rate_type,helper_categories')
+    .select('helper_address,helper_lat,helper_lng,helper_bio,helper_rate,helper_rate_type,helper_categories,visible_on_map')
     .eq('id',myProfileId||me.id).maybeSingle();
 
   if(prof?.helper_address){
@@ -3230,6 +3355,12 @@ async function openHelperScreen(){
   if(prof?.helper_rate) document.getElementById('hp-rate').value=prof.helper_rate;
   if(prof?.helper_rate_type) setHPRateType(prof.helper_rate_type);
   setHelperVisibility(prof?.show_on_map!==false);
+
+  // show pause option only when listing is currently active
+  const pauseSection=document.getElementById('hp-pause-section');
+  if(pauseSection) pauseSection.style.display=prof?.visible_on_map?'block':'none';
+  const pauseBtn=document.getElementById('hp-pause-btn');
+  if(pauseBtn){delete pauseBtn.dataset.confirming;pauseBtn.innerHTML='⏸️ Pause My Listing';pauseBtn.style.borderColor='rgba(234,179,8,.3)';pauseBtn.style.background='transparent';}
 
   // restore selected categories
   hpSelectedCategories=new Set(prof?.helper_categories||[]);
@@ -3349,25 +3480,49 @@ async function saveHelperProfile(){
     helper_expires_at:expiresAt
   }).eq('id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
-  // update toggle UI
-  const lbl=document.getElementById('helper-location-label');
-  lbl.textContent=`📍 ${address} · Change`;lbl.style.color='var(--lime)';
-  updateHelperToggleUI(true);
-  document.getElementById('helper-toggle').checked=true;
   toast('✅ Helper profile saved!');
   loadJobs();
-  nav('profile');
+  const returnTo=helperEnteredFromFork?'browse':'profile';
+  helperEnteredFromFork=false;
+  nav(returnTo);
 }
 
 function cancelHelperProfile(){
-  // if turning off (was off before navigating here), uncheck toggle
-  const toggle=document.getElementById('helper-toggle');
-  if(toggle.checked){
-    toggle.checked=false;
-    updateHelperToggleUI(false);
-    if(sb&&me) sb.from('profiles').update({visible_on_map:false}).eq('id',myProfileId||me.id);
+  if(helperEnteredFromFork){
+    helperEnteredFromFork=false;
+    nav('post');
+    return;
   }
   nav('profile');
+}
+
+async function confirmPauseHelper(){
+  const btn=document.getElementById('hp-pause-btn');
+  if(btn.dataset.confirming){
+    // Second tap — actually pause
+    btn.disabled=true;
+    const{error}=await sb.from('profiles').update({visible_on_map:false}).eq('id',myProfileId||me.id);
+    btn.disabled=false;
+    if(error)return toast('❌ '+error.message);
+    toast('⏸️ Listing paused — you can resume anytime');
+    loadJobs();
+    nav('profile');
+    return;
+  }
+  // First tap — show confirmation state
+  btn.dataset.confirming='true';
+  btn.innerHTML='⏸️ Tap again to confirm pause';
+  btn.style.borderColor='var(--yellow)';
+  btn.style.background='rgba(234,179,8,.08)';
+  // Reset after 4 seconds if no second tap
+  setTimeout(()=>{
+    if(btn.dataset.confirming){
+      delete btn.dataset.confirming;
+      btn.innerHTML='⏸️ Pause My Listing';
+      btn.style.borderColor='rgba(234,179,8,.3)';
+      btn.style.background='transparent';
+    }
+  },4000);
 }
 
 // old functions kept as no-ops to avoid any stale references
