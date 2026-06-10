@@ -332,7 +332,6 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 /* conversation row */
 .conv-row{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border-radius:var(--radius-sm);border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;margin-bottom:8px}
 .conv-row:active{transform:scale(.98)}
-.conv-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .conv-body{flex:1;min-width:0}
 .conv-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:3px}
 .conv-name{font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -350,7 +349,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-close:active{background:var(--border)}
 .op-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 20px calc(var(--sab) + 28px);display:flex;flex-direction:column;gap:16px}
 .op-hero{display:flex;align-items:center;gap:14px}
-.op-av{width:64px;height:64px;border-radius:50%;border:3px solid var(--purple);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;flex-shrink:0}
+.op-av{width:64px;height:64px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;flex-shrink:0}
 .op-name{font-size:20px;font-weight:800;line-height:1.2;word-break:break-word;overflow-wrap:break-word}
 .op-stats{background:var(--surface2);border-radius:var(--radius-sm);border:1.5px solid var(--border);overflow:hidden}
 .op-stats-row{display:grid;grid-template-columns:1fr 1fr}
@@ -812,7 +811,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 <div class="modal-ov" id="chat-modal" onclick="if(event.target.id==='chat-modal')closeChat()">
   <div class="modal-sheet" style="height:80vh;display:flex;flex-direction:column;padding:0">
     <div style="padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:12px">
-      <div id="chat-av" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)" style="width:46px;height:46px;border-radius:50%;background:#9B59D4;border:3px solid #9B59D4;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">?</div>
+      <div id="chat-av" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)" style="width:46px;height:46px;border-radius:50%;background:#9B59D4;border:1.5px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">?</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="chat-title">—</div>
         <div style="font-size:12px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer" id="chat-other" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)">—<span style="font-size:10px;opacity:.5">›</span></div>
@@ -1728,12 +1727,12 @@ async function openOtherProfile(userId){
   const pRatingStr=pAvg?`★ ${pAvg} <span style="color:var(--muted);font-size:11px;font-weight:700">(${pCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
   const hRatingStr=hAvg?`★ ${hAvg} <span style="color:var(--muted);font-size:11px;font-weight:700">(${hCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
 
-  const bg=prof.avatar_color||'#9B59D4';
+  const bg=avColor(prof.name,prof.avatar_color);
   const initial=((prof.name||'?')[0]).toUpperCase();
 
   content.innerHTML=`
     <div class="op-hero">
-      <div class="op-av" style="background:${bg};border-color:${bg}">${esc(initial)}</div>
+      <div class="op-av" style="background:${bg}">${esc(initial)}</div>
       <div class="op-name">${esc(prof.name||'Yoodler')}</div>
     </div>
     <div class="op-stats">
@@ -2022,12 +2021,12 @@ async function setAvatar(){
 }
 
 function jobCard(j,profile){
-  const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
+  const color=CAT_COLOR[j.category]||'#9B59D4';
   const name=profile?.name||'Someone';
   const rating=profile?.rating?`<span style="color:var(--yellow);font-size:11px;font-weight:800">★ ${profile.rating}</span>`:`<span style="color:var(--muted);font-size:11px;font-weight:700">New</span>`;
   const locBadge=j.location_verified?`<span style="color:var(--lime);font-size:10px">✅</span>`:`<span style="color:var(--yellow);font-size:10px">⚠️</span>`;
   return `<div class="job-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
-    <div class="jc-badge">${emoji} ${j.category||'other'}</div>
+    <div class="jc-badge">${j.category||'other'}</div>
     <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
     <div class="jc-desc">${esc(j.description||'')}</div>
     <div class="jc-foot">
@@ -2047,7 +2046,6 @@ const FEATURED_POSTER_ID='c89896db-b2ab-4c4c-88fa-650823e63303';
 
 function listCard(j,profile){
   const color=CAT_COLOR[j.category]||'#9B59D4';
-  const emoji=CAT_EMOJI[j.category]||'✨';
   const name=profile?.name||'Someone';
   const rating=profile?.rating?`★ ${profile.rating}`:'New';
   // show real distance only when GPS is known — map centre is not the user's position
@@ -2058,7 +2056,7 @@ function listCard(j,profile){
   }
   return `<div class="list-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="lc-top">
-      <span class="lc-title">${emoji} ${esc(j.title)}</span>
+      <span class="lc-title">${esc(j.title)}</span>
       <div style="display:flex;flex-direction:row;align-items:center;gap:4px;flex-shrink:0">${myAppliedTaskIds.has(j.id)?'<span style="font-size:10px;font-weight:800;color:var(--lime);letter-spacing:.5px">Applied-</span>':''}<span class="lc-budget">$${j.price??'?'}</span></div>
     </div>
     <div class="lc-desc">${esc(j.description||'')}</div>
@@ -2328,7 +2326,7 @@ async function openApplicants(taskId,taskTitle){
     return `<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;border:1.5px solid var(--border)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:8px">
-          <div onclick="openOtherProfile('${app.applicant_id}')" style="width:42px;height:42px;border-radius:50%;border:3px solid #9B59D4;color:#9B59D4;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">${((name||'?')[0]).toUpperCase()}</div>
+          <div onclick="openOtherProfile('${app.applicant_id}')" style="cursor:pointer;flex-shrink:0">${avatarCircle(name,p.avatar_color,'42px','17px')}</div>
           <div>
             <div style="font-size:15px;font-weight:800">${esc(name)}</div>
             <div style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</div>
@@ -2574,7 +2572,6 @@ async function loadMyJobs(){
       if(!j)return'';
       const cat=(j.category||'other').toLowerCase();
       const color=CAT_COLOR[cat]||'#9B59D4';
-      const emoji=CAT_EMOJI[cat]||'✨';
       let appBadge,actionBtn='',appMenu='';
       if(app.status==='pending'){
         appBadge=`<span style="color:var(--yellow);font-size:12px;font-weight:800">Pending</span>`;
@@ -2635,7 +2632,7 @@ async function loadMyJobs(){
 
   const data2=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   g.innerHTML=data2.map(j=>{
-    const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
+    const color=CAT_COLOR[j.category]||'#9B59D4';
     const daysLeft=j.expires_at?Math.ceil((new Date(j.expires_at)-now)/(1000*60*60*24)):null;
 
     const gpsTag=j.status==='open'?(j.location_verified?` · <span style="color:var(--lime);font-size:11px;font-weight:800">GPS</span>`:`· <span style="color:var(--yellow);font-size:11px;font-weight:800">⚠️ Unverified</span>`):'';
@@ -2867,8 +2864,6 @@ async function loadMessages(){
     const otherName=t.other_name||'Someone';
     const otherRating=t.other_rating;
     const cat=(t.category||'other').toLowerCase();
-    const color=CAT_COLOR[cat]||'#9B59D4';
-    const emoji=CAT_EMOJI[cat]||'✨';
     const preview=t.last_msg_body?esc(t.last_msg_body).slice(0,60):'Tap to open chat';
     const msgTime=t.last_msg_created_at?timeAgo(t.last_msg_created_at):'';
     const isUnread=t.has_unread===true;
@@ -2880,7 +2875,7 @@ async function loadMessages(){
       else if(t.app_status==='assigned'||t.task_status==='claimed') statusTag=`<span style="font-size:10px;color:var(--teal);font-weight:800;margin-left:6px">Assigned</span>`;
     }
     return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
-      <div class="conv-icon" style="background:${color}22;border:1.5px solid ${color}44">${emoji}</div>
+      ${avatarCircle(otherName,null,'44px','18px')}
       <div class="conv-body">
         <div class="conv-top">
           <span class="conv-name">${esc(otherName)}${unreadBadge}</span>
@@ -2927,11 +2922,11 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   // Set avatar initial immediately with default color
   const avEl=document.getElementById('chat-av');
   const initial=((otherName||'?')[0]).toUpperCase();
-  avEl.textContent=initial;avEl.style.background='#9B59D4';avEl.style.borderColor='#9B59D4';
+  avEl.textContent=initial;avEl.style.background=avColor(otherName,null);
   // Fetch avatar_color async — update once loaded
   if(sb&&otherId){
     sb.from('profiles').select('avatar_color').eq('id',otherId).maybeSingle().then(({data})=>{
-      if(data?.avatar_color){avEl.style.background=data.avatar_color;avEl.style.borderColor=data.avatar_color;}
+      if(data?.avatar_color){avEl.style.background=avColor(otherName,data.avatar_color);}
     });
   }
   const otherEl=document.getElementById('chat-other');
@@ -3167,10 +3162,23 @@ function spin(){return'<div class="loading"><div class="spinner"></div></div>';}
 function emptyState(ico,t,d){return`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-t">${t}</div><div class="empty-d">${d}</div></div>`;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function linkify(s){return s.replace(/(https?:\/\/[^\s<&]+(?:&amp;[^\s<&]+)*|www\.[^\s<&]+(?:&amp;[^\s<&]+)*)/gi,function(url){const href=url.startsWith('www.')?'https://'+url:url;return'<a href="'+href+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;word-break:break-all">'+url+'</a>';});}
+// Avatar color guard: use stored color only if readable on the dark theme,
+// otherwise fall back to a deterministic palette keyed on the name.
+const AV_COLORS=['#9B59D4','#6366F1','#06B6D4','#14B8A6','#22C55E','#F97316','#EAB308','#EC4899'];
+function avColor(name,stored){
+  if(stored&&/^#?[0-9a-fA-F]{6}$/.test(String(stored).trim())){
+    const c=String(stored).trim().replace('#','');
+    const r=parseInt(c.slice(0,2),16),g=parseInt(c.slice(2,4),16),b=parseInt(c.slice(4,6),16);
+    if((0.2126*r+0.7152*g+0.0722*b)/255>0.2)return'#'+c;
+  }
+  let h=0;const s=String(name||'?');
+  for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;
+  return AV_COLORS[h%AV_COLORS.length];
+}
 function avatarCircle(name,color,size='36px',fontSize='14px',border=true){
-  const bg=color||'#9B59D4';
+  const bg=avColor(name,color);
   const initial=((name||'?')[0]).toUpperCase();
-  const b=border?`border:3px solid ${bg};outline:2.5px solid ${bg};outline-offset:2px;`:'';
+  const b=border?'border:1.5px solid rgba(255,255,255,.12);':'';
   return`<div style="width:${size};height:${size};border-radius:50%;background:${bg};${b}display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${fontSize};color:#fff;flex-shrink:0;font-family:'Nunito',sans-serif">${esc(initial)}</div>`;
 }
 function timeAgo(d){const m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
