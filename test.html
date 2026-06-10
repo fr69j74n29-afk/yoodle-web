@@ -1320,7 +1320,7 @@ let locationSource='preset'; // 'gps' | 'preset'
 
 let _geoWatchId=null;
 
-function locateUser() {
+function locateUser(silent) {
   if(!navigator.geolocation){showGeoFallback();return;}
 
   const btn=document.getElementById('map-locate-btn');
@@ -1328,41 +1328,50 @@ function locateUser() {
 
   if(_geoWatchId!==null){navigator.geolocation.clearWatch(_geoWatchId);_geoWatchId=null;}
 
-  let _hasFirstPosition=false;
   let _resolved=false;
+  let _coarseFix=null; // best low-accuracy fix — last-resort fallback only (never cached)
+
+  const _applyFix=(lat,lng,cache)=>{
+    gpsLat=lat; gpsLng=lng;
+    if(cache)_cacheGps(lat,lng);
+    locationSource='gps';
+    if(btn){btn.classList.remove('locating');btn.classList.add('located');}
+    updateGpsDot();
+    // Move only if meaningfully different from where the map already sits
+    if(haversineKm(userLat,userLng,lat,lng)*1000>50)
+      map.flyTo([lat,lng],map.getZoom()); // moveend handles userLat/userLng + loadJobs
+    else
+      updateCircleOverlay();
+  };
 
   // iOS safety net — watchPosition timeout unreliable after backgrounding
   const _safetyTimer=setTimeout(()=>{
     if(_resolved)return;
     _resolved=true;
     if(_geoWatchId!==null){navigator.geolocation.clearWatch(_geoWatchId);_geoWatchId=null;}
-    if(btn)btn.classList.remove('locating');
-    toast('📍 Location timed out — try again');
+    if(_coarseFix){
+      // No GPS-grade fix arrived (e.g. desktop, no GPS hardware) — use best coarse fix, never cache it
+      _applyFix(_coarseFix.lat,_coarseFix.lng,false);
+    } else {
+      if(btn)btn.classList.remove('locating');
+      if(!silent)toast('📍 Location timed out — try again');
+    }
   },10000);
 
   _geoWatchId=navigator.geolocation.watchPosition(
     pos=>{
       if(_resolved)return;
       const newLat=pos.coords.latitude, newLng=pos.coords.longitude;
-      if(!_hasFirstPosition){
-        _hasFirstPosition=true;
-        gpsLat=newLat; gpsLng=newLng;
-        _cacheGps(newLat,newLng);
-        locationSource='gps';
-        if(btn){btn.classList.remove('locating');btn.classList.add('located');}
-        updateGpsDot();
-        map.flyTo([newLat,newLng],map.getZoom()); // moveend handles userLat/userLng + loadJobs
-      } else {
-        _resolved=true;
-        clearTimeout(_safetyTimer);
-        gpsLat=newLat; gpsLng=newLng;
-        _cacheGps(newLat,newLng);
-        updateGpsDot();
-        if(haversineKm(userLat,userLng,newLat,newLng)*1000>50)
-          map.flyTo([newLat,newLng],map.getZoom());
-        navigator.geolocation.clearWatch(_geoWatchId);
-        _geoWatchId=null;
+      if(pos.coords.accuracy>2000){
+        // Coarse network/IP estimate — hold as fallback only; no movement, no cache
+        _coarseFix={lat:newLat,lng:newLng};
+        return;
       }
+      _resolved=true;
+      clearTimeout(_safetyTimer);
+      navigator.geolocation.clearWatch(_geoWatchId);
+      _geoWatchId=null;
+      _applyFix(newLat,newLng,true);
     },
     err=>{
       if(_resolved)return;
@@ -1371,12 +1380,12 @@ function locateUser() {
       if(_geoWatchId!==null){navigator.geolocation.clearWatch(_geoWatchId);_geoWatchId=null;}
       if(btn)btn.classList.remove('locating');
       if(err.code===1){
-        toast('📍 Tap AA in address bar → Website Settings → Location → Allow');
+        if(!silent)toast('📍 Tap AA in address bar → Website Settings → Location → Allow');
       } else {
-        toast('📍 Location unavailable — try again');
+        if(!silent)toast('📍 Location unavailable — try again');
       }
     },
-    {timeout:9000,enableHighAccuracy:false,maximumAge:30000}
+    {timeout:9000,enableHighAccuracy:true,maximumAge:0}
   );
 }
 
@@ -1860,6 +1869,17 @@ async function showApp(){
   setAvatar();
   if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
   loadJobs();
+  // Silent GPS refresh on login — only when permission was ALREADY granted and the
+  // 30-min cache is stale. Fresh cache → no GPS at all (battery). Never prompts.
+  // Permissions API may be absent on older iOS Safari (<16) → try/catch falls back
+  // to today's tap-to-locate behaviour.
+  try{
+    if(navigator.permissions&&navigator.geolocation&&!_restoreCachedGps()){
+      navigator.permissions.query({name:'geolocation'}).then(p=>{
+        if(p.state==='granted')locateUser(true);
+      }).catch(()=>{});
+    }
+  }catch(e){}
   subscribeToMessages();
   registerOneSignal();
   processReferral();
