@@ -62,24 +62,55 @@ body{
 }
 
 
-/* ── DARK MODE ── */
-body.dark{
+/* ── THEMES ── */
+body.theme-sage-dark{
   --purple:#7AAF8B;--lime:#6FCF97;--pink:#5C9E72;
   --teal:#6FCF97;--orange:#D4A96A;--yellow:#D4B978;
   --bg:#131A14;--surface:#1A221B;--surface2:#212A22;
   --border:#2E382F;--text:#E3E1DB;--muted:#8A9A8C;
   --badge-bg:rgba(255,255,255,.06);
 }
-body.dark .top-bar{background:rgba(19,26,20,.96)}
-body.dark .bottom-nav{background:rgba(19,26,20,.97)}
-body.dark .btn-google{background:#1A221B;color:var(--text);border:1.5px solid var(--border)}
-body.dark .map-locate-btn{background:rgba(26,34,27,.95)}
-body.dark #map,.dark .leaflet-container{background:#1A221B!important}
-body.dark .leaflet-tile-pane{filter:brightness(.75) saturate(.8) contrast(1.05)}
-body.dark .pin-dot{border-color:rgba(19,26,20,.7)}
-body.dark .modal-ov,body.dark .op-ov,body.dark .ref-modal{background:rgba(0,0,0,.7)}
-body.dark [onclick="openRadiusSheet()"]{background:rgba(26,34,27,.93)!important}
-body.dark .user-ring{background:rgba(106,207,151,.9)}
+body.theme-classic{
+  --purple:#9078C0;--lime:#8DC95F;--pink:#7577D6;
+  --teal:#3AACBC;--orange:#E08A3A;--yellow:#E0C45A;
+  --bg:#0E0E0E;--surface:#1A1A1A;--surface2:#232323;
+  --border:#2E2E2E;--text:#EBEBEB;--muted:#888;
+  --badge-bg:rgba(255,255,255,.06);
+}
+/* shared dark overrides */
+body.theme-sage-dark .top-bar{background:rgba(19,26,20,.96)}
+body.theme-sage-dark .bottom-nav{background:rgba(19,26,20,.97)}
+body.theme-classic .top-bar{background:rgba(14,14,14,.96)}
+body.theme-classic .bottom-nav{background:rgba(14,14,14,.97)}
+body.theme-sage-dark .btn-google,body.theme-classic .btn-google{background:var(--surface);color:var(--text);border:1.5px solid var(--border)}
+body.theme-sage-dark .map-locate-btn{background:rgba(26,34,27,.95)}
+body.theme-classic .map-locate-btn{background:rgba(26,26,26,.95)}
+body.theme-sage-dark #map,body.theme-sage-dark .leaflet-container{background:#1A221B!important}
+body.theme-classic #map,body.theme-classic .leaflet-container{background:#1A1A1A!important}
+body.theme-sage-dark .leaflet-tile-pane{filter:brightness(.75) saturate(.8) contrast(1.05)}
+body.theme-classic .leaflet-tile-pane{filter:brightness(.7) saturate(.85) contrast(1.1)}
+body.theme-sage-dark .pin-dot{border-color:rgba(19,26,20,.7)}
+body.theme-classic .pin-dot{border-color:rgba(14,14,14,.7)}
+body.theme-sage-dark .modal-ov,body.theme-sage-dark .op-ov,body.theme-sage-dark .ref-modal,
+body.theme-classic .modal-ov,body.theme-classic .op-ov,body.theme-classic .ref-modal{background:rgba(0,0,0,.7)}
+body.theme-sage-dark [onclick="openRadiusSheet()"]{background:rgba(26,34,27,.93)!important}
+body.theme-classic [onclick="openRadiusSheet()"]{background:rgba(26,26,26,.93)!important}
+body.theme-sage-dark .user-ring{background:rgba(106,207,151,.9)}
+body.theme-classic .user-ring{background:rgba(58,172,188,.9)}
+body.theme-classic .ly{color:#9078C0}
+body.theme-classic .lo1{color:#8DC95F}
+body.theme-classic .lo2{color:#7577D6}
+body.theme-classic .ld{color:#3AACBC}
+body.theme-classic .ll{color:#E08A3A}
+body.theme-classic .le{color:#E0C45A}
+/* theme picker styles */
+.theme-row{display:flex;gap:10px;margin-top:2px}
+.theme-opt{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 6px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--surface);cursor:pointer;transition:border-color .2s}
+.theme-opt.active{border-color:var(--purple)}
+.theme-swatch{width:36px;height:36px;border-radius:50%;border:2px solid rgba(128,128,128,.25)}
+.theme-name{font-size:11px;font-weight:700;color:var(--muted);text-align:center}
+.theme-opt.active .theme-name{color:var(--text);font-weight:800}
+
 
 /* LOGO */
 .wordmark{font-family:'Fredoka One',cursive;line-height:1}
@@ -704,18 +735,23 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         <div style="font-size:13px;font-weight:800;color:var(--purple);margin-bottom:6px">Push Notifications</div>
         <div id="notif-tip-body" style="font-size:12px;color:var(--muted);line-height:1.6;font-weight:700"></div>
       </div>
-      <!-- Dark mode toggle -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:10px">
-          <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:var(--purple)"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          <span style="font-size:15px;font-weight:700">Dark Mode</span>
+      <!-- Theme picker -->
+      <div style="padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
+        <div style="font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Theme</div>
+        <div class="theme-row">
+          <div class="theme-opt" id="t-sage-light" onclick="setTheme('sage-light')">
+            <div class="theme-swatch" style="background:linear-gradient(135deg,#F5F4EF 50%,#5C8A6A 50%)"></div>
+            <div class="theme-name">Light</div>
+          </div>
+          <div class="theme-opt" id="t-sage-dark" onclick="setTheme('sage-dark')">
+            <div class="theme-swatch" style="background:linear-gradient(135deg,#131A14 50%,#7AAF8B 50%)"></div>
+            <div class="theme-name">Dark</div>
+          </div>
+          <div class="theme-opt" id="t-classic" onclick="setTheme('classic')">
+            <div class="theme-swatch" style="background:linear-gradient(135deg,#0E0E0E 50%,#9078C0 50%)"></div>
+            <div class="theme-name">Classic</div>
+          </div>
         </div>
-        <label style="position:relative;display:inline-block;width:48px;height:28px;flex-shrink:0">
-          <input type="checkbox" id="dark-toggle" onchange="toggleDarkMode(this.checked)" style="opacity:0;width:0;height:0">
-          <span style="position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:28px;transition:.25s">
-            <span style="position:absolute;content:'';height:22px;width:22px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.25s" id="toggle-knob"></span>
-          </span>
-        </label>
       </div>
       <button class="btn-so" onclick="signOut()">Sign Out</button>
     </div>
@@ -1073,36 +1109,31 @@ const CAT_COLOR = {
 };
 
 
-/* ── DARK MODE ── */
-function toggleDarkMode(on){
-  document.body.classList.toggle('dark',on);
-  localStorage.setItem('yoodle-dark',on?'1':'0');
-  const knob=document.getElementById('toggle-knob');
-  if(knob)knob.style.transform=on?'translateX(20px)':'none';
-  const track=document.getElementById('dark-toggle')?.parentElement?.querySelector('span');
-  if(track)track.style.background=on?'var(--purple)':'var(--border)';
-  const icon=document.getElementById('theme-icon');
-  if(icon)icon.innerHTML=on
-    ?'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
-    :'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+/* ── THEMES ── */
+const THEMES=['sage-light','sage-dark','classic'];
+function setTheme(name){
+  if(!THEMES.includes(name))name='sage-dark';
+  document.body.classList.remove(...THEMES.map(t=>'theme-'+t));
+  if(name!=='sage-light')document.body.classList.add('theme-'+name);
+  localStorage.setItem('yoodle-theme',name);
+  THEMES.forEach(t=>{
+    const el=document.getElementById('t-'+t);
+    if(el)el.classList.toggle('active',t===name);
+  });
 }
-function initDarkMode(){
-  const saved=localStorage.getItem('yoodle-dark');
-  const on=saved!=='0';
-  document.body.classList.toggle('dark',on);
-  const cb=document.getElementById('dark-toggle');
-  if(cb)cb.checked=on;
-  const knob=document.getElementById('toggle-knob');
-  if(knob&&on)knob.style.transform='translateX(20px)';
-  const track=document.getElementById('dark-toggle')?.parentElement?.querySelector('span');
-  if(track&&on)track.style.background='var(--purple)';
-  if(on){
-    const icon=document.getElementById('theme-icon');
-    if(icon)icon.innerHTML='<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+function initTheme(){
+  const saved=localStorage.getItem('yoodle-theme');
+  /* migrate old dark mode pref */
+  if(!saved){
+    const oldDark=localStorage.getItem('yoodle-dark');
+    if(oldDark==='0') setTheme('sage-light');
+    else setTheme('sage-dark');
+    return;
   }
+  setTheme(saved);
 }
 
-try{initDarkMode();}catch(e){}
+try{initTheme();}catch(e){}
 
 const CAT_EMOJI = {
   assembly: '🔧',
