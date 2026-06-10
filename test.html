@@ -568,9 +568,9 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <div style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:32px;font-family:'Fredoka One',cursive">What would you like to post?</div>
 
       <!-- Needs help card -->
-      <button onclick="nav('postjob')" style="width:100%;max-width:400px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(249,115,22,.35);background:var(--surface);cursor:pointer;margin-bottom:16px;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
-        <div style="width:52px;height:52px;border-radius:14px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <button onclick="nav('postjob')" style="width:100%;max-width:400px;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid var(--orange);background:var(--surface);cursor:pointer;margin-bottom:16px;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
+        <div style="width:52px;height:52px;border-radius:14px;background:var(--orange);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         </div>
         <div>
           <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">Needs help</div>
@@ -3221,14 +3221,13 @@ async function updateForkHelperCard(){
     const expiry=prof.helper_expires_at?new Date(prof.helper_expires_at):null;
     const expiresLabel=expiry?`Expires ${expiry.toLocaleDateString('en-CA',{month:'short',day:'numeric'})}`:'Active';
     el.innerHTML=`
-      <div style="width:100%;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(163,230,53,.25);background:rgba(163,230,53,.06)">
+      <div style="width:100%;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(163,230,53,.25);background:rgba(163,230,53,.06)">
         <div style="width:52px;height:52px;border-radius:14px;background:rgba(163,230,53,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <span style="font-size:24px">✅</span>
         </div>
         <div style="flex:1;min-width:0">
           <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">You're listed as a helper</div>
-          <div style="font-size:13px;font-weight:700;color:var(--lime)">${expiresLabel}</div>
-          <button onclick="nav('profile')" style="background:none;border:none;padding:0;margin-top:6px;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;text-decoration:underline">Manage in Profile →</button>
+          <div style="font-size:13px;font-weight:700;color:var(--lime)">${expiresLabel} · <button onclick="nav('profile')" style="background:none;border:none;padding:0;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;text-decoration:underline">Manage in Profile →</button></div>
         </div>
       </div>`;
   } else {
@@ -3236,21 +3235,21 @@ async function updateForkHelperCard(){
     const expired=prof.helper_expires_at&&new Date(prof.helper_expires_at)<new Date();
     const statusLabel=expired?'Your Helper Listing has expired':'Your Helper Listing is paused';
     el.innerHTML=`
-      <div style="width:100%;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid var(--yellow);background:rgba(234,179,8,.06)">
+      <div style="width:100%;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid var(--yellow);background:rgba(234,179,8,.06)">
         <div style="width:52px;height:52px;border-radius:14px;background:rgba(234,179,8,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <span style="font-size:24px">⏸️</span>
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:2px">${statusLabel}</div>
-          <button onclick="helperEnteredFromFork=true;nav('helper')" style="margin-top:8px;padding:10px 20px;border-radius:100px;border:none;background:var(--lime);color:#000;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Renew Listing ✨</button>
+          <div style="font-size:14px;font-weight:800;color:var(--text)">${statusLabel}</div>
         </div>
+        <button onclick="helperEnteredFromFork=true;nav('helper')" style="flex-shrink:0;padding:9px 16px;border-radius:100px;border:none;background:var(--lime);color:#000;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer">Renew ✨</button>
       </div>`;
   }
 }
 
 function forkHelperCardNew(){
   return `
-    <button onclick="helperEnteredFromFork=true;nav('helper')" style="width:100%;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(163,230,53,.35);background:rgba(163,230,53,.06);cursor:pointer;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
+    <button onclick="helperEnteredFromFork=true;nav('helper')" style="width:100%;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(163,230,53,.35);background:rgba(163,230,53,.06);cursor:pointer;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
       <div style="width:52px;height:52px;border-radius:14px;background:var(--lime);display:flex;align-items:center;justify-content:center;flex-shrink:0">
         <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       </div>
