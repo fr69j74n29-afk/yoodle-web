@@ -349,7 +349,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-close:active{background:var(--border)}
 .op-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 20px calc(var(--sab) + 28px);display:flex;flex-direction:column;gap:16px}
 .op-hero{display:flex;align-items:center;gap:14px}
-.op-av{width:64px;height:64px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;flex-shrink:0}
+.op-av{width:64px;height:64px;border-radius:50%;background:#000;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;flex-shrink:0}
 .op-name{font-size:20px;font-weight:800;line-height:1.2;word-break:break-word;overflow-wrap:break-word}
 .op-stats{background:var(--surface2);border-radius:var(--radius-sm);border:1.5px solid var(--border);overflow:hidden}
 .op-stats-row{display:grid;grid-template-columns:1fr 1fr}
@@ -811,7 +811,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 <div class="modal-ov" id="chat-modal" onclick="if(event.target.id==='chat-modal')closeChat()">
   <div class="modal-sheet" style="height:80vh;display:flex;flex-direction:column;padding:0">
     <div style="padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:12px">
-      <div id="chat-av" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)" style="width:46px;height:46px;border-radius:50%;background:#9B59D4;border:1.5px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">?</div>
+      <div id="chat-av" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)" style="width:46px;height:46px;border-radius:50%;background:#000;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">?</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="chat-title">—</div>
         <div style="font-size:12px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer" id="chat-other" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)">—<span style="font-size:10px;opacity:.5">›</span></div>
@@ -1727,12 +1727,11 @@ async function openOtherProfile(userId){
   const pRatingStr=pAvg?`★ ${pAvg} <span style="color:var(--muted);font-size:11px;font-weight:700">(${pCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
   const hRatingStr=hAvg?`★ ${hAvg} <span style="color:var(--muted);font-size:11px;font-weight:700">(${hCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
 
-  const bg=avColor(prof.name,prof.avatar_color);
-  const initial=((prof.name||'?')[0]).toUpperCase();
+    const initial=((prof.name||'?')[0]).toUpperCase();
 
   content.innerHTML=`
     <div class="op-hero">
-      <div class="op-av" style="background:${bg}">${esc(initial)}</div>
+      <div class="op-av">${esc(initial)}</div>
       <div class="op-name">${esc(prof.name||'Yoodler')}</div>
     </div>
     <div class="op-stats">
@@ -2922,13 +2921,7 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   // Set avatar initial immediately with default color
   const avEl=document.getElementById('chat-av');
   const initial=((otherName||'?')[0]).toUpperCase();
-  avEl.textContent=initial;avEl.style.background=avColor(otherName,null);
-  // Fetch avatar_color async — update once loaded
-  if(sb&&otherId){
-    sb.from('profiles').select('avatar_color').eq('id',otherId).maybeSingle().then(({data})=>{
-      if(data?.avatar_color){avEl.style.background=avColor(otherName,data.avatar_color);}
-    });
-  }
+  avEl.textContent=initial;
   const otherEl=document.getElementById('chat-other');
   otherEl.innerHTML=`${esc(otherName+ratingStr)}<span style="font-size:10px;opacity:.5;margin-left:4px">›</span>`;
   document.getElementById('chat-modal').classList.add('open');
@@ -3162,24 +3155,11 @@ function spin(){return'<div class="loading"><div class="spinner"></div></div>';}
 function emptyState(ico,t,d){return`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-t">${t}</div><div class="empty-d">${d}</div></div>`;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function linkify(s){return s.replace(/(https?:\/\/[^\s<&]+(?:&amp;[^\s<&]+)*|www\.[^\s<&]+(?:&amp;[^\s<&]+)*)/gi,function(url){const href=url.startsWith('www.')?'https://'+url:url;return'<a href="'+href+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;word-break:break-all">'+url+'</a>';});}
-// Avatar color guard: use stored color only if readable on the dark theme,
-// otherwise fall back to a deterministic palette keyed on the name.
-const AV_COLORS=['#9B59D4','#6366F1','#06B6D4','#14B8A6','#22C55E','#F97316','#EAB308','#EC4899'];
-function avColor(name,stored){
-  if(stored&&/^#?[0-9a-fA-F]{6}$/.test(String(stored).trim())){
-    const c=String(stored).trim().replace('#','');
-    const r=parseInt(c.slice(0,2),16),g=parseInt(c.slice(2,4),16),b=parseInt(c.slice(4,6),16);
-    if((0.2126*r+0.7152*g+0.0722*b)/255>0.2)return'#'+c;
-  }
-  let h=0;const s=String(name||'?');
-  for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;
-  return AV_COLORS[h%AV_COLORS.length];
-}
+// Avatar standard: black fill, white border, white initial — everywhere except map pins.
+// Signature unchanged for call-site compatibility; color/border params are intentionally ignored.
 function avatarCircle(name,color,size='36px',fontSize='14px',border=true){
-  const bg=avColor(name,color);
   const initial=((name||'?')[0]).toUpperCase();
-  const b=border?'border:1.5px solid rgba(255,255,255,.12);':'';
-  return`<div style="width:${size};height:${size};border-radius:50%;background:${bg};${b}display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${fontSize};color:#fff;flex-shrink:0;font-family:'Nunito',sans-serif">${esc(initial)}</div>`;
+  return`<div style="width:${size};height:${size};border-radius:50%;background:#000;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${fontSize};color:#fff;flex-shrink:0;font-family:'Nunito',sans-serif">${esc(initial)}</div>`;
 }
 function timeAgo(d){const m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
 async function saveBio(){
