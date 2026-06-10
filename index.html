@@ -39,7 +39,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="manifest" href="/manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <style>
 :root{
@@ -79,7 +79,7 @@ body{
 #view-auth::after{content:'';position:absolute;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,.14) 0%,transparent 65%);bottom:-80px;right:-80px;pointer-events:none}
 .auth-wm{font-size:80px;position:relative;z-index:1;margin-bottom:6px}
 .auth-tag{font-size:10.5px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:48px;position:relative;z-index:1;text-align:center}
-.auth-h{font-size:24px;font-weight:900;text-align:center;margin-bottom:6px;position:relative;z-index:1}
+.auth-h{font-size:24px;font-weight:800;text-align:center;margin-bottom:6px;position:relative;z-index:1}
 .auth-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:32px;position:relative;z-index:1;line-height:1.5}
 .auth-btns{width:100%;display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}
 .auth-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;font-weight:700;margin:4px 0;position:relative;z-index:1}
@@ -91,7 +91,7 @@ body{
 .magic-email{flex:1;padding:15px 16px;border-radius:var(--radius);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:16px;font-weight:600;outline:none;transition:border-color .15s;min-width:0}
 .magic-email:focus{border-color:var(--purple)}
 .magic-email::placeholder{color:var(--muted)}
-.btn-magic{padding:15px 20px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;border:none;cursor:pointer;white-space:nowrap;transition:transform .15s;flex-shrink:0}
+.btn-magic{padding:15px 20px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;border:none;cursor:pointer;white-space:nowrap;transition:transform .15s;flex-shrink:0}
 .btn-magic:active{transform:scale(.96)}
 .btn-magic:disabled{opacity:.5;cursor:not-allowed}
 .magic-sent{background:rgba(163,230,53,.1);border:1.5px solid rgba(163,230,53,.3);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--lime);font-weight:700;text-align:center;display:none;line-height:1.5}
@@ -113,10 +113,10 @@ body{
 .pts-badge{display:flex;align-items:center;gap:5px;background:var(--surface2);border:1.5px solid var(--border);border-radius:100px;padding:6px 14px 6px 10px;cursor:pointer;transition:transform .15s}
 .pts-badge:active{transform:scale(.95)}
 .pts-ico{font-size:16px;line-height:1}
-.pts-val{font-size:14px;font-weight:900;color:var(--yellow)}
-.pts-new{font-size:9px;font-weight:900;color:var(--bg);background:var(--lime);border-radius:100px;padding:2px 6px;text-transform:uppercase;letter-spacing:.5px;animation:pts-pulse 2s ease-in-out infinite}
+.pts-val{font-size:14px;font-weight:800;color:var(--yellow)}
+.pts-new{font-size:9px;font-weight:800;color:var(--bg);background:var(--lime);border-radius:100px;padding:2px 6px;text-transform:uppercase;letter-spacing:.5px;animation:pts-pulse 2s ease-in-out infinite}
 @keyframes pts-pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.top-avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--purple);overflow:hidden;cursor:pointer;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:var(--purple);flex-shrink:0}
+.top-avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--purple);overflow:hidden;cursor:pointer;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--purple);flex-shrink:0}
 .top-avatar img{width:100%;height:100%;object-fit:cover}
 
 /* ── REFERRAL MODAL ── */
@@ -124,26 +124,26 @@ body{
 .ref-modal.open{display:flex}
 .ref-sheet{width:100%;max-width:480px;background:var(--surface);border-radius:28px 28px 0 0;padding:28px 24px max(28px,calc(var(--sab) + 16px));max-height:85dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .ref-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-.ref-title{font-size:22px;font-weight:900}
-.ref-close{width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900}
+.ref-title{font-size:22px;font-weight:800}
+.ref-close{width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:800}
 .ref-balance{text-align:center;background:linear-gradient(135deg,rgba(155,89,212,.15),rgba(6,182,212,.15));border:1.5px solid rgba(155,89,212,.3);border-radius:20px;padding:24px;margin-bottom:20px}
-.ref-pts-big{font-size:48px;font-weight:900;color:var(--yellow);line-height:1}
+.ref-pts-big{font-size:48px;font-weight:800;color:var(--yellow);line-height:1}
 .ref-pts-label{font-size:13px;color:var(--muted);font-weight:800;margin-top:4px}
 .ref-stats{display:flex;gap:10px;margin-bottom:20px}
 .ref-stat{flex:1;background:var(--surface2);border-radius:14px;padding:14px;text-align:center}
-.ref-stat-v{font-size:20px;font-weight:900;color:var(--lime)}
+.ref-stat-v{font-size:20px;font-weight:800;color:var(--lime)}
 .ref-stat-l{font-size:11px;color:var(--muted);font-weight:800;margin-top:2px}
 .ref-how{margin-bottom:20px}
-.ref-how-t{font-size:15px;font-weight:900;margin-bottom:10px}
+.ref-how-t{font-size:15px;font-weight:800;margin-bottom:10px}
 .ref-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
-.ref-step-n{width:24px;height:24px;border-radius:50%;background:var(--purple);color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ref-step-n{width:24px;height:24px;border-radius:50%;background:var(--purple);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .ref-step-t{font-size:13px;color:var(--muted);font-weight:700;line-height:1.5}
 .ref-link-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .ref-link-url{flex:1;font-size:13px;font-weight:800;color:var(--text);word-break:break-all}
-.ref-copy-btn{background:var(--purple);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:900;cursor:pointer;white-space:nowrap;font-family:inherit}
-.ref-share-btn{width:100%;background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit}
+.ref-copy-btn{background:var(--purple);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit}
+.ref-share-btn{width:100%;background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
 .ref-coming{background:var(--surface2);border-radius:14px;padding:16px;margin-top:16px}
-.ref-coming-t{font-size:13px;font-weight:900;margin-bottom:6px;color:var(--teal)}
+.ref-coming-t{font-size:13px;font-weight:800;margin-bottom:6px;color:var(--teal)}
 .ref-coming-d{font-size:12px;color:var(--muted);font-weight:700;line-height:1.5}
 
 /* VIEWS */
@@ -169,7 +169,7 @@ body{
 /* ── LIST VIEW ── */
 #app-list{overflow:hidden;position:relative}
 .list-header{padding:16px 20px 10px;flex-shrink:0}
-.list-h{font-size:22px;font-weight:900;margin-bottom:2px}
+.list-h{font-size:22px;font-weight:800;margin-bottom:2px}
 .list-sub{font-size:13px;color:var(--muted)}
 .list-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 20px 20px;-webkit-overflow-scrolling:touch}
 .jobs-grid{display:flex;flex-direction:column;gap:8px;padding-top:16px}
@@ -179,23 +179,23 @@ body{
 .list-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--jc,var(--purple))}
 .list-card:active{transform:scale(.98)}
 .lc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
-.lc-cat{font-size:10px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:var(--jc,var(--purple));display:flex;align-items:center;gap:4px;flex-shrink:0}
-.lc-budget{font-size:17px;font-weight:900;color:var(--lime);white-space:nowrap;flex-shrink:0}
-.lc-title{font-size:15px;font-weight:900;line-height:1.3;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-cat{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--jc,var(--purple));display:flex;align-items:center;gap:4px;flex-shrink:0}
+.lc-budget{font-size:17px;font-weight:800;color:var(--lime);white-space:nowrap;flex-shrink:0}
+.lc-title{font-size:15px;font-weight:800;line-height:1.3;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lc-desc{font-size:12px;color:#aaa;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
 .lc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .lc-poster{display:flex;align-items:center;gap:5px;min-width:0}
-.lc-av{width:20px;height:20px;border-radius:50%;background:var(--surface2);font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--muted);flex-shrink:0}
+.lc-av{width:20px;height:20px;border-radius:50%;background:var(--surface2);font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--muted);flex-shrink:0}
 .lc-name{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lc-meta{font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0}
 /* JOB CARD */
 .job-card{background:var(--surface);border-radius:var(--radius);padding:18px 18px 16px;border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;position:relative;overflow:hidden;flex-shrink:0}
 .job-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--jc,var(--purple))}
 .job-card:active{transform:scale(.98)}
-.jc-badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;padding:4px 10px;border-radius:100px;background:rgba(255,255,255,.05);color:var(--jc,var(--purple));margin-bottom:10px}
+.jc-badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 10px;border-radius:100px;background:rgba(255,255,255,.05);color:var(--jc,var(--purple));margin-bottom:10px}
 .jc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
-.jc-title{font-size:16px;font-weight:900;line-height:1.3;flex:1;padding-right:10px}
-.jc-budget{font-size:18px;font-weight:900;color:var(--lime);white-space:nowrap}
+.jc-title{font-size:16px;font-weight:800;line-height:1.3;flex:1;padding-right:10px}
+.jc-budget{font-size:18px;font-weight:800;color:var(--lime);white-space:nowrap}
 .jc-desc{font-size:13px;color:#bbb;line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 /* 3-dot overflow menu */
 .card-menu-wrap{position:relative;z-index:10}
@@ -209,7 +209,7 @@ body{
 .card-menu-drop .menu-divider{height:1px;background:var(--border);margin:0}
 .jc-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px}
 .jc-poster{display:flex;align-items:center;gap:6px}
-.poster-av{width:26px;height:26px;border-radius:50%;background:var(--surface2);overflow:hidden;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--muted);flex-shrink:0}
+.poster-av{width:26px;height:26px;border-radius:50%;background:var(--surface2);overflow:hidden;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--muted);flex-shrink:0}
 .poster-av img{width:100%;height:100%;object-fit:cover}
 .poster-nm{font-size:12px;font-weight:700;color:var(--muted)}
 .jc-loc{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px}
@@ -218,9 +218,9 @@ body{
 #app-post{overflow:hidden}
 #app-postjob{overflow:hidden}
 .post-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 20px calc(var(--sab) + 20px);-webkit-overflow-scrolling:touch}
-.section-h{font-size:22px;font-weight:900;margin-bottom:20px}
+.section-h{font-size:22px;font-weight:800;margin-bottom:20px}
 .form-g{margin-bottom:16px}
-.form-lbl{display:block;font-size:12px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.form-lbl{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
 .form-inp,.form-ta{width:100%;padding:14px 16px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:16px;font-weight:600;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
 .form-inp:focus,.form-ta:focus{border-color:var(--purple)}
 .form-ta{resize:none;height:100px}
@@ -242,7 +242,7 @@ body{
 .loc-status.loading{color:var(--muted)}
 .list-radius-btn{padding:6px 14px;border-radius:100px;background:var(--surface2);border:1.5px solid var(--border);font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;white-space:nowrap;font-family:'Nunito',sans-serif;transition:all .15s;flex-shrink:0}
 .list-radius-btn.active{background:rgba(155,89,212,.15);border-color:var(--purple);color:var(--purple)}
-.btn-primary{width:100%;padding:16px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;border:none;cursor:pointer;transition:opacity .15s,transform .15s;margin-top:8px}
+.btn-primary{width:100%;padding:16px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:none;cursor:pointer;transition:opacity .15s,transform .15s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn-primary:active{transform:scale(.97);opacity:.9}
 .btn-primary:disabled{opacity:.45;cursor:not-allowed}
 
@@ -257,19 +257,19 @@ body{
 #app-profile{overflow:hidden}
 .profile-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 20px calc(var(--sab) + 20px);-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .profile-hero{text-align:center;padding:20px 0 16px}
-.profile-av{width:64px;height:64px;border-radius:50%;border:3px solid var(--purple);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:var(--purple);background:var(--surface2);flex-shrink:0}
+.profile-av{width:64px;height:64px;border-radius:50%;border:3px solid var(--purple);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:var(--purple);background:var(--surface2);flex-shrink:0}
 .profile-av img{width:100%;height:100%;object-fit:cover}
-.profile-nm{font-size:22px;font-weight:900;margin-bottom:4px}
+.profile-nm{font-size:22px;font-weight:800;margin-bottom:4px}
 .profile-em{font-size:13px;color:var(--muted)}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:24px 0}
 .stat-c{background:var(--surface);border-radius:var(--radius-sm);padding:16px 10px;text-align:center;border:1.5px solid var(--border)}
-.stat-n{font-size:26px;font-weight:900;color:var(--purple);display:block}
+.stat-n{font-size:26px;font-weight:800;color:var(--purple);display:block}
 .stat-l{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.5px}
 .settings-l{display:flex;flex-direction:column;gap:2px}
 .setting-i{display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--surface);font-size:15px;font-weight:700;cursor:pointer;min-height:54px}
 .setting-i:first-child{border-radius:var(--radius) var(--radius) var(--radius-sm) var(--radius-sm)}
 .setting-i:last-child{border-radius:var(--radius-sm) var(--radius-sm) var(--radius) var(--radius)}
-.btn-so{width:100%;padding:16px;border-radius:var(--radius);background:var(--surface);color:#EF4444;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;border:1.5px solid rgba(239,68,68,.25);cursor:pointer;margin-top:20px}
+.btn-so{width:100%;padding:16px;border-radius:var(--radius);background:var(--surface);color:#EF4444;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:1.5px solid rgba(239,68,68,.25);cursor:pointer;margin-top:20px}
 
 /* ── MESSAGES ── */
 #app-messages{overflow:hidden}
@@ -282,7 +282,7 @@ body{
   border-top:1px solid var(--border);z-index:200;flex-shrink:0;
   position:relative;/* own stacking context — fixes Android compositing overlap */
 }
-.nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.3px;transition:color .15s;flex:1;min-height:44px;justify-content:center;white-space:nowrap}
+.nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;transition:color .15s;flex:1;min-height:44px;justify-content:center;white-space:nowrap}
 .nav-i.active{color:var(--purple)}
 .nav-i.nav-post{color:var(--muted)}
 .nav-i.nav-post.active{color:var(--muted)}
@@ -297,18 +297,24 @@ body{
 .modal-ov.open{display:flex}
 .modal-sheet{width:100%;max-width:480px;background:var(--surface);border-radius:28px 28px 0 0;padding:24px 24px max(24px,calc(var(--sab) + 16px));max-height:90dvh;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .modal-handle{width:40px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 20px}
-.modal-title{font-size:22px;font-weight:900;margin-bottom:6px;word-break:break-word;overflow-wrap:break-word}
+.modal-title{font-size:22px;font-weight:800;margin-bottom:6px;word-break:break-word;overflow-wrap:break-word}
 .modal-meta{font-size:13px;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .modal-desc{font-size:15px;line-height:1.6;margin-bottom:22px;word-break:break-word;overflow-wrap:break-word}
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
 .modal-pill{background:var(--surface2);border-radius:14px;padding:14px;text-align:center}
-.modal-pill-l{font-size:10px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.modal-pill-v{font-size:18px;font-weight:900}
+.modal-pill-l{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.modal-pill-v{font-size:18px;font-weight:800}
 
 /* ── UTILS ── */
+.modal-meta svg{flex-shrink:0;vertical-align:-2px}
+.star-btn{width:48px;height:48px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent}
+.star-btn:active{transform:scale(.92)}
+.star-btn svg{width:36px;height:36px;transition:fill .12s,stroke .12s}
+svg.star-on{fill:var(--yellow);stroke:var(--yellow)}
+svg.star-off{fill:none;stroke:#4a4a4a}
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
 .empty-ico{font-size:48px;margin-bottom:12px}
-.empty-t{font-size:18px;font-weight:900;margin-bottom:8px;color:var(--text)}
+.empty-t{font-size:18px;font-weight:800;margin-bottom:8px;color:var(--text)}
 .empty-d{font-size:14px;line-height:1.6}
 .toast{
   position:fixed;top:calc(var(--sat) + 70px);
@@ -326,10 +332,9 @@ body{
 /* conversation row */
 .conv-row{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border-radius:var(--radius-sm);border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;margin-bottom:8px}
 .conv-row:active{transform:scale(.98)}
-.conv-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .conv-body{flex:1;min-width:0}
 .conv-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:3px}
-.conv-name{font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-name{font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .conv-time{font-size:11px;color:var(--muted);font-weight:700;flex-shrink:0}
 .conv-title{font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
 .conv-preview{font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -344,18 +349,18 @@ body{
 .op-close:active{background:var(--border)}
 .op-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 20px calc(var(--sab) + 28px);display:flex;flex-direction:column;gap:16px}
 .op-hero{display:flex;align-items:center;gap:14px}
-.op-av{width:64px;height:64px;border-radius:50%;border:3px solid var(--purple);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:#fff;flex-shrink:0}
-.op-name{font-size:20px;font-weight:900;line-height:1.2;word-break:break-word;overflow-wrap:break-word}
+.op-av{width:32px;height:32px;border-radius:50%;background:#000;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
+.op-name{font-size:20px;font-weight:800;line-height:1.2;word-break:break-word;overflow-wrap:break-word}
 .op-stats{background:var(--surface2);border-radius:var(--radius-sm);border:1.5px solid var(--border);overflow:hidden}
 .op-stats-row{display:grid;grid-template-columns:1fr 1fr}
 .op-stat{padding:14px 16px;display:flex;flex-direction:column;gap:4px}
 .op-stat:first-child{border-right:1px solid var(--border)}
-.op-stat-role{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.op-stat-role{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .op-stat-line{font-size:13px;font-weight:700;display:flex;align-items:baseline;gap:5px}
-.op-stat-num{color:var(--purple);font-size:17px;font-weight:900}
+.op-stat-num{color:var(--purple);font-size:17px;font-weight:800}
 .op-stat-rating{font-size:13px;font-weight:800;color:var(--yellow);margin-top:4px}
 .op-bio{background:var(--surface2);border-radius:var(--radius-sm);border:1.5px solid var(--border);padding:14px 16px;word-break:break-word;overflow-wrap:break-word}
-.op-bio-lbl{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.op-bio-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
 .op-bio-text{font-size:14px;font-weight:600;color:#ccc;line-height:1.7;word-break:break-word;overflow-wrap:break-word}
 .op-bio-empty{font-size:13px;color:var(--muted);font-style:italic;font-weight:600}
 
@@ -400,11 +405,11 @@ body{
 .ds-num{
   width:36px;height:36px;border-radius:50%;
   background:linear-gradient(135deg,var(--purple),var(--pink));
-  color:#fff;font-size:16px;font-weight:900;font-family:'Fredoka One',cursive;
+  color:#fff;font-size:16px;font-weight:800;font-family:'Fredoka One',cursive;
   display:flex;align-items:center;justify-content:center;
   margin-bottom:10px;flex-shrink:0
 }
-.ds-title{font-size:13px;font-weight:900;margin-bottom:5px;color:var(--text)}
+.ds-title{font-size:13px;font-weight:800;margin-bottom:5px;color:var(--text)}
 .ds-desc{font-size:11px;color:var(--muted);font-weight:600;line-height:1.55}
 .ds-div{width:1px;background:var(--border);align-self:stretch;flex-shrink:0}
 .ds-nav{
@@ -468,14 +473,14 @@ body{
     <div class="magic-wrap">
       <div class="magic-row">
         <input class="magic-email" id="magic-email" type="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')sendMagicLink()">
-        <button class="btn-magic" id="magic-btn" onclick="sendMagicLink()">Send Link ✉️</button>
+        <button class="btn-magic" id="magic-btn" onclick="sendMagicLink()">Send Link</button>
       </div>
-      <div class="magic-sent" id="magic-sent">✅ Check your inbox! Link sent to <span id="magic-addr"></span></div>
+      <div class="magic-sent" id="magic-sent">Check your inbox! Link sent to <span id="magic-addr"></span></div>
     </div>
   </div>
   <div class="auth-legal">By continuing you agree to Yoodle's <a href="/privacy">Privacy Policy</a>. No spam, ever.<br><a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a></div>
   <div id="ios-pwa-tip" style="display:none;margin-top:16px;background:rgba(155,89,212,.1);border:1.5px solid rgba(155,89,212,.3);border-radius:12px;padding:12px 16px;font-size:12px;color:#aaa;line-height:1.6;font-weight:700;text-align:center;position:relative;z-index:1">
-    📲 <strong style="color:var(--purple)">Using the home screen app?</strong><br>Sign in with Google — magic links open in Safari and won't transfer back to the app.
+    <strong style="color:var(--purple)">Using the home screen app?</strong><br>Sign in with Google — magic links open in Safari and won't transfer back to the app.
   </div>
 </div>
 
@@ -489,7 +494,7 @@ body{
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
     <div class="top-right">
       <div class="pts-badge" onclick="openReferralModal()" id="pts-badge" style="display:none">
-        <span class="pts-ico">✨</span>
+        <span class="pts-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="var(--yellow)" stroke="none" style="display:block"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z"/></svg></span>
         <span class="pts-val" id="pts-val">0</span>
         <span class="pts-new" id="pts-new">New</span>
       </div>
@@ -507,26 +512,26 @@ body{
         </svg>
       </button>
       <!-- Map/List toggle pill — bottom center -->
-      <button id="browse-toggle" onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;pointer-events:all;background:rgba(22,22,22,.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:100px;padding:10px 22px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.45)">
+      <button id="browse-toggle" onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;pointer-events:all;background:linear-gradient(135deg,var(--purple),var(--pink));border:none;border-radius:100px;padding:11px 24px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#fff;box-shadow:0 4px 16px rgba(155,89,212,.45)">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        <span style="font-size:14px;font-weight:900;color:var(--text);font-family:'Nunito',sans-serif">List</span>
+        <span style="font-size:14px;font-weight:800;color:#fff;font-family:'Nunito',sans-serif">List</span>
       </button>
       <!-- Corner count card — bottom left -->
       <div id="map-counts" style="position:absolute;top:24px;left:16px;z-index:10;pointer-events:all;display:none">
         <button onclick="openRadiusSheet()" style="background:rgba(22,22,22,.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:16px;padding:10px 14px;cursor:pointer;display:flex;flex-direction:column;gap:7px;min-width:148px;box-shadow:0 4px 16px rgba(0,0,0,.45)">
-          <div style="font-size:9px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px" id="map-radius-corner">WITHIN — KM</div>
+          <div style="font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px" id="map-radius-corner">WITHIN — KM</div>
           <div id="map-counts-loading" style="display:none;font-size:11px;font-weight:800;color:var(--muted);align-items:center;gap:6px">
             <div class="spinner" style="width:12px;height:12px;border-width:2px"></div> Loading…
           </div>
           <div id="map-counts-data" style="display:flex;flex-direction:column;gap:6px">
             <div style="display:flex;align-items:center;gap:8px">
               <span style="width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0;display:inline-block"></span>
-              <span style="font-size:15px;font-weight:900;color:var(--text)" id="map-jobs-count">0</span>
+              <span style="font-size:15px;font-weight:800;color:var(--text)" id="map-jobs-count">0</span>
               <span style="font-size:12px;font-weight:700;color:var(--muted)">need help</span>
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="width:10px;height:10px;border-radius:50%;background:#22C55E;flex-shrink:0;display:inline-block"></span>
-              <span style="font-size:15px;font-weight:900;color:var(--text)" id="map-helpers-count">0</span>
+              <span style="font-size:15px;font-weight:800;color:var(--text)" id="map-helpers-count">0</span>
               <span style="font-size:12px;font-weight:700;color:var(--muted)">offering help</span>
             </div>
           </div>
@@ -543,32 +548,32 @@ body{
       <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:10px" id="list-sub">Within — km · map area</div>
       <!-- Tabs -->
       <div style="display:flex;gap:6px;background:var(--surface2);border-radius:12px;padding:4px">
-        <button id="list-tab-jobs" onclick="switchListTab('jobs')" style="flex:1;padding:9px;border-radius:8px;border:none;background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">📋 Jobs <span id="list-jobs-count" style="color:var(--purple)">0</span></button>
-        <button id="list-tab-helpers" onclick="switchListTab('helpers')" style="flex:1;padding:9px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">💪 Help <span id="list-helpers-count" style="color:var(--lime)">0</span></button>
+        <button id="list-tab-jobs" onclick="switchListTab('jobs')" style="flex:1;padding:9px;border-radius:8px;border:none;background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Jobs <span id="list-jobs-count" style="color:var(--purple)">0</span></button>
+        <button id="list-tab-helpers" onclick="switchListTab('helpers')" style="flex:1;padding:9px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Help <span id="list-helpers-count" style="color:var(--lime)">0</span></button>
       </div>
     </div>
     <!-- Scrollable content -->
     <div id="list-tab-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px 80px"></div>
     <!-- Map toggle pill -->
-    <button onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(22,22,22,.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:100px;padding:10px 22px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.45)">
+    <button onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;background:linear-gradient(135deg,var(--purple),var(--pink));border:none;border-radius:100px;padding:11px 24px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#fff;box-shadow:0 4px 16px rgba(155,89,212,.45)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-      <span style="font-size:14px;font-weight:900;color:var(--text);font-family:'Nunito',sans-serif">Map</span>
+      <span style="font-size:14px;font-weight:800;color:#fff;font-family:'Nunito',sans-serif">Map</span>
     </button>
   </div>
 
   <!-- POST FORK (+ button landing) -->
   <div class="app-view" id="app-post">
     <div class="post-scroll" style="display:flex;flex-direction:column;align-items:center;padding-top:36px">
-      <div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px">New Listing</div>
-      <div style="font-size:22px;font-weight:900;color:var(--text);margin-bottom:32px;font-family:'Fredoka One',cursive">What would you like to post?</div>
+      <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px">New Listing</div>
+      <div style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:32px;font-family:'Fredoka One',cursive">What would you like to post?</div>
 
       <!-- Needs help card -->
-      <button onclick="nav('postjob')" style="width:100%;max-width:400px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(249,115,22,.35);background:var(--surface);cursor:pointer;margin-bottom:16px;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
-        <div style="width:52px;height:52px;border-radius:14px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <button onclick="nav('postjob')" style="width:100%;max-width:400px;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid var(--orange);background:var(--surface);cursor:pointer;margin-bottom:16px;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
+        <div style="width:52px;height:52px;border-radius:14px;background:var(--orange);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         </div>
         <div>
-          <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:2px">Needs help</div>
+          <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">Needs help</div>
           <div style="font-size:13px;font-weight:700;color:var(--muted)">I have a task that needs doing</div>
         </div>
       </button>
@@ -583,7 +588,7 @@ body{
     <div class="post-scroll">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
         <button onclick="nav('post')" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>
-        <div class="section-h" style="margin-bottom:0">Post a Job 📋</div>
+        <div class="section-h" style="margin-bottom:0">Post a Job</div>
       </div>
       <input type="hidden" id="p-cat" value="other">
       <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="p-title" type="text" placeholder="e.g. Help me move a couch"></div>
@@ -597,26 +602,26 @@ body{
               oninput="onLocInput(this.value)" onfocus="if(this.value.length>2)showLocSuggestions()" onblur="setTimeout(hideLocSuggestions,200)">
             <div class="loc-suggestions" id="loc-suggestions"></div>
           </div>
-          <button class="btn-gps" id="gps-btn" onclick="detectLocation()">📍 GPS</button>
+          <button class="btn-gps" id="gps-btn" onclick="detectLocation()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>GPS</button>
         </div>
         <div class="loc-status" id="loc-status">Type an address and select from suggestions, or tap GPS</div>
       </div>
 
       <!-- MAP PIN VISIBILITY -->
       <div class="form-g">
-        <label class="form-lbl">📍 Map pin visibility</label>
+        <label class="form-lbl">Map pin visibility</label>
         <div style="display:flex;gap:8px">
-          <button id="p-vis-public" onclick="setPostVisibility(true)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--lime);background:rgba(163,230,53,.12);color:var(--lime);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">
-            📌 Show pin on map
+          <button id="p-vis-public" onclick="setPostVisibility(true)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--lime);background:rgba(163,230,53,.12);color:var(--lime);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">
+            Show pin on map
           </button>
-          <button id="p-vis-private" onclick="setPostVisibility(false)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">
-            🔒 List only
+          <button id="p-vis-private" onclick="setPostVisibility(false)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">
+            List only
           </button>
         </div>
         <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">Pin on map shows your approximate location. List only keeps your address private.</div>
       </div>
 
-      <button class="btn-primary" id="post-btn" onclick="postJob()">Post Job 🚀</button>
+      <button class="btn-primary" id="post-btn" onclick="postJob()">Post Job</button>
     </div>
   </div>
 
@@ -646,19 +651,19 @@ body{
 
       <div class="stats-row" style="grid-template-columns:1fr 1fr">
         <div class="stat-c" style="text-align:left;padding:16px">
-          <div style="font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">As Poster</div>
+          <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">As Poster</div>
           <div style="display:flex;flex-direction:column;gap:4px">
-            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-posted" style="color:var(--purple);font-size:18px;font-weight:900">0</span> posted</div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-poster-done" style="color:var(--purple);font-size:18px;font-weight:900">0</span> completed</div>
-            <div style="font-size:13px;font-weight:700;color:var(--yellow)" id="s-poster-rating">⭐ —</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-posted" style="color:var(--purple);font-size:18px;font-weight:800">0</span> posted</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-poster-done" style="color:var(--purple);font-size:18px;font-weight:800">0</span> completed</div>
+            <div style="font-size:13px;font-weight:700;color:var(--yellow)" id="s-poster-rating">★ —</div>
           </div>
         </div>
         <div class="stat-c" style="text-align:left;padding:16px">
-          <div style="font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">As Helper</div>
+          <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">As Helper</div>
           <div style="display:flex;flex-direction:column;gap:4px">
-            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-applied" style="color:var(--purple);font-size:18px;font-weight:900">0</span> applied</div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-helper-done" style="color:var(--purple);font-size:18px;font-weight:900">0</span> completed</div>
-            <div style="font-size:13px;font-weight:700;color:var(--yellow)" id="s-helper-rating">⭐ —</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-applied" style="color:var(--purple);font-size:18px;font-weight:800">0</span> applied</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-helper-done" style="color:var(--purple);font-size:18px;font-weight:800">0</span> completed</div>
+            <div style="font-size:13px;font-weight:700;color:var(--yellow)" id="s-helper-rating">★ —</div>
           </div>
         </div>
       </div>
@@ -671,11 +676,11 @@ body{
         <input class="form-inp" id="p-name" type="text" placeholder="Your name" style="margin-bottom:8px">
         <label class="form-lbl">About Me</label>
 	<textarea class="form-ta" id="p-bio" placeholder="Tell your neighbours a bit about yourself…" 	style="height:120px;margin-bottom:8px"></textarea>
-        <button class="btn-primary" onclick="saveBio()">Save Profile ✨</button>
+        <button class="btn-primary" onclick="saveBio()">Save Profile</button>
       </div>
       <!-- Notification tip -->
       <div id="notif-tip" style="display:none;background:rgba(155,89,212,.08);border:1.5px solid rgba(155,89,212,.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px">
-        <div style="font-size:13px;font-weight:900;color:var(--purple);margin-bottom:6px">🔔 Push Notifications</div>
+        <div style="font-size:13px;font-weight:800;color:var(--purple);margin-bottom:6px">Push Notifications</div>
         <div id="notif-tip-body" style="font-size:12px;color:#aaa;line-height:1.6;font-weight:700"></div>
       </div>
       <button class="btn-so" onclick="signOut()">Sign Out</button>
@@ -685,7 +690,7 @@ body{
   <!-- MESSAGES VIEW -->
   <div class="app-view" id="app-messages">
     <div class="myjobs-inner">
-      <div class="section-h" style="margin-bottom:16px">Messages 💬</div>
+      <div class="section-h" style="margin-bottom:16px">Messages</div>
       <div id="conversations-list"><div class="loading"><div class="spinner"></div></div></div>
     </div>
   </div>
@@ -695,19 +700,19 @@ body{
     <div class="myjobs-inner" style="padding-bottom:40px">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
         <button onclick="nav(helperEnteredFromFork?'post':'profile')" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>
-        <div class="section-h" style="margin-bottom:0">💪 Helper Profile</div>
+        <div class="section-h" style="margin-bottom:0">Helper Profile</div>
       </div>
 
       <!-- ADDRESS -->
       <div class="form-g">
-        <label class="form-lbl">📍 Your available area</label>
+        <label class="form-lbl">Your available area</label>
         <div style="position:relative">
           <input class="form-inp" id="hp-loc" type="text" placeholder="Start typing your address…" autocomplete="off"
             oninput="onHPLocInput(this.value)" onfocus="if(this.value.length>2)showHPSuggestions()" onblur="setTimeout(hideHPSuggestions,200)">
           <div class="loc-suggestions" id="hp-loc-suggestions"></div>
         </div>
         <div class="loc-status" id="hp-loc-status">Select your area from suggestions</div>
-        <div style="font-size:11px;color:var(--yellow);font-weight:700;margin-top:8px;line-height:1.5">⚠️ Remember to update your location if you move — e.g. going to your cottage for the weekend.</div>
+        <div style="font-size:11px;color:var(--yellow);font-weight:700;margin-top:8px;line-height:1.5">Remember to update your location if you move — e.g. going to your cottage for the weekend.</div>
       </div>
 
       <!-- CATEGORIES -->
@@ -728,44 +733,44 @@ body{
         <label class="form-lbl">Your rate</label>
         <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:6px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;min-width:120px">
-            <span style="font-size:15px;font-weight:900;color:var(--muted)">$</span>
-            <input id="hp-rate" type="number" min="0" placeholder="0" style="background:none;border:none;outline:none;font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;color:var(--text);width:80px" oninput="onHPRateInput()">
+            <span style="font-size:15px;font-weight:800;color:var(--muted)">$</span>
+            <input id="hp-rate" type="number" min="0" placeholder="0" style="background:none;border:none;outline:none;font-family:'Nunito',sans-serif;font-size:18px;font-weight:800;color:var(--text);width:80px" oninput="onHPRateInput()">
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="hp-rate-type active" id="hprt-free" onclick="setHPRateType('free')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--lime);background:rgba(163,230,53,.12);color:var(--lime);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">🤝 Free</button>
-            <button class="hp-rate-type" id="hprt-hourly" onclick="setHPRateType('hourly')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">Per hour</button>
-            <button class="hp-rate-type" id="hprt-daily" onclick="setHPRateType('daily')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">Per day</button>
-            <button class="hp-rate-type" id="hprt-flat" onclick="setHPRateType('flat')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">Flat rate</button>
+            <button class="hp-rate-type active" id="hprt-free" onclick="setHPRateType('free')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--lime);background:rgba(163,230,53,.12);color:var(--lime);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Free</button>
+            <button class="hp-rate-type" id="hprt-hourly" onclick="setHPRateType('hourly')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Per hour</button>
+            <button class="hp-rate-type" id="hprt-daily" onclick="setHPRateType('daily')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Per day</button>
+            <button class="hp-rate-type" id="hprt-flat" onclick="setHPRateType('flat')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Flat rate</button>
           </div>
         </div>
       </div>
 
       <!-- EXPIRY NOTICE -->
       <div style="background:rgba(155,89,212,.08);border:1.5px solid rgba(155,89,212,.25);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:20px;font-size:12px;color:#aaa;font-weight:700;line-height:1.6">
-        🕐 Helper listings are active for <strong style="color:var(--purple)">30 days</strong>. After that your profile is automatically hidden — just toggle back on to renew.
+        Helper listings are active for <strong style="color:var(--purple)">30 days</strong>. After that your profile is automatically hidden — just toggle back on to renew.
       </div>
 
       <!-- MAP PIN VISIBILITY -->
       <div class="form-g">
-        <label class="form-lbl">📍 Map pin visibility</label>
+        <label class="form-lbl">Map pin visibility</label>
         <div style="display:flex;gap:8px">
-          <button id="hp-vis-public" onclick="setHelperVisibility(true)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--lime);background:rgba(163,230,53,.12);color:var(--lime);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">
-            📌 Show pin on map
+          <button id="hp-vis-public" onclick="setHelperVisibility(true)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--lime);background:rgba(163,230,53,.12);color:var(--lime);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">
+            Show pin on map
           </button>
-          <button id="hp-vis-private" onclick="setHelperVisibility(false)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">
-            🔒 List only
+          <button id="hp-vis-private" onclick="setHelperVisibility(false)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">
+            List only
           </button>
         </div>
         <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">Pin on map shows your approximate location. List only keeps your address private.</div>
       </div>
 
       <!-- ACTION BUTTONS -->
-      <button class="btn-primary" onclick="saveHelperProfile()">Save Helper Profile ✨</button>
-      <button onclick="cancelHelperProfile()" style="width:100%;padding:14px;margin-top:10px;border-radius:var(--radius);background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;border:1.5px solid var(--border);cursor:pointer">Cancel</button>
+      <button class="btn-primary" onclick="saveHelperProfile()">Save Helper Profile</button>
+      <button onclick="cancelHelperProfile()" style="width:100%;padding:14px;margin-top:10px;border-radius:var(--radius);background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;border:1.5px solid var(--border);cursor:pointer">Cancel</button>
 
       <!-- Pause listing (shown only when active) -->
       <div id="hp-pause-section" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
-        <button id="hp-pause-btn" onclick="confirmPauseHelper()" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;color:var(--yellow);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;border:1.5px solid rgba(234,179,8,.3);cursor:pointer">⏸️ Pause My Listing</button>
+        <button id="hp-pause-btn" onclick="confirmPauseHelper()" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;color:var(--yellow);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;border:1.5px solid rgba(234,179,8,.3);cursor:pointer">Pause My Listing</button>
         <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center;line-height:1.5">This will hide you from searches. You can resume anytime.</div>
       </div>
     </div>
@@ -783,7 +788,7 @@ body{
     <button class="nav-i" id="ni-myjobs" onclick="nav('myjobs')" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       Activity
-      <span id="rating-badge" onclick="event.stopPropagation();openRatingsSheet()" style="display:none;position:absolute;top:4px;right:6px;background:var(--yellow);color:#000;font-size:9px;font-weight:900;border-radius:100px;padding:2px 5px;line-height:1.2;cursor:pointer"></span>
+      <span id="rating-badge" onclick="event.stopPropagation();openRatingsSheet()" style="display:none;position:absolute;top:4px;right:6px;background:var(--yellow);color:#000;font-size:9px;font-weight:800;border-radius:100px;padding:2px 5px;line-height:1.2;cursor:pointer"></span>
     </button>
     <button class="nav-i nav-post" id="ni-post" onclick="nav('post')">
       <div style="width:46px;height:46px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:-10px 0 -2px">
@@ -793,7 +798,7 @@ body{
     <button class="nav-i" id="ni-messages" onclick="nav('messages')" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Messages
-      <span id="unread-badge" style="display:none;position:absolute;top:4px;right:6px;background:#EF4444;color:#fff;font-size:9px;font-weight:900;border-radius:100px;padding:2px 5px;line-height:1.2"></span>
+      <span id="unread-badge" style="display:none;position:absolute;top:4px;right:6px;background:#EF4444;color:#fff;font-size:9px;font-weight:800;border-radius:100px;padding:2px 5px;line-height:1.2"></span>
     </button>
     <button class="nav-i" id="ni-profile" onclick="nav('profile')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -806,12 +811,12 @@ body{
 <div class="modal-ov" id="chat-modal" onclick="if(event.target.id==='chat-modal')closeChat()">
   <div class="modal-sheet" style="height:80vh;display:flex;flex-direction:column;padding:0">
     <div style="padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:12px">
-      <div id="chat-av" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)" style="width:46px;height:46px;border-radius:50%;background:#9B59D4;border:3px solid #9B59D4;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">?</div>
+      <div id="chat-av" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)" style="width:32px;height:32px;border-radius:50%;background:#000;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">?</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:16px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="chat-title">—</div>
+        <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="chat-title">—</div>
         <div style="font-size:12px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer" id="chat-other" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)">—<span style="font-size:10px;opacity:.5">›</span></div>
       </div>
-      <button onclick="closeChat()" style="width:44px;height:44px;border-radius:50%;border:none;background:var(--surface2);color:var(--text);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900">✕</button>
+      <button onclick="closeChat()" style="width:44px;height:44px;border-radius:50%;border:none;background:var(--surface2);color:var(--text);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800">✕</button>
     </div>
     <div id="chat-actions" style="display:none;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)"></div>
     <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch"></div>
@@ -828,7 +833,7 @@ body{
   <div class="modal-sheet">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
       <div class="modal-handle" style="margin:0"></div>
-      <button onclick="document.getElementById('modal').classList.remove('open')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;line-height:1">✕</button>
+      <button onclick="document.getElementById('modal').classList.remove('open')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;line-height:1">✕</button>
     </div>
     <div class="modal-title" id="m-title">—</div>
     <div class="modal-meta" id="m-meta">—</div>
@@ -841,24 +846,24 @@ body{
       </div>
     </div>
     <div style="display:flex;gap:10px;align-items:stretch;margin-top:8px">
-      <button class="btn-primary" id="m-action" onclick="jobAction()" style="flex:1;margin-top:0">I Can Help! 🙋</button>
-      <button onclick="shareJob()" title="Share this job" style="width:52px;border-radius:var(--radius);background:var(--surface2);border:1.5px solid var(--yellow);color:var(--yellow);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">🔗</button>
+      <button class="btn-primary" id="m-action" onclick="jobAction()" style="flex:1;margin-top:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M7 11v8m0-8L9.5 4.5a1.8 1.8 0 0 1 3.4 1.2L12 9h6.2a2 2 0 0 1 2 2.4l-1.2 6A2 2 0 0 1 17 19H7"/><path d="M7 11H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3"/></svg>I Can Help</button>
+      <button onclick="shareJob()" title="Share this job" style="width:52px;border-radius:var(--radius);background:var(--surface2);border:1.5px solid var(--yellow);color:var(--yellow);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
     </div>
-    <button class="btn-destructive" id="m-unclaim" onclick="unclaimJob()" style="display:none;width:100%;padding:16px;border-radius:var(--radius);background:transparent;color:#EF4444;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;border:1.5px solid rgba(239,68,68,.35);cursor:pointer;margin-top:10px">↩️ Unclaim Job</button>
+    <button class="btn-destructive" id="m-unclaim" onclick="unclaimJob()" style="display:none;width:100%;padding:16px;border-radius:var(--radius);background:transparent;color:#EF4444;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:1.5px solid rgba(239,68,68,.35);cursor:pointer;margin-top:10px">Unclaim Job</button>
   </div>
 </div>
 <!-- RATING MODAL -->
 <div class="modal-ov" id="rating-modal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title" style="margin-bottom:6px">Rate your experience ⭐</div>
+    <div class="modal-title" style="margin-bottom:6px">Rate your experience</div>
     <div style="font-size:14px;color:var(--muted);margin-bottom:24px" id="rating-prompt">How did it go?</div>
-    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:28px" id="rating-stars">
-      <span style="font-size:40px;cursor:pointer" onclick="setRating(1)">⭐</span>
-      <span style="font-size:40px;cursor:pointer" onclick="setRating(2)">⭐</span>
-      <span style="font-size:40px;cursor:pointer" onclick="setRating(3)">⭐</span>
-      <span style="font-size:40px;cursor:pointer" onclick="setRating(4)">⭐</span>
-      <span style="font-size:40px;cursor:pointer" onclick="setRating(5)">⭐</span>
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:28px" id="rating-stars">
+      <button class="star-btn" aria-label="Rate 1 star" onclick="setRating(1)"><svg class="star-off" viewBox="0 0 24 24" stroke-width="1.8" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+      <button class="star-btn" aria-label="Rate 2 stars" onclick="setRating(2)"><svg class="star-off" viewBox="0 0 24 24" stroke-width="1.8" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+      <button class="star-btn" aria-label="Rate 3 stars" onclick="setRating(3)"><svg class="star-off" viewBox="0 0 24 24" stroke-width="1.8" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+      <button class="star-btn" aria-label="Rate 4 stars" onclick="setRating(4)"><svg class="star-off" viewBox="0 0 24 24" stroke-width="1.8" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+      <button class="star-btn" aria-label="Rate 5 stars" onclick="setRating(5)"><svg class="star-off" viewBox="0 0 24 24" stroke-width="1.8" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
     </div>
     <button class="btn-primary" id="rating-submit-btn" onclick="submitRating()" disabled>Submit Rating</button>
     <button onclick="document.getElementById('rating-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Skip</button>
@@ -868,7 +873,7 @@ body{
 <div class="modal-ov" id="edit-modal" onclick="if(event.target.id==='edit-modal')document.getElementById('edit-modal').classList.remove('open')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title" style="margin-bottom:20px">Edit Job ✏️</div>
+    <div class="modal-title" style="margin-bottom:20px">Edit Job</div>
     <input type="hidden" id="edit-job-id">
     <div class="form-g">
       <label class="form-lbl">Job Title</label>
@@ -882,7 +887,7 @@ body{
       <label class="form-lbl">Budget (CAD $)</label>
       <input class="form-inp" id="edit-budget" type="number" min="0" placeholder="e.g. 50">
     </div>
-    <button class="btn-primary" onclick="saveEdit()">Save Changes ✨</button>
+    <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
     <button onclick="document.getElementById('edit-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
   </div>
 </div>
@@ -896,7 +901,7 @@ body{
     <div style="font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.5" id="cancel-confirm-desc">This will remove the job from the map and notify anyone who applied. This can't be undone.</div>
     <input type="hidden" id="cancel-confirm-job-id">
     <input type="hidden" id="cancel-confirm-type" value="job">
-    <button onclick="confirmCancelJob()" style="width:100%;padding:16px;border-radius:var(--radius);background:#EF4444;border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer" id="cancel-confirm-btn">Yes, cancel job</button>
+    <button onclick="confirmCancelJob()" style="width:100%;padding:16px;border-radius:var(--radius);background:#EF4444;border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer" id="cancel-confirm-btn">Yes, cancel job</button>
     <button onclick="document.getElementById('cancel-confirm-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Keep it</button>
   </div>
 </div>
@@ -905,7 +910,7 @@ body{
 <div class="modal-ov" id="applicants-modal" onclick="if(event.target.id==='applicants-modal')document.getElementById('applicants-modal').classList.remove('open')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title" style="margin-bottom:4px">Interested People 👥</div>
+    <div class="modal-title" style="margin-bottom:4px">Interested People</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:20px" id="applicants-job-title">—</div>
     <div id="applicants-list"><div class="loading"><div class="spinner"></div></div></div>
     <button onclick="document.getElementById('applicants-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:16px">Close</button>
@@ -920,8 +925,8 @@ body{
     <div class="modal-title" style="margin-bottom:6px">Applied!</div>
     <div style="font-size:14px;color:var(--muted);margin-bottom:6px" id="applied-job-title">—</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:28px">Awaiting the poster's response. You'll be notified when assigned.</div>
-    <button class="btn-primary" id="applied-chat-btn" onclick="openAppliedChat()">💬 Ask a Question</button>
-    <button id="applied-withdraw-btn" onclick="withdrawFromConfirm()" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;margin-top:10px">↩️ Withdraw Interest</button>
+    <button class="btn-primary" id="applied-chat-btn" onclick="openAppliedChat()">Ask a Question</button>
+    <button id="applied-withdraw-btn" onclick="withdrawFromConfirm()" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:10px">Withdraw Interest</button>
     <button onclick="document.getElementById('applied-modal').classList.remove('open')" style="width:100%;padding:12px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-top:6px">Close</button>
   </div>
 </div>
@@ -933,8 +938,8 @@ body{
       <div class="modal-handle"></div>
       <!-- Tabs -->
       <div style="display:flex;gap:0;background:var(--surface2);border-radius:var(--radius-sm);padding:4px;margin-bottom:16px">
-        <button id="sheet-tab-jobs" onclick="switchSheetTab('jobs')" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">📋 Jobs <span id="sheet-jobs-count" style="color:var(--purple)">0</span></button>
-        <button id="sheet-tab-helpers" onclick="switchSheetTab('helpers')" style="flex:1;padding:10px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer">💪 Help <span id="sheet-helpers-count" style="color:var(--lime)">0</span></button>
+        <button id="sheet-tab-jobs" onclick="switchSheetTab('jobs')" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Jobs <span id="sheet-jobs-count" style="color:var(--purple)">0</span></button>
+        <button id="sheet-tab-helpers" onclick="switchSheetTab('helpers')" style="flex:1;padding:10px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Help <span id="sheet-helpers-count" style="color:var(--lime)">0</span></button>
       </div>
     </div>
     <div id="sheet-content" style="flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch"></div>
@@ -946,7 +951,7 @@ body{
   <div class="modal-sheet" style="max-height:85dvh;display:flex;flex-direction:column;padding:0">
     <div style="padding:16px 20px 0;flex-shrink:0">
       <div class="modal-handle"></div>
-      <div style="font-size:20px;font-weight:900;margin-bottom:4px">⭐ Pending Ratings</div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:4px">Pending Ratings</div>
       <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:16px">Rate these to complete the job lifecycle</div>
     </div>
     <div id="ratings-sheet-list" style="flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch"></div>
@@ -970,13 +975,13 @@ body{
 <div class="modal-ov" id="contact-modal" onclick="if(event.target.id==='contact-modal')document.getElementById('contact-modal').classList.remove('open')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title" style="margin-bottom:4px">💬 Ask a Question</div>
+    <div class="modal-title" style="margin-bottom:4px">Ask a Question</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Send a message to <strong style="color:var(--text)" id="contact-helper-name">—</strong></div>
     <div class="form-g">
       <label class="form-lbl">Your message</label>
       <textarea class="form-ta" id="contact-msg" placeholder="Hi! I saw your profile and wanted to ask about…" style="min-height:100px"></textarea>
     </div>
-    <button class="btn-primary" onclick="submitContactHelper()">Send Message 💬</button>
+    <button class="btn-primary" onclick="submitContactHelper()">Send Message</button>
   </div>
 </div>
 
@@ -984,7 +989,7 @@ body{
 <div class="ref-modal" id="ref-modal" onclick="if(event.target.id==='ref-modal')closeReferralModal()">
   <div class="ref-sheet">
     <div class="ref-header">
-      <div class="ref-title">✨ Yoodle Points</div>
+      <div class="ref-title">Yoodle Points</div>
       <button class="ref-close" onclick="closeReferralModal()">✕</button>
     </div>
     <div class="ref-balance">
@@ -1011,9 +1016,9 @@ body{
       <div class="ref-link-url" id="ref-link-url">yoodle.ca?ref=...</div>
       <button class="ref-copy-btn" onclick="copyRefLink()">Copy</button>
     </div>
-    <button class="ref-share-btn" onclick="shareRefLink()">Share Your Link 🚀</button>
+    <button class="ref-share-btn" onclick="shareRefLink()">Share Your Link</button>
     <div class="ref-coming">
-      <div class="ref-coming-t">🔜 Coming Soon</div>
+      <div class="ref-coming-t">Coming Soon</div>
       <div class="ref-coming-d">Bump up your job posts so more helpers see them, priority badges, and more ways to earn and spend points.</div>
     </div>
   </div>
@@ -1039,6 +1044,13 @@ const CAT_EMOJI = {
   moving: '📦',
   errands: '🏃',
   other: '✨'
+};
+
+// Inline SVG icons for JS-built labels (Feather-style, matches bottom-nav strokes)
+const ICO={
+  hand:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M7 11v8m0-8L9.5 4.5a1.8 1.8 0 0 1 3.4 1.2L12 9h6.2a2 2 0 0 1 2 2.4l-1.2 6A2 2 0 0 1 17 19H7"/><path d="M7 11H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3"/></svg>',
+  nav:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>',
+  pin:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:-2px;margin-right:3px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'
 };
 
 function isHelperContact(task){
@@ -1090,7 +1102,7 @@ async function submitContactHelper(){
     expires_at:new Date(Date.now()+30*24*60*60*1000).toISOString()
   }).select('id').single();
 
-  if(taskErr){btn.disabled=false;btn.textContent='Send Message 💬';return toast('❌ '+taskErr.message);}
+  if(taskErr){btn.disabled=false;btn.textContent='Send Message';return toast('❌ '+taskErr.message);}
 
   // create conversation: poster=me, applicant=helper
   const{data:convId,error:convErr}=await sb.rpc('create_conversation',{
@@ -1108,7 +1120,7 @@ async function submitContactHelper(){
   });
 
   document.getElementById('contact-modal').classList.remove('open');
-  btn.disabled=false;btn.textContent='Send Message 💬';
+  btn.disabled=false;btn.textContent='Send Message';
   toast('✅ Message sent to '+contactHelperName+'!');
   loadMessages();loadMyJobs();
 }
@@ -1308,7 +1320,7 @@ let locationSource='preset'; // 'gps' | 'preset'
 
 let _geoWatchId=null;
 
-function locateUser() {
+function locateUser(silent) {
   if(!navigator.geolocation){showGeoFallback();return;}
 
   const btn=document.getElementById('map-locate-btn');
@@ -1316,41 +1328,50 @@ function locateUser() {
 
   if(_geoWatchId!==null){navigator.geolocation.clearWatch(_geoWatchId);_geoWatchId=null;}
 
-  let _hasFirstPosition=false;
   let _resolved=false;
+  let _coarseFix=null; // best low-accuracy fix — last-resort fallback only (never cached)
+
+  const _applyFix=(lat,lng,cache)=>{
+    gpsLat=lat; gpsLng=lng;
+    if(cache)_cacheGps(lat,lng);
+    locationSource='gps';
+    if(btn){btn.classList.remove('locating');btn.classList.add('located');}
+    updateGpsDot();
+    // Move only if meaningfully different from where the map already sits
+    if(haversineKm(userLat,userLng,lat,lng)*1000>50)
+      map.flyTo([lat,lng],map.getZoom()); // moveend handles userLat/userLng + loadJobs
+    else
+      updateCircleOverlay();
+  };
 
   // iOS safety net — watchPosition timeout unreliable after backgrounding
   const _safetyTimer=setTimeout(()=>{
     if(_resolved)return;
     _resolved=true;
     if(_geoWatchId!==null){navigator.geolocation.clearWatch(_geoWatchId);_geoWatchId=null;}
-    if(btn)btn.classList.remove('locating');
-    toast('📍 Location timed out — try again');
+    if(_coarseFix){
+      // No GPS-grade fix arrived (e.g. desktop, no GPS hardware) — use best coarse fix, never cache it
+      _applyFix(_coarseFix.lat,_coarseFix.lng,false);
+    } else {
+      if(btn)btn.classList.remove('locating');
+      if(!silent)toast('📍 Location timed out — try again');
+    }
   },10000);
 
   _geoWatchId=navigator.geolocation.watchPosition(
     pos=>{
       if(_resolved)return;
       const newLat=pos.coords.latitude, newLng=pos.coords.longitude;
-      if(!_hasFirstPosition){
-        _hasFirstPosition=true;
-        gpsLat=newLat; gpsLng=newLng;
-        _cacheGps(newLat,newLng);
-        locationSource='gps';
-        if(btn){btn.classList.remove('locating');btn.classList.add('located');}
-        updateGpsDot();
-        map.flyTo([newLat,newLng],map.getZoom()); // moveend handles userLat/userLng + loadJobs
-      } else {
-        _resolved=true;
-        clearTimeout(_safetyTimer);
-        gpsLat=newLat; gpsLng=newLng;
-        _cacheGps(newLat,newLng);
-        updateGpsDot();
-        if(haversineKm(userLat,userLng,newLat,newLng)*1000>50)
-          map.flyTo([newLat,newLng],map.getZoom());
-        navigator.geolocation.clearWatch(_geoWatchId);
-        _geoWatchId=null;
+      if(pos.coords.accuracy>2000){
+        // Coarse network/IP estimate — hold as fallback only; no movement, no cache
+        _coarseFix={lat:newLat,lng:newLng};
+        return;
       }
+      _resolved=true;
+      clearTimeout(_safetyTimer);
+      navigator.geolocation.clearWatch(_geoWatchId);
+      _geoWatchId=null;
+      _applyFix(newLat,newLng,true);
     },
     err=>{
       if(_resolved)return;
@@ -1359,12 +1380,12 @@ function locateUser() {
       if(_geoWatchId!==null){navigator.geolocation.clearWatch(_geoWatchId);_geoWatchId=null;}
       if(btn)btn.classList.remove('locating');
       if(err.code===1){
-        toast('📍 Tap AA in address bar → Website Settings → Location → Allow');
+        if(!silent)toast('📍 Tap AA in address bar → Website Settings → Location → Allow');
       } else {
-        toast('📍 Location unavailable — try again');
+        if(!silent)toast('📍 Location unavailable — try again');
       }
     },
-    {timeout:9000,enableHighAccuracy:false,maximumAge:30000}
+    {timeout:9000,enableHighAccuracy:true,maximumAge:0}
   );
 }
 
@@ -1469,7 +1490,7 @@ function renderMapPins(){
     const[fLat,fLng]=h._fuzzy||(h._fuzzy=fuzzyCoords(h.last_lat,h.last_lng));
     const icon=L.divIcon({
       className:'',
-      html:`<div style="width:38px;height:38px;border-radius:50%;background:#22C55E;border:3px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:pointer;font-family:'Nunito',sans-serif">${initial}</div>`,
+      html:`<div style="width:38px;height:38px;border-radius:50%;background:#22C55E;border:3px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:pointer;font-family:'Nunito',sans-serif">${initial}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
     const marker=L.marker([fLat,fLng],{icon}).addTo(map).on('click',()=>openOtherProfile(h.id));
@@ -1579,15 +1600,15 @@ function renderSheetContent(){
     if(!sheetHelpers.length){el.innerHTML=emptyState('💪','No helpers visible nearby','Helpers can enable visibility in their profile');return;}
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">${sheetHelpers.map(h=>{
       const name=h.name||'Helper';
-      const rating=h.rating?`⭐ ${h.rating}`:'New';
+      const rating=h.rating?`★ ${h.rating}`:'New';
       const cats=(h.helper_categories||[]).slice(0,4).map(c=>`<span style="font-size:10px;font-weight:800;color:var(--purple);background:rgba(155,89,212,.12);border:1px solid rgba(155,89,212,.25);border-radius:100px;padding:2px 8px;white-space:nowrap">${c}</span>`).join('');
-      const rateLabel=h.helper_rate_type==='free'||!h.helper_rate?'🤝 Free':
-        `💰 $${h.helper_rate}${h.helper_rate_type==='hourly'?'/hr':h.helper_rate_type==='daily'?'/day':' flat'}`;
+      const rateLabel=h.helper_rate_type==='free'||!h.helper_rate?'Free':
+        `$${h.helper_rate}${h.helper_rate_type==='hourly'?'/hr':h.helper_rate_type==='daily'?'/day':' flat'}`;
       return `<div onclick="openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
         <div style="display:flex;align-items:center;gap:12px">
-          ${avatarCircle(name,h.avatar_color,'44px','18px')}
+          ${avatarCircle(name,h.avatar_color,'28px','12px')}
           <div style="min-width:0;flex:1">
-            <div style="font-size:15px;font-weight:900">${esc(name)}</div>
+            <div style="font-size:15px;font-weight:800">${esc(name)}</div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</span>
               <span style="font-size:12px;color:var(--lime);font-weight:800">${rateLabel}</span>
@@ -1637,16 +1658,16 @@ function renderListTabContent(){
     if(!sheetHelpers.length){el.innerHTML=emptyState('💪','No helpers nearby','Helpers can enable visibility in their profile');return;}
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px">${sheetHelpers.map(h=>{
       const name=h.name||'Helper';
-      const rating=h.rating?`⭐ ${h.rating}`:'New';
+      const rating=h.rating?`★ ${h.rating}`:'New';
       const cats=(h.helper_categories||[]).slice(0,4).map(c=>`<span style="font-size:10px;font-weight:800;color:var(--purple);background:rgba(155,89,212,.12);border:1px solid rgba(155,89,212,.25);border-radius:100px;padding:2px 8px;white-space:nowrap">${c}</span>`).join('');
-      const rateLabel=h.helper_rate_type==='free'||!h.helper_rate?'🤝 Free':`💰 $${h.helper_rate}${h.helper_rate_type==='hourly'?'/hr':h.helper_rate_type==='daily'?'/day':' flat'}`;
+      const rateLabel=h.helper_rate_type==='free'||!h.helper_rate?'Free':`$${h.helper_rate}${h.helper_rate_type==='hourly'?'/hr':h.helper_rate_type==='daily'?'/day':' flat'}`;
       let distLabel='';
       if(gpsLat&&gpsLng&&h.last_lat&&h.last_lng){const d=haversineKm(gpsLat,gpsLng,h.last_lat,h.last_lng);distLabel=d<=1?'Less than 1 km away':`${d.toFixed(1)} km away`;}
       return `<div onclick="openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
         <div style="display:flex;align-items:center;gap:12px">
-          ${avatarCircle(name,h.avatar_color,'44px','18px')}
+          ${avatarCircle(name,h.avatar_color,'28px','12px')}
           <div style="min-width:0;flex:1">
-            <div style="font-size:15px;font-weight:900">${esc(name)}</div>
+            <div style="font-size:15px;font-weight:800">${esc(name)}</div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</span>
               <span style="font-size:12px;color:var(--lime);font-weight:800">${rateLabel}</span>
@@ -1655,7 +1676,7 @@ function renderListTabContent(){
           <div style="font-size:12px;color:var(--muted);font-weight:800;flex-shrink:0">View ›</div>
         </div>
         ${cats?`<div style="display:flex;flex-wrap:wrap;gap:4px">${cats}</div>`:''}
-        ${distLabel?`<div style="font-size:11px;color:var(--muted);font-weight:700">📍 ${esc(distLabel)}</div>`:''}
+        ${distLabel?`<div style="font-size:11px;color:var(--muted);font-weight:700">${esc(distLabel)}</div>`:''}
       </div>`;
     }).join('')}</div>`;
   }
@@ -1712,15 +1733,14 @@ async function openOtherProfile(userId){
   const pCount=Array.isArray(pRating)&&pRating[0]?.count?pRating[0].count:0;
   const hAvg=Array.isArray(hRating)&&hRating[0]?.round?hRating[0].round:null;
   const hCount=Array.isArray(hRating)&&hRating[0]?.count?hRating[0].count:0;
-  const pRatingStr=pAvg?`⭐ ${pAvg} <span style="color:var(--muted);font-size:11px;font-weight:700">(${pCount})</span>`:`<span style="color:var(--muted)">⭐ No ratings yet</span>`;
-  const hRatingStr=hAvg?`⭐ ${hAvg} <span style="color:var(--muted);font-size:11px;font-weight:700">(${hCount})</span>`:`<span style="color:var(--muted)">⭐ No ratings yet</span>`;
+  const pRatingStr=pAvg?`★ ${pAvg} <span style="color:var(--muted);font-size:11px;font-weight:700">(${pCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
+  const hRatingStr=hAvg?`★ ${hAvg} <span style="color:var(--muted);font-size:11px;font-weight:700">(${hCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
 
-  const bg=prof.avatar_color||'#9B59D4';
-  const initial=((prof.name||'?')[0]).toUpperCase();
+    const initial=((prof.name||'?')[0]).toUpperCase();
 
   content.innerHTML=`
     <div class="op-hero">
-      <div class="op-av" style="background:${bg};border-color:${bg}">${esc(initial)}</div>
+      <div class="op-av">${esc(initial)}</div>
       <div class="op-name">${esc(prof.name||'Yoodler')}</div>
     </div>
     <div class="op-stats">
@@ -1746,15 +1766,15 @@ async function openOtherProfile(userId){
     ${prof.visible_on_map?(()=>{
       const cats=(prof.helper_categories||[]);
       const rateLabel=prof.helper_rate_type==='free'||!prof.helper_rate
-        ?'🤝 Willing to help free of charge'
-        :`💰 $${prof.helper_rate}${prof.helper_rate_type==='hourly'?' / hour':prof.helper_rate_type==='daily'?' / day':' flat rate'}`;
+        ?'Willing to help free of charge'
+        :`$${prof.helper_rate}${prof.helper_rate_type==='hourly'?' / hour':prof.helper_rate_type==='daily'?' / day':' flat rate'}`;
       const isMe=userId===(myProfileId||me?.id);
       return `<div class="op-bio" style="margin-top:12px;border-top:1px solid var(--border);padding-top:16px">
-        <div class="op-bio-lbl" style="color:var(--lime)">💪 Available as Helper</div>
+        <div class="op-bio-lbl" style="color:var(--lime)">Available as Helper</div>
         ${cats.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${cats.map(c=>`<span style="font-size:11px;font-weight:800;color:var(--purple);background:rgba(155,89,212,.12);border:1px solid rgba(155,89,212,.25);border-radius:100px;padding:3px 10px">${c}</span>`).join('')}</div>`:''}
         ${prof.helper_bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(prof.helper_bio)}</div>`:''}
         <div style="font-size:13px;font-weight:800;color:var(--lime)">${rateLabel}</div>
-        ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Helper')}')" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer">💬 Contact Helper</button>`:''}
+        ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Helper')}')" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Helper</button>`:''}
       </div>`;
     })():''}`;
 }
@@ -1821,7 +1841,7 @@ async function sendMagicLink() {
   document.getElementById('magic-btn').disabled=true;
   document.getElementById('magic-btn').textContent='Sending…';
   const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
-  document.getElementById('magic-btn').textContent='Send Link ✉️';
+  document.getElementById('magic-btn').textContent='Send Link';
   if(error){document.getElementById('magic-btn').disabled=false;return toast('❌ '+error.message);}
   document.getElementById('magic-addr').textContent=email;
   document.getElementById('magic-sent').style.display='block';
@@ -1849,6 +1869,17 @@ async function showApp(){
   setAvatar();
   if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
   loadJobs();
+  // Silent GPS refresh on login — only when permission was ALREADY granted and the
+  // 30-min cache is stale. Fresh cache → no GPS at all (battery). Never prompts.
+  // Permissions API may be absent on older iOS Safari (<16) → try/catch falls back
+  // to today's tap-to-locate behaviour.
+  try{
+    if(navigator.permissions&&navigator.geolocation&&!_restoreCachedGps()){
+      navigator.permissions.query({name:'geolocation'}).then(p=>{
+        if(p.state==='granted')locateUser(true);
+      }).catch(()=>{});
+    }
+  }catch(e){}
   subscribeToMessages();
   registerOneSignal();
   processReferral();
@@ -2009,12 +2040,12 @@ async function setAvatar(){
 }
 
 function jobCard(j,profile){
-  const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
+  const color=CAT_COLOR[j.category]||'#9B59D4';
   const name=profile?.name||'Someone';
-  const rating=profile?.rating?`<span style="color:var(--yellow);font-size:11px;font-weight:800">⭐ ${profile.rating}</span>`:`<span style="color:var(--muted);font-size:11px;font-weight:700">New</span>`;
+  const rating=profile?.rating?`<span style="color:var(--yellow);font-size:11px;font-weight:800">★ ${profile.rating}</span>`:`<span style="color:var(--muted);font-size:11px;font-weight:700">New</span>`;
   const locBadge=j.location_verified?`<span style="color:var(--lime);font-size:10px">✅</span>`:`<span style="color:var(--yellow);font-size:10px">⚠️</span>`;
   return `<div class="job-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
-    <div class="jc-badge">${emoji} ${j.category||'other'}</div>
+    <div class="jc-badge">${j.category||'other'}</div>
     <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
     <div class="jc-desc">${esc(j.description||'')}</div>
     <div class="jc-foot">
@@ -2034,9 +2065,8 @@ const FEATURED_POSTER_ID='c89896db-b2ab-4c4c-88fa-650823e63303';
 
 function listCard(j,profile){
   const color=CAT_COLOR[j.category]||'#9B59D4';
-  const emoji=CAT_EMOJI[j.category]||'✨';
   const name=profile?.name||'Someone';
-  const rating=profile?.rating?`⭐ ${profile.rating}`:'New';
+  const rating=profile?.rating?`★ ${profile.rating}`:'New';
   // show real distance only when GPS is known — map centre is not the user's position
   let locLabel=null;
   if(gpsLat&&gpsLng&&j.lat&&j.lng){
@@ -2045,8 +2075,8 @@ function listCard(j,profile){
   }
   return `<div class="list-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="lc-top">
-      <span class="lc-title">${emoji} ${esc(j.title)}</span>
-      <div style="display:flex;flex-direction:row;align-items:center;gap:4px;flex-shrink:0">${myAppliedTaskIds.has(j.id)?'<span style="font-size:10px;font-weight:900;color:var(--lime);letter-spacing:.5px">Applied-</span>':''}<span class="lc-budget">$${j.price??'?'}</span></div>
+      <span class="lc-title">${esc(j.title)}</span>
+      <div style="display:flex;flex-direction:row;align-items:center;gap:4px;flex-shrink:0">${myAppliedTaskIds.has(j.id)?'<span style="font-size:10px;font-weight:800;color:var(--lime);letter-spacing:.5px">Applied-</span>':''}<span class="lc-budget">$${j.price??'?'}</span></div>
     </div>
     <div class="lc-desc">${esc(j.description||'')}</div>
     <div class="lc-foot">
@@ -2055,7 +2085,7 @@ function listCard(j,profile){
         <span class="lc-name">${esc(name)}</span>
         <span style="color:var(--yellow);font-size:11px;font-weight:800;flex-shrink:0">${rating}</span>
       </div>
-      <span class="lc-meta">${locLabel?`📍 ${esc(locLabel)} · `:''}${timeAgo(j.created_at)}</span>
+      <span class="lc-meta">${locLabel?`${esc(locLabel)} · `:''}${timeAgo(j.created_at)}</span>
     </div>
   </div>`;
 }
@@ -2063,13 +2093,13 @@ function listCard(j,profile){
 async function openJob(j){
   activeJob=j;const color=CAT_COLOR[j.category]||'#9B59D4';
   document.getElementById('m-title').textContent=j.title;
-  const locTag=j.location_verified?'<span style="color:var(--lime);font-size:11px">✅ GPS Verified</span>':'<span style="color:var(--yellow);font-size:11px">⚠️ GPS Unverified</span>';
+  const locTag=j.location_verified?'<span style="color:var(--lime);font-size:11px">GPS Verified</span>':'<span style="color:var(--yellow);font-size:11px">GPS Unverified</span>';
   let modalLocLabel=null;
   if(gpsLat&&gpsLng&&j.lat&&j.lng){
     const d=haversineKm(gpsLat,gpsLng,j.lat,j.lng);
     modalLocLabel=d<=1?'Less than 1 km away':`${d.toFixed(1)} km away`;
   }
-  document.getElementById('m-meta').innerHTML=`${modalLocLabel?`📍 ${esc(modalLocLabel)} `:''}${locTag} &nbsp;·&nbsp; ${timeAgo(j.created_at)}`;
+  document.getElementById('m-meta').innerHTML=`${modalLocLabel?`${ICO.pin}${esc(modalLocLabel)} `:''}${locTag} &nbsp;·&nbsp; ${timeAgo(j.created_at)}`;
   document.getElementById('m-desc').textContent=j.description||'';
   document.getElementById('m-budget').textContent=`$${j.price??'?'}`;
 
@@ -2082,12 +2112,11 @@ async function openJob(j){
       sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',pid).eq('status','completed')
     ]);
     const pname=prof?.name||'Someone';
-    const prating=prof?.rating?`<span style="color:var(--yellow);font-size:13px;font-weight:800">⭐ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:12px;font-weight:700">New</span>`;
-    const pInitial=((pname||'?')[0]).toUpperCase();
+    const prating=prof?.rating?`<span style="color:var(--yellow);font-size:13px;font-weight:800">★ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:12px;font-weight:700">New</span>`;
     document.getElementById('m-poster').innerHTML=`
-      <div onclick="openOtherProfile('${pid}')" style="width:46px;height:46px;border-radius:50%;border:3px solid #9B59D4;color:#9B59D4;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">${pInitial}</div>
+      <div onclick="openOtherProfile('${pid}')" style="cursor:pointer;flex-shrink:0">${avatarCircle(pname,prof?.avatar_color,'32px','13px')}</div>
       <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
-        <div style="font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
+        <div style="font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
         <div style="display:flex;align-items:center;gap:5px">${prating}</div>
       </div>`;
   }
@@ -2097,19 +2126,19 @@ async function openJob(j){
   btn.onclick=()=>jobAction();
 
   if(j.status==='completed'){
-    btn.textContent='✅ Job Completed';btn.disabled=true;
+    btn.textContent='Job Completed';btn.disabled=true;
   } else if(j.status==='claimed'){
     if(isPoster){
-      btn.textContent='✅ Mark Complete';
+      btn.textContent='Mark Complete';
       btn.onclick=()=>jobAction();
       unclaimBtn.style.display='block';
     } else {
-      btn.textContent='💬 Message Poster';
+      btn.textContent='Message Poster';
       btn.onclick=()=>{document.getElementById('modal').classList.remove('open');nav('messages');};
     }
   } else if(j.status==='open'){
     if(isPoster){
-      btn.textContent='👥 Review Applicants';
+      btn.textContent='Review Applicants';
       btn.onclick=()=>openApplicants(j.id,j.title);
     } else {
       // check if already applied
@@ -2118,12 +2147,12 @@ async function openJob(j){
         const pid=myProfileId||me.id;
           sb.from('applications').select('id,status').eq('task_id',j.id).eq('applicant_id',pid).maybeSingle().then(({data})=>{
             if(data&&data.status==='pending'){
-              btn.textContent='↩️ Withdraw Interest';btn.disabled=false;
+              btn.textContent='Withdraw Interest';btn.disabled=false;
               btn.onclick=()=>withdrawApplication(data.id);
             } else if(data&&data.status==='assigned'){
-              btn.textContent='✅ You are assigned!';btn.disabled=true;
+              btn.textContent='You are assigned!';btn.disabled=true;
             } else {
-              btn.textContent="🙋 I'm Interested";btn.disabled=false;
+              btn.innerHTML=ICO.hand+"I'm Interested";btn.disabled=false;
               btn.onclick=()=>applyForJob(j.id,j.poster_id,j.title);
             }
           });
@@ -2163,7 +2192,7 @@ async function jobAction(){
       toast('✅ Already completed!');loadMyJobs();loadJobs();return;
     }
     const{error}=await sb.from('tasks').update({status:'completed'}).eq('id',activeJob.id);
-    if(error){btn.disabled=false;btn.textContent='✅ Mark Complete';return toast('❌ '+error.message);}
+    if(error){btn.disabled=false;btn.textContent='Mark Complete';return toast('❌ '+error.message);}
     document.getElementById('modal').classList.remove('open');
     toast('✅ Job marked complete!');loadJobs();loadMyJobs();
     openRatingModal(activeJob.id,activeJob.doer_id,'How did the helper do?');
@@ -2190,14 +2219,14 @@ async function applyForJob(taskId,posterId,jobTitle){
   if(!sb||!me)return;
   const pid=myProfileId||me.id;
   const btn=document.getElementById('m-action');
-  btn.textContent='✅ Applied';btn.disabled=true;
+  btn.textContent='Applied';btn.disabled=true;
 
   // upsert application
   const{error}=await sb.from('applications').upsert(
     {task_id:taskId,applicant_id:pid,status:'pending'},
     {onConflict:'task_id,applicant_id'}
   );
-  if(error){btn.textContent="🙋 I'm Interested";btn.disabled=false;return toast('❌ '+error.message);}
+  if(error){btn.innerHTML=ICO.hand+"I'm Interested";btn.disabled=false;return toast('❌ '+error.message);}
 
   // get applicant name
   const{data:myProf}=await sb.from('profiles').select('name').eq('id',pid).single();
@@ -2310,14 +2339,14 @@ async function openApplicants(taskId,taskTitle){
   el.innerHTML=data.map(app=>{
     const p=app.profiles||{};
     const name=p.name||'Someone';
-    const rating=p.rating?`⭐ ${p.rating}`:'New';
+    const rating=p.rating?`★ ${p.rating}`:'New';
     const bio=p.bio?`<div style="font-size:12px;color:#aaa;margin:4px 0 8px;line-height:1.4">${esc(p.bio)}</div>`:'';
     return `<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;border:1.5px solid var(--border)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:8px">
-          <div onclick="openOtherProfile('${app.applicant_id}')" style="width:42px;height:42px;border-radius:50%;border:3px solid #9B59D4;color:#9B59D4;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">${((name||'?')[0]).toUpperCase()}</div>
+          <div onclick="openOtherProfile('${app.applicant_id}')" style="cursor:pointer;flex-shrink:0">${avatarCircle(name,p.avatar_color,'42px','17px')}</div>
           <div>
-            <div style="font-size:15px;font-weight:900">${esc(name)}</div>
+            <div style="font-size:15px;font-weight:800">${esc(name)}</div>
             <div style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</div>
           </div>
         </div>
@@ -2325,8 +2354,8 @@ async function openApplicants(taskId,taskTitle){
       </div>
       ${bio}
       <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="openChatWithApplicant('${taskId}','${esc(name)}','${app.applicant_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
-        <button onclick="assignApplicant('${taskId}','${app.id}','${app.applicant_id}','${esc(name)}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Assign</button>
+        <button onclick="openChatWithApplicant('${taskId}','${esc(name)}','${app.applicant_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Chat</button>
+        <button onclick="assignApplicant('${taskId}','${app.id}','${app.applicant_id}','${esc(name)}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">✅ Assign</button>
       </div>
     </div>`;
   }).join('');
@@ -2392,13 +2421,13 @@ function selCat(el){document.querySelectorAll('.cat-opt').forEach(c=>c.classList
 async function detectLocation(){
   const btn=document.getElementById('gps-btn');const inp=document.getElementById('p-loc');const st=document.getElementById('loc-status');
   if(!navigator.geolocation){st.textContent='GPS not available — type your address';st.className='loc-status manual';inp.placeholder='e.g. 123 Main St, Etobicoke';return;}
-  btn.disabled=true;btn.textContent='📡 Locating…';st.textContent='Getting your location…';st.className='loc-status loading';
+  btn.disabled=true;btn.textContent='Locating…';st.textContent='Getting your location…';st.className='loc-status loading';
   navigator.geolocation.getCurrentPosition(
     async pos=>{gpsLat=pos.coords.latitude;gpsLng=pos.coords.longitude;
       try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${gpsLat}&lon=${gpsLng}&zoom=14&format=json`,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});const d=await r.json();const a=d.address||{};const nb=a.neighbourhood||a.suburb||a.quarter||a.village||a.town||a.city_district||'';const city=a.city||a.town||a.municipality||a.county||'';const prov=a.state_code||a.state||'';inp.value=[nb,city,prov].filter(Boolean).slice(0,2).join(', ')||city;locVerified=true;st.textContent='✅ GPS verified — neighbourhood only, no exact address stored';st.className='loc-status verified';}
       catch{inp.value='';locVerified=false;st.textContent='Could not detect location — type it below';st.className='loc-status manual';}
-      btn.disabled=false;btn.textContent='📍 GPS';},
-    ()=>{locVerified=false;st.textContent='Location denied — type your address below';st.className='loc-status manual';btn.disabled=false;btn.textContent='📍 GPS';},
+      btn.disabled=false;btn.innerHTML=ICO.nav+'GPS';},
+    ()=>{locVerified=false;st.textContent='Location denied — type your address below';st.className='loc-status manual';btn.disabled=false;btn.innerHTML=ICO.nav+'GPS';},
     {timeout:10000,enableHighAccuracy:false}
   );
 }
@@ -2493,7 +2522,7 @@ async function postJob(){
   const btn=document.getElementById('post-btn');btn.disabled=true;btn.textContent='Posting…';
   const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
   const{error}=await sb.from('tasks').insert({poster_id:myProfileId||me.id,title,description:desc,category:'other',price:budget?parseFloat(budget):0,address:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open',expires_at:expiresAt,show_on_map:postShowOnMap});
-  btn.disabled=false;btn.textContent='Post Job 🚀';
+  btn.disabled=false;btn.textContent='Post Job';
   if(error)return toast('❌ '+error.message);
   toast('🎉 Job posted! Expires in 14 days.');resetPost();nav('browse');
 }
@@ -2505,7 +2534,7 @@ function resetPost(){
   ['p-title','p-desc','p-budget'].forEach(id=>document.getElementById(id).value='');
   const loc=document.getElementById('p-loc');loc.value='';loc.placeholder='Start typing your address…';
   const st=document.getElementById('loc-status');st.textContent='Type an address and select from suggestions, or tap GPS';st.className='loc-status';
-  document.getElementById('gps-btn').textContent='📍 GPS';
+  document.getElementById('gps-btn').innerHTML=ICO.nav+'GPS';
   hideLocSuggestions();
 }
 
@@ -2561,26 +2590,25 @@ async function loadMyJobs(){
       if(!j)return'';
       const cat=(j.category||'other').toLowerCase();
       const color=CAT_COLOR[cat]||'#9B59D4';
-      const emoji=CAT_EMOJI[cat]||'✨';
       let appBadge,actionBtn='',appMenu='';
       if(app.status==='pending'){
-        appBadge=`<span style="color:var(--yellow);font-size:12px;font-weight:800">⏳ Pending</span>`;
+        appBadge=`<span style="color:var(--yellow);font-size:12px;font-weight:800">Pending</span>`;
         appMenu=`<div class="card-menu-wrap">
           <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-app-${app.id}')" aria-label="More options">⋮</button>
           <div class="card-menu-drop" id="cm-app-${app.id}">
-            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${app.id}','withdraw')">↩️ Withdraw Interest</button>
+            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${app.id}','withdraw')">Withdraw Interest</button>
           </div>
         </div>`;
       } else if(app.status==='assigned'){
-        appBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">🤝 Assigned</span>`;
+        appBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">Assigned</span>`;
         appMenu=`<div class="card-menu-wrap">
           <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-app-${app.id}')" aria-label="More options">⋮</button>
           <div class="card-menu-drop" id="cm-app-${app.id}">
-            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','unclaim')">↩️ Unclaim</button>
+            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','unclaim')">Unclaim</button>
           </div>
         </div>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Chat</button>
         </div>`;
       }
       return `<div class="job-card" style="--jc:${color};cursor:default;overflow:visible">
@@ -2600,18 +2628,18 @@ async function loadMyJobs(){
       const posterName=j.profiles?.name||'Neighbour';
       return `<div class="job-card" style="--jc:${color};cursor:default;overflow:visible">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <span style="color:var(--teal);font-size:12px;font-weight:800">💬 Help Request</span>
+          <span style="color:var(--teal);font-size:12px;font-weight:800">Help Request</span>
           <div class="card-menu-wrap">
             <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-ho-${j.id}')" aria-label="More options">⋮</button>
             <div class="card-menu-drop" id="cm-ho-${j.id}">
-              <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','help_offer')">🚫 Decline</button>
+              <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','help_offer')">Decline</button>
             </div>
           </div>
         </div>
         <div class="jc-top"><div class="jc-title">${esc(j.title)}</div></div>
         <div class="jc-desc">${esc(j.description||'')}</div>
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Chat</button>
         </div>
       </div>`;
     }).join('');
@@ -2622,28 +2650,28 @@ async function loadMyJobs(){
 
   const data2=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   g.innerHTML=data2.map(j=>{
-    const color=CAT_COLOR[j.category]||'#9B59D4';const emoji=CAT_EMOJI[j.category]||'✨';
+    const color=CAT_COLOR[j.category]||'#9B59D4';
     const daysLeft=j.expires_at?Math.ceil((new Date(j.expires_at)-now)/(1000*60*60*24)):null;
 
-    const gpsTag=j.status==='open'?(j.location_verified?` · <span style="color:var(--lime);font-size:11px;font-weight:800">✅ GPS</span>`:`· <span style="color:var(--yellow);font-size:11px;font-weight:800">⚠️ Unverified</span>`):'';
+    const gpsTag=j.status==='open'?(j.location_verified?` · <span style="color:var(--lime);font-size:11px;font-weight:800">GPS</span>`:`· <span style="color:var(--yellow);font-size:11px;font-weight:800">⚠️ Unverified</span>`):'';
     let statusBadge;
-    if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">🤝 Active</span>`;
-    else statusBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">🟢 Open${daysLeft!==null?` · ${daysLeft}d left`:''}${gpsTag}</span>`;
+    if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">Active</span>`;
+    else statusBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">Open${daysLeft!==null?` · ${daysLeft}d left`:''}${gpsTag}</span>`;
 
     let actionBtn='';
     let cardMenu='';
     if(j.status==='open'){
       const appCount=applicantCounts[j.id]||0;
       const appBadge=appCount>0?`<div style="margin-top:8px;padding:8px 12px;background:rgba(155,89,212,.12);border:1.5px solid rgba(155,89,212,.3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:13px;font-weight:800;color:var(--purple)">👥 ${appCount} interested</span>
-        <button onclick="event.stopPropagation();openApplicants('${j.id}','${esc(j.title)}')" style="padding:6px 14px;border-radius:100px;background:var(--purple);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;cursor:pointer">Review →</button>
+        <span style="font-size:13px;font-weight:800;color:var(--purple)">${appCount} interested</span>
+        <button onclick="event.stopPropagation();openApplicants('${j.id}','${esc(j.title)}')" style="padding:6px 14px;border-radius:100px;background:var(--purple);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer">Review →</button>
       </div>`:'';
       cardMenu=`<div class="card-menu-wrap">
         <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-${j.id}')" aria-label="More options">⋮</button>
         <div class="card-menu-drop" id="cm-${j.id}">
-          <button onclick="event.stopPropagation();closeAllCardMenus();openEditModal('${j.id}','${esc(j.title)}','${esc(j.description||'')}','${j.price??0}')">✏️ Edit</button>
+          <button onclick="event.stopPropagation();closeAllCardMenus();openEditModal('${j.id}','${esc(j.title)}','${esc(j.description||'')}','${j.price??0}')">Edit</button>
           <div class="menu-divider"></div>
-          <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}')">🗑️ Cancel Job</button>
+          <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}')">Cancel Job</button>
         </div>
       </div>`;
       actionBtn=appBadge;
@@ -2653,22 +2681,22 @@ async function loadMyJobs(){
         cardMenu=`<div class="card-menu-wrap">
           <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-${j.id}')" aria-label="More options">⋮</button>
           <div class="card-menu-drop" id="cm-${j.id}">
-            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','help_offer')">❌ Cancel</button>
+            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','help_offer')">Cancel</button>
           </div>
         </div>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
+          <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">✅ Complete</button>
         </div>`;
       } else {
         cardMenu=`<div class="card-menu-wrap">
           <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-${j.id}')" aria-label="More options">⋮</button>
           <div class="card-menu-drop" id="cm-${j.id}">
-            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','unclaim')">↩️ Unclaim</button>
+            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','unclaim')">Unclaim</button>
           </div>
         </div>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">💬 Chat</button>
-          <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Complete</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Chat</button>
+          <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">✅ Complete</button>
         </div>`;
       }
     }
@@ -2832,8 +2860,8 @@ document.getElementById('s-applied').textContent=applied||0;
 document.getElementById('s-helper-done').textContent=helperDone||0;
 const avgPoster=posterRatings?.length?( posterRatings.reduce((s,r)=>s+r.score,0)/posterRatings.length).toFixed(1):null;
 const avgHelper=helperRatings?.length?(helperRatings.reduce((s,r)=>s+r.score,0)/helperRatings.length).toFixed(1):null;
-document.getElementById('s-poster-rating').textContent=avgPoster?`⭐ ${avgPoster} (${posterRatings.length} reviews)`:'No reviews yet';
-document.getElementById('s-helper-rating').textContent=avgHelper?`⭐ ${avgHelper} (${helperRatings.length} reviews)`:'No reviews yet';
+document.getElementById('s-poster-rating').textContent=avgPoster?`★ ${avgPoster} (${posterRatings.length} reviews)`:'No reviews yet';
+document.getElementById('s-helper-rating').textContent=avgHelper?`★ ${avgHelper} (${helperRatings.length} reviews)`:'No reviews yet';
 updateNotifTip();
 }
 
@@ -2854,24 +2882,22 @@ async function loadMessages(){
     const otherName=t.other_name||'Someone';
     const otherRating=t.other_rating;
     const cat=(t.category||'other').toLowerCase();
-    const color=CAT_COLOR[cat]||'#9B59D4';
-    const emoji=CAT_EMOJI[cat]||'✨';
     const preview=t.last_msg_body?esc(t.last_msg_body).slice(0,60):'Tap to open chat';
     const msgTime=t.last_msg_created_at?timeAgo(t.last_msg_created_at):'';
     const isUnread=t.has_unread===true;
     const rowBg=isUnread?'background:rgba(236,72,153,.08);border-color:rgba(236,72,153,.3)':'';
-    const unreadBadge=isUnread?`<span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;background:var(--pink);color:#fff;font-size:9px;font-weight:900;letter-spacing:.5px;vertical-align:middle;flex-shrink:0">NEW</span>`:'';
+    const unreadBadge=isUnread?`<span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;background:var(--pink);color:#fff;font-size:9px;font-weight:800;letter-spacing:.5px;vertical-align:middle;flex-shrink:0">NEW</span>`:'';
     let statusTag='';
     if(!isPoster){
-      if(t.app_status==='pending') statusTag=`<span style="font-size:10px;color:var(--yellow);font-weight:800;margin-left:6px">⏳ Pending</span>`;
-      else if(t.app_status==='assigned'||t.task_status==='claimed') statusTag=`<span style="font-size:10px;color:var(--teal);font-weight:800;margin-left:6px">🤝 Assigned</span>`;
+      if(t.app_status==='pending') statusTag=`<span style="font-size:10px;color:var(--yellow);font-weight:800;margin-left:6px">Pending</span>`;
+      else if(t.app_status==='assigned'||t.task_status==='claimed') statusTag=`<span style="font-size:10px;color:var(--teal);font-weight:800;margin-left:6px">Assigned</span>`;
     }
     return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
-      <div class="conv-icon" style="background:${color}22;border:1.5px solid ${color}44">${emoji}</div>
+      ${avatarCircle(otherName,null,'28px','12px')}
       <div class="conv-body">
         <div class="conv-top">
           <span class="conv-name">${esc(otherName)}${unreadBadge}</span>
-          <span class="conv-time" style="${isUnread?'color:var(--pink);font-weight:900':''}">${msgTime}</span>
+          <span class="conv-time" style="${isUnread?'color:var(--pink);font-weight:800':''}">${msgTime}</span>
         </div>
         <div class="conv-title" style="display:flex;align-items:center;gap:4px">${esc(t.title)}${statusTag}</div>
         <div class="conv-preview" style="${isUnread?'color:var(--text);font-weight:800':'color:#666'}">${preview}</div>
@@ -2910,17 +2936,11 @@ async function openChatFromNotification(taskId,convId){
 async function openChat(taskId,title,otherName,posterId,otherId,otherRating,convId){
   activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;activeChatConvId=convId||null;
   document.getElementById('chat-title').textContent=title;
-  const ratingStr=otherRating?` · ⭐ ${otherRating}`:'';
+  const ratingStr=otherRating?` · ★ ${otherRating}`:'';
   // Set avatar initial immediately with default color
   const avEl=document.getElementById('chat-av');
   const initial=((otherName||'?')[0]).toUpperCase();
-  avEl.textContent=initial;avEl.style.background='#9B59D4';avEl.style.borderColor='#9B59D4';
-  // Fetch avatar_color async — update once loaded
-  if(sb&&otherId){
-    sb.from('profiles').select('avatar_color').eq('id',otherId).maybeSingle().then(({data})=>{
-      if(data?.avatar_color){avEl.style.background=data.avatar_color;avEl.style.borderColor=data.avatar_color;}
-    });
-  }
+  avEl.textContent=initial;
   const otherEl=document.getElementById('chat-other');
   otherEl.innerHTML=`${esc(otherName+ratingStr)}<span style="font-size:10px;opacity:.5;margin-left:4px">›</span>`;
   document.getElementById('chat-modal').classList.add('open');
@@ -2955,14 +2975,14 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   const isDoer=task.doer_id===pid;
   const isHO=isHelperContact(task);
 
-  const withdrawBtn=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Withdraw</button>`;
-  const cancelHOLabel=isPoster?'❌ Cancel':'🚫 Decline';
-  const cancelHOBtn=`<button onclick="cancelHelpOffer('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">${cancelHOLabel}</button>`;
+  const withdrawBtn=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Withdraw</button>`;
+  const cancelHOLabel=isPoster?'Cancel':'Decline';
+  const cancelHOBtn=`<button onclick="cancelHelpOffer('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">${cancelHOLabel}</button>`;
   if(task.status==='claimed'){
     let btns='';
     if(isPoster){
-      btns+=`<button onclick="chatComplete('${taskId}','${task.doer_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">✅ Mark Complete</button>`;
-      btns+=isHO?cancelHOBtn:`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
+      btns+=`<button onclick="chatComplete('${taskId}','${task.doer_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">✅ Mark Complete</button>`;
+      btns+=isHO?cancelHOBtn:`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Unclaim</button>`;
     } else if(isDoer){
       btns+=isHO?cancelHOBtn:withdrawBtn;
     }
@@ -3036,7 +3056,7 @@ async function claimFromChat(taskId){
   const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id').eq('id',taskId).single();
   const actionsEl=document.getElementById('chat-actions');
   if(task?.status==='claimed'){
-    actionsEl.innerHTML=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">↩️ Unclaim</button>`;
+    actionsEl.innerHTML=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(239,68,68,.35);color:#EF4444;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Unclaim</button>`;
     actionsEl.style.display='flex';
   }
   loadMessages();loadJobs();
@@ -3154,11 +3174,11 @@ function spin(){return'<div class="loading"><div class="spinner"></div></div>';}
 function emptyState(ico,t,d){return`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-t">${t}</div><div class="empty-d">${d}</div></div>`;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function linkify(s){return s.replace(/(https?:\/\/[^\s<&]+(?:&amp;[^\s<&]+)*|www\.[^\s<&]+(?:&amp;[^\s<&]+)*)/gi,function(url){const href=url.startsWith('www.')?'https://'+url:url;return'<a href="'+href+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;word-break:break-all">'+url+'</a>';});}
+// Avatar standard: black fill, white border, white initial — everywhere except map pins.
+// Signature unchanged for call-site compatibility; color/border params are intentionally ignored.
 function avatarCircle(name,color,size='36px',fontSize='14px',border=true){
-  const bg=color||'#9B59D4';
   const initial=((name||'?')[0]).toUpperCase();
-  const b=border?`border:3px solid ${bg};outline:2.5px solid ${bg};outline-offset:2px;`:'';
-  return`<div style="width:${size};height:${size};border-radius:50%;background:${bg};${b}display:flex;align-items:center;justify-content:center;font-weight:900;font-size:${fontSize};color:#fff;flex-shrink:0;font-family:'Nunito',sans-serif">${esc(initial)}</div>`;
+  return`<div style="width:${size};height:${size};border-radius:50%;background:#000;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${fontSize};color:#fff;flex-shrink:0;font-family:'Nunito',sans-serif">${esc(initial)}</div>`;
 }
 function timeAgo(d){const m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
 async function saveBio(){
@@ -3201,14 +3221,13 @@ async function updateForkHelperCard(){
     const expiry=prof.helper_expires_at?new Date(prof.helper_expires_at):null;
     const expiresLabel=expiry?`Expires ${expiry.toLocaleDateString('en-CA',{month:'short',day:'numeric'})}`:'Active';
     el.innerHTML=`
-      <div style="width:100%;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(163,230,53,.25);background:rgba(163,230,53,.06)">
+      <div style="width:100%;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(163,230,53,.25);background:rgba(163,230,53,.06)">
         <div style="width:52px;height:52px;border-radius:14px;background:rgba(163,230,53,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <span style="font-size:24px">✅</span>
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:2px">You're listed as a helper</div>
-          <div style="font-size:13px;font-weight:700;color:var(--lime)">${expiresLabel}</div>
-          <button onclick="nav('profile')" style="background:none;border:none;padding:0;margin-top:6px;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;text-decoration:underline">Manage in Profile →</button>
+          <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">You're listed as a helper</div>
+          <div style="font-size:13px;font-weight:700;color:var(--lime)">${expiresLabel} · <button onclick="nav('profile')" style="background:none;border:none;padding:0;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;text-decoration:underline">Manage in Profile →</button></div>
         </div>
       </div>`;
   } else {
@@ -3216,26 +3235,26 @@ async function updateForkHelperCard(){
     const expired=prof.helper_expires_at&&new Date(prof.helper_expires_at)<new Date();
     const statusLabel=expired?'Your Helper Listing has expired':'Your Helper Listing is paused';
     el.innerHTML=`
-      <div style="width:100%;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid var(--yellow);background:rgba(234,179,8,.06)">
+      <div style="width:100%;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid var(--yellow);background:rgba(234,179,8,.06)">
         <div style="width:52px;height:52px;border-radius:14px;background:rgba(234,179,8,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <span style="font-size:24px">⏸️</span>
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:15px;font-weight:900;color:var(--text);margin-bottom:2px">${statusLabel}</div>
-          <button onclick="helperEnteredFromFork=true;nav('helper')" style="margin-top:8px;padding:10px 20px;border-radius:100px;border:none;background:var(--lime);color:#000;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">Renew Listing ✨</button>
+          <div style="font-size:14px;font-weight:800;color:var(--text)">${statusLabel}</div>
         </div>
+        <button onclick="helperEnteredFromFork=true;nav('helper')" style="flex-shrink:0;padding:9px 16px;border-radius:100px;border:none;background:var(--lime);color:#000;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer">Renew ✨</button>
       </div>`;
   }
 }
 
 function forkHelperCardNew(){
   return `
-    <button onclick="helperEnteredFromFork=true;nav('helper')" style="width:100%;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(163,230,53,.35);background:rgba(163,230,53,.06);cursor:pointer;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
+    <button onclick="helperEnteredFromFork=true;nav('helper')" style="width:100%;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid rgba(163,230,53,.35);background:rgba(163,230,53,.06);cursor:pointer;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
       <div style="width:52px;height:52px;border-radius:14px;background:var(--lime);display:flex;align-items:center;justify-content:center;flex-shrink:0">
         <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       </div>
       <div>
-        <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:2px">Offering help</div>
+        <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">Offering help</div>
         <div style="font-size:13px;font-weight:700;color:var(--muted)">I want to offer a skill or service</div>
       </div>
     </button>`;
@@ -3258,7 +3277,7 @@ function updateProfileHelperBlock(prof){
           <span style="font-size:20px">💪</span>
         </div>
         <div style="flex:1">
-          <div style="font-size:15px;font-weight:900;color:var(--text)">Become a Helper</div>
+          <div style="font-size:15px;font-weight:800;color:var(--text)">Become a Helper</div>
           <div style="font-size:12px;font-weight:700;color:var(--muted)">Offer your skills to neighbours nearby</div>
         </div>
         <span style="font-size:18px;color:var(--muted)">›</span>
@@ -3279,7 +3298,7 @@ function updateProfileHelperBlock(prof){
             <span style="font-size:20px">✅</span>
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:15px;font-weight:900;color:var(--lime)">Helper listing active</div>
+            <div style="font-size:15px;font-weight:800;color:var(--lime)">Helper listing active</div>
             ${expiresLabel?`<div style="font-size:11px;font-weight:700;color:var(--muted)">${expiresLabel}</div>`:''}
           </div>
         </div>
@@ -3298,11 +3317,11 @@ function updateProfileHelperBlock(prof){
             <span style="font-size:20px">${icon}</span>
           </div>
           <div style="flex:1">
-            <div style="font-size:15px;font-weight:900;color:var(--text)">${label}</div>
+            <div style="font-size:15px;font-weight:800;color:var(--text)">${label}</div>
             <div style="font-size:11px;font-weight:700;color:var(--muted)">Your profile is hidden from searches</div>
           </div>
         </div>
-        <button onclick="nav('helper')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:none;background:var(--lime);color:#000;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer">${expired?'Renew Listing ✨':'Resume Listing ✨'}</button>
+        <button onclick="nav('helper')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:none;background:var(--lime);color:#000;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">${expired?'Renew Listing ✨':'Resume Listing ✨'}</button>
       </div>`;
   }
 }
@@ -3350,7 +3369,7 @@ async function openHelperScreen(){
   const pauseSection=document.getElementById('hp-pause-section');
   if(pauseSection) pauseSection.style.display=prof?.visible_on_map?'block':'none';
   const pauseBtn=document.getElementById('hp-pause-btn');
-  if(pauseBtn){delete pauseBtn.dataset.confirming;pauseBtn.innerHTML='⏸️ Pause My Listing';pauseBtn.style.borderColor='rgba(234,179,8,.3)';pauseBtn.style.background='transparent';}
+  if(pauseBtn){delete pauseBtn.dataset.confirming;pauseBtn.innerHTML='Pause My Listing';pauseBtn.style.borderColor='rgba(234,179,8,.3)';pauseBtn.style.background='transparent';}
 
   // restore selected categories
   hpSelectedCategories=new Set(prof?.helper_categories||[]);
@@ -3501,14 +3520,14 @@ async function confirmPauseHelper(){
   }
   // First tap — show confirmation state
   btn.dataset.confirming='true';
-  btn.innerHTML='⏸️ Tap again to confirm pause';
+  btn.innerHTML='Tap again to confirm pause';
   btn.style.borderColor='var(--yellow)';
   btn.style.background='rgba(234,179,8,.08)';
   // Reset after 4 seconds if no second tap
   setTimeout(()=>{
     if(btn.dataset.confirming){
       delete btn.dataset.confirming;
-      btn.innerHTML='⏸️ Pause My Listing';
+      btn.innerHTML='Pause My Listing';
       btn.style.borderColor='rgba(234,179,8,.3)';
       btn.style.background='transparent';
     }
@@ -3534,8 +3553,8 @@ function setRating(n){
 }
 
 function renderStars(n){
-  const stars=document.getElementById('rating-stars').querySelectorAll('span');
-  stars.forEach((s,i)=>s.textContent=i<n?'⭐':'☆');
+  const stars=document.getElementById('rating-stars').querySelectorAll('svg');
+  stars.forEach((s,i)=>s.setAttribute('class',i<n?'star-on':'star-off'));
 }
 
 function isIos(){return/iphone|ipad|ipod/i.test(navigator.userAgent);}
@@ -3551,9 +3570,9 @@ function updateNotifNudge(){
     nudge.style.display='none';
   } else {
     nudge.style.display='flex';
-    if(iosNotReady) nudgeText.textContent='📲 Add to Home Screen for notifications';
-    else if(Notification?.permission==='denied') nudgeText.textContent='🔔 Notifications blocked — tap to fix';
-    else nudgeText.textContent='🔔 Tap to enable notifications';
+    if(iosNotReady) nudgeText.textContent='Add to Home Screen for notifications';
+    else if(Notification?.permission==='denied') nudgeText.textContent='Notifications blocked — tap to fix';
+    else nudgeText.textContent='Tap to enable notifications';
   }
 }
 
@@ -3588,13 +3607,13 @@ function updateNotifTip(){
     body.innerHTML='On iPhone, push notifications require adding Yoodle to your home screen.<br><br>Tap <strong style="color:var(--text)">Share →</strong> then <strong style="color:var(--text)">Add to Home Screen</strong>, then open the app from your home screen icon.';
   } else if(isIos()&&isInStandaloneMode()){
     tip.style.display='block';
-    body.innerHTML='✅ You\'re using Yoodle as an app! Make sure you\'ve allowed notifications when prompted.';
+    body.innerHTML='You\'re using Yoodle as an app! Make sure you\'ve allowed notifications when prompted.';
   } else if(Notification?.permission==='granted'){
     tip.style.display='block';
-    body.innerHTML='✅ Push notifications are enabled on this device.';
+    body.innerHTML='Push notifications are enabled on this device.';
   } else if(Notification?.permission==='denied'){
     tip.style.display='block';
-    body.innerHTML='⚠️ Notifications are blocked. Go to your browser settings and allow notifications for yoodle.ca.';
+    body.innerHTML='Notifications are blocked. Go to your browser settings and allow notifications for yoodle.ca.';
   } else {
     tip.style.display='block';
     body.innerHTML='Enable notifications to get alerted about new jobs and messages near you.';
@@ -3655,14 +3674,14 @@ async function openRatingsSheet(){
   }
   el.innerHTML=pending.map((item,idx)=>`
     <div id="rating-item-${idx}" style="background:var(--surface);border-radius:var(--radius-sm);border:1.5px solid var(--border);padding:16px;margin-bottom:12px">
-      <div style="font-size:15px;font-weight:900;margin-bottom:2px">${esc(item.title)}</div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:2px">${esc(item.title)}</div>
       <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:12px">${item.role==='poster'?'You posted':'You helped'} · ${item.otherName}${item.price?' · $'+item.price:''}</div>
       <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:8px">${esc(item.prompt)}</div>
       <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px" id="stars-${idx}">
         ${[1,2,3,4,5].map(n=>`<span style="font-size:32px;cursor:pointer" onclick="setSheetRating(${idx},${n},'${item.taskId}','${item.ratedId}')" id="star-${idx}-${n}">☆</span>`).join('')}
       </div>
       <button id="submit-${idx}" onclick="submitSheetRating(${idx},'${item.taskId}','${item.ratedId}')"
-        style="width:100%;padding:12px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer;opacity:.4" disabled>
+        style="width:100%;padding:12px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;opacity:.4" disabled>
         Submit Rating
       </button>
     </div>`).join('');
@@ -3673,7 +3692,7 @@ function setSheetRating(idx,score,taskId,ratedId){
   sheetRatings[idx]=score;
   for(let n=1;n<=5;n++){
     const s=document.getElementById(`star-${idx}-${n}`);
-    if(s)s.textContent=n<=score?'⭐':'☆';
+    if(s)s.textContent=n<=score?'★':'☆';
   }
   const btn=document.getElementById(`submit-${idx}`);
   if(btn){btn.disabled=false;btn.style.opacity='1';}
