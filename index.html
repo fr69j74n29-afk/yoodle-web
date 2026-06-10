@@ -1088,7 +1088,7 @@ function toggleDarkMode(on){
 }
 function initDarkMode(){
   const saved=localStorage.getItem('yoodle-dark');
-  const on=saved==='1';
+  const on=saved!=='0';
   document.body.classList.toggle('dark',on);
   const cb=document.getElementById('dark-toggle');
   if(cb)cb.checked=on;
