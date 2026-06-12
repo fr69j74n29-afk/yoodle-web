@@ -72,7 +72,7 @@ body.theme-sage-dark{
 }
 body.theme-classic{
   --purple:#9078C0;--lime:#8DC95F;--pink:#7577D6;
-  --teal:#3AACBC;--orange:#E08A3A;--yellow:#E0C45A;
+  --teal:#3AACBC;--orange:#F97316;--yellow:#E0C45A;
   --bg:#0E0E0E;--surface:#1A1A1A;--surface2:#232323;
   --border:#2E2E2E;--text:#EBEBEB;--muted:#888;
   --badge-bg:rgba(255,255,255,.06);
@@ -101,7 +101,7 @@ body.theme-classic .ly{color:#9078C0}
 body.theme-classic .lo1{color:#8DC95F}
 body.theme-classic .lo2{color:#7577D6}
 body.theme-classic .ld{color:#3AACBC}
-body.theme-classic .ll{color:#E08A3A}
+body.theme-classic .ll{color:#F97316}
 body.theme-classic .le{color:#E0C45A}
 /* theme picker styles */
 .theme-row{display:flex;gap:10px;margin-top:2px}
@@ -329,12 +329,12 @@ body.theme-classic .le{color:#E0C45A}
 /* ── BOTTOM NAV ── */
 .bottom-nav{
   display:flex;align-items:center;justify-content:space-around;
-  padding:4px 0 calc(var(--sab) * 0.35);
+  padding:8px 0 max(8px, var(--sab));
   background:rgba(245,244,239,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-top:1px solid var(--border);z-index:200;flex-shrink:0;
   position:relative;/* own stacking context — fixes Android compositing overlap */
 }
-.nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;transition:color .15s;flex:1;min-height:44px;justify-content:center;white-space:nowrap}
+.nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;transition:color .15s;flex:1;min-height:44px;justify-content:center;white-space:nowrap}
 .nav-i.active{color:var(--purple)}
 .nav-i.nav-post{color:var(--muted)}
 .nav-i.nav-post.active{color:var(--muted)}
