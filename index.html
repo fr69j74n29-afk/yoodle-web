@@ -619,18 +619,18 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px">New Listing</div>
       <div style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:32px;font-family:'Fredoka One',cursive">What would you like to post?</div>
 
-      <!-- Needs help card -->
+      <!-- Post a job card -->
       <button onclick="nav('postjob')" style="width:100%;max-width:400px;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;border:1.5px solid var(--orange);background:var(--surface);cursor:pointer;margin-bottom:16px;text-align:left;font-family:'Nunito',sans-serif;transition:border-color .15s">
         <div style="width:52px;height:52px;border-radius:14px;background:var(--orange);display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <svg viewBox="0 0 24 24" fill="none" stroke="#1E2620" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         </div>
         <div>
-          <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">Needs help</div>
+          <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">Post a job</div>
           <div style="font-size:13px;font-weight:700;color:var(--muted)">I have a task that needs doing</div>
         </div>
       </button>
 
-      <!-- Offering help card (dynamic state) -->
+      <!-- Find work card (dynamic state) -->
       <div id="fork-helper-card" style="width:100%;max-width:400px"></div>
     </div>
   </div>
@@ -3295,7 +3295,7 @@ let helperLocSuggestionsData=[];
 let helperLocDebounceTimer=null;
 let helperEnteredFromFork=false;
 
-// ── FORK SCREEN: "Offering help" card state ──
+// ── FORK SCREEN: "Find work" card state ──
 async function updateForkHelperCard(){
   const el=document.getElementById('fork-helper-card');
   if(!el)return;
@@ -3351,7 +3351,7 @@ function forkHelperCardNew(){
         <svg viewBox="0 0 24 24" fill="none" stroke="#1E2620" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       </div>
       <div>
-        <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">Offering help</div>
+        <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">Find work</div>
         <div style="font-size:13px;font-weight:700;color:var(--muted)">I want to offer a skill or service</div>
       </div>
     </button>`;
