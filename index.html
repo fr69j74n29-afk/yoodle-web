@@ -630,7 +630,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         </div>
       </button>
 
-      <!-- Find work card (dynamic state) -->
+      <!-- Find me work card (dynamic state) -->
       <div id="fork-helper-card" style="width:100%;max-width:400px"></div>
     </div>
   </div>
@@ -3295,7 +3295,7 @@ let helperLocSuggestionsData=[];
 let helperLocDebounceTimer=null;
 let helperEnteredFromFork=false;
 
-// ── FORK SCREEN: "Find work" card state ──
+// ── FORK SCREEN: "Find me work" card state ──
 async function updateForkHelperCard(){
   const el=document.getElementById('fork-helper-card');
   if(!el)return;
@@ -3351,7 +3351,7 @@ function forkHelperCardNew(){
         <svg viewBox="0 0 24 24" fill="none" stroke="#1E2620" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       </div>
       <div>
-        <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">Find work</div>
+        <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">Find me work</div>
         <div style="font-size:13px;font-weight:700;color:var(--muted)">I want to offer a skill or service</div>
       </div>
     </button>`;
