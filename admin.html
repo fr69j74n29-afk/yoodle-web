@@ -649,6 +649,21 @@ body::before {
 .ac-badge.claimed { background: rgba(6,182,212,.12); color: #06B6D4; border: 1px solid rgba(6,182,212,.25); }
 .ac-badge.completed { background: rgba(155,89,212,.12); color: #9B59D4; border: 1px solid rgba(155,89,212,.25); }
 .ac-badge.cancelled { background: rgba(102,102,128,.12); color: #666680; border: 1px solid rgba(102,102,128,.25); }
+.ac-badge.pending { background: rgba(249,115,22,.12); color: #F97316; border: 1px solid rgba(249,115,22,.25); }
+.ac-badge.approved { background: rgba(163,230,53,.12); color: #A3E635; border: 1px solid rgba(163,230,53,.25); }
+.ac-badge.rejected { background: rgba(239,68,68,.12); color: #EF4444; border: 1px solid rgba(239,68,68,.25); }
+.ac-badge.youth { background: rgba(124,58,237,.12); color: #7C3AED; border: 1px solid rgba(124,58,237,.25); }
+.ac-badge.business { background: rgba(37,99,235,.12); color: #2563EB; border: 1px solid rgba(37,99,235,.25); }
+
+.amb-actions { display: flex; gap: 8px; margin-top: 8px; }
+.amb-btn {
+  padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer;
+  font-family: var(--body); font-size: 11px; font-weight: 800; transition: opacity .15s;
+}
+.amb-btn:hover { opacity: .85; }
+.amb-btn:disabled { opacity: .4; cursor: not-allowed; }
+.amb-btn-approve { background: rgba(163,230,53,.15); color: #A3E635; }
+.amb-btn-reject { background: rgba(239,68,68,.15); color: #EF4444; }
 
 .ac-meta {
   display: flex;
@@ -1009,6 +1024,15 @@ body::before {
       </div>
     </div>
 
+    <!-- AMBASSADOR APPLICATIONS -->
+    <div class="section-title">AMBASSADOR APPLICATIONS</div>
+    <div class="activity-tabs">
+      <button class="activity-tab active" onclick="switchAmbTab(this,'pending')">🕐 Pending <span id="amb-pending-count" style="opacity:.5"></span></button>
+      <button class="activity-tab" onclick="switchAmbTab(this,'all')">📋 All <span id="amb-all-count" style="opacity:.5"></span></button>
+    </div>
+    <div id="amb-pending" class="activity-panel"></div>
+    <div id="amb-all" class="activity-panel" style="display:none"></div>
+
     <!-- RECENT ACTIVITY -->
     <div class="section-title">RECENT ACTIVITY — LAST 48 HOURS</div>
 
@@ -1177,6 +1201,7 @@ async function loadStats() {
 
     // Reload activity section
     loadRecentActivity();
+    loadAmbassadors();
 
   } catch (err) {
     console.error('Stats error:', err);
@@ -1437,6 +1462,92 @@ async function loadRecentActivity() {
   }
 }
 
+// ── AMBASSADOR APPLICATIONS ──
+let currentAmbTab = 'pending';
+
+function switchAmbTab(btn, tab) {
+  btn.closest('.activity-tabs').querySelectorAll('.activity-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentAmbTab = tab;
+  document.getElementById('amb-pending').style.display = tab === 'pending' ? 'block' : 'none';
+  document.getElementById('amb-all').style.display = tab === 'all' ? 'block' : 'none';
+}
+
+function renderAmbCard(a) {
+  const statusClass = (a.status || 'pending').toLowerCase();
+  const tierClass = (a.tier || '').toLowerCase();
+  const showActions = statusClass === 'pending';
+  return `<div class="activity-card" id="amb-${a.id}">
+    <div class="ac-top">
+      <div class="ac-title">${esc(a.name)}</div>
+      <span class="ac-badge ${tierClass}">${a.tier}</span>
+      <span class="ac-badge ${statusClass}">${statusClass}</span>
+    </div>
+    <div class="ac-meta">
+      <span>📧 ${esc(a.email)}</span>
+      ${a.phone ? `<span>📱 ${esc(a.phone)}</span>` : ''}
+      <span>📍 ${esc(a.neighbourhood)}</span>
+      <span>🕐 ${timeAgo(a.created_at)}</span>
+    </div>
+    ${a.message ? `<div class="ac-desc">${esc(a.message)}</div>` : ''}
+    ${showActions ? `<div class="amb-actions">
+      <button class="amb-btn amb-btn-approve" onclick="updateAmbStatus('${a.id}','approved')">✓ Approve</button>
+      <button class="amb-btn amb-btn-reject" onclick="updateAmbStatus('${a.id}','rejected')">✗ Reject</button>
+    </div>` : ''}
+  </div>`;
+}
+
+async function loadAmbassadors() {
+  const pendingEl = document.getElementById('amb-pending');
+  const allEl = document.getElementById('amb-all');
+  pendingEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  allEl.innerHTML = pendingEl.innerHTML;
+
+  try {
+    const { data, error } = await sb.from('ambassador_applications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+    const apps = data || [];
+    const pending = apps.filter(a => a.status === 'pending');
+
+    document.getElementById('amb-pending-count').textContent = pending.length ? `(${pending.length})` : '';
+    document.getElementById('amb-all-count').textContent = apps.length ? `(${apps.length})` : '';
+
+    if (!pending.length) {
+      pendingEl.innerHTML = '<div class="activity-empty"><div class="ae-icon">📭</div><div class="ae-title">No pending applications</div><div class="ae-sub">All caught up</div></div>';
+    } else {
+      pendingEl.innerHTML = pending.map(renderAmbCard).join('');
+    }
+
+    if (!apps.length) {
+      allEl.innerHTML = '<div class="activity-empty"><div class="ae-icon">📋</div><div class="ae-title">No applications yet</div><div class="ae-sub">Applications from the ambassador page will appear here</div></div>';
+    } else {
+      allEl.innerHTML = apps.map(renderAmbCard).join('');
+    }
+  } catch (err) {
+    console.error('Ambassador load error:', err);
+    pendingEl.innerHTML = '<div class="activity-empty"><div class="ae-icon">😕</div><div class="ae-title">Error loading</div><div class="ae-sub">' + esc(err.message) + '</div></div>';
+    allEl.innerHTML = pendingEl.innerHTML;
+  }
+}
+
+async function updateAmbStatus(id, status) {
+  const card = document.getElementById('amb-' + id);
+  if (card) card.style.opacity = '.5';
+  try {
+    const { error } = await sb.from('ambassador_applications').update({ status }).eq('id', id);
+    if (error) throw error;
+    loadAmbassadors();
+  } catch (err) {
+    console.error('Ambassador update error:', err);
+    alert('Failed to update: ' + err.message);
+    if (card) card.style.opacity = '1';
+  }
+}
+
 // ── ADMIN MESSAGING ──
 let adminMsgData = null;
 
@@ -1559,6 +1670,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
       show('screen-dashboard');
       loadStats();
       loadRecentActivity();
+      loadAmbassadors();
     } catch (err) {
       console.error('Auth handler error:', err);
       dashboardReady = false;
