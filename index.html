@@ -926,6 +926,28 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     <button class="btn-destructive" id="m-unclaim" onclick="unclaimJob()" style="display:none;width:100%;padding:16px;border-radius:var(--radius);background:transparent;color:#DC5046;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:1.5px solid rgba(220,80,70,.25);cursor:pointer;margin-top:10px">Unclaim Job</button>
   </div>
 </div>
+<!-- BUSINESS LISTING MODAL -->
+<div class="modal-ov" id="biz-modal" onclick="if(event.target.id==='biz-modal')document.getElementById('biz-modal').classList.remove('open')">
+  <div class="modal-sheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="modal-handle" style="margin:0"></div>
+      <button onclick="document.getElementById('biz-modal').classList.remove('open')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;line-height:1">✕</button>
+    </div>
+    <div style="height:4px;background:linear-gradient(90deg,#BA7517,#FAC775);border-radius:4px;margin-bottom:16px"></div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+      <div id="biz-avatar" style="width:52px;height:52px;border-radius:12px;background:#FAEEDA;border:1.5px solid #BA7517;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;color:#633806;flex-shrink:0">G</div>
+      <div style="min-width:0">
+        <div id="biz-name" style="font-size:16px;font-weight:800;color:var(--fg)">—</div>
+        <div id="biz-category" style="font-size:13px;color:var(--muted);margin-top:2px">—</div>
+        <div style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;background:#FAEEDA;padding:2px 8px;border-radius:8px">
+          <span style="font-size:11px;color:#854F0B;font-weight:700">SPONSORED</span>
+        </div>
+      </div>
+    </div>
+    <div id="biz-desc" style="font-size:14px;color:var(--muted);line-height:1.6;border-top:1px solid var(--surface2);padding-top:14px;margin-bottom:16px">—</div>
+    <div id="biz-actions" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
 <!-- RATING MODAL -->
 <div class="modal-ov" id="rating-modal">
   <div class="modal-sheet">
@@ -1562,6 +1584,7 @@ function updateCircleOverlay() {
 function fuzzyCoords(lat,lng){return[lat+(Math.random()-.5)*.0014,lng+(Math.random()-.5)*.0018];}
 
 let helperMarkers=[];
+let allBizListings=[], bizMarkers=[];
 
 function renderMapPins(){
   // clear existing
@@ -1597,9 +1620,72 @@ function renderMapPins(){
     const marker=L.marker([fLat,fLng],{icon}).addTo(map).on('click',()=>openOtherProfile(h.id));
     helperMarkers.push(marker);
   });
+
+  // ── BUSINESS FLAG PINS ──
+  bizMarkers.forEach(m=>map.removeLayer(m));bizMarkers=[];
+  (allBizListings||[]).forEach(biz=>{
+    const initial=(biz.business_name||'B').charAt(0).toUpperCase();
+    const icon=L.divIcon({
+      className:'',
+      html:`<div style="display:flex;align-items:flex-start;cursor:pointer;filter:drop-shadow(0 1px 3px rgba(0,0,0,.2))">
+        <div style="width:3px;height:44px;background:#854F0B;border-radius:1px"></div>
+        <div style="display:flex;flex-direction:column;align-items:center">
+          <div style="width:40px;height:26px;background:linear-gradient(135deg,#FAEEDA,#FAC775);border:1.5px solid #BA7517;border-left:none;border-radius:0 4px 4px 0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#633806;font-family:'Nunito',sans-serif">${initial}</div>
+          <div style="font-size:9px;color:#633806;background:rgba(250,238,218,.9);padding:1px 4px;border-radius:2px;margin-top:1px;white-space:nowrap;max-width:60px;overflow:hidden;text-overflow:ellipsis">${esc(biz.business_name||'')}</div>
+        </div>
+      </div>`,
+      iconSize:[46,52],iconAnchor:[3,44]
+    });
+    const marker=L.marker([biz.lat,biz.lng],{icon,zIndexOffset:500}).addTo(map).on('click',()=>openBizListing(biz));
+    bizMarkers.push(marker);
+  });
 }
 
 let allHelpers=[];
+
+// ── BUSINESS LISTING MODAL & TRACKING ──
+function openBizListing(biz){
+  const initial=(biz.business_name||'B').charAt(0).toUpperCase();
+  document.getElementById('biz-avatar').textContent=initial;
+  document.getElementById('biz-name').textContent=biz.business_name||'';
+  document.getElementById('biz-category').textContent=biz.business_category||'';
+  document.getElementById('biz-desc').textContent=biz.business_description||'';
+  const actions=document.getElementById('biz-actions');
+  actions.innerHTML='';
+  if(biz.business_website){
+    const aWeb=document.createElement('a');
+    aWeb.href=biz.business_website;aWeb.target='_blank';aWeb.rel='noopener';
+    aWeb.style.cssText='display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border-radius:12px;text-decoration:none;color:var(--fg);font-size:14px;font-weight:600;border:1px solid var(--surface2)';
+    aWeb.innerHTML=`<span style="font-size:18px">🌐</span><span style="flex:1">${esc(biz.business_website.replace(/^https?:\/\//,''))}</span><span style="color:var(--muted);font-size:13px">↗</span>`;
+    aWeb.onclick=()=>logBizEvent(biz.id,'url_tap');
+    actions.appendChild(aWeb);
+  }
+  if(biz.business_phone){
+    const aPhone=document.createElement('a');
+    aPhone.href='tel:'+biz.business_phone;
+    aPhone.style.cssText='display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border-radius:12px;text-decoration:none;color:var(--fg);font-size:14px;font-weight:600;border:1px solid var(--surface2)';
+    aPhone.innerHTML=`<span style="font-size:18px">📞</span><span>${esc(biz.business_phone)}</span>`;
+    aPhone.onclick=()=>logBizEvent(biz.id,'phone_tap');
+    actions.appendChild(aPhone);
+  }
+  if(biz.lat&&biz.lng){
+    const aDir=document.createElement('a');
+    aDir.href=`https://www.google.com/maps/dir/?api=1&destination=${biz.lat},${biz.lng}`;
+    aDir.target='_blank';aDir.rel='noopener';
+    aDir.style.cssText='display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border-radius:12px;text-decoration:none;color:var(--fg);font-size:14px;font-weight:600;border:1px solid var(--surface2)';
+    aDir.innerHTML=`<span style="font-size:18px">📍</span><span>${esc(biz.address||'Get directions')}</span>`;
+    aDir.onclick=()=>logBizEvent(biz.id,'directions_tap');
+    actions.appendChild(aDir);
+  }
+  document.getElementById('biz-modal').classList.add('open');
+  logBizEvent(biz.id,'pin_tap');
+}
+
+function logBizEvent(listingId,eventType){
+  if(!sb)return;
+  const viewerId=myProfileId||me?.id||null;
+  sb.rpc('log_business_event',{p_listing_id:listingId,p_event_type:eventType,p_viewer_id:viewerId}).then(()=>{});
+}
 
 let listRadiusKm=25;
 
@@ -1635,6 +1721,14 @@ async function loadJobs() {
     .eq('visible_on_map', true)
     .neq('id', pid||'00000000-0000-0000-0000-000000000000');
   allHelpers=helpers||[];
+
+  // fetch business listings for map
+  const{data:bizData}=await sb.rpc('get_business_listings',{
+    user_lat:userLat||43.6532,
+    user_lng:userLng||-79.3832,
+    radius_km:RADIUS_KM
+  });
+  allBizListings=bizData||[];
 
   // if no user location, show prompt
   if(!userLat||!userLng){
