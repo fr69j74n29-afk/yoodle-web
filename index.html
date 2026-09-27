@@ -63,47 +63,33 @@ body{
 
 
 /* ── THEMES ── */
+/* Sage Dark+ (Sept 2026): sage base, brighter accents; Classic theme retired */
 body.theme-sage-dark{
-  --purple:#7AAF8B;--lime:#6FCF97;--pink:#5C9E72;
-  --teal:#6FCF97;--orange:#F97316;--yellow:#D4B978;
-  --bg:#0B100C;--surface:#131A14;--surface2:#1A221B;
-  --border:#2E382F;--text:#E3E1DB;--muted:#8A9A8C;
-  --badge-bg:rgba(255,255,255,.06);
-}
-body.theme-classic{
-  --purple:#9078C0;--lime:#8DC95F;--pink:#7577D6;
-  --teal:#3AACBC;--orange:#F97316;--yellow:#E0C45A;
-  --bg:#0E0E0E;--surface:#1A1A1A;--surface2:#232323;
-  --border:#2E2E2E;--text:#EBEBEB;--muted:#888;
+  --purple:#4CC38A;--lime:#8DE0A8;--pink:#2F9E68;
+  --teal:#3AC0CF;--orange:#FF8A3D;--yellow:#F0CF5A;
+  --bg:#0B100C;--surface:#141C16;--surface2:#1C261E;
+  --border:#2E3A30;--text:#F0EFEA;--muted:#93A596;
   --badge-bg:rgba(255,255,255,.06);
 }
 /* shared dark overrides */
-body.theme-sage-dark .top-bar{background:rgba(19,26,20,.96)}
-body.theme-sage-dark .bottom-nav{background:rgba(19,26,20,.97)}
-body.theme-classic .top-bar{background:rgba(14,14,14,.96)}
-body.theme-classic .bottom-nav{background:rgba(14,14,14,.97)}
-body.theme-sage-dark .btn-google,body.theme-classic .btn-google{background:var(--surface);color:var(--text);border:1.5px solid var(--border)}
-body.theme-sage-dark .map-locate-btn{background:rgba(26,34,27,.95)}
-body.theme-classic .map-locate-btn{background:rgba(26,26,26,.95)}
-body.theme-sage-dark #map,body.theme-sage-dark .leaflet-container{background:#1A221B!important}
-body.theme-classic #map,body.theme-classic .leaflet-container{background:#1A1A1A!important}
+body.theme-sage-dark .top-bar{background:rgba(20,28,22,.96)}
+body.theme-sage-dark .bottom-nav{background:rgba(20,28,22,.97)}
+body.theme-sage-dark .btn-google{background:var(--surface);color:var(--text);border:1.5px solid var(--border)}
+body.theme-sage-dark .map-locate-btn{background:rgba(28,38,30,.95)}
+body.theme-sage-dark #map,body.theme-sage-dark .leaflet-container{background:#1C261E!important}
 body.theme-sage-dark .leaflet-tile-pane{filter:brightness(.75) saturate(.8) contrast(1.05)}
-body.theme-classic .leaflet-tile-pane{filter:brightness(.7) saturate(.85) contrast(1.1)}
 body.theme-sage-dark .nav-i.active{color:#FFFFFF}
-body.theme-sage-dark .pin-dot{border-color:rgba(19,26,20,.7)}
-body.theme-classic .pin-dot{border-color:rgba(14,14,14,.7)}
-body.theme-sage-dark .modal-ov,body.theme-sage-dark .op-ov,body.theme-sage-dark .ref-modal,
-body.theme-classic .modal-ov,body.theme-classic .op-ov,body.theme-classic .ref-modal{background:rgba(0,0,0,.7)}
-body.theme-sage-dark [onclick="openRadiusSheet()"]{background:rgba(26,34,27,.93)!important}
-body.theme-classic [onclick="openRadiusSheet()"]{background:rgba(26,26,26,.93)!important}
-body.theme-sage-dark .user-ring{background:rgba(106,207,151,.9)}
-body.theme-classic .user-ring{background:rgba(58,172,188,.9)}
-body.theme-classic .ly{color:#9078C0}
-body.theme-classic .lo1{color:#8DC95F}
-body.theme-classic .lo2{color:#7577D6}
-body.theme-classic .ld{color:#3AACBC}
-body.theme-classic .ll{color:#F97316}
-body.theme-classic .le{color:#E0C45A}
+body.theme-sage-dark .pin-dot{border-color:rgba(20,28,22,.7)}
+body.theme-sage-dark .modal-ov,body.theme-sage-dark .op-ov,body.theme-sage-dark .ref-modal{background:rgba(0,0,0,.7)}
+body.theme-sage-dark [onclick="openRadiusSheet()"]{background:rgba(28,38,30,.93)!important}
+body.theme-sage-dark .user-ring{background:rgba(76,195,138,.9)}
+/* Classic logo colours kept after Classic theme retired */
+body.theme-sage-dark .ly{color:#9078C0}
+body.theme-sage-dark .lo1{color:#8DC95F}
+body.theme-sage-dark .lo2{color:#7577D6}
+body.theme-sage-dark .ld{color:#3AACBC}
+body.theme-sage-dark .ll{color:#F97316}
+body.theme-sage-dark .le{color:#E0C45A}
 /* theme picker styles */
 .theme-row{display:flex;gap:10px;margin-top:2px}
 .theme-opt{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 6px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--surface);cursor:pointer;transition:border-color .2s}
@@ -115,8 +101,9 @@ body.theme-classic .le{color:#E0C45A}
 
 /* LOGO */
 .wordmark{font-family:'Fredoka One',cursive;line-height:1}
-.ly{color:#5C8A6A}.lo1{color:#3D6B50}.lo2{color:#4A9E7A}
-.ld{color:#7AAF8B}.ll{color:#5C8A6A}.le{color:#3D6B50}
+/* Classic logo colours, deeper shades on light so every letter stays readable */
+.ly{color:#9078C0}.lo1{color:#5E9E2E}.lo2{color:#7577D6}
+.ld{color:#1F8E9E}.ll{color:#D9600A}.le{color:#A07E14}
 .lca{color:var(--muted);font-size:.45em;vertical-align:baseline}
 
 /* ── AUTH ── */
@@ -338,7 +325,7 @@ body.theme-classic .le{color:#E0C45A}
 }
 .nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;transition:color .15s;flex:1;min-height:44px;justify-content:center;white-space:nowrap}
 .nav-i.active{color:var(--purple)}
-body:not(.theme-sage-dark):not(.theme-classic) .nav-i.active{color:#2E4A38}
+body:not(.theme-sage-dark) .nav-i.active{color:#2E4A38}
 .nav-i.nav-post{color:var(--muted)}
 .nav-i.nav-post.active{color:var(--muted)}
 .nav-i svg{width:22px;height:22px;flex-shrink:0}
@@ -748,12 +735,8 @@ svg.star-off{fill:none;stroke:#4a4a4a}
             <div class="theme-name">Light</div>
           </div>
           <div class="theme-opt" id="t-sage-dark" onclick="setTheme('sage-dark')">
-            <div class="theme-swatch" style="background:linear-gradient(135deg,#131A14 50%,#7AAF8B 50%)"></div>
+            <div class="theme-swatch" style="background:linear-gradient(135deg,#141C16 50%,#4CC38A 50%)"></div>
             <div class="theme-name">Dark</div>
-          </div>
-          <div class="theme-opt" id="t-classic" onclick="setTheme('classic')">
-            <div class="theme-swatch" style="background:linear-gradient(135deg,#0E0E0E 50%,#9078C0 50%)"></div>
-            <div class="theme-name">Classic</div>
           </div>
         </div>
       </div>
@@ -1136,7 +1119,7 @@ const CAT_COLOR = {
 
 
 /* ── THEMES ── */
-const THEMES=['sage-light','sage-dark','classic'];
+const THEMES=['sage-light','sage-dark']; // 'classic' retired — saved value migrates to sage-dark via fallback below
 function setTheme(name){
   if(!THEMES.includes(name))name='sage-dark';
   document.body.classList.remove(...THEMES.map(t=>'theme-'+t));
