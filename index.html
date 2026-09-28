@@ -206,6 +206,14 @@ body.theme-sage-dark .le{color:#E0C45A}
 .ga-sheet .auth-divider{margin:4px 0}
 .ga-sheet .btn-magic{background:var(--sage-soft);color:var(--pink)}
 .ga-sheet #ios-pwa-tip{margin-top:14px}
+.otp-wrap{display:none;flex-direction:column;gap:8px;margin-top:4px}
+.otp-row{display:flex;gap:8px}
+.otp-inp{flex:1;min-width:0;padding:15px 16px;border-radius:var(--radius);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;letter-spacing:6px;text-align:center;outline:none}
+.otp-inp:focus{border-color:var(--purple)}
+.otp-inp::placeholder{letter-spacing:6px;color:var(--muted);font-weight:700}
+.btn-otp{padding:15px 20px;border-radius:var(--radius);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;border:none;cursor:pointer;white-space:nowrap}
+.btn-otp:disabled{opacity:.5;cursor:not-allowed}
+.otp-again{background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;text-decoration:underline;align-self:center}
 .ga-fine{font-size:12.5px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.6}
 .ga-fine a{color:var(--purple);text-decoration:none}
 @media(min-width:481px){
@@ -617,13 +625,20 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <div class="magic-wrap">
         <div class="magic-row">
           <input class="magic-email" id="magic-email" type="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')sendMagicLink()">
-          <button class="btn-magic" id="magic-btn" onclick="sendMagicLink()">Send Link</button>
+          <button class="btn-magic" id="magic-btn" onclick="sendMagicLink()">Email me a code</button>
         </div>
-        <div class="magic-sent" id="magic-sent">Check your inbox! Link sent to <span id="magic-addr"></span></div>
+        <div class="magic-sent" id="magic-sent">Check your inbox! We sent a code to <span id="magic-addr"></span></div>
+        <div class="otp-wrap" id="otp-wrap">
+          <div class="otp-row">
+            <input class="otp-inp" id="otp-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="••••••" onkeydown="if(event.key==='Enter')verifyEmailCode()">
+            <button class="btn-otp" id="otp-btn" onclick="verifyEmailCode()">Sign in</button>
+          </div>
+          <button class="otp-again" onclick="resetEmailCode()">Use a different email or resend</button>
+        </div>
       </div>
     </div>
   <div id="ios-pwa-tip" style="display:none;margin-top:16px;background:rgba(92,138,106,.08);border:1.5px solid rgba(92,138,106,.20);border-radius:12px;padding:12px 16px;font-size:13.5px;color:var(--muted);line-height:1.6;font-weight:700;text-align:center;position:relative;z-index:1">
-    <strong style="color:var(--purple)">Using the home screen app?</strong><br>Sign in with Google — magic links open in Safari and won't transfer back to the app.
+    <strong style="color:var(--purple)">Using the home screen app?</strong><br>Type the code from the email here — tapping the link opens Safari instead of the app.
   </div>
     <div class="ga-fine">By continuing you agree to Yoodle's <a href="/privacy">Privacy Policy</a>. No spam, ever.</div>
   </div>
@@ -2187,14 +2202,40 @@ async function signIn(provider) {
 async function sendMagicLink() {
   const email=document.getElementById('magic-email').value.trim();
   if(!email||!email.includes('@'))return toast('Enter a valid email address');
-  if(!sb){document.getElementById('magic-addr').textContent=email;document.getElementById('magic-sent').style.display='block';document.getElementById('magic-btn').disabled=true;return;}
-  document.getElementById('magic-btn').disabled=true;
-  document.getElementById('magic-btn').textContent='Sending…';
-  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
-  document.getElementById('magic-btn').textContent='Send Link';
-  if(error){document.getElementById('magic-btn').disabled=false;return toast('❌ '+error.message);}
+  const btn=document.getElementById('magic-btn');
+  if(sb){
+    btn.disabled=true;btn.textContent='Sending…';
+    // Same email contains a 6-digit code AND a link — code works inside the home-screen app / iOS app
+    const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
+    btn.textContent='Email me a code';
+    if(error){btn.disabled=false;return toast('❌ '+error.message);}
+  }else{btn.disabled=true;}
   document.getElementById('magic-addr').textContent=email;
   document.getElementById('magic-sent').style.display='block';
+  document.getElementById('magic-email').closest('.magic-row').style.display='none';
+  document.getElementById('otp-wrap').style.display='flex';
+  setTimeout(()=>document.getElementById('otp-code').focus(),60);
+}
+
+async function verifyEmailCode(){
+  const email=document.getElementById('magic-email').value.trim();
+  const token=document.getElementById('otp-code').value.replace(/\D/g,'');
+  if(token.length<6)return toast('Enter the code from your email');
+  if(!sb)return toast('⚠️ Add Supabase credentials first');
+  const btn=document.getElementById('otp-btn');btn.disabled=true;btn.textContent='Checking…';
+  const{error}=await sb.auth.verifyOtp({email,token,type:'email'});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error)return toast(/expired|invalid/i.test(error.message)?'❌ That code is wrong or expired — request a new one':'❌ '+error.message);
+  // success: onAuthStateChange → showApp() takes over (draft / helper intent restored there)
+}
+
+function resetEmailCode(){
+  document.getElementById('otp-wrap').style.display='none';
+  document.getElementById('magic-sent').style.display='none';
+  document.getElementById('otp-code').value='';
+  document.getElementById('magic-email').closest('.magic-row').style.display='flex';
+  const btn=document.getElementById('magic-btn');btn.disabled=false;btn.textContent='Email me a code';
+  document.getElementById('magic-email').focus();
 }
 
 async function signOut(){if(sb)await sb.auth.signOut();else showAuthScreen();}
