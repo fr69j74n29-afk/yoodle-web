@@ -1427,7 +1427,14 @@ var baseLayer=null, baseIsVector=false, _baseFallbackTimer=null;
 var OFM_STYLE={'sage-light':'https://tiles.openfreemap.org/styles/positron','sage-dark':'https://tiles.openfreemap.org/styles/dark'};
 var SAGE_TINT={
   'sage-light':{bg:'#EEF2EC',water:'#CFE2DE',green:'#DCEADA'},
-  'sage-dark':{bg:'#0D120F',water:'#0E2124',green:'#13201A'}
+  'sage-dark':{bg:'#0D120F',water:'#0E2124',green:'#13201A',roads:{ // Sage Dark+: lift streets off the near-black background (OpenFreeMap 'dark' layer ids)
+    highway_path:'#2A342D',road_pier:'#34423A',highway_minor:'#34423A',
+    highway_major_casing:'#1C2620',highway_major_inner:'#4A5C50',highway_major_subtle:'#3E4E43',
+    highway_motorway_casing:'#1C2620',highway_motorway_inner:'#62786A',highway_motorway_subtle:'#3E4E43',
+    railway:'#2C3630',railway_minor:'#2C3630',railway_transit:'#2C3630',
+    railway_dashline:'#0D120F',railway_minor_dashline:'#0D120F',railway_transit_dashline:'#0D120F',
+    highway_name_other:'#93A898',highway_name_motorway:'#A8BAAD'
+  }}
 };
 var OFM_ATTR='<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">© OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 function _curTheme(){return document.body.classList.contains('theme-sage-dark')?'sage-dark':'sage-light';}
@@ -1452,6 +1459,8 @@ function _sageTint(gl){
     gl.getStyle().layers.forEach(ly=>{
       const id=ly.id.toLowerCase();
       try{
+        const rc=p.roads&&p.roads[ly.id];
+        if(rc){if(ly.type==='line')gl.setPaintProperty(ly.id,'line-color',rc);else if(ly.type==='symbol')gl.setPaintProperty(ly.id,'text-color',rc);return;}
         if(ly.type==='background')gl.setPaintProperty(ly.id,'background-color',p.bg);
         else if(ly.type==='fill'&&id.includes('water'))gl.setPaintProperty(ly.id,'fill-color',p.water);
         else if(ly.type==='fill'&&/(park|wood|grass|forest|landcover)/.test(id))gl.setPaintProperty(ly.id,'fill-color',p.green);

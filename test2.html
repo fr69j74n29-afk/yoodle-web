@@ -1423,7 +1423,14 @@ var ZOFF=1;
 var OFM_STYLE={'sage-light':'https://tiles.openfreemap.org/styles/positron','sage-dark':'https://tiles.openfreemap.org/styles/dark'};
 var SAGE_TINT={
   'sage-light':{bg:'#EEF2EC',water:'#CFE2DE',green:'#DCEADA'},
-  'sage-dark':{bg:'#0D120F',water:'#0E2124',green:'#13201A'}
+  'sage-dark':{bg:'#0D120F',water:'#0E2124',green:'#13201A',roads:{ // Sage Dark+: lift streets off the near-black background (OpenFreeMap 'dark' layer ids)
+    highway_path:'#2A342D',road_pier:'#34423A',highway_minor:'#34423A',
+    highway_major_casing:'#1C2620',highway_major_inner:'#4A5C50',highway_major_subtle:'#3E4E43',
+    highway_motorway_casing:'#1C2620',highway_motorway_inner:'#62786A',highway_motorway_subtle:'#3E4E43',
+    railway:'#2C3630',railway_minor:'#2C3630',railway_transit:'#2C3630',
+    railway_dashline:'#0D120F',railway_minor_dashline:'#0D120F',railway_transit_dashline:'#0D120F',
+    highway_name_other:'#93A898',highway_name_motorway:'#A8BAAD'
+  }}
 };
 var OSM_RASTER_STYLE={version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,maxzoom:19,attribution:'© OpenStreetMap'}},layers:[{id:'osm',type:'raster',source:'osm'}]};
 var _styleFallbackTimer=null, _usingRasterStyle=false;
@@ -1442,6 +1449,8 @@ function _sageTint(){
     map.getStyle().layers.forEach(ly=>{
       const id=ly.id.toLowerCase();
       try{
+        const rc=p.roads&&p.roads[ly.id];
+        if(rc){if(ly.type==='line')map.setPaintProperty(ly.id,'line-color',rc);else if(ly.type==='symbol')map.setPaintProperty(ly.id,'text-color',rc);return;}
         if(ly.type==='background')map.setPaintProperty(ly.id,'background-color',p.bg);
         else if(ly.type==='fill'&&id.includes('water'))map.setPaintProperty(ly.id,'fill-color',p.water);
         else if(ly.type==='fill'&&/(park|wood|grass|forest|landcover)/.test(id))map.setPaintProperty(ly.id,'fill-color',p.green);
