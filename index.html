@@ -659,6 +659,13 @@ svg.star-off{fill:none;stroke:#4a4a4a}
           </div>
           <button class="otp-again" onclick="resetEmailCode()">Use a different email or resend</button>
         </div>
+        <button class="otp-again" id="pw-toggle" onclick="togglePasswordLogin()" style="margin-top:4px">Sign in with password</button>
+        <div class="otp-wrap" id="pw-wrap">
+          <div class="otp-row">
+            <input class="magic-email" id="pw-input" type="password" autocomplete="current-password" placeholder="Password" onkeydown="if(event.key==='Enter')signInWithPassword()">
+            <button class="btn-otp" id="pw-btn" onclick="signInWithPassword()">Sign in</button>
+          </div>
+        </div>
       </div>
     </div>
   <div id="ios-pwa-tip" style="display:none;margin-top:16px;background:rgba(92,138,106,.08);border:1.5px solid rgba(92,138,106,.20);border-radius:12px;padding:12px 16px;font-size:13.5px;color:var(--muted);line-height:1.6;font-weight:700;text-align:center;position:relative;z-index:1">
@@ -1768,6 +1775,7 @@ let locationSource='preset'; // 'gps' | 'preset'
 let _geoWatchId=null;
 
 function locateUser(silent) {
+  if(isDemoAccount){if(!silent)demoLocationNote();return;}
   if(!navigator.geolocation){showGeoFallback();return;}
 
   const btn=document.getElementById('map-locate-btn');
@@ -2251,6 +2259,29 @@ async function loadBlockedIds(){
   }catch(e){console.warn('blocked ids',e);}
 }
 
+// Demo account (App Store reviewer): map stays on Toronto, GPS never moves it
+let isDemoAccount=false;
+const DEMO_CENTER={lat:43.6532,lng:-79.3832};
+async function checkDemoAccount(){
+  isDemoAccount=false;
+  if(!sb||!me)return;
+  try{
+    const{data,error}=await sb.from('profiles').select('is_demo').eq('id',myProfileId||me.id).maybeSingle();
+    if(!error&&data?.is_demo===true)isDemoAccount=true;
+  }catch(e){}
+  if(!isDemoAccount)return;
+  // Treat downtown Toronto as "your location": distances, green ring, GPS dot
+  gpsLat=DEMO_CENTER.lat;gpsLng=DEMO_CENTER.lng;locationSource='gps';
+  userLat=DEMO_CENTER.lat;userLng=DEMO_CENTER.lng;
+  try{localStorage.removeItem(GPS_CACHE_KEY);}catch(e){}
+  if(map)setTimeout(()=>{_mapResize();_mapSetView(DEMO_CENTER.lat,DEMO_CENTER.lng,kmToZoom(5,DEMO_CENTER.lat));updateGpsDot();updateCircleOverlay();loadJobs();},700);
+}
+function demoLocationNote(){
+  // Still triggers the normal location permission prompt, but never moves the map
+  try{navigator.geolocation&&navigator.geolocation.getCurrentPosition(()=>{},()=>{},{timeout:5000});}catch(e){}
+  toast('📍 Demo account — showing Toronto. Yoodle currently serves the GTA.');
+}
+
 async function checkAccountGates(){
   if(!sb||!me)return false;
   try{
@@ -2606,6 +2637,29 @@ async function verifyEmailCode(){
   // success: onAuthStateChange → showApp() takes over (draft / helper intent restored there)
 }
 
+// Password sign-in (used by the App Store reviewer account; works for any account with a password)
+function togglePasswordLogin(){
+  const w=document.getElementById('pw-wrap');const show=w.style.display!=='flex';
+  w.style.display=show?'flex':'none';
+  if(show){
+    const row=document.getElementById('magic-email').closest('.magic-row');if(row)row.style.display='flex';
+    setTimeout(()=>document.getElementById(document.getElementById('magic-email').value.trim()?'pw-input':'magic-email').focus(),60);
+  }
+}
+async function signInWithPassword(){
+  if(!sb)return;
+  const email=document.getElementById('magic-email').value.trim();
+  const password=document.getElementById('pw-input').value;
+  if(!email||!email.includes('@'))return toast('Enter your email above');
+  if(!password)return toast('Enter your password');
+  const btn=document.getElementById('pw-btn');btn.disabled=true;btn.textContent='Checking…';
+  const{error}=await sb.auth.signInWithPassword({email,password});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error)return toast(/invalid/i.test(error.message)?'❌ Wrong email or password':'❌ '+error.message);
+  document.getElementById('pw-input').value='';
+  // success: onAuthStateChange → showApp()
+}
+
 function resetEmailCode(){
   document.getElementById('otp-wrap').style.display='none';
   document.getElementById('magic-sent').style.display='none';
@@ -2661,6 +2715,7 @@ async function showApp(){
   setAvatar();
   if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
   if(await checkAccountGates())return; // suspended — stop here
+  await checkDemoAccount();
   await loadBlockedIds();
   loadJobs();
   closeAuthSheet();
@@ -2671,7 +2726,7 @@ async function showApp(){
   // Permissions API may be absent on older iOS Safari (<16) → try/catch falls back
   // to today's tap-to-locate behaviour.
   try{
-    if(navigator.permissions&&navigator.geolocation&&!_restoreCachedGps()){
+    if(!isDemoAccount&&navigator.permissions&&navigator.geolocation&&!_restoreCachedGps()){
       navigator.permissions.query({name:'geolocation'}).then(p=>{
         if(p.state==='granted')locateUser(true);
       }).catch(()=>{});
@@ -3222,6 +3277,7 @@ function selCat(el){document.querySelectorAll('.cat-opt').forEach(c=>c.classList
 
 async function detectLocation(){
   const btn=document.getElementById('gps-btn');const inp=document.getElementById('p-loc');const st=document.getElementById('loc-status');
+  if(isDemoAccount){demoLocationNote();gpsLat=DEMO_CENTER.lat;gpsLng=DEMO_CENTER.lng;inp.value='Downtown Toronto, ON';locVerified=false;st.textContent='📍 Demo account — job placed in downtown Toronto';st.className='loc-status manual';return;}
   if(!navigator.geolocation){st.textContent='GPS not available — type your address';st.className='loc-status manual';inp.placeholder='e.g. 123 Main St, Etobicoke';return;}
   btn.disabled=true;btn.textContent='Locating…';st.textContent='Getting your location…';st.className='loc-status loading';
   navigator.geolocation.getCurrentPosition(
