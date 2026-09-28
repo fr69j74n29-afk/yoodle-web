@@ -396,6 +396,20 @@ body.theme-sage-dark .le{color:#E0C45A}
 .setting-i:first-child{border-radius:var(--radius) var(--radius) var(--radius-sm) var(--radius-sm)}
 .setting-i:last-child{border-radius:var(--radius-sm) var(--radius-sm) var(--radius) var(--radius)}
 .btn-so{width:100%;padding:16px;border-radius:var(--radius);background:var(--surface);color:#DC5046;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:1.5px solid rgba(220,80,70,.20);cursor:pointer;margin-top:20px}
+.btn-del{display:block;margin:14px auto 0;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;text-decoration:underline;cursor:pointer}
+.del-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1500;display:none;align-items:flex-end;justify-content:center}
+.del-ov.open{display:flex}
+.del-sheet{width:100%;max-width:480px;background:var(--surface);border-radius:26px 26px 0 0;padding:22px 22px calc(var(--sab) + 22px);color:var(--text)}
+.del-sheet h3{font-size:21px;font-weight:800;margin-bottom:8px}
+.del-sheet p{font-size:14.5px;color:var(--muted);font-weight:600;line-height:1.5;margin-bottom:10px}
+.del-sheet ul{font-size:14px;color:var(--text);font-weight:600;line-height:1.6;margin:0 0 14px 20px}
+.del-inp{width:100%;padding:14px 16px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;letter-spacing:2px;outline:none;margin-bottom:12px}
+.del-inp:focus{border-color:#DC5046}
+.del-row{display:flex;gap:10px}
+.del-row button{flex:1;padding:15px;border-radius:var(--radius);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;border:none}
+.del-cancel{background:var(--surface2);color:var(--text);border:1.5px solid var(--border)!important}
+.del-go{background:#C0392B;color:#fff}
+.del-go:disabled{opacity:.45;cursor:not-allowed}
 
 /* ── MESSAGES ── */
 #app-messages{overflow:hidden}
@@ -858,6 +872,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         </div>
       </div>
       <button class="btn-so" onclick="signOut()">Sign Out</button>
+      <button class="btn-del" onclick="openDeleteAccount()">Delete my account</button>
     </div>
   </div>
 
@@ -1221,6 +1236,24 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 </div>
 
 <div class="toast" id="toast"></div>
+<!-- DELETE ACCOUNT -->
+<div class="del-ov" id="del-ov" onclick="if(event.target===this)closeDeleteAccount()">
+  <div class="del-sheet" role="dialog" aria-modal="true" aria-labelledby="del-h">
+    <h3 id="del-h">Delete your account?</h3>
+    <p>This permanently removes your Yoodle account. It can't be undone.</p>
+    <ul>
+      <li>Your profile, jobs and helper listing</li>
+      <li>Your messages, applications and ratings</li>
+      <li>Your Yoodle Points and referrals</li>
+    </ul>
+    <p>Jobs you were helping with go back to the poster as open.</p>
+    <input class="del-inp" id="del-inp" type="text" autocomplete="off" autocapitalize="characters" placeholder="Type DELETE to confirm" oninput="document.getElementById('del-go').disabled=this.value.trim().toUpperCase()!=='DELETE'">
+    <div class="del-row">
+      <button class="del-cancel" onclick="closeDeleteAccount()">Cancel</button>
+      <button class="del-go" id="del-go" disabled onclick="confirmDeleteAccount()">Delete forever</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
@@ -2238,6 +2271,26 @@ function resetEmailCode(){
   document.getElementById('magic-email').focus();
 }
 
+function openDeleteAccount(){
+  const i=document.getElementById('del-inp');i.value='';
+  document.getElementById('del-go').disabled=true;
+  document.getElementById('del-ov').classList.add('open');
+  setTimeout(()=>i.focus(),60);
+}
+function closeDeleteAccount(){document.getElementById('del-ov').classList.remove('open');}
+async function confirmDeleteAccount(){
+  if(document.getElementById('del-inp').value.trim().toUpperCase()!=='DELETE')return;
+  if(!sb||!me)return toast('Sign in first');
+  const btn=document.getElementById('del-go');btn.disabled=true;btn.textContent='Deleting…';
+  const{error}=await sb.rpc('delete_my_account');
+  if(error){btn.disabled=false;btn.textContent='Delete forever';return toast('❌ '+error.message);}
+  // Account is gone — clear this device's Yoodle data (keep theme choice) and return to the landing
+  try{Object.keys(localStorage).filter(k=>k.startsWith('yoodle')&&k!=='yoodle-theme').forEach(k=>localStorage.removeItem(k));}catch(e){}
+  closeDeleteAccount();btn.textContent='Delete forever';
+  try{await sb.auth.signOut();}catch(e){}
+  me=null;myProfileId=null;showAuthScreen();
+  toast('Your account has been deleted');
+}
 async function signOut(){if(sb)await sb.auth.signOut();else showAuthScreen();}
 function showAuthScreen(){document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';}
 
