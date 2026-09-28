@@ -1806,7 +1806,10 @@ function updateZoomLimits() {
   if(!map)return;
   const lat=map.getCenter().lat;
   // MapLibre throws on invalid limits (e.g. hidden container → 0px radius) — validate first
-  const mn=kmToZoom(25,lat), mx=kmToZoom(1,lat);
+  // Zoom out: stop at 25 km. Zoom in: allow STREET_ZOOM levels past the 1 km ring
+  // so street names show (vector styles label side streets only when close in).
+  // Search radius stays clamped at 1 km (RADIUS_KM); the ring fades out past it.
+  const mn=kmToZoom(25,lat), mx=Math.min(kmToZoom(1,lat)+STREET_ZOOM,18);
   if(!isFinite(mn)||!isFinite(mx)||mn<0||mx>24||mn>=mx)return;
   try{
     if(mn>map.getMaxZoom()){map.setMaxZoom(mx);map.setMinZoom(mn);}
@@ -1814,6 +1817,7 @@ function updateZoomLimits() {
   }catch(e){}
 }
 
+var STREET_ZOOM=3; // extra zoom-in beyond the 1 km ring (3 ≈ 8× closer)
 function updateCircleOverlay() {
   if(!map)return;
   const mask=document.getElementById('map-overlay-mask');
@@ -1829,6 +1833,8 @@ function updateCircleOverlay() {
   ring.style.top='50%';
   ring.style.marginLeft=(-r)+'px';
   ring.style.marginTop=(-r)+'px';
+  // Past the 1 km level the ring no longer matches the 1 km search area → fade it out
+  try{const over=map.getZoom()-kmToZoom(1,map.getCenter().lat);ring.style.opacity=over>0?String(Math.max(0,1-over)):'1';}catch(e){}
   // Update corner card radius label
   const corner=document.getElementById('map-radius-corner');
   if(corner)corner.textContent=`WITHIN ${RADIUS_KM} KM`;
