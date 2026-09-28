@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- yoodle v001 -->
+<!-- yoodle v001 — map: MapLibre GL JS + OpenFreeMap (ported from test2.html, 28 Sept 2026) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -35,8 +35,8 @@
 }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"/>
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 <link rel="manifest" href="/manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -78,8 +78,7 @@ body.theme-sage-dark .top-bar{background:rgba(13,18,15,.96)}
 body.theme-sage-dark .bottom-nav{background:rgba(13,18,15,.97)}
 body.theme-sage-dark .btn-google{background:var(--surface);color:var(--text);border:1.5px solid var(--border)}
 body.theme-sage-dark .map-locate-btn{background:rgba(20,26,22,.95)}
-body.theme-sage-dark #map,body.theme-sage-dark .leaflet-container{background:#141A16!important}
-body.theme-sage-dark .leaflet-tile-pane{filter:brightness(.75) saturate(.8) contrast(1.05)}
+body.theme-sage-dark #map,body.theme-sage-dark .maplibregl-map{background:#141A16!important}
 body.theme-sage-dark .nav-i.active{color:#FFFFFF}
 body.theme-sage-dark .pin-dot{border-color:rgba(13,18,15,.7)}
 body.theme-sage-dark .modal-ov,body.theme-sage-dark .op-ov,body.theme-sage-dark .ref-modal{background:rgba(0,0,0,.7)}
@@ -278,9 +277,8 @@ body.theme-sage-dark .le{color:#E0C45A}
 /* ── MAP VIEW ── */
 #app-map{position:relative}
 #map{flex:1;width:100%;background:#E8E8E0;z-index:1;min-height:0}
-.leaflet-container{background:#E8E8E0!important;font-family:'Nunito',sans-serif}
-.leaflet-tile-pane{filter:saturate(.85) brightness(1.02) sepia(.05)}
-.leaflet-tile{filter:brightness(.85) saturate(.7) hue-rotate(180deg) invert(1)}
+.maplibregl-map{background:#E8E8E0;font-family:'Nunito',sans-serif}
+.maplibregl-ctrl-attrib{font-size:10.5px}
 .map-locate-btn{position:absolute;bottom:20px;right:16px;z-index:10;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:all;transition:all .2s;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.1)}
 .map-locate-btn:active{border-color:var(--teal);background:rgba(74,158,122,.12);transform:scale(.93)}
 .map-locate-btn.locating svg{animation:spin .8s linear infinite}
@@ -1372,6 +1370,7 @@ function setTheme(name){
     const el=document.getElementById('t-'+t);
     if(el)el.classList.toggle('active',t===name);
   });
+  _refreshBaseStyle();
 }
 function initTheme(){
   const saved=localStorage.getItem('yoodle-theme');
@@ -1485,12 +1484,85 @@ let RADIUS_KM=25;
 let sheetTab='jobs';
 let sheetJobs=[],sheetHelpers=[];
 
+/* ── MAP: MapLibre GL JS + OpenFreeMap, no Leaflet ──
+   Zoom note: MapLibre uses 512px tiles, so its zoom = Leaflet zoom − 1.
+   'yoodle_map' in localStorage stays in Leaflet units so index.html and
+   test2.html can share it (ZOFF converts on read/write). */
+var ZOFF=1;
+var OFM_STYLE={'sage-light':'https://tiles.openfreemap.org/styles/positron','sage-dark':'https://tiles.openfreemap.org/styles/dark'};
+var SAGE_TINT={
+  'sage-light':{bg:'#EEF2EC',water:'#CFE2DE',green:'#DCEADA'},
+  'sage-dark':{bg:'#0D120F',water:'#0E2124',green:'#13201A',roads:{ // Sage Dark+: lift streets off the near-black background (OpenFreeMap 'dark' layer ids)
+    highway_path:'#44544A',road_pier:'#5A6E60',highway_minor:'#5A6E60',
+    highway_major_casing:'#26322B',highway_major_inner:'#7F9785',highway_major_subtle:'#667C6C',
+    highway_motorway_casing:'#2A1D1C',highway_motorway_inner:'#8C4F4B',highway_motorway_subtle:'#5E3A37', // motorways: subtle muted red
+    railway:'#3F4C43',railway_minor:'#3F4C43',railway_transit:'#3F4C43',
+    railway_dashline:'#0D120F',railway_minor_dashline:'#0D120F',railway_transit_dashline:'#0D120F',
+    highway_name_other:'#C4D4C8',highway_name_motorway:'#D8E4DB'
+  }}
+};
+var OSM_RASTER_STYLE={version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,maxzoom:19,attribution:'© OpenStreetMap'}},layers:[{id:'osm',type:'raster',source:'osm'}]};
+var _styleFallbackTimer=null, _usingRasterStyle=false;
+function _curTheme(){return document.body.classList.contains('theme-sage-dark')?'sage-dark':'sage-light';}
+function _webglOK(){
+  try{
+    if(!window.maplibregl)return false;
+    const c=document.createElement('canvas');
+    return !!(c.getContext('webgl2')||c.getContext('webgl'));
+  }catch(e){return false;}
+}
+function _sageTint(){
+  if(_usingRasterStyle)return;
+  const p=SAGE_TINT[_curTheme()];
+  try{
+    map.getStyle().layers.forEach(ly=>{
+      const id=ly.id.toLowerCase();
+      try{
+        const rc=p.roads&&p.roads[ly.id];
+        if(rc){if(ly.type==='line')map.setPaintProperty(ly.id,'line-color',rc);else if(ly.type==='symbol')map.setPaintProperty(ly.id,'text-color',rc);return;}
+        if(ly.type==='background')map.setPaintProperty(ly.id,'background-color',p.bg);
+        else if(ly.type==='fill'&&id.includes('water'))map.setPaintProperty(ly.id,'fill-color',p.water);
+        else if(ly.type==='fill'&&/(park|wood|grass|forest|landcover)/.test(id))map.setPaintProperty(ly.id,'fill-color',p.green);
+      }catch(e){}
+    });
+  }catch(e){}
+}
+function _armStyleFallback(){
+  clearTimeout(_styleFallbackTimer);
+  // OpenFreeMap style not loaded in 8s → plain OSM raster inside MapLibre
+  _styleFallbackTimer=setTimeout(()=>{
+    try{if(map&&!map.isStyleLoaded()){_usingRasterStyle=true;map.setStyle(OSM_RASTER_STYLE);console.warn('[map] OSM raster fallback');}}catch(e){}
+  },8000);
+}
+function _refreshBaseStyle(){
+  try{
+    if(!map||!map.setStyle||_usingRasterStyle)return;
+    _armStyleFallback();
+    map.setStyle(OFM_STYLE[_curTheme()],{diff:false});
+  }catch(e){} // map not created yet (theme set on page load)
+}
+// Build a DOM marker (replaces L.divIcon + L.marker)
+function _htmlMarker(html,w,h,lat,lng,opts){
+  opts=opts||{};
+  const el=document.createElement('div');
+  el.className=opts.className||'';
+  el.style.width=w+'px';el.style.height=h+'px';
+  if(opts.z)el.style.zIndex=opts.z;
+  el.innerHTML=html;
+  if(opts.onClick)el.addEventListener('click',e=>{e.stopPropagation();opts.onClick();});
+  const m=new maplibregl.Marker({element:el,anchor:opts.anchor||'center',offset:opts.offset||[0,0]}).setLngLat([lng,lat]).addTo(map);
+  return m;
+}
+// Leaflet-style helpers used by the existing re-anchor code
+function _mapResize(){try{map.resize();}catch(e){}}
+function _mapSetView(lat,lng,z){try{map.jumpTo({center:[lng,lat],zoom:z});}catch(e){}}
+
 function initMap() {
   // Restore last viewed position — instant, no network needed
   const _saved=JSON.parse(localStorage.getItem('yoodle_map')||'null');
   const _startLat=_saved?.lat??43.6532;
   const _startLng=_saved?.lng??-79.3832;
-  const _startZoom=_saved?.zoom??13;
+  const _startZoom=(_saved?.zoom??13)-ZOFF; // stored in Leaflet units
 
   // Set coords immediately so loadJobs works on first showApp call
   userLat=_startLat; userLng=_startLng;
@@ -1503,21 +1575,40 @@ function initMap() {
     locationSource='gps';
   }
 
-  map=L.map('map',{center:[userLat,userLng],zoom:_startZoom,zoomSnap:0,zoomControl:false,attributionControl:false});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
-  L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
+  if(!_webglOK()){
+    // No WebGL (very old browser) → no map; List view still works
+    document.getElementById('map').innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--muted);font-weight:700">The map can\'t load on this browser. Tap <strong>List</strong> to see jobs and helpers nearby.</div>';
+    return;
+  }
+  map=new maplibregl.Map({
+    container:'map',
+    style:OFM_STYLE[_curTheme()],
+    center:[userLng,userLat],
+    zoom:_startZoom,
+    attributionControl:false,
+    dragRotate:false,pitchWithRotate:false,touchPitch:false,
+    fadeDuration:150
+  });
+  map.touchZoomRotate.disableRotation();
+  map.keyboard.disableRotation();
+  map.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>'}),'bottom-left');
+  map.on('style.load',()=>{clearTimeout(_styleFallbackTimer);_sageTint();});
+  _armStyleFallback();
+  // WebGL context lost (iOS backgrounding) → MapLibre restores it; force a redraw after
+  map.on('webglcontextrestored',()=>{try{map.triggerRepaint();}catch(e){}});
 
-  // Insert overlay divs inside #map so Leaflet z-index layers are respected:
-  // z-index 450 = above tile/vector panes (200-400), below marker pane (600)
+  // Overlay divs go in the canvas container BEFORE any markers, so the ring
+  // draws above the map but below the pins (DOM order, no z-index needed)
+  const _cc=map.getCanvasContainer();
   const _mask=document.createElement('div');
   _mask.id='map-overlay-mask';
-  _mask.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:450;';
-  document.getElementById('map').appendChild(_mask);
+  _mask.style.cssText='position:absolute;inset:0;pointer-events:none;';
+  _cc.appendChild(_mask);
 
   const _ring=document.createElement('div');
   _ring.id='map-overlay-ring';
-  _ring.style.cssText='position:absolute;pointer-events:none;z-index:451;border-radius:50%;border:4px dashed rgba(92,138,106,0.65);box-sizing:border-box;';
-  document.getElementById('map').appendChild(_ring);
+  _ring.style.cssText='position:absolute;pointer-events:none;border-radius:50%;border:4px dashed rgba(92,138,106,0.65);box-sizing:border-box;';
+  _cc.appendChild(_ring);
 
   let _moveEndTimer=null;
   map.on('move',updateCircleOverlay);
@@ -1531,7 +1622,7 @@ function initMap() {
   map.on('moveend',()=>{
     const c=map.getCenter();
     userLat=c.lat; userLng=c.lng;
-    localStorage.setItem('yoodle_map',JSON.stringify({lat:c.lat,lng:c.lng,zoom:map.getZoom()}));
+    localStorage.setItem('yoodle_map',JSON.stringify({lat:c.lat,lng:c.lng,zoom:map.getZoom()+ZOFF})); // Leaflet units
     updateZoomLimits();
     // If GPS was active but user dragged map away, switch ring to grey
     if(locationSource==='gps'&&gpsLat!==null){
@@ -1543,7 +1634,7 @@ function initMap() {
   });
 
   setTimeout(()=>{
-    map.invalidateSize();
+    _mapResize();
     updateZoomLimits();
     updateCircleOverlay();
     // Show GPS dot + located state if restored from cache
@@ -1689,8 +1780,8 @@ function locateUser(silent) {
     if(btn){btn.classList.remove('locating');btn.classList.add('located');}
     updateGpsDot();
     // Move only if meaningfully different from where the map already sits
-    if(haversineKm(userLat,userLng,lat,lng)*1000>50)
-      map.flyTo([lat,lng],map.getZoom()); // moveend handles userLat/userLng + loadJobs
+    if(map&&haversineKm(userLat,userLng,lat,lng)*1000>50)
+      map.flyTo({center:[lng,lat],zoom:map.getZoom()}); // moveend handles userLat/userLng + loadJobs
     else
       updateCircleOverlay();
   };
@@ -1752,10 +1843,9 @@ function showGeoFallback() {
 
 // Pixel radius: circle fills ~88% of the shorter screen dimension
 function updateGpsDot() {
-  if(userMarker){map.removeLayer(userMarker);userMarker=null;}
+  if(userMarker){userMarker.remove();userMarker=null;}
   if(!gpsLat||!gpsLng||!map)return;
-  const icon=L.divIcon({className:'yoodle-pin',html:'<div class="user-ring"></div>',iconSize:[20,20],iconAnchor:[10,10]});
-  userMarker=L.marker([gpsLat,gpsLng],{icon,zIndexOffset:1000}).addTo(map);
+  userMarker=_htmlMarker('<div class="user-ring"></div>',20,20,gpsLat,gpsLng,{className:'yoodle-pin',z:3});
 }
 
 function getPixelRadius() {
@@ -1767,27 +1857,36 @@ function getPixelRadius() {
 function getCircleKm() {
   if(!map)return RADIUS_KM;
   const r=getPixelRadius();
-  const s=map.getSize();
-  const northLL=map.containerPointToLatLng(L.point(s.x/2,s.y/2-r));
+  const el=document.getElementById('map');
+  const northLL=map.unproject([el.clientWidth/2,el.clientHeight/2-r]);
   const c=map.getCenter();
   return haversineKm(c.lat,c.lng,northLL.lat,northLL.lng);
 }
 
-// Convert km radius to Leaflet zoom level at given latitude (256px tiles)
+// Convert km radius to MapLibre zoom level at given latitude (512px tiles)
 function kmToZoom(km,lat) {
   const r=getPixelRadius();
   const mpp=(km*1000)/r;
-  return Math.log2(40075016.686*Math.cos(lat*Math.PI/180)/(mpp*256));
+  return Math.log2(40075016.686*Math.cos(lat*Math.PI/180)/(mpp*512));
 }
 
 // Hard-stop zoom: can't zoom out past 25km or in past 1km
 function updateZoomLimits() {
   if(!map)return;
   const lat=map.getCenter().lat;
-  map.setMinZoom(kmToZoom(25,lat));
-  map.setMaxZoom(kmToZoom(1,lat));
+  // MapLibre throws on invalid limits (e.g. hidden container → 0px radius) — validate first
+  // Zoom out: stop at 25 km. Zoom in: allow STREET_ZOOM levels past the 1 km ring
+  // so street names show (vector styles label side streets only when close in).
+  // Search radius stays clamped at 1 km (RADIUS_KM); the ring fades out past it.
+  const mn=kmToZoom(25,lat), mx=Math.min(kmToZoom(1,lat)+STREET_ZOOM,18);
+  if(!isFinite(mn)||!isFinite(mx)||mn<0||mx>24||mn>=mx)return;
+  try{
+    if(mn>map.getMaxZoom()){map.setMaxZoom(mx);map.setMinZoom(mn);}
+    else{map.setMinZoom(mn);map.setMaxZoom(mx);}
+  }catch(e){}
 }
 
+var STREET_ZOOM=3; // extra zoom-in beyond the 1 km ring (3 ≈ 8× closer)
 function updateCircleOverlay() {
   if(!map)return;
   const mask=document.getElementById('map-overlay-mask');
@@ -1803,6 +1902,8 @@ function updateCircleOverlay() {
   ring.style.top='50%';
   ring.style.marginLeft=(-r)+'px';
   ring.style.marginTop=(-r)+'px';
+  // Past the 1 km level the ring no longer matches the 1 km search area → fade it out
+  try{const over=map.getZoom()-kmToZoom(1,map.getCenter().lat);ring.style.opacity=over>0?String(Math.max(0,1-over)):'1';}catch(e){}
   // Update corner card radius label
   const corner=document.getElementById('map-radius-corner');
   if(corner)corner.textContent=`WITHIN ${RADIUS_KM} KM`;
@@ -1816,8 +1917,9 @@ let allBizListings=[], bizMarkers=[];
 
 function renderMapPins(){
   // clear existing
-  jobMarkers.forEach(m=>map.removeLayer(m));jobMarkers=[];
-  helperMarkers.forEach(m=>map.removeLayer(m));helperMarkers=[];
+  if(!map)return;
+  jobMarkers.forEach(m=>m.remove());jobMarkers=[];
+  helperMarkers.forEach(m=>m.remove());helperMarkers=[];
 
   // ── JOB BUBBLES (tasks with show_on_map=true) ──
   const publicJobs=(allJobs||[]).filter(j=>j.show_on_map&&j.lat&&j.lng&&j.status==='open'&&j.poster_id!==FEATURED_POSTER_ID);
@@ -1825,12 +1927,11 @@ function renderMapPins(){
     const color='#EF4444';
     const emoji=CAT_EMOJI[job.category]||'📋';
     const[fLat,fLng]=job._fuzzy||(job._fuzzy=fuzzyCoords(job.lat,job.lng));
-    const icon=L.divIcon({
-      className:'',
+    const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
       html:`<div style="width:38px;height:38px;border-radius:50%;background:${color};border:3px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer">${emoji}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
-    const marker=L.marker([fLat,fLng],{icon}).addTo(map).on('click',()=>openJob(job));
+    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:1,onClick:()=>openJob(job)});
     jobMarkers.push(marker);
   });
 
@@ -1840,21 +1941,19 @@ function renderMapPins(){
     const name=h.name||'Helper';
     const initial=name.charAt(0).toUpperCase();
     const[fLat,fLng]=h._fuzzy||(h._fuzzy=fuzzyCoords(h.last_lat,h.last_lng));
-    const icon=L.divIcon({
-      className:'',
+    const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
       html:`<div style="width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif">${initial}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
-    const marker=L.marker([fLat,fLng],{icon}).addTo(map).on('click',()=>openOtherProfile(h.id));
+    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:1,onClick:()=>openOtherProfile(h.id)});
     helperMarkers.push(marker);
   });
 
   // ── BUSINESS FLAG PINS ──
-  bizMarkers.forEach(m=>map.removeLayer(m));bizMarkers=[];
+  bizMarkers.forEach(m=>m.remove());bizMarkers=[];
   (allBizListings||[]).forEach(biz=>{
     const initial=(biz.business_name||'B').charAt(0).toUpperCase();
-    const icon=L.divIcon({
-      className:'',
+    const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
       html:`<div style="display:flex;align-items:flex-start;cursor:pointer;filter:drop-shadow(0 1px 3px rgba(0,0,0,.2))">
         <div style="width:3px;height:44px;background:#854F0B;border-radius:1px"></div>
         <div style="display:flex;flex-direction:column;align-items:center">
@@ -1864,7 +1963,7 @@ function renderMapPins(){
       </div>`,
       iconSize:[46,52],iconAnchor:[3,44]
     });
-    const marker=L.marker([biz.lat,biz.lng],{icon,zIndexOffset:500}).addTo(map).on('click',()=>openBizListing(biz));
+    const marker=_htmlMarker(icon.html,46,52,biz.lat,biz.lng,{z:2,anchor:'top-left',offset:[-3,-44],onClick:()=>openBizListing(biz)});
     bizMarkers.push(marker);
   });
 }
@@ -2378,12 +2477,13 @@ function nav(view) {
   // close any open modals when navigating
   document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
   if(view==='map'||(view==='browse'&&browseMode==='map')){setTimeout(()=>{
+    if(!map)return; // no WebGL → no map
     // Snapshot position before invalidateSize (which can fire moveend and corrupt coords)
     const _lat=userLat, _lng=userLng, _z=map.getZoom();
     // Recalc container size without auto-panning (container just went none→flex)
-    map.invalidateSize({pan:false});
+    _mapResize();
     // Restore the exact position the user last saw
-    map.setView([_lat,_lng],_z,{animate:false});
+    _mapSetView(_lat,_lng,_z);
     if(gpsLat&&gpsLng)updateGpsDot();
     updateCircleOverlay();updateRadiusCounts();updateNotifNudge();
   },100);}
@@ -2545,13 +2645,13 @@ async function showApp(){
     const _hasSavedZoom=!!JSON.parse(localStorage.getItem('yoodle_map')||'null')?.zoom;
     const _lat=userLat, _lng=userLng, _z=map.getZoom();
     setTimeout(()=>{
-      map.invalidateSize({pan:false});
+      _mapResize();
       // First load (no saved zoom) — zoom out to show 25 km radius
       const z2=_hasSavedZoom?_z:kmToZoom(25,_lat);
-      map.setView([_lat,_lng],z2,{animate:false});
+      _mapSetView(_lat,_lng,z2);
       updateCircleOverlay();
     },150);
-    setTimeout(()=>{map.invalidateSize({pan:false});map.setView([_lat,_lng],_hasSavedZoom?_z:map.getZoom(),{animate:false});updateCircleOverlay();},600);
+    setTimeout(()=>{_mapResize();_mapSetView(_lat,_lng,_hasSavedZoom?_z:map.getZoom());updateCircleOverlay();},600);
   }
   setAvatar();
   if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
@@ -2688,8 +2788,9 @@ function _onVisibility(){
         // Snapshot position before invalidateSize to prevent drift
         const _lat=userLat, _lng=userLng, _z=map.getZoom();
         if(gpsLat&&gpsLng)updateGpsDot();
-        setTimeout(()=>{map.invalidateSize({pan:false});map.setView([_lat,_lng],_z,{animate:false});updateCircleOverlay();},150);
-        setTimeout(()=>{map.invalidateSize({pan:false});map.setView([_lat,_lng],_z,{animate:false});updateCircleOverlay();if(me)loadJobs();},600);
+        try{map.triggerRepaint();}catch(e){} // iOS: redraw after backgrounding
+        setTimeout(()=>{_mapResize();_mapSetView(_lat,_lng,_z);updateCircleOverlay();},150);
+        setTimeout(()=>{_mapResize();_mapSetView(_lat,_lng,_z);updateCircleOverlay();if(me)loadJobs();},600);
       }
       // If map tab is hidden, nav() will re-anchor when user switches to it
     }
