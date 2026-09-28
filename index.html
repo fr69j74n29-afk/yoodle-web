@@ -2274,7 +2274,7 @@ async function checkDemoAccount(){
   gpsLat=DEMO_CENTER.lat;gpsLng=DEMO_CENTER.lng;locationSource='gps';
   userLat=DEMO_CENTER.lat;userLng=DEMO_CENTER.lng;
   try{localStorage.removeItem(GPS_CACHE_KEY);}catch(e){}
-  if(map)setTimeout(()=>{_mapResize();_mapSetView(DEMO_CENTER.lat,DEMO_CENTER.lng,kmToZoom(5,DEMO_CENTER.lat));updateGpsDot();updateCircleOverlay();loadJobs();},700);
+  if(map)setTimeout(()=>{_mapResize();_mapSetView(DEMO_CENTER.lat,DEMO_CENTER.lng,kmToZoom(25,DEMO_CENTER.lat));updateGpsDot();updateCircleOverlay();loadJobs();},700);
 }
 function demoLocationNote(){
   // Still triggers the normal location permission prompt, but never moves the map
