@@ -879,6 +879,22 @@ svg.star-off{fill:none;stroke:#4a4a4a}
           <label class="sw" aria-label="Email me about unread messages"><input type="checkbox" id="em-toggle" onchange="setEmailNotifications(this.checked)"><span></span></label>
         </div>
       </div>
+      <!-- Blocked users -->
+      <div style="padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
+        <div style="font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Blocked users</div>
+        <div id="blocked-list" style="font-size:14px;color:var(--muted);font-weight:600">—</div>
+      </div>
+      <!-- Help & Support -->
+      <div style="padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
+        <div style="font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Help &amp; Support</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:15px;font-weight:700">
+          <a href="mailto:support@yoodle.ca" style="color:var(--text);text-decoration:none">Contact us · <span style="color:var(--purple)">support@yoodle.ca</span></a>
+          <a href="https://yoodle.ca/faq" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">FAQ ›</a>
+          <a href="https://yoodle.ca/terms" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">Terms of Use ›</a>
+          <a href="https://yoodle.ca/privacy" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">Privacy Policy ›</a>
+        </div>
+        <div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5">To report someone, open their profile or your chat with them and tap Report. We review reports within 24 hours.</div>
+      </div>
       <!-- Theme picker -->
       <div style="padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
         <div style="font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Theme</div>
@@ -1027,6 +1043,14 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="chat-title">—</div>
         <div style="font-size:13.5px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer" id="chat-other" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)">—<span style="font-size:11.5px;opacity:.5">›</span></div>
       </div>
+      <div class="card-menu-wrap" id="chat-more-wrap">
+        <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'chat-menu')" aria-label="More options" style="width:40px;height:40px;font-size:22px">⋮</button>
+        <div class="card-menu-drop" id="chat-menu" style="top:44px">
+          <button onclick="event.stopPropagation();closeAllCardMenus();reportFromChat()">Report</button>
+          <div class="menu-divider"></div>
+          <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();blockFromChat()">Block</button>
+        </div>
+      </div>
       <button onclick="closeChat()" style="width:44px;height:44px;border-radius:50%;border:none;background:var(--surface2);color:var(--text);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800">✕</button>
     </div>
     <div id="chat-actions" style="display:none;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)"></div>
@@ -1061,6 +1085,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <button onclick="shareJob()" title="Share this job" style="width:52px;border-radius:var(--radius);background:var(--surface2);border:1.5px solid var(--yellow);color:var(--yellow);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
     </div>
     <button class="btn-destructive" id="m-unclaim" onclick="unclaimJob()" style="display:none;width:100%;padding:16px;border-radius:var(--radius);background:transparent;color:#DC5046;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:1.5px solid rgba(220,80,70,.25);cursor:pointer;margin-top:10px">Unclaim Job</button>
+    <button id="m-report" onclick="reportJob()" style="display:none;margin:14px auto 0;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:700;text-decoration:underline;cursor:pointer">Report this job</button>
   </div>
 </div>
 <!-- BUSINESS LISTING MODAL -->
@@ -1254,6 +1279,52 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <div class="ref-coming-t">Coming Soon</div>
       <div class="ref-coming-d">Bump up your job posts so more helpers see them, priority badges, and more ways to earn and spend points.</div>
     </div>
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="modal-ov" id="report-modal" style="z-index:1200" onclick="if(event.target.id==='report-modal')closeReport()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="margin-bottom:4px">Report</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:16px" id="report-sub">—</div>
+    <div id="report-reasons" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+    <div class="form-g"><label class="form-lbl">What happened? (optional)</label><textarea class="form-ta" id="report-details" maxlength="1000" placeholder="Add any details that help us review this…"></textarea></div>
+    <label style="display:flex;gap:10px;align-items:center;font-size:14px;font-weight:700;margin-bottom:14px;cursor:pointer"><input type="checkbox" id="report-also-block" style="width:18px;height:18px;accent-color:var(--btn-a)"> Also block this person</label>
+    <button class="btn-primary" id="report-submit" onclick="submitReport()">Send report</button>
+    <button onclick="closeReport()" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:4px">Cancel</button>
+    <div style="font-size:12.5px;color:var(--muted);text-align:center;line-height:1.5">We review reports within 24 hours. The person you report isn't told who reported them. If you're in danger, call 911.</div>
+  </div>
+</div>
+
+<!-- BLOCK CONFIRM -->
+<div class="modal-ov" id="block-modal" style="z-index:1200" onclick="if(event.target.id==='block-modal')document.getElementById('block-modal').classList.remove('open')">
+  <div class="modal-sheet" style="text-align:center">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="margin-bottom:8px" id="block-title">Block?</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:22px;line-height:1.5">They won't be able to message you, and you won't see each other's jobs, helper listing or conversations. They aren't notified. You can unblock anytime in Profile.</div>
+    <button id="block-go" onclick="confirmBlock()" style="width:100%;padding:16px;border-radius:var(--radius);background:#DC5046;border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer">Block</button>
+    <button onclick="document.getElementById('block-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<!-- TERMS GATE (shown once until accepted) -->
+<div id="terms-gate" style="display:none;position:fixed;inset:0;z-index:2500;background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center">
+  <div class="modal-sheet">
+    <div class="modal-title" style="margin-bottom:8px">Our Terms of Use</div>
+    <div style="font-size:14.5px;color:var(--muted);line-height:1.6;margin-bottom:12px">To keep Yoodle safe for neighbours, please review and accept our Terms of Use. Yoodle has <strong style="color:var(--text)">zero tolerance for objectionable content or abusive behaviour</strong> — posts that break the rules are removed and accounts can be suspended.</div>
+    <div style="font-size:14.5px;font-weight:800;margin-bottom:18px"><a href="https://yoodle.ca/terms" target="_blank" rel="noopener" style="color:var(--purple)">Read the Terms of Use</a> · <a href="https://yoodle.ca/privacy" target="_blank" rel="noopener" style="color:var(--purple)">Privacy Policy</a></div>
+    <button class="btn-primary" id="terms-accept" onclick="acceptTerms()">I agree</button>
+    <button onclick="signOut()" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:6px">Not now — sign out</button>
+  </div>
+</div>
+
+<!-- SUSPENDED NOTICE -->
+<div id="suspended-gate" style="display:none;position:fixed;inset:0;z-index:2600;background:rgba(0,0,0,.7);align-items:center;justify-content:center;padding:24px">
+  <div class="modal-sheet" style="border-radius:24px;text-align:center">
+    <div class="modal-title" style="margin-bottom:8px">Account suspended</div>
+    <div style="font-size:14.5px;color:var(--muted);line-height:1.6;margin-bottom:18px">Your Yoodle account has been suspended for breaking our <a href="https://yoodle.ca/terms" target="_blank" rel="noopener" style="color:var(--purple)">Terms of Use</a>. If you think this is a mistake, email <a href="mailto:support@yoodle.ca" style="color:var(--purple)">support@yoodle.ca</a>.</div>
+    <button class="btn-primary" onclick="signOut()">Sign out</button>
   </div>
 </div>
 
@@ -1895,7 +1966,7 @@ async function loadJobs() {
       exclude_user_id:pid||null
     }):Promise.resolve(null)
   ]);
-  allHelpers=helpers||[];
+  allHelpers=(helpers||[]).filter(h=>!hiddenUserIds.has(h.id));
   allBizListings=bizData||[];
 
   // if no user location, show prompt
@@ -2055,7 +2126,139 @@ function closeOtherProfile(){
   }
 }
 
+// ── REPORT · BLOCK · TERMS · SUSPENSION ──
+let hiddenUserIds=new Set();   // blocked either way (server list) — hidden everywhere
+let iBlockedIds=new Set();     // people I blocked (can unblock)
+let activeChatOtherName='';
+let _report=null, _blockTarget=null;
+const REPORT_REASONS=['Scam or fake job','Harassment or hate','Inappropriate or offensive','Unsafe or illegal','Spam','Other'];
+
+async function loadBlockedIds(){
+  if(!sb||!me)return;
+  try{
+    const pid=myProfileId||me.id;
+    const[{data:ids,error:e1},{data:mine,error:e2}]=await Promise.all([
+      sb.rpc('my_blocked_ids'),
+      sb.from('blocks').select('blocked_id').eq('blocker_id',pid)
+    ]);
+    if(!e1)hiddenUserIds=new Set((ids||[]).map(r=>typeof r==='string'?r:(r?.my_blocked_ids||r?.id)).filter(Boolean));
+    if(!e2)iBlockedIds=new Set((mine||[]).map(r=>r.blocked_id));
+    iBlockedIds.forEach(id=>hiddenUserIds.add(id));
+  }catch(e){console.warn('blocked ids',e);}
+}
+
+async function checkAccountGates(){
+  if(!sb||!me)return false;
+  try{
+    const[{data:susp},{data:tp,error:tpErr}]=await Promise.all([
+      sb.rpc('am_i_suspended'),
+      sb.from('profiles').select('terms_accepted_at').eq('id',myProfileId||me.id).maybeSingle()
+    ]);
+    if(susp===true){document.getElementById('suspended-gate').style.display='flex';return true;}
+    if(!tpErr&&tp&&!tp.terms_accepted_at)document.getElementById('terms-gate').style.display='flex';
+  }catch(e){console.warn('gates',e);}
+  return false;
+}
+async function acceptTerms(){
+  if(!sb||!me)return;
+  const btn=document.getElementById('terms-accept');btn.disabled=true;btn.textContent='Saving…';
+  const{error}=await sb.from('profiles').update({terms_accepted_at:new Date().toISOString()}).eq('id',myProfileId||me.id);
+  btn.disabled=false;btn.textContent='I agree';
+  if(error)return toast('❌ '+error.message);
+  document.getElementById('terms-gate').style.display='none';
+  toast('✅ Thanks — welcome to Yoodle!');
+}
+
+function openReport(reportedId,name,taskId,convId){
+  if(!sb||!me)return toast('Sign in to report');
+  if(reportedId===(myProfileId||me.id))return toast("That's you!");
+  _report={reportedId,name,taskId:taskId||null,convId:convId||null};
+  document.getElementById('report-sub').textContent=taskId?`Report "${window._mJobTitle||'this job'}" posted by ${name}`:`Report ${name}`;
+  document.getElementById('report-reasons').innerHTML=REPORT_REASONS.map((r,i)=>`<label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);font-size:14.5px;font-weight:700;cursor:pointer"><input type="radio" name="report-reason" value="${esc(r)}" style="width:18px;height:18px;accent-color:var(--btn-a)">${esc(r)}</label>`).join('');
+  document.getElementById('report-details').value='';
+  document.getElementById('report-also-block').checked=false;
+  document.getElementById('report-modal').classList.add('open');
+}
+function closeReport(){document.getElementById('report-modal').classList.remove('open');_report=null;}
+async function submitReport(){
+  if(!_report||!sb||!me)return;
+  const reason=document.querySelector('input[name="report-reason"]:checked')?.value;
+  if(!reason)return toast('Choose a reason');
+  const details=document.getElementById('report-details').value.trim()||null;
+  const alsoBlock=document.getElementById('report-also-block').checked;
+  const btn=document.getElementById('report-submit');btn.disabled=true;btn.textContent='Sending…';
+  const r=_report;
+  const{error}=await sb.from('reports').insert({reporter_id:myProfileId||me.id,reported_id:r.reportedId,reason,details,task_id:r.taskId,conversation_id:r.convId});
+  btn.disabled=false;btn.textContent='Send report';
+  if(error)return toast('❌ '+error.message);
+  closeReport();
+  if(alsoBlock){await doBlock(r.reportedId);}
+  toast('✅ Thanks — we\'ll review this within 24 hours');
+}
+function reportJob(){
+  if(!activeJob)return;
+  window._mJobTitle=activeJob.title;
+  openReport(activeJob.poster_id,window._mPosterName||'the poster',activeJob.id,null);
+}
+function reportFromChat(){
+  if(!activeChatDoerId)return;
+  window._mJobTitle=document.getElementById('chat-title').textContent;
+  openReport(activeChatDoerId,activeChatOtherName,null,activeChatConvId);
+  if(_report)_report.taskId=activeChatTaskId;
+  document.getElementById('report-sub').textContent=`Report ${activeChatOtherName}`;
+}
+function blockFromChat(){if(activeChatDoerId)openBlock(activeChatDoerId,activeChatOtherName);}
+
+function openBlock(userId,name){
+  if(!sb||!me)return toast('Sign in first');
+  if(userId===(myProfileId||me.id))return toast("That's you!");
+  _blockTarget=userId;
+  document.getElementById('block-title').textContent=`Block ${name}?`;
+  document.getElementById('block-modal').classList.add('open');
+}
+async function confirmBlock(){
+  if(!_blockTarget)return;
+  const btn=document.getElementById('block-go');btn.disabled=true;
+  const ok=await doBlock(_blockTarget);
+  btn.disabled=false;
+  document.getElementById('block-modal').classList.remove('open');
+  if(ok)toast('🚫 Blocked');
+}
+async function doBlock(userId){
+  const pid=myProfileId||me.id;
+  const{error}=await sb.from('blocks').insert({blocker_id:pid,blocked_id:userId});
+  if(error&&error.code!=='23505'){toast('❌ '+error.message);return false;}
+  iBlockedIds.add(userId);hiddenUserIds.add(userId);
+  // close anything showing this person and refresh lists
+  if(activeChatDoerId===userId){document.getElementById('chat-modal').classList.remove('open');activeChatConvId=null;}
+  document.getElementById('op-modal').classList.remove('open');_opParentModal=null;
+  document.getElementById('modal').classList.remove('open');
+  loadJobs();loadMessages();refreshUnreadCount();loadBlockedList();
+  return true;
+}
+async function unblockUser(userId){
+  if(!sb||!me)return;
+  const{error}=await sb.from('blocks').delete().eq('blocker_id',myProfileId||me.id).eq('blocked_id',userId);
+  if(error)return toast('❌ '+error.message);
+  document.getElementById('op-modal').classList.remove('open');_opParentModal=null;
+  await loadBlockedIds();
+  loadJobs();loadMessages();loadBlockedList();
+  toast('Unblocked');
+}
+async function loadBlockedList(){
+  const el=document.getElementById('blocked-list');
+  if(!el||!sb||!me)return;
+  const{data,error}=await sb.from('blocks').select('blocked_id,created_at,profiles!blocks_blocked_id_fkey(name)').eq('blocker_id',myProfileId||me.id).order('created_at',{ascending:false});
+  if(error){el.textContent='Could not load';return;}
+  if(!data?.length){el.textContent="You haven't blocked anyone.";return;}
+  el.innerHTML=data.map(b=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--border)">
+    <span style="color:var(--text);font-weight:800">${esc(b.profiles?.name||'Yoodler')}</span>
+    <button onclick="unblockUser('${b.blocked_id}')" style="padding:7px 14px;border-radius:100px;border:1.5px solid var(--border);background:transparent;color:var(--text);font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">Unblock</button>
+  </div>`).join('');
+}
+
 async function openOtherProfile(userId){
+  if(hiddenUserIds.has(userId)&&!iBlockedIds.has(userId)){toast('This profile is not available');return;}
   // Remember whichever modal is currently open so we can restore it on close
   _opParentModal=document.querySelector('.modal-ov.open')||null;
   // Hide it so only the profile modal shows
@@ -2094,6 +2297,7 @@ async function openOtherProfile(userId){
   const hRatingStr=hAvg?`★ ${hAvg} <span style="color:var(--muted);font-size:12.5px;font-weight:700">(${hCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
 
     const initial=((prof.name||'?')[0]).toUpperCase();
+    window._opName=prof.name||'this person';
 
   content.innerHTML=`
     <div class="op-hero">
@@ -2133,7 +2337,13 @@ async function openOtherProfile(userId){
         <div style="font-size:14px;font-weight:800;color:var(--lime)">${rateLabel}</div>
         ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Helper')}')" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Helper</button>`:''}
       </div>`;
-    })():''}`;
+    })():''}
+    ${(me&&userId!==(myProfileId||me.id))?`<div style="display:flex;gap:10px;justify-content:center;margin-top:4px">
+      <button onclick="openReport('${userId}',window._opName,null,null)" style="flex:1;padding:12px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Report</button>
+      ${iBlockedIds.has(userId)
+        ?`<button onclick="unblockUser('${userId}')" style="flex:1;padding:12px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Unblock</button>`
+        :`<button onclick="openBlock('${userId}',window._opName)" style="flex:1;padding:12px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.3);color:#DC5046;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Block</button>`}
+    </div>`:''}`;
 }
 
 let browseMode='map'; // 'map' | 'list'
@@ -2345,6 +2555,8 @@ async function showApp(){
   }
   setAvatar();
   if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
+  if(await checkAccountGates())return; // suspended — stop here
+  await loadBlockedIds();
   loadJobs();
   closeAuthSheet();
   restoreGuestDraft();
@@ -2594,6 +2806,7 @@ async function openJob(j){
       sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',pid).eq('status','completed')
     ]);
     const pname=prof?.name||'Someone';
+    window._mPosterName=pname;
     const prating=prof?.rating?`<span style="color:var(--yellow);font-size:14px;font-weight:800">★ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:13.5px;font-weight:700">New</span>`;
     document.getElementById('m-poster').innerHTML=`
       <div onclick="openOtherProfile('${pid}')" style="cursor:pointer;flex-shrink:0">${avatarCircle(pname,prof?.avatar_color,'32px','13px')}</div>
@@ -2603,6 +2816,7 @@ async function openJob(j){
       </div>`;
   }
   const isPoster=me&&(j.poster_id===me.id||j.poster_id===myProfileId);
+  document.getElementById('m-report').style.display=(me&&!isPoster)?'block':'none';
   const btn=document.getElementById('m-action');const unclaimBtn=document.getElementById('m-unclaim');
   btn.disabled=false;btn.style.display='block';unclaimBtn.style.display='none';
   btn.onclick=()=>jobAction();
@@ -3318,6 +3532,7 @@ if(!url){
 // populate helper status block
 updateProfileHelperBlock(prof);
 loadEmailPref();
+loadBlockedList();
 const pid=myProfileId||me.id;
 // fetch all stats in parallel
 const[
@@ -3417,7 +3632,7 @@ async function openChatFromNotification(taskId,convId){
 }
 
 async function openChat(taskId,title,otherName,posterId,otherId,otherRating,convId){
-  activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;activeChatConvId=convId||null;
+  activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;activeChatConvId=convId||null;activeChatOtherName=otherName||'this person';
   document.getElementById('chat-title').textContent=title;
   const ratingStr=otherRating?` · ★ ${otherRating}`:'';
   // Set avatar initial immediately with default color

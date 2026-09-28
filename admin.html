@@ -936,7 +936,7 @@ body::before {
     <div class="dash-user">
       <div class="dash-avatar" id="dash-avatar">?</div>
       <span class="dash-name" id="dash-name"></span>
-      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers()">↻ Refresh</button>
+      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadReports()">↻ Refresh</button>
     </div>
   </div>
 
@@ -1024,6 +1024,14 @@ body::before {
         <canvas id="growth-chart"></canvas>
       </div>
     </div>
+
+    <!-- REPORTS (moderation — review within 24 h) -->
+    <div class="section-title">REPORTS — REVIEW WITHIN 24 HOURS</div>
+    <div class="activity-tabs">
+      <button class="activity-tab active" onclick="switchReportTab(this,'open')">🚩 Open <span id="rep-open-count" style="opacity:.5"></span></button>
+      <button class="activity-tab" onclick="switchReportTab(this,'all')">📋 All</button>
+    </div>
+    <div id="reports-list" class="activity-panel" style="margin-bottom:28px"></div>
 
     <!-- NEWEST USERS -->
     <div class="section-title">NEWEST USERS — LAST 5</div>
@@ -1371,6 +1379,81 @@ function switchActivityTab(btn, tab) {
   document.getElementById('activity-helpers').style.display = tab === 'helpers' ? 'block' : 'none';
 }
 
+// ── REPORTS / MODERATION (admin-only RPCs) ──
+let reportTab = 'open';
+function switchReportTab(btn, tab) {
+  btn.parentElement.querySelectorAll('.activity-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  reportTab = tab;
+  loadReports();
+}
+async function loadReports() {
+  const el = document.getElementById('reports-list');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const [{ data, error }, { data: openRows }] = await Promise.all([
+    sb.rpc('admin_list_reports', { p_status: reportTab }),
+    sb.rpc('admin_list_reports', { p_status: 'open' })
+  ]);
+  const cnt = document.getElementById('rep-open-count');
+  if (cnt) cnt.textContent = openRows ? openRows.length : '';
+  if (error) { el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load reports: ${esc(error.message)}</div>`; return; }
+  if (!data || !data.length) { el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">${reportTab === 'open' ? 'No open reports. 🎉' : 'No reports yet.'}</div>`; return; }
+  el.innerHTML = data.map(r => {
+    const ageH = (Date.now() - new Date(r.created_at).getTime()) / 3600000;
+    const overdue = r.status === 'open' && ageH >= 20;
+    const msgs = (r.recent_messages || []).map(m => `<div style="font-size:12.5px;line-height:1.5;padding:4px 0;${m.from_reported ? 'color:var(--text)' : 'color:var(--muted)'}"><b>${esc(m.sender_name || '?')}:</b> ${esc(m.body || '')} <span style="font-family:var(--mono);font-size:10px;opacity:.6">${esc(timeAgo(m.created_at))}</span></div>`).join('');
+    const taskLive = r.task_id && ['open', 'claimed'].includes(r.task_status);
+    const statusChip = r.status === 'open'
+      ? `<span style="font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:6px;background:${overdue ? 'rgba(236,72,153,.18);color:var(--pink)' : 'rgba(252,211,77,.14);color:var(--yellow)'}">${overdue ? 'OPEN · ' + Math.floor(ageH) + 'H — DUE SOON' : 'OPEN'}</span>`
+      : `<span style="font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(163,230,53,.12);color:var(--lime)">${esc(r.status.toUpperCase())}</span>`;
+    return `<div class="activity-card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:15px;font-weight:800;color:var(--text)">🚩 ${esc(r.reason)}</span>
+        <span style="display:flex;gap:8px;align-items:center">${statusChip}<span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${esc(timeAgo(r.created_at))}</span></span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">
+        <div><b style="color:var(--text)">Reported:</b> ${esc(r.reported_name || '?')} · ${esc(r.reported_email || '')} · ${r.reported_report_count} report(s)${r.reported_suspended ? ' · <span style="color:var(--pink);font-weight:800">SUSPENDED</span>' : ''}</div>
+        <div><b style="color:var(--text)">By:</b> ${esc(r.reporter_name || '?')} · ${esc(r.reporter_email || '')}</div>
+        ${r.task_title ? `<div><b style="color:var(--text)">Job:</b> ${esc(r.task_title)} (${esc(r.task_status || '')})</div>` : ''}
+        ${r.details ? `<div style="margin-top:6px;color:var(--text)">“${esc(r.details)}”</div>` : ''}
+        ${r.admin_note ? `<div style="margin-top:6px"><b style="color:var(--text)">Note:</b> ${esc(r.admin_note)}</div>` : ''}
+      </div>
+      ${msgs ? `<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:var(--teal);font-weight:700">Recent messages (${r.recent_messages.length})</summary><div style="margin-top:6px;padding:8px 10px;background:var(--surface2);border-radius:8px">${msgs}</div></details>` : ''}
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+        ${r.status === 'open'
+          ? `<button class="btn-out" style="margin:0" onclick="resolveReport('${r.id}','resolved')">✓ Resolve</button>
+             <button class="btn-out" style="margin:0" onclick="resolveReport('${r.id}','dismissed')">Dismiss</button>`
+          : `<button class="btn-out" style="margin:0" onclick="resolveReport('${r.id}','open')">Reopen</button>`}
+        ${taskLive ? `<button class="btn-out" style="margin:0" onclick="removeReportedTask('${r.task_id}')">Remove job</button>` : ''}
+        ${r.reported_suspended
+          ? `<button class="btn-out" style="margin:0" onclick="suspendUser('${r.reported_id}',false)">Unsuspend user</button>`
+          : `<button class="btn-out" style="margin:0;color:var(--pink);border-color:rgba(236,72,153,.4)" onclick="suspendUser('${r.reported_id}',true)">Suspend user</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+async function resolveReport(id, status) {
+  const note = status === 'open' ? null : (prompt('Optional note (what you did):') || null);
+  const { error } = await sb.rpc('admin_resolve_report', { p_report_id: id, p_status: status, p_note: note });
+  if (error) return alert('Error: ' + error.message);
+  loadReports();
+}
+async function removeReportedTask(taskId) {
+  if (!confirm('Remove this job? It will be cancelled and disappear from the map and lists.')) return;
+  const { error } = await sb.rpc('admin_remove_task', { p_task_id: taskId });
+  if (error) return alert('Error: ' + error.message);
+  loadReports();
+}
+async function suspendUser(userId, suspend) {
+  const reason = suspend ? prompt('Suspend this user? Their open jobs are cancelled, their helper listing is hidden, and they can no longer post or message.\n\nReason (optional):') : null;
+  if (suspend && reason === null) return;           // cancelled
+  if (!suspend && !confirm('Unsuspend this user? (Cancelled jobs and helper listing are not restored automatically.)')) return;
+  const { error } = await sb.rpc('admin_suspend_user', { p_user_id: userId, p_suspend: suspend, p_reason: reason || null });
+  if (error) return alert('Error: ' + error.message);
+  loadReports();
+}
+
 // ── NEWEST USERS (admin-only RPC, reads auth.users) ──
 async function loadRecentUsers() {
   const el = document.getElementById('recent-users');
@@ -1700,6 +1783,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
       show('screen-dashboard');
       loadStats();
       loadRecentUsers();
+      loadReports();
       loadRecentActivity();
       loadAmbassadors();
     } catch (err) {
