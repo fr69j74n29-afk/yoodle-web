@@ -936,7 +936,7 @@ body::before {
     <div class="dash-user">
       <div class="dash-avatar" id="dash-avatar">?</div>
       <span class="dash-name" id="dash-name"></span>
-      <button class="btn-refresh" id="refresh-btn" onclick="loadStats()">↻ Refresh</button>
+      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers()">↻ Refresh</button>
     </div>
   </div>
 
@@ -1024,6 +1024,10 @@ body::before {
         <canvas id="growth-chart"></canvas>
       </div>
     </div>
+
+    <!-- NEWEST USERS -->
+    <div class="section-title">NEWEST USERS — LAST 5</div>
+    <div id="recent-users" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
 
     <!-- AMBASSADOR APPLICATIONS -->
     <div class="section-title">AMBASSADOR APPLICATIONS</div>
@@ -1367,6 +1371,31 @@ function switchActivityTab(btn, tab) {
   document.getElementById('activity-helpers').style.display = tab === 'helpers' ? 'block' : 'none';
 }
 
+// ── NEWEST USERS (admin-only RPC, reads auth.users) ──
+async function loadRecentUsers() {
+  const el = document.getElementById('recent-users');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_recent_users', { p_limit: 5 });
+  if (error) {
+    el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load newest users: ${esc(error.message)}</div>`;
+    return;
+  }
+  if (!data || !data.length) {
+    el.innerHTML = '<div style="padding:14px 0;color:var(--muted);font-size:13px">No users yet.</div>';
+    return;
+  }
+  el.innerHTML = data.map((u, i) => {
+    const d = new Date(u.created_at);
+    const date = d.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' }) + ' · ' +
+                 d.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 0;${i ? 'border-top:1px solid var(--border);' : ''}">
+      <span style="font-size:14px;font-weight:700;color:var(--text);word-break:break-all">${esc(u.email || '—')}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap" title="${escAttr(timeAgo(u.created_at))}">${esc(date)}</span>
+    </div>`;
+  }).join('');
+}
+
 async function loadRecentActivity() {
   const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const jobsEl = document.getElementById('activity-jobs');
@@ -1670,6 +1699,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
       populateUser(session.user);
       show('screen-dashboard');
       loadStats();
+      loadRecentUsers();
       loadRecentActivity();
       loadAmbassadors();
     } catch (err) {
