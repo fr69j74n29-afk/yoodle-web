@@ -1541,6 +1541,9 @@ function _refreshBaseStyle(){
     map.setStyle(OFM_STYLE[_curTheme()],{diff:false});
   }catch(e){} // map not created yet (theme set on page load)
 }
+function _collapseAttrib(){
+  try{document.querySelectorAll('#map .maplibregl-ctrl-attrib.maplibregl-compact-show').forEach(el=>el.classList.remove('maplibregl-compact-show'));}catch(e){}
+}
 // Build a DOM marker (replaces L.divIcon + L.marker)
 function _htmlMarker(html,w,h,lat,lng,opts){
   opts=opts||{};
@@ -1592,7 +1595,9 @@ function initMap() {
   map.touchZoomRotate.disableRotation();
   map.keyboard.disableRotation();
   map.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>'}),'bottom-left');
-  map.on('style.load',()=>{clearTimeout(_styleFallbackTimer);_sageTint();});
+  map.on('style.load',()=>{clearTimeout(_styleFallbackTimer);_sageTint();setTimeout(_collapseAttrib,300);});
+  // Attribution starts collapsed as the small "i" button (MapLibre opens it on load); tap "i" to expand
+  map.once('idle',_collapseAttrib);
   _armStyleFallback();
   // WebGL context lost (iOS backgrounding) → MapLibre restores it; force a redraw after
   map.on('webglcontextrestored',()=>{try{map.triggerRepaint();}catch(e){}});
