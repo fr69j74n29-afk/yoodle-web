@@ -140,6 +140,81 @@ body.theme-sage-dark .le{color:#E0C45A}
 .auth-legal{font-size:12.5px;color:var(--muted);text-align:center;margin-top:24px;line-height:1.7;position:relative;z-index:1}
 .auth-legal a{color:var(--purple);text-decoration:none}
 
+
+/* ── SIGNED-OUT LANDING (guest post v2) ── */
+/* Light sage palette for signed-out screens, whatever theme is saved */
+#view-auth{
+  --bg:#EEF2EC;--surface:#FFFFFF;--surface2:#F3F6F2;--border:#DCE3DD;
+  --text:#1F2A24;--muted:#6B7A71;--purple:#5E8B6F;--pink:#4A7359;--lime:#2E7D52;--teal:#4A9E7A;
+  --sage-soft:#E3ECE5;
+  justify-content:flex-start;padding:0;color:var(--text);
+}
+.ga-wrap{width:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;flex:1 0 auto;position:relative;z-index:1;padding:calc(var(--sat) + 14px) 22px calc(var(--sab) + 24px)}
+.ga-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.ga-wm{font-size:34px}
+.ga-pill{background:var(--sage-soft);color:var(--pink);border:none;border-radius:999px;padding:9px 18px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
+.ga-pill:active{transform:scale(.96)}
+.ga-page{display:flex;flex-direction:column}
+.ga-page[hidden]{display:none}
+.ga-hero h1{font-family:'Fredoka One',cursive;font-weight:400;font-size:32px;line-height:1.15;color:var(--text)}
+.ga-hero p{font-size:15px;color:var(--muted);font-weight:600;margin-top:8px;line-height:1.5}
+.ga-cta{margin-top:24px;width:100%;border:none;border-radius:18px;padding:18px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:800;background:var(--purple);color:#fff;cursor:pointer;box-shadow:0 6px 16px rgba(94,139,111,.35);transition:transform .15s}
+.ga-cta:active{transform:scale(.97)}
+.ga-note{font-size:13.5px;color:var(--muted);text-align:center;margin-top:8px;font-weight:600}
+.ga-helpers{margin-top:22px;background:var(--surface);border:1.5px solid var(--border);border-radius:18px;padding:16px;display:flex;gap:14px;align-items:center}
+.ga-pins{position:relative;width:64px;height:52px;flex-shrink:0;background:#E7EDE4;border-radius:12px;overflow:hidden}
+.ga-pins i{position:absolute;width:12px;height:12px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#22C55E;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.ga-helpers b{display:block;font-size:14px;font-weight:800;color:var(--text)}
+.ga-helpers span{font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.45}
+.ga-steps{margin-top:14px;background:var(--surface);border:1.5px solid var(--border);border-radius:18px;padding:6px 16px}
+.ga-step{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border)}
+.ga-step:last-child{border-bottom:none}
+.ga-num{width:28px;height:28px;border-radius:50%;background:var(--purple);color:#fff;font-family:'Fredoka One',cursive;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ga-step b{display:block;font-size:14px;font-weight:800}
+.ga-step span{font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.45}
+.ga-alt{margin-top:18px;text-align:center;font-size:14px;font-weight:700;color:var(--muted)}
+.ga-alt a{color:var(--purple);font-weight:800;cursor:pointer;text-decoration:none}
+#view-auth .auth-legal{margin-top:22px}
+#ga-landing{padding-top:18px}
+.ga-eyebrow{font-size:13.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);text-align:center;margin-bottom:8px}
+.ga-fork-h{font-family:'Fredoka One',cursive;font-weight:400;font-size:28px;line-height:1.2;text-align:center;color:var(--text)}
+.ga-fork-sub{font-size:15px;font-weight:600;color:var(--muted);text-align:center;margin:6px 0 28px}
+.ga-choice{width:100%;min-height:98px;display:flex;align-items:center;gap:16px;padding:20px;border-radius:16px;background:var(--surface);cursor:pointer;text-align:left;font-family:'Nunito',sans-serif;margin-bottom:14px;transition:transform .15s}
+.ga-choice:active{transform:scale(.98)}
+.ga-choice-job{border:1.5px solid #F97316}
+.ga-choice-help{border:1.5px solid rgba(46,125,82,.30)}
+.ga-choice-ico{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ga-choice-ico svg{width:24px;height:24px}
+.ga-choice-t{font-size:18px;font-weight:800;color:var(--text);margin-bottom:2px}
+.ga-choice-d{font-size:14px;font-weight:700;color:var(--muted)}
+.ga-back{background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;padding:0;align-self:flex-start;margin-bottom:12px}
+.ga-post-h{font-family:'Fredoka One',cursive;font-weight:400;font-size:26px;margin-bottom:4px}
+.ga-post-sub{font-size:14px;color:var(--muted);font-weight:600;margin-bottom:18px}
+.ga-loc-note{background:var(--sage-soft);color:var(--pink);border-radius:12px;padding:11px 14px;font-size:12.5px;font-weight:700;line-height:1.45;margin-bottom:14px}
+.ga-dim{position:fixed;inset:0;background:rgba(20,30,25,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:5}
+.ga-dim.open{opacity:1;pointer-events:auto}
+.ga-sheet{position:fixed;left:50%;bottom:0;width:100%;max-width:480px;transform:translate(-50%,105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);background:var(--surface);border-radius:26px 26px 0 0;padding:12px 22px calc(var(--sab) + 22px);z-index:6;max-height:92dvh;overflow-y:auto;box-shadow:0 -8px 30px rgba(0,0,0,.15)}
+.ga-sheet.open{transform:translate(-50%,0)}
+.ga-grab{width:40px;height:5px;border-radius:5px;background:var(--border);margin:0 auto 14px}
+.ga-sheet h3{font-family:'Fredoka One',cursive;font-weight:400;font-size:24px;color:var(--pink);margin-bottom:4px}
+.ga-sheet-p{font-size:14px;color:var(--muted);font-weight:600;line-height:1.5;margin-bottom:16px}
+.ga-draft{background:var(--bg);border-radius:14px;padding:12px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ga-draft b{font-size:14px;font-weight:800;display:block;word-break:break-word}
+.ga-draft span{font-size:13.5px;color:var(--muted);font-weight:700}
+.ga-draft a{font-size:14px;font-weight:800;color:var(--purple);cursor:pointer;flex-shrink:0}
+.ga-sheet .btn-google{border:1.5px solid var(--border);background:#fff;color:#1a1a1a}
+.ga-sheet .auth-divider{margin:4px 0}
+.ga-sheet .btn-magic{background:var(--sage-soft);color:var(--pink)}
+.ga-sheet #ios-pwa-tip{margin-top:14px}
+.ga-fine{font-size:12.5px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.6}
+.ga-fine a{color:var(--purple);text-decoration:none}
+@media(min-width:481px){
+  .ga-sheet{bottom:50%;border-radius:26px;transform:translate(-50%,60%);opacity:0;pointer-events:none;transition:transform .25s,opacity .25s;max-width:420px}
+  .ga-sheet.open{transform:translate(-50%,50%);opacity:1;pointer-events:auto}
+  .ga-grab{display:none}
+  #view-auth .ds-nav{order:0;margin:0 auto;padding-top:18px}
+}
+
 /* ── MAIN APP ── */
 #view-main{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;position:relative}
 
@@ -484,48 +559,73 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     <a href="/privacy">Privacy</a>
   </nav>
 
-  <!-- DESKTOP ONLY: 1-2-3 strip -->
-  <div class="desktop-strip">
-    <div class="ds-step">
-      <div class="ds-num">1</div>
-      <div class="ds-title">Post a Job</div>
-      <div class="ds-desc">Describe what you need, set your budget, and pin your neighbourhood.</div>
+  <div class="ga-wrap">
+    <div class="ga-hdr">
+      <div class="wordmark ga-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span><span class="lca">.ca</span></div>
+      <button class="ga-pill" onclick="openAuthSheet('signin')">Sign in</button>
     </div>
-    <div class="ds-div"></div>
-    <div class="ds-step">
-      <div class="ds-num">2</div>
-      <div class="ds-title">Pick Your Helper</div>
-      <div class="ds-desc">Local people apply fast. Browse ratings and choose the right fit.</div>
+
+    <!-- LANDING -->
+    <div class="ga-page" id="ga-landing">
+      <div class="ga-eyebrow">Neighbours helping neighbours</div>
+      <h1 class="ga-fork-h">What would you like to do?</h1>
+      <div class="ga-fork-sub">Free for everyone. No fees, ever.</div>
+
+      <button class="ga-choice ga-choice-job" id="ga-cta" onclick="openGuestPost()">
+        <div class="ga-choice-ico" style="background:#F97316"><svg viewBox="0 0 24 24" fill="none" stroke="#1E2620" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+        <div><div class="ga-choice-t" id="ga-cta-t">Post a job</div><div class="ga-choice-d">I have a task that needs doing</div></div>
+      </button>
+
+      <button class="ga-choice ga-choice-help" onclick="openAuthSheet('helper')">
+        <div class="ga-choice-ico" style="background:#8DE0A8"><svg viewBox="0 0 24 24" fill="none" stroke="#1E2620" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <div><div class="ga-choice-t">Find me work</div><div class="ga-choice-d">I want to offer a skill or service</div></div>
+      </button>
+
+      <div class="ga-alt">Already on Yoodle? <a onclick="openAuthSheet('signin')">Sign in</a></div>
+      <div class="auth-legal">By continuing you agree to Yoodle's <a href="/privacy">Privacy Policy</a>. No spam, ever.<br><a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a> · <a href="/ambassadors">Ambassadors</a></div>
     </div>
-    <div class="ds-div"></div>
-    <div class="ds-step">
-      <div class="ds-num">3</div>
-      <div class="ds-title">Get It Done</div>
-      <div class="ds-desc">Chat in the app, confirm the details, and pay directly. No fees.</div>
+
+    <!-- GUEST POST FORM -->
+    <div class="ga-page" id="ga-post" hidden>
+      <button class="ga-back" onclick="closeGuestPost()">← Back</button>
+      <div class="ga-post-h">Post a job</div>
+      <div class="ga-post-sub">Free, always. Takes about a minute.</div>
+      <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="g-title" type="text" maxlength="120" placeholder="e.g. Help me move a couch"></div>
+      <div class="form-g"><label class="form-lbl">Description</label><textarea class="form-ta" id="g-desc" placeholder="Describe what needs doing, when, any requirements…"></textarea></div>
+      <div class="form-g"><label class="form-lbl">Budget (CAD $)</label><input class="form-inp" id="g-budget" type="number" min="0" inputmode="decimal" placeholder="e.g. 50"></div>
+      <div class="ga-loc-note">📍 You'll pin your location right after signing in — your exact address is never shown publicly.</div>
+      <button class="ga-cta" style="margin-top:0" onclick="saveGuestPost()">Continue</button>
     </div>
   </div>
 
-  <div class="wordmark auth-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span><span class="lca">.ca</span></div>
-  <div class="auth-tag">Odd Jobs · Real People · Help Each Other</div>
-  <div class="auth-h">Find help. Earn cash.<br>Build your community.</div>
-  <div class="auth-sub">Sign in to get started — no passwords needed.</div>
-  <div class="auth-btns">
-    <button class="btn-google" onclick="signIn('google')">
-      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-      Continue with Google
-    </button>
-    <div class="auth-divider">or use your email</div>
-    <div class="magic-wrap">
-      <div class="magic-row">
-        <input class="magic-email" id="magic-email" type="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')sendMagicLink()">
-        <button class="btn-magic" id="magic-btn" onclick="sendMagicLink()">Send Link</button>
-      </div>
-      <div class="magic-sent" id="magic-sent">Check your inbox! Link sent to <span id="magic-addr"></span></div>
+  <!-- SIGN-IN SHEET -->
+  <div class="ga-dim" id="ga-dim" onclick="closeAuthSheet()"></div>
+  <div class="ga-sheet" id="ga-sheet" role="dialog" aria-modal="true" aria-labelledby="ga-sheet-h">
+    <div class="ga-grab"></div>
+    <h3 id="ga-sheet-h">Welcome back</h3>
+    <div class="ga-sheet-p" id="ga-sheet-p">Sign in to Yoodle — no passwords needed.</div>
+    <div class="ga-draft" id="ga-draft" style="display:none">
+      <div><b id="ga-draft-t"></b><span id="ga-draft-m"></span></div>
+      <a onclick="closeAuthSheet();openGuestPost()">Edit</a>
     </div>
-  </div>
-  <div class="auth-legal">By continuing you agree to Yoodle's <a href="/privacy">Privacy Policy</a>. No spam, ever.<br><a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a> · <a href="/ambassadors">Ambassadors</a></div>
+    <div class="auth-btns">
+      <button class="btn-google" onclick="signIn('google')">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+      <div class="auth-divider">or use your email</div>
+      <div class="magic-wrap">
+        <div class="magic-row">
+          <input class="magic-email" id="magic-email" type="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')sendMagicLink()">
+          <button class="btn-magic" id="magic-btn" onclick="sendMagicLink()">Send Link</button>
+        </div>
+        <div class="magic-sent" id="magic-sent">Check your inbox! Link sent to <span id="magic-addr"></span></div>
+      </div>
+    </div>
   <div id="ios-pwa-tip" style="display:none;margin-top:16px;background:rgba(92,138,106,.08);border:1.5px solid rgba(92,138,106,.20);border-radius:12px;padding:12px 16px;font-size:13.5px;color:var(--muted);line-height:1.6;font-weight:700;text-align:center;position:relative;z-index:1">
     <strong style="color:var(--purple)">Using the home screen app?</strong><br>Sign in with Google — magic links open in Safari and won't transfer back to the app.
+  </div>
+    <div class="ga-fine">By continuing you agree to Yoodle's <a href="/privacy">Privacy Policy</a>. No spam, ever.</div>
   </div>
 </div>
 
@@ -2009,6 +2109,76 @@ function nav(view) {
   updateNotifNudge();
 }
 
+// ── SIGNED-OUT LANDING + GUEST POST DRAFT ── write first, sign in to publish
+const GUEST_DRAFT_KEY='yoodle_post_draft';
+const GUEST_DRAFT_TTL=24*60*60*1000;
+function _readGuestDraft(){try{return JSON.parse(localStorage.getItem(GUEST_DRAFT_KEY)||'null');}catch(e){return null;}}
+function openGuestPost(){
+  const d=_readGuestDraft();
+  if(d){document.getElementById('g-title').value=d.title||'';document.getElementById('g-desc').value=d.desc||'';document.getElementById('g-budget').value=d.budget||'';}
+  document.getElementById('ga-landing').hidden=true;
+  document.getElementById('ga-post').hidden=false;
+  document.getElementById('view-auth').scrollTop=0;
+  setTimeout(()=>document.getElementById('g-title').focus(),60);
+}
+function closeGuestPost(){
+  document.getElementById('ga-post').hidden=true;
+  document.getElementById('ga-landing').hidden=false;
+  document.getElementById('view-auth').scrollTop=0;
+}
+function saveGuestPost(){
+  const title=document.getElementById('g-title').value.trim();
+  const desc=document.getElementById('g-desc').value.trim();
+  const budget=document.getElementById('g-budget').value;
+  if(!title)return toast('Add a job title!');
+  if(!desc)return toast('Describe the job!');
+  try{localStorage.setItem(GUEST_DRAFT_KEY,JSON.stringify({title,desc,budget,ts:Date.now()}));}
+  catch(e){return toast('⚠️ Could not save your draft — sign in and post from the app');}
+  document.getElementById('ga-cta-t').textContent='Continue your job';
+  openAuthSheet('post');
+}
+const AFTER_LOGIN_KEY='yoodle_after_login';
+function openAuthSheet(mode){
+  try{if(mode==='helper')localStorage.setItem(AFTER_LOGIN_KEY,'helper');else localStorage.removeItem(AFTER_LOGIN_KEY);}catch(e){}
+  const h=document.getElementById('ga-sheet-h'),p=document.getElementById('ga-sheet-p'),dc=document.getElementById('ga-draft');
+  dc.style.display='none';
+  if(mode==='post'){
+    const d=_readGuestDraft();
+    h.textContent='Almost done!';
+    p.textContent="Sign in so neighbours can reply to you. Your job is saved — you'll pin your location and post it right after.";
+    if(d){
+      document.getElementById('ga-draft-t').textContent=d.title;
+      document.getElementById('ga-draft-m').textContent=d.budget?('$'+d.budget+' · ready to post'):'ready to post';
+      dc.style.display='flex';
+    }
+  }else if(mode==='helper'){
+    h.textContent='Find work nearby';
+    p.textContent="Sign in and we'll take you straight to your helper profile — neighbours nearby can then find and message you.";
+  }else{
+    h.textContent='Welcome back';
+    p.textContent='Sign in to Yoodle — no passwords needed.';
+  }
+  document.getElementById('ga-dim').classList.add('open');
+  document.getElementById('ga-sheet').classList.add('open');
+}
+function closeAuthSheet(){
+  document.getElementById('ga-dim').classList.remove('open');
+  document.getElementById('ga-sheet').classList.remove('open');
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAuthSheet();});
+function restoreGuestDraft(){
+  let intent=null;try{intent=localStorage.getItem(AFTER_LOGIN_KEY);localStorage.removeItem(AFTER_LOGIN_KEY);}catch(e){}
+  if(intent==='helper'){helperEnteredFromFork=true;nav('helper');toast('👋 Welcome! Set up your helper profile so neighbours can find you');return;}
+  const d=_readGuestDraft();
+  try{localStorage.removeItem(GUEST_DRAFT_KEY);}catch(e){}
+  if(!d||!d.title||Date.now()-(d.ts||0)>GUEST_DRAFT_TTL)return;
+  nav('postjob'); // resetPost() runs inside nav — fill fields after it
+  document.getElementById('p-title').value=d.title;
+  document.getElementById('p-desc').value=d.desc||'';
+  document.getElementById('p-budget').value=d.budget||'';
+  toast('📍 Almost there — add your location and tap Post Job');
+}
+
 async function signIn(provider) {
   if(!sb)return toast('⚠️ Add Supabase credentials first');
   await sb.auth.signInWithOAuth({provider,options:{redirectTo:window.location.origin}});
@@ -2049,6 +2219,8 @@ async function showApp(){
   setAvatar();
   if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
   loadJobs();
+  closeAuthSheet();
+  restoreGuestDraft();
   // Silent GPS refresh on login — only when permission was ALREADY granted and the
   // 30-min cache is stale. Fresh cache → no GPS at all (battery). Never prompts.
   // Permissions API may be absent on older iOS Safari (<16) → try/catch falls back
