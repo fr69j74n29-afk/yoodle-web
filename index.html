@@ -2310,11 +2310,15 @@ async function confirmDeleteAccount(){
   // Account is gone — clear this device's Yoodle data (keep theme choice) and return to the landing
   try{Object.keys(localStorage).filter(k=>k.startsWith('yoodle')&&k!=='yoodle-theme').forEach(k=>localStorage.removeItem(k));}catch(e){}
   closeDeleteAccount();btn.textContent='Delete forever';
+  oneSignalLogout();
   try{await sb.auth.signOut();}catch(e){}
   me=null;myProfileId=null;showAuthScreen();
   toast('Your account has been deleted');
 }
-async function signOut(){if(sb)await sb.auth.signOut();else showAuthScreen();}
+function oneSignalLogout(){
+  try{if(oneSignalReady&&window.OneSignalDeferred)window.OneSignalDeferred.push(async(os)=>{try{await os.logout();}catch(e){}});}catch(e){}
+}
+async function signOut(){oneSignalLogout();if(sb)await sb.auth.signOut();else showAuthScreen();}
 function showAuthScreen(){document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';}
 
 async function showApp(){
@@ -2402,6 +2406,8 @@ async function registerOneSignal(){
           }
         });
       }
+      // User-based push targeting: this device belongs to profile id (OneSignal external_id)
+      if(me){try{await os.login(myProfileId||me.id);}catch(err){console.warn('OneSignal login error:',err);}}
       const subId=os.User.PushSubscription.id;
       if(subId&&me&&sb){
         const pid=myProfileId||me.id;
