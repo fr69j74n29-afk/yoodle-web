@@ -48,6 +48,7 @@
   --bg:#F5F4EF;--surface:#FFFFFF;--surface2:#EFF0EA;
   --border:#D4D6CD;--text:#1E2620;--muted:#7A8A7C;
   --radius:20px;--radius-sm:12px;
+  --btn-a:#5C8A6A;--btn-b:#3D6B50;--btn-lime:#2E7D52; /* filled buttons with white text */
   --sat:env(safe-area-inset-top,0px);
   --sab:env(safe-area-inset-bottom,0px);
 }
@@ -66,6 +67,7 @@ body{
 /* Sage Dark+ (Sept 2026): sage base, brighter accents; Classic theme retired */
 body.theme-sage-dark{
   --purple:#4CC38A;--lime:#8DE0A8;--pink:#2F9E68;
+  --btn-a:#178A52;--btn-b:#0F6B3C;--btn-lime:#15803D;
   --teal:#3AC0CF;--orange:#FF8A3D;--yellow:#F0CF5A;
   --bg:#050706;--surface:#0D120F;--surface2:#141A16;
   --border:#232C25;--text:#F0EFEA;--muted:#93A596;
@@ -82,7 +84,7 @@ body.theme-sage-dark .nav-i.active{color:#FFFFFF}
 body.theme-sage-dark .pin-dot{border-color:rgba(13,18,15,.7)}
 body.theme-sage-dark .modal-ov,body.theme-sage-dark .op-ov,body.theme-sage-dark .ref-modal{background:rgba(0,0,0,.7)}
 body.theme-sage-dark [onclick="openRadiusSheet()"]{background:rgba(20,26,22,.93)!important}
-body.theme-sage-dark .user-ring{background:rgba(76,195,138,.9)}
+body.theme-sage-dark .user-ring{background:rgba(23,138,82,.9)}
 /* Classic logo colours kept after Classic theme retired */
 body.theme-sage-dark .ly{color:#9078C0}
 body.theme-sage-dark .lo1{color:#8DC95F}
@@ -95,7 +97,7 @@ body.theme-sage-dark .le{color:#E0C45A}
 .theme-opt{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 6px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--surface);cursor:pointer;transition:border-color .2s}
 .theme-opt.active{border-color:var(--purple)}
 .theme-swatch{width:36px;height:36px;border-radius:50%;border:2px solid rgba(128,128,128,.25)}
-.theme-name{font-size:11px;font-weight:700;color:var(--muted);text-align:center}
+.theme-name{font-size:12.5px;font-weight:700;color:var(--muted);text-align:center}
 .theme-opt.active .theme-name{color:var(--text);font-weight:800}
 
 
@@ -118,11 +120,11 @@ body.theme-sage-dark .le{color:#E0C45A}
 #view-auth::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(92,138,106,.12) 0%,transparent 65%);top:-150px;left:-150px;pointer-events:none}
 #view-auth::after{content:'';position:absolute;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(61,107,80,.10) 0%,transparent 65%);bottom:-80px;right:-80px;pointer-events:none}
 .auth-wm{font-size:80px;position:relative;z-index:1;margin-bottom:6px}
-.auth-tag{font-size:10.5px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:48px;position:relative;z-index:1;text-align:center}
+.auth-tag{font-size:12px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:48px;position:relative;z-index:1;text-align:center}
 .auth-h{font-size:24px;font-weight:800;text-align:center;margin-bottom:6px;position:relative;z-index:1}
 .auth-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:32px;position:relative;z-index:1;line-height:1.5}
 .auth-btns{width:100%;display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}
-.auth-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;font-weight:700;margin:4px 0;position:relative;z-index:1}
+.auth-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13.5px;font-weight:700;margin:4px 0;position:relative;z-index:1}
 .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 .btn-google{display:flex;align-items:center;justify-content:center;gap:12px;padding:17px 24px;border-radius:var(--radius);background:#fff;color:#1a1a1a;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:none;cursor:pointer;transition:transform .15s;width:100%}
 .btn-google:active{transform:scale(.96)}
@@ -131,11 +133,11 @@ body.theme-sage-dark .le{color:#E0C45A}
 .magic-email{flex:1;padding:15px 16px;border-radius:var(--radius);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:16px;font-weight:600;outline:none;transition:border-color .15s;min-width:0}
 .magic-email:focus{border-color:var(--purple)}
 .magic-email::placeholder{color:var(--muted)}
-.btn-magic{padding:15px 20px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;border:none;cursor:pointer;white-space:nowrap;transition:transform .15s;flex-shrink:0}
+.btn-magic{padding:15px 20px;border-radius:var(--radius);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;border:none;cursor:pointer;white-space:nowrap;transition:transform .15s;flex-shrink:0}
 .btn-magic:active{transform:scale(.96)}
 .btn-magic:disabled{opacity:.5;cursor:not-allowed}
-.magic-sent{background:rgba(46,125,82,.08);border:1.5px solid rgba(46,125,82,.18);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--lime);font-weight:700;text-align:center;display:none;line-height:1.5}
-.auth-legal{font-size:11px;color:var(--muted);text-align:center;margin-top:24px;line-height:1.7;position:relative;z-index:1}
+.magic-sent{background:rgba(46,125,82,.08);border:1.5px solid rgba(46,125,82,.18);border-radius:var(--radius-sm);padding:12px 16px;font-size:14px;color:var(--lime);font-weight:700;text-align:center;display:none;line-height:1.5}
+.auth-legal{font-size:12.5px;color:var(--muted);text-align:center;margin-top:24px;line-height:1.7;position:relative;z-index:1}
 .auth-legal a{color:var(--purple);text-decoration:none}
 
 /* ── MAIN APP ── */
@@ -154,7 +156,7 @@ body.theme-sage-dark .le{color:#E0C45A}
 .pts-badge:active{transform:scale(.95)}
 .pts-ico{font-size:16px;line-height:1}
 .pts-val{font-size:14px;font-weight:800;color:var(--yellow)}
-.pts-new{font-size:9px;font-weight:800;color:var(--bg);background:var(--lime);border-radius:100px;padding:2px 6px;text-transform:uppercase;letter-spacing:.5px;animation:pts-pulse 2s ease-in-out infinite}
+.pts-new{font-size:10.5px;font-weight:800;color:var(--bg);background:var(--lime);border-radius:100px;padding:2px 6px;text-transform:uppercase;letter-spacing:.5px;animation:pts-pulse 2s ease-in-out infinite}
 @keyframes pts-pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .top-avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--purple);overflow:hidden;cursor:pointer;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--purple);flex-shrink:0}
 .top-avatar img{width:100%;height:100%;object-fit:cover}
@@ -168,23 +170,23 @@ body.theme-sage-dark .le{color:#E0C45A}
 .ref-close{width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:800}
 .ref-balance{text-align:center;background:linear-gradient(135deg,rgba(92,138,106,.10),rgba(74,158,122,.10));border:1.5px solid rgba(92,138,106,.20);border-radius:20px;padding:24px;margin-bottom:20px}
 .ref-pts-big{font-size:48px;font-weight:800;color:var(--yellow);line-height:1}
-.ref-pts-label{font-size:13px;color:var(--muted);font-weight:800;margin-top:4px}
+.ref-pts-label{font-size:14px;color:var(--muted);font-weight:800;margin-top:4px}
 .ref-stats{display:flex;gap:10px;margin-bottom:20px}
 .ref-stat{flex:1;background:var(--surface2);border-radius:14px;padding:14px;text-align:center}
 .ref-stat-v{font-size:20px;font-weight:800;color:var(--lime)}
-.ref-stat-l{font-size:11px;color:var(--muted);font-weight:800;margin-top:2px}
+.ref-stat-l{font-size:12.5px;color:var(--muted);font-weight:800;margin-top:2px}
 .ref-how{margin-bottom:20px}
 .ref-how-t{font-size:15px;font-weight:800;margin-bottom:10px}
 .ref-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
-.ref-step-n{width:24px;height:24px;border-radius:50%;background:var(--purple);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ref-step-t{font-size:13px;color:var(--muted);font-weight:700;line-height:1.5}
+.ref-step-n{width:24px;height:24px;border-radius:50%;background:var(--btn-a);color:#fff;font-size:13.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ref-step-t{font-size:14px;color:var(--muted);font-weight:700;line-height:1.5}
 .ref-link-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.ref-link-url{flex:1;font-size:13px;font-weight:800;color:var(--text);word-break:break-all}
-.ref-copy-btn{background:var(--purple);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit}
-.ref-share-btn{width:100%;background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+.ref-link-url{flex:1;font-size:14px;font-weight:800;color:var(--text);word-break:break-all}
+.ref-copy-btn{background:var(--btn-a);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit}
+.ref-share-btn{width:100%;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));color:#fff;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
 .ref-coming{background:var(--surface2);border-radius:14px;padding:16px;margin-top:16px}
-.ref-coming-t{font-size:13px;font-weight:800;margin-bottom:6px;color:var(--teal)}
-.ref-coming-d{font-size:12px;color:var(--muted);font-weight:700;line-height:1.5}
+.ref-coming-t{font-size:14px;font-weight:800;margin-bottom:6px;color:var(--teal)}
+.ref-coming-d{font-size:13.5px;color:var(--muted);font-weight:700;line-height:1.5}
 
 /* VIEWS */
 .app-view{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden}
@@ -211,7 +213,7 @@ body.theme-sage-dark .le{color:#E0C45A}
 #app-list{overflow:hidden;position:relative}
 .list-header{padding:16px 20px 10px;flex-shrink:0}
 .list-h{font-size:22px;font-weight:800;margin-bottom:2px}
-.list-sub{font-size:13px;color:var(--muted)}
+.list-sub{font-size:14px;color:var(--muted)}
 .list-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 20px 20px;-webkit-overflow-scrolling:touch}
 .jobs-grid{display:flex;flex-direction:column;gap:8px;padding-top:16px}
 
@@ -220,24 +222,24 @@ body.theme-sage-dark .le{color:#E0C45A}
 .list-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--jc,var(--purple))}
 .list-card:active{transform:scale(.98)}
 .lc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
-.lc-cat{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--jc,var(--purple));display:flex;align-items:center;gap:4px;flex-shrink:0}
+.lc-cat{font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--jc,var(--purple));display:flex;align-items:center;gap:4px;flex-shrink:0}
 .lc-budget{font-size:17px;font-weight:800;color:var(--lime);white-space:nowrap;flex-shrink:0}
 .lc-title{font-size:15px;font-weight:800;line-height:1.3;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lc-desc{font-size:12px;color:#aaa;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
+.lc-desc{font-size:13.5px;color:#aaa;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
 .lc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .lc-poster{display:flex;align-items:center;gap:5px;min-width:0}
-.lc-av{width:20px;height:20px;border-radius:50%;background:var(--surface2);font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--muted);flex-shrink:0}
-.lc-name{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lc-meta{font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.lc-av{width:20px;height:20px;border-radius:50%;background:var(--surface2);font-size:10.5px;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--muted);flex-shrink:0}
+.lc-name{font-size:12.5px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-meta{font-size:12.5px;color:var(--muted);white-space:nowrap;flex-shrink:0}
 /* JOB CARD */
 .job-card{background:var(--surface);border-radius:var(--radius);padding:18px 18px 16px;border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;position:relative;overflow:hidden;flex-shrink:0}
 .job-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--jc,var(--purple))}
 .job-card:active{transform:scale(.98)}
-.jc-badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 10px;border-radius:100px;background:var(--badge-bg,rgba(0,0,0,.04));color:var(--jc,var(--purple));margin-bottom:10px}
+.jc-badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 10px;border-radius:100px;background:var(--badge-bg,rgba(0,0,0,.04));color:var(--jc,var(--purple));margin-bottom:10px}
 .jc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
 .jc-title{font-size:16px;font-weight:800;line-height:1.3;flex:1;padding-right:10px}
 .jc-budget{font-size:18px;font-weight:800;color:var(--lime);white-space:nowrap}
-.jc-desc{font-size:13px;color:#bbb;line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.jc-desc{font-size:14px;color:#bbb;line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 /* 3-dot overflow menu */
 .card-menu-wrap{position:relative;z-index:10}
 .card-menu-btn{width:32px;height:32px;border-radius:50%;background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;line-height:1;padding:0}
@@ -250,10 +252,10 @@ body.theme-sage-dark .le{color:#E0C45A}
 .card-menu-drop .menu-divider{height:1px;background:var(--border);margin:0}
 .jc-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px}
 .jc-poster{display:flex;align-items:center;gap:6px}
-.poster-av{width:26px;height:26px;border-radius:50%;background:var(--surface2);overflow:hidden;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--muted);flex-shrink:0}
+.poster-av{width:26px;height:26px;border-radius:50%;background:var(--surface2);overflow:hidden;font-size:12.5px;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--muted);flex-shrink:0}
 .poster-av img{width:100%;height:100%;object-fit:cover}
-.poster-nm{font-size:12px;font-weight:700;color:var(--muted)}
-.jc-loc{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px}
+.poster-nm{font-size:13.5px;font-weight:700;color:var(--muted)}
+.jc-loc{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:3px}
 
 /* ── POST JOB ── */
 #app-post{overflow:hidden}
@@ -261,7 +263,7 @@ body.theme-sage-dark .le{color:#E0C45A}
 .post-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 20px calc(var(--sab) + 20px);-webkit-overflow-scrolling:touch}
 .section-h{font-size:22px;font-weight:800;margin-bottom:20px}
 .form-g{margin-bottom:16px}
-.form-lbl{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.form-lbl{display:block;font-size:13.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
 .form-inp,.form-ta{width:100%;padding:14px 16px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:16px;font-weight:600;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
 .form-inp:focus,.form-ta:focus{border-color:var(--purple)}
 .form-ta{resize:none;height:100px}
@@ -269,21 +271,21 @@ body.theme-sage-dark .le{color:#E0C45A}
 .loc-autocomplete-wrap{position:relative;flex:1;min-width:0}
 .loc-suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface2);border:1.5px solid var(--purple);border-radius:var(--radius-sm);z-index:500;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.1);display:none}
 .loc-suggestions.open{display:block}
-.loc-suggestion{padding:13px 14px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);line-height:1.4}
+.loc-suggestion{padding:13px 14px;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);line-height:1.4}
 .loc-suggestion:last-child{border-bottom:none}
 .loc-suggestion:active{background:rgba(92,138,106,.10)}
 .loc-suggestion .sug-main{font-size:14px;font-weight:800}
-.loc-suggestion .sug-sub{font-size:11px;color:var(--muted);margin-top:2px}
-.btn-gps{padding:0 14px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--teal);cursor:pointer;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:6px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;flex-shrink:0;min-height:50px}
+.loc-suggestion .sug-sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.btn-gps{padding:0 14px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--teal);cursor:pointer;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:6px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;flex-shrink:0;min-height:50px}
 .btn-gps:active{border-color:var(--teal);background:rgba(74,158,122,.06)}
 .btn-gps:disabled{opacity:.5;cursor:not-allowed}
-.loc-status{font-size:11px;font-weight:700;margin-top:6px;min-height:16px;line-height:1.5;word-break:break-word}
+.loc-status{font-size:12.5px;font-weight:700;margin-top:6px;min-height:16px;line-height:1.5;word-break:break-word}
 .loc-status.verified{color:var(--lime)}
 .loc-status.manual{color:var(--yellow)}
 .loc-status.loading{color:var(--muted)}
-.list-radius-btn{padding:6px 14px;border-radius:100px;background:var(--surface2);border:1.5px solid var(--border);font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;white-space:nowrap;font-family:'Nunito',sans-serif;transition:all .15s;flex-shrink:0}
+.list-radius-btn{padding:6px 14px;border-radius:100px;background:var(--surface2);border:1.5px solid var(--border);font-size:13.5px;font-weight:800;color:var(--muted);cursor:pointer;white-space:nowrap;font-family:'Nunito',sans-serif;transition:all .15s;flex-shrink:0}
 .list-radius-btn.active{background:rgba(92,138,106,.10);border-color:var(--purple);color:var(--purple)}
-.btn-primary{width:100%;padding:16px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:none;cursor:pointer;transition:opacity .15s,transform .15s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{width:100%;padding:16px;border-radius:var(--radius);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:none;cursor:pointer;transition:opacity .15s,transform .15s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn-primary:active{transform:scale(.97);opacity:.9}
 .btn-primary:disabled{opacity:.45;cursor:not-allowed}
 
@@ -301,11 +303,11 @@ body.theme-sage-dark .le{color:#E0C45A}
 .profile-av{width:64px;height:64px;border-radius:50%;border:3px solid var(--purple);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:var(--purple);background:var(--surface2);flex-shrink:0}
 .profile-av img{width:100%;height:100%;object-fit:cover}
 .profile-nm{font-size:22px;font-weight:800;margin-bottom:4px}
-.profile-em{font-size:13px;color:var(--muted)}
+.profile-em{font-size:14px;color:var(--muted)}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:24px 0}
 .stat-c{background:var(--surface);border-radius:var(--radius-sm);padding:16px 10px;text-align:center;border:1.5px solid var(--border)}
 .stat-n{font-size:26px;font-weight:800;color:var(--purple);display:block}
-.stat-l{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+.stat-l{font-size:11.5px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.5px}
 .settings-l{display:flex;flex-direction:column;gap:2px}
 .setting-i{display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--surface);font-size:15px;font-weight:700;cursor:pointer;min-height:54px}
 .setting-i:first-child{border-radius:var(--radius) var(--radius) var(--radius-sm) var(--radius-sm)}
@@ -323,7 +325,7 @@ body.theme-sage-dark .le{color:#E0C45A}
   border-top:1px solid var(--border);z-index:200;flex-shrink:0;
   position:relative;/* own stacking context — fixes Android compositing overlap */
 }
-.nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;transition:color .15s;flex:1;min-height:44px;justify-content:center;white-space:nowrap}
+.nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;transition:color .15s;flex:1;min-height:44px;justify-content:center;white-space:nowrap}
 .nav-i.active{color:var(--purple)}
 body:not(.theme-sage-dark) .nav-i.active{color:#2E4A38}
 .nav-i.nav-post{color:var(--muted)}
@@ -331,7 +333,7 @@ body:not(.theme-sage-dark) .nav-i.active{color:#2E4A38}
 .nav-i svg{width:22px;height:22px;flex-shrink:0}
 
 /* FAB */
-.fab{position:absolute;bottom:16px;right:16px;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-size:26px;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(92,138,106,.25);transition:transform .15s;z-index:50}
+.fab{position:absolute;bottom:16px;right:16px;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-size:26px;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(92,138,106,.25);transition:transform .15s;z-index:50}
 .fab:active{transform:scale(.91)}
 
 /* ── MODALS — fixed so they cover full viewport ── */
@@ -340,11 +342,11 @@ body:not(.theme-sage-dark) .nav-i.active{color:#2E4A38}
 .modal-sheet{width:100%;max-width:480px;background:var(--surface);border-radius:28px 28px 0 0;padding:24px 24px max(24px,calc(var(--sab) + 16px));max-height:90dvh;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .modal-handle{width:40px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 20px}
 .modal-title{font-size:22px;font-weight:800;margin-bottom:6px;word-break:break-word;overflow-wrap:break-word}
-.modal-meta{font-size:13px;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.modal-meta{font-size:14px;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .modal-desc{font-size:15px;line-height:1.6;margin-bottom:22px;word-break:break-word;overflow-wrap:break-word}
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
 .modal-pill{background:var(--surface2);border-radius:14px;padding:14px;text-align:center}
-.modal-pill-l{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.modal-pill-l{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
 .modal-pill-v{font-size:18px;font-weight:800}
 
 /* ── UTILS ── */
@@ -377,9 +379,9 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .conv-body{flex:1;min-width:0}
 .conv-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:3px}
 .conv-name{font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.conv-time{font-size:11px;color:var(--muted);font-weight:700;flex-shrink:0}
-.conv-title{font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
-.conv-preview{font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-time{font-size:12.5px;color:var(--muted);font-weight:700;flex-shrink:0}
+.conv-title{font-size:13.5px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.conv-preview{font-size:13.5px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ── OTHER USER PROFILE MODAL ── */
 .op-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;display:none;align-items:flex-end;justify-content:center}
@@ -391,20 +393,20 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-close:active{background:var(--border)}
 .op-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 20px calc(var(--sab) + 28px);display:flex;flex-direction:column;gap:16px}
 .op-hero{display:flex;align-items:center;gap:14px}
-.op-av{width:32px;height:32px;border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
+.op-av{width:32px;height:32px;border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
 .op-name{font-size:20px;font-weight:800;line-height:1.2;word-break:break-word;overflow-wrap:break-word}
 .op-stats{background:var(--surface2);border-radius:var(--radius-sm);border:1.5px solid var(--border);overflow:hidden}
 .op-stats-row{display:grid;grid-template-columns:1fr 1fr}
 .op-stat{padding:14px 16px;display:flex;flex-direction:column;gap:4px}
 .op-stat:first-child{border-right:1px solid var(--border)}
-.op-stat-role{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-.op-stat-line{font-size:13px;font-weight:700;display:flex;align-items:baseline;gap:5px}
+.op-stat-role{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.op-stat-line{font-size:14px;font-weight:700;display:flex;align-items:baseline;gap:5px}
 .op-stat-num{color:var(--purple);font-size:17px;font-weight:800}
-.op-stat-rating{font-size:13px;font-weight:800;color:var(--yellow);margin-top:4px}
+.op-stat-rating{font-size:14px;font-weight:800;color:var(--yellow);margin-top:4px}
 .op-bio{background:var(--surface2);border-radius:var(--radius-sm);border:1.5px solid var(--border);padding:14px 16px;word-break:break-word;overflow-wrap:break-word}
-.op-bio-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.op-bio-lbl{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
 .op-bio-text{font-size:14px;font-weight:600;color:#ccc;line-height:1.7;word-break:break-word;overflow-wrap:break-word}
-.op-bio-empty{font-size:13px;color:var(--muted);font-style:italic;font-weight:600}
+.op-bio-empty{font-size:14px;color:var(--muted);font-style:italic;font-weight:600}
 
 @media(min-width:481px){
   body{box-shadow:0 0 0 1px var(--border)}
@@ -446,13 +448,13 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 }
 .ds-num{
   width:36px;height:36px;border-radius:50%;
-  background:linear-gradient(135deg,var(--purple),var(--pink));
+  background:linear-gradient(135deg,var(--btn-a),var(--btn-b));
   color:#fff;font-size:16px;font-weight:800;font-family:'Fredoka One',cursive;
   display:flex;align-items:center;justify-content:center;
   margin-bottom:10px;flex-shrink:0
 }
-.ds-title{font-size:13px;font-weight:800;margin-bottom:5px;color:var(--text)}
-.ds-desc{font-size:11px;color:var(--muted);font-weight:600;line-height:1.55}
+.ds-title{font-size:14px;font-weight:800;margin-bottom:5px;color:var(--text)}
+.ds-desc{font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.55}
 .ds-div{width:1px;background:var(--border);align-self:stretch;flex-shrink:0}
 .ds-nav{
   display:none;width:100%;max-width:680px;
@@ -463,7 +465,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   .ds-nav{display:flex}
 }
 .ds-nav a{
-  color:var(--muted);font-size:12px;font-weight:800;
+  color:var(--muted);font-size:13.5px;font-weight:800;
   text-decoration:none;transition:color .15s;letter-spacing:.3px
 }
 .ds-nav a:hover{color:var(--purple)}
@@ -522,7 +524,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     </div>
   </div>
   <div class="auth-legal">By continuing you agree to Yoodle's <a href="/privacy">Privacy Policy</a>. No spam, ever.<br><a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a> · <a href="/ambassadors">Ambassadors</a></div>
-  <div id="ios-pwa-tip" style="display:none;margin-top:16px;background:rgba(92,138,106,.08);border:1.5px solid rgba(92,138,106,.20);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.6;font-weight:700;text-align:center;position:relative;z-index:1">
+  <div id="ios-pwa-tip" style="display:none;margin-top:16px;background:rgba(92,138,106,.08);border:1.5px solid rgba(92,138,106,.20);border-radius:12px;padding:12px 16px;font-size:13.5px;color:var(--muted);line-height:1.6;font-weight:700;text-align:center;position:relative;z-index:1">
     <strong style="color:var(--purple)">Using the home screen app?</strong><br>Sign in with Google — magic links open in Safari and won't transfer back to the app.
   </div>
 </div>
@@ -555,27 +557,27 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         </svg>
       </button>
       <!-- Map/List toggle pill — bottom center -->
-      <button id="browse-toggle" onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;pointer-events:all;background:linear-gradient(135deg,var(--purple),var(--pink));border:none;border-radius:100px;padding:11px 24px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#fff;box-shadow:0 4px 16px rgba(92,138,106,.25)">
+      <button id="browse-toggle" onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;pointer-events:all;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;border-radius:100px;padding:11px 24px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#fff;box-shadow:0 4px 16px rgba(92,138,106,.25)">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
         <span style="font-size:14px;font-weight:800;color:#fff;font-family:'Nunito',sans-serif">List</span>
       </button>
       <!-- Corner count card — bottom left -->
       <div id="map-counts" style="position:absolute;top:24px;left:16px;z-index:10;pointer-events:all;display:none">
         <button onclick="openRadiusSheet()" style="background:rgba(255,255,255,.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:16px;padding:10px 14px;cursor:pointer;display:flex;flex-direction:column;gap:7px;min-width:148px;box-shadow:0 4px 16px rgba(0,0,0,.1)">
-          <div style="font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px" id="map-radius-corner">WITHIN — KM</div>
-          <div id="map-counts-loading" style="display:none;font-size:11px;font-weight:800;color:var(--muted);align-items:center;gap:6px">
+          <div style="font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px" id="map-radius-corner">WITHIN — KM</div>
+          <div id="map-counts-loading" style="display:none;font-size:12.5px;font-weight:800;color:var(--muted);align-items:center;gap:6px">
             <div class="spinner" style="width:12px;height:12px;border-width:2px"></div> Loading…
           </div>
           <div id="map-counts-data" style="display:flex;flex-direction:column;gap:6px">
             <div style="display:flex;align-items:center;gap:8px">
               <span style="width:10px;height:10px;border-radius:50%;background:#E07A5F;flex-shrink:0;display:inline-block"></span>
               <span style="font-size:15px;font-weight:800;color:var(--text)" id="map-jobs-count">0</span>
-              <span style="font-size:12px;font-weight:700;color:var(--muted)">need help</span>
+              <span style="font-size:13.5px;font-weight:700;color:var(--muted)">need help</span>
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="width:10px;height:10px;border-radius:50%;background:#5C8A6A;flex-shrink:0;display:inline-block"></span>
               <span style="font-size:15px;font-weight:800;color:var(--text)" id="map-helpers-count">0</span>
-              <span style="font-size:12px;font-weight:700;color:var(--muted)">offering help</span>
+              <span style="font-size:13.5px;font-weight:700;color:var(--muted)">offering help</span>
             </div>
           </div>
         </button>
@@ -588,7 +590,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   <!-- LIST VIEW -->
   <div class="app-view" id="app-list">
     <div style="padding:12px 16px 0;flex-shrink:0">
-      <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:10px" id="list-sub">Within — km · map area</div>
+      <div style="font-size:13.5px;font-weight:800;color:var(--muted);margin-bottom:10px" id="list-sub">Within — km · map area</div>
       <!-- Tabs -->
       <div style="display:flex;gap:6px;background:var(--surface2);border-radius:12px;padding:4px">
         <button id="list-tab-jobs" onclick="switchListTab('jobs')" style="flex:1;padding:9px;border-radius:8px;border:none;background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Jobs <span id="list-jobs-count" style="color:var(--purple)">0</span></button>
@@ -598,7 +600,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     <!-- Scrollable content -->
     <div id="list-tab-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px 80px"></div>
     <!-- Map toggle pill -->
-    <button onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;background:linear-gradient(135deg,var(--purple),var(--pink));border:none;border-radius:100px;padding:11px 24px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#fff;box-shadow:0 4px 16px rgba(92,138,106,.25)">
+    <button onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;border-radius:100px;padding:11px 24px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#fff;box-shadow:0 4px 16px rgba(92,138,106,.25)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
       <span style="font-size:14px;font-weight:800;color:#fff;font-family:'Nunito',sans-serif">Map</span>
     </button>
@@ -607,7 +609,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   <!-- POST FORK (+ button landing) -->
   <div class="app-view" id="app-post">
     <div class="post-scroll" style="display:flex;flex-direction:column;align-items:center;padding-top:36px">
-      <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px">New Listing</div>
+      <div style="font-size:13.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px">New Listing</div>
       <div style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:32px;font-family:'Fredoka One',cursive">What would you like to post?</div>
 
       <!-- Post a job card -->
@@ -617,7 +619,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         </div>
         <div>
           <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">Post a job</div>
-          <div style="font-size:13px;font-weight:700;color:var(--muted)">I have a task that needs doing</div>
+          <div style="font-size:14px;font-weight:700;color:var(--muted)">I have a task that needs doing</div>
         </div>
       </button>
 
@@ -654,14 +656,14 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <div class="form-g">
         <label class="form-lbl">Map pin visibility</label>
         <div style="display:flex;gap:8px">
-          <button id="p-vis-public" onclick="setPostVisibility(true)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--lime);background:rgba(46,125,82,.08);color:var(--lime);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">
+          <button id="p-vis-public" onclick="setPostVisibility(true)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--lime);background:rgba(46,125,82,.08);color:var(--lime);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">
             Show pin on map
           </button>
-          <button id="p-vis-private" onclick="setPostVisibility(false)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">
+          <button id="p-vis-private" onclick="setPostVisibility(false)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">
             List only
           </button>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">Pin on map shows your approximate location. List only keeps your address private.</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5">Pin on map shows your approximate location. List only keeps your address private.</div>
       </div>
 
       <button class="btn-primary" id="post-btn" onclick="postJob()">Post Job</button>
@@ -688,25 +690,25 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         <div class="profile-av" id="pav" style="margin:0;flex-shrink:0">?</div>
         <div style="flex:1;min-width:0">
           <div class="profile-nm" id="pnm" style="margin-bottom:2px">—</div>
-          <div id="pem" style="font-size:12px;color:var(--muted)">—</div>
+          <div id="pem" style="font-size:13.5px;color:var(--muted)">—</div>
         </div>
       </div>
 
       <div class="stats-row" style="grid-template-columns:1fr 1fr">
         <div class="stat-c" style="text-align:left;padding:16px">
-          <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">As Poster</div>
+          <div style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">As Poster</div>
           <div style="display:flex;flex-direction:column;gap:4px">
-            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-posted" style="color:var(--purple);font-size:18px;font-weight:800">0</span> posted</div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-poster-done" style="color:var(--purple);font-size:18px;font-weight:800">0</span> completed</div>
-            <div style="font-size:13px;font-weight:700;color:var(--yellow)" id="s-poster-rating">★ —</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text)"><span id="s-posted" style="color:var(--purple);font-size:18px;font-weight:800">0</span> posted</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text)"><span id="s-poster-done" style="color:var(--purple);font-size:18px;font-weight:800">0</span> completed</div>
+            <div style="font-size:14px;font-weight:700;color:var(--yellow)" id="s-poster-rating">★ —</div>
           </div>
         </div>
         <div class="stat-c" style="text-align:left;padding:16px">
-          <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">As Helper</div>
+          <div style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">As Helper</div>
           <div style="display:flex;flex-direction:column;gap:4px">
-            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-applied" style="color:var(--purple);font-size:18px;font-weight:800">0</span> applied</div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)"><span id="s-helper-done" style="color:var(--purple);font-size:18px;font-weight:800">0</span> completed</div>
-            <div style="font-size:13px;font-weight:700;color:var(--yellow)" id="s-helper-rating">★ —</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text)"><span id="s-applied" style="color:var(--purple);font-size:18px;font-weight:800">0</span> applied</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text)"><span id="s-helper-done" style="color:var(--purple);font-size:18px;font-weight:800">0</span> completed</div>
+            <div style="font-size:14px;font-weight:700;color:var(--yellow)" id="s-helper-rating">★ —</div>
           </div>
         </div>
       </div>
@@ -723,19 +725,19 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       </div>
       <!-- Notification tip -->
       <div id="notif-tip" style="display:none;background:rgba(92,138,106,.06);border:1.5px solid rgba(92,138,106,.18);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px">
-        <div style="font-size:13px;font-weight:800;color:var(--purple);margin-bottom:6px">Push Notifications</div>
-        <div id="notif-tip-body" style="font-size:12px;color:var(--muted);line-height:1.6;font-weight:700"></div>
+        <div style="font-size:14px;font-weight:800;color:var(--purple);margin-bottom:6px">Push Notifications</div>
+        <div id="notif-tip-body" style="font-size:13.5px;color:var(--muted);line-height:1.6;font-weight:700"></div>
       </div>
       <!-- Theme picker -->
       <div style="padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
-        <div style="font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Theme</div>
+        <div style="font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Theme</div>
         <div class="theme-row">
           <div class="theme-opt" id="t-sage-light" onclick="setTheme('sage-light')">
             <div class="theme-swatch" style="background:linear-gradient(135deg,#F5F4EF 50%,#5C8A6A 50%)"></div>
             <div class="theme-name">Light</div>
           </div>
           <div class="theme-opt" id="t-sage-dark" onclick="setTheme('sage-dark')">
-            <div class="theme-swatch" style="background:linear-gradient(135deg,#0D120F 50%,#4CC38A 50%)"></div>
+            <div class="theme-swatch" style="background:linear-gradient(135deg,#0D120F 50%,#178A52 50%)"></div>
             <div class="theme-name">Dark</div>
           </div>
         </div>
@@ -769,13 +771,13 @@ svg.star-off{fill:none;stroke:#4a4a4a}
           <div class="loc-suggestions" id="hp-loc-suggestions"></div>
         </div>
         <div class="loc-status" id="hp-loc-status">Select your area from suggestions</div>
-        <div style="font-size:11px;color:var(--yellow);font-weight:700;margin-top:8px;line-height:1.5">Remember to update your location if you move — e.g. going to your cottage for the weekend.</div>
+        <div style="font-size:12.5px;color:var(--yellow);font-weight:700;margin-top:8px;line-height:1.5">Remember to update your location if you move — e.g. going to your cottage for the weekend.</div>
       </div>
 
       <!-- CATEGORIES -->
       <div class="form-g">
         <label class="form-lbl">What can you help with?</label>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Select all that apply</div>
+        <div style="font-size:13.5px;color:var(--muted);margin-bottom:10px">Select all that apply</div>
         <div id="hp-categories" style="display:flex;flex-wrap:wrap;gap:8px"></div>
       </div>
 
@@ -794,16 +796,16 @@ svg.star-off{fill:none;stroke:#4a4a4a}
             <input id="hp-rate" type="number" min="0" placeholder="0" style="background:none;border:none;outline:none;font-family:'Nunito',sans-serif;font-size:18px;font-weight:800;color:var(--text);width:80px" oninput="onHPRateInput()">
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="hp-rate-type active" id="hprt-free" onclick="setHPRateType('free')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--lime);background:rgba(46,125,82,.08);color:var(--lime);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Free</button>
-            <button class="hp-rate-type" id="hprt-hourly" onclick="setHPRateType('hourly')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Per hour</button>
-            <button class="hp-rate-type" id="hprt-daily" onclick="setHPRateType('daily')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Per day</button>
-            <button class="hp-rate-type" id="hprt-flat" onclick="setHPRateType('flat')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Flat rate</button>
+            <button class="hp-rate-type active" id="hprt-free" onclick="setHPRateType('free')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--lime);background:rgba(46,125,82,.08);color:var(--lime);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Free</button>
+            <button class="hp-rate-type" id="hprt-hourly" onclick="setHPRateType('hourly')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Per hour</button>
+            <button class="hp-rate-type" id="hprt-daily" onclick="setHPRateType('daily')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Per day</button>
+            <button class="hp-rate-type" id="hprt-flat" onclick="setHPRateType('flat')" style="padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Flat rate</button>
           </div>
         </div>
       </div>
 
       <!-- EXPIRY NOTICE -->
-      <div style="background:rgba(92,138,106,.06);border:1.5px solid rgba(92,138,106,.18);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:20px;font-size:12px;color:var(--muted);font-weight:700;line-height:1.6">
+      <div style="background:rgba(92,138,106,.06);border:1.5px solid rgba(92,138,106,.18);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:20px;font-size:13.5px;color:var(--muted);font-weight:700;line-height:1.6">
         Helper listings are active for <strong style="color:var(--purple)">90 days</strong>. After that your profile is automatically hidden — just toggle back on to renew.
       </div>
 
@@ -811,14 +813,14 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <div class="form-g">
         <label class="form-lbl">Map pin visibility</label>
         <div style="display:flex;gap:8px">
-          <button id="hp-vis-public" onclick="setHelperVisibility(true)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--lime);background:rgba(46,125,82,.08);color:var(--lime);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">
+          <button id="hp-vis-public" onclick="setHelperVisibility(true)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--lime);background:rgba(46,125,82,.08);color:var(--lime);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">
             Show pin on map
           </button>
-          <button id="hp-vis-private" onclick="setHelperVisibility(false)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">
+          <button id="hp-vis-private" onclick="setHelperVisibility(false)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">
             List only
           </button>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">Being shown on the map improves the odds of jobs finding you.</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5">Being shown on the map improves the odds of jobs finding you.</div>
       </div>
 
       <!-- ACTION BUTTONS -->
@@ -828,7 +830,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <!-- Pause listing (shown only when active) -->
       <div id="hp-pause-section" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
         <button id="hp-pause-btn" onclick="confirmPauseHelper()" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;color:var(--yellow);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;border:1.5px solid rgba(234,179,8,.3);cursor:pointer">Pause My Listing</button>
-        <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center;line-height:1.5">This will hide you from searches. You can resume anytime.</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-top:8px;text-align:center;line-height:1.5">This will hide you from searches. You can resume anytime.</div>
       </div>
     </div>
   </div>
@@ -845,7 +847,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     <button class="nav-i" id="ni-myjobs" onclick="nav('myjobs')" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       Activity
-      <span id="rating-badge" onclick="event.stopPropagation();openRatingsSheet()" style="display:none;position:absolute;top:4px;right:6px;background:var(--yellow);color:#fff;font-size:9px;font-weight:800;border-radius:100px;padding:2px 5px;line-height:1.2;cursor:pointer"></span>
+      <span id="rating-badge" onclick="event.stopPropagation();openRatingsSheet()" style="display:none;position:absolute;top:4px;right:6px;background:var(--yellow);color:#fff;font-size:10.5px;font-weight:800;border-radius:100px;padding:2px 5px;line-height:1.2;cursor:pointer"></span>
     </button>
     <button class="nav-i nav-post" id="ni-post" onclick="nav('post')">
       <div style="width:46px;height:46px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:-10px 0 -2px">
@@ -855,7 +857,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     <button class="nav-i" id="ni-messages" onclick="nav('messages')" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Messages
-      <span id="unread-badge" style="display:none;position:absolute;top:4px;right:6px;background:#E07A5F;color:#fff;font-size:9px;font-weight:800;border-radius:100px;padding:2px 5px;line-height:1.2"></span>
+      <span id="unread-badge" style="display:none;position:absolute;top:4px;right:6px;background:#E07A5F;color:#fff;font-size:10.5px;font-weight:800;border-radius:100px;padding:2px 5px;line-height:1.2"></span>
     </button>
     <button class="nav-i" id="ni-profile" onclick="nav('profile')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -868,10 +870,10 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 <div class="modal-ov" id="chat-modal" onclick="if(event.target.id==='chat-modal')closeChat()">
   <div class="modal-sheet" style="height:80vh;display:flex;flex-direction:column;padding:0">
     <div style="padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:12px">
-      <div id="chat-av" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)" style="width:32px;height:32px;border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">?</div>
+      <div id="chat-av" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)" style="width:32px;height:32px;border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;cursor:pointer;font-family:'Nunito',sans-serif">?</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="chat-title">—</div>
-        <div style="font-size:12px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer" id="chat-other" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)">—<span style="font-size:10px;opacity:.5">›</span></div>
+        <div style="font-size:13.5px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer" id="chat-other" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)">—<span style="font-size:11.5px;opacity:.5">›</span></div>
       </div>
       <button onclick="closeChat()" style="width:44px;height:44px;border-radius:50%;border:none;background:var(--surface2);color:var(--text);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800">✕</button>
     </div>
@@ -880,7 +882,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     <div id="chat-input-bar" style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;background:var(--surface)">
       <input id="chat-input" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMessage()"
         style="flex:1;padding:12px 16px;border-radius:100px;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:16px;font-weight:600;outline:none">
-      <button onclick="sendMessage()" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">↑</button>
+      <button onclick="sendMessage()" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">↑</button>
     </div>
   </div>
 </div>
@@ -921,9 +923,9 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <div id="biz-avatar" style="width:52px;height:52px;border-radius:12px;background:#FAEEDA;border:1.5px solid #BA7517;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;color:#633806;flex-shrink:0">G</div>
       <div style="min-width:0">
         <div id="biz-name" style="font-size:16px;font-weight:800;color:var(--fg)">—</div>
-        <div id="biz-category" style="font-size:13px;color:var(--muted);margin-top:2px">—</div>
+        <div id="biz-category" style="font-size:14px;color:var(--muted);margin-top:2px">—</div>
         <div style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;background:#FAEEDA;padding:2px 8px;border-radius:8px">
-          <span style="font-size:11px;color:#854F0B;font-weight:700">SPONSORED</span>
+          <span style="font-size:12.5px;color:#854F0B;font-weight:700">SPONSORED</span>
         </div>
       </div>
     </div>
@@ -990,7 +992,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title" style="margin-bottom:4px">Interested People</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:20px" id="applicants-job-title">—</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:20px" id="applicants-job-title">—</div>
     <div id="applicants-list"><div class="loading"><div class="spinner"></div></div></div>
     <button onclick="document.getElementById('applicants-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:16px">Close</button>
   </div>
@@ -1003,7 +1005,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     <div style="font-size:48px;margin-bottom:12px">🙋</div>
     <div class="modal-title" style="margin-bottom:6px">Applied!</div>
     <div style="font-size:14px;color:var(--muted);margin-bottom:6px" id="applied-job-title">—</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:28px">Awaiting the poster's response. You'll be notified when assigned.</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:28px">Awaiting the poster's response. You'll be notified when assigned.</div>
     <button class="btn-primary" id="applied-chat-btn" onclick="openAppliedChat()">Ask a Question</button>
     <button id="applied-withdraw-btn" onclick="withdrawFromConfirm()" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:10px">Withdraw Interest</button>
     <button onclick="document.getElementById('applied-modal').classList.remove('open')" style="width:100%;padding:12px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-top:6px">Close</button>
@@ -1031,7 +1033,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     <div style="padding:16px 20px 0;flex-shrink:0">
       <div class="modal-handle"></div>
       <div style="font-size:20px;font-weight:800;margin-bottom:4px">Pending Ratings</div>
-      <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:16px">Rate these to complete the job lifecycle</div>
+      <div style="font-size:14px;color:var(--muted);font-weight:700;margin-bottom:16px">Rate these to complete the job lifecycle</div>
     </div>
     <div id="ratings-sheet-list" style="flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch"></div>
   </div>
@@ -1055,7 +1057,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title" style="margin-bottom:4px">Ask a Question</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Send a message to <strong style="color:var(--text)" id="contact-helper-name">—</strong></div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:20px">Send a message to <strong style="color:var(--text)" id="contact-helper-name">—</strong></div>
     <div class="form-g">
       <label class="form-lbl">Your message</label>
       <textarea class="form-ta" id="contact-msg" placeholder="Hi! I saw your profile and wanted to ask about…" style="min-height:100px"></textarea>
@@ -1614,7 +1616,7 @@ function renderMapPins(){
         <div style="width:3px;height:44px;background:#854F0B;border-radius:1px"></div>
         <div style="display:flex;flex-direction:column;align-items:center">
           <div style="width:40px;height:26px;background:linear-gradient(135deg,#FAEEDA,#FAC775);border:1.5px solid #BA7517;border-left:none;border-radius:0 4px 4px 0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#633806;font-family:'Nunito',sans-serif">${initial}</div>
-          <div style="font-size:9px;color:#633806;background:rgba(250,238,218,.9);padding:1px 4px;border-radius:2px;margin-top:1px;white-space:nowrap;max-width:60px;overflow:hidden;text-overflow:ellipsis">${esc(biz.business_name||'')}</div>
+          <div style="font-size:10.5px;color:#633806;background:rgba(250,238,218,.9);padding:1px 4px;border-radius:2px;margin-top:1px;white-space:nowrap;max-width:60px;overflow:hidden;text-overflow:ellipsis">${esc(biz.business_name||'')}</div>
         </div>
       </div>`,
       iconSize:[46,52],iconAnchor:[3,44]
@@ -1639,7 +1641,7 @@ function openBizListing(biz){
     const aWeb=document.createElement('a');
     aWeb.href=biz.business_website;aWeb.target='_blank';aWeb.rel='noopener';
     aWeb.style.cssText='display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border-radius:12px;text-decoration:none;color:var(--fg);font-size:14px;font-weight:600;border:1px solid var(--surface2)';
-    aWeb.innerHTML=`<span style="font-size:18px">🌐</span><span style="flex:1">${esc(biz.business_website.replace(/^https?:\/\//,''))}</span><span style="color:var(--muted);font-size:13px">↗</span>`;
+    aWeb.innerHTML=`<span style="font-size:18px">🌐</span><span style="flex:1">${esc(biz.business_website.replace(/^https?:\/\//,''))}</span><span style="color:var(--muted);font-size:14px">↗</span>`;
     aWeb.onclick=()=>logBizEvent(biz.id,'url_tap');
     actions.appendChild(aWeb);
   }
@@ -1779,7 +1781,7 @@ function renderSheetContent(){
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">${sheetHelpers.map(h=>{
       const name=h.name||'Helper';
       const rating=h.rating?`★ ${h.rating}`:'New';
-      const cats=(h.helper_categories||[]).slice(0,4).map(c=>`<span style="font-size:10px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:2px 8px;white-space:nowrap">${c}</span>`).join('');
+      const cats=(h.helper_categories||[]).slice(0,4).map(c=>`<span style="font-size:11.5px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:2px 8px;white-space:nowrap">${c}</span>`).join('');
       const rateLabel=h.helper_rate_type==='free'||!h.helper_rate?'Free':
         `$${h.helper_rate}${h.helper_rate_type==='hourly'?'/hr':h.helper_rate_type==='daily'?'/day':' flat'}`;
       return `<div onclick="openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
@@ -1788,11 +1790,11 @@ function renderSheetContent(){
           <div style="min-width:0;flex:1">
             <div style="font-size:15px;font-weight:800">${esc(name)}</div>
             <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</span>
-              <span style="font-size:12px;color:var(--lime);font-weight:800">${rateLabel}</span>
+              <span style="font-size:13.5px;color:var(--yellow);font-weight:800">${rating}</span>
+              <span style="font-size:13.5px;color:var(--lime);font-weight:800">${rateLabel}</span>
             </div>
           </div>
-          <div style="font-size:12px;color:var(--muted);font-weight:800;flex-shrink:0">View ›</div>
+          <div style="font-size:13.5px;color:var(--muted);font-weight:800;flex-shrink:0">View ›</div>
         </div>
         ${cats?`<div style="display:flex;flex-wrap:wrap;gap:4px">${cats}</div>`:''}
       </div>`;
@@ -1837,7 +1839,7 @@ function renderListTabContent(){
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px">${sheetHelpers.map(h=>{
       const name=h.name||'Helper';
       const rating=h.rating?`★ ${h.rating}`:'New';
-      const cats=(h.helper_categories||[]).slice(0,4).map(c=>`<span style="font-size:10px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:2px 8px;white-space:nowrap">${c}</span>`).join('');
+      const cats=(h.helper_categories||[]).slice(0,4).map(c=>`<span style="font-size:11.5px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:2px 8px;white-space:nowrap">${c}</span>`).join('');
       const rateLabel=h.helper_rate_type==='free'||!h.helper_rate?'Free':`$${h.helper_rate}${h.helper_rate_type==='hourly'?'/hr':h.helper_rate_type==='daily'?'/day':' flat'}`;
       let distLabel='';
       if(gpsLat&&gpsLng&&h.last_lat&&h.last_lng){const d=haversineKm(gpsLat,gpsLng,h.last_lat,h.last_lng);distLabel=d<=1?'Less than 1 km away':`${d.toFixed(1)} km away`;}
@@ -1847,14 +1849,14 @@ function renderListTabContent(){
           <div style="min-width:0;flex:1">
             <div style="font-size:15px;font-weight:800">${esc(name)}</div>
             <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</span>
-              <span style="font-size:12px;color:var(--lime);font-weight:800">${rateLabel}</span>
+              <span style="font-size:13.5px;color:var(--yellow);font-weight:800">${rating}</span>
+              <span style="font-size:13.5px;color:var(--lime);font-weight:800">${rateLabel}</span>
             </div>
           </div>
-          <div style="font-size:12px;color:var(--muted);font-weight:800;flex-shrink:0">View ›</div>
+          <div style="font-size:13.5px;color:var(--muted);font-weight:800;flex-shrink:0">View ›</div>
         </div>
         ${cats?`<div style="display:flex;flex-wrap:wrap;gap:4px">${cats}</div>`:''}
-        ${distLabel?`<div style="font-size:11px;color:var(--muted);font-weight:700">${esc(distLabel)}</div>`:''}
+        ${distLabel?`<div style="font-size:12.5px;color:var(--muted);font-weight:700">${esc(distLabel)}</div>`:''}
       </div>`;
     }).join('')}</div>`;
   }
@@ -1911,8 +1913,8 @@ async function openOtherProfile(userId){
   const pCount=Array.isArray(pRating)&&pRating[0]?.count?pRating[0].count:0;
   const hAvg=Array.isArray(hRating)&&hRating[0]?.round?hRating[0].round:null;
   const hCount=Array.isArray(hRating)&&hRating[0]?.count?hRating[0].count:0;
-  const pRatingStr=pAvg?`★ ${pAvg} <span style="color:var(--muted);font-size:11px;font-weight:700">(${pCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
-  const hRatingStr=hAvg?`★ ${hAvg} <span style="color:var(--muted);font-size:11px;font-weight:700">(${hCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
+  const pRatingStr=pAvg?`★ ${pAvg} <span style="color:var(--muted);font-size:12.5px;font-weight:700">(${pCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
+  const hRatingStr=hAvg?`★ ${hAvg} <span style="color:var(--muted);font-size:12.5px;font-weight:700">(${hCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
 
     const initial=((prof.name||'?')[0]).toUpperCase();
 
@@ -1949,10 +1951,10 @@ async function openOtherProfile(userId){
       const isMe=userId===(myProfileId||me?.id);
       return `<div class="op-bio" style="margin-top:12px;border-top:1px solid var(--border);padding-top:16px">
         <div class="op-bio-lbl" style="color:var(--lime)">Available as Helper</div>
-        ${cats.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${cats.map(c=>`<span style="font-size:11px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:3px 10px">${c}</span>`).join('')}</div>`:''}
+        ${cats.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${cats.map(c=>`<span style="font-size:12.5px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:3px 10px">${c}</span>`).join('')}</div>`:''}
         ${prof.helper_bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(prof.helper_bio)}</div>`:''}
-        <div style="font-size:13px;font-weight:800;color:var(--lime)">${rateLabel}</div>
-        ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Helper')}')" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Helper</button>`:''}
+        <div style="font-size:14px;font-weight:800;color:var(--lime)">${rateLabel}</div>
+        ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Helper')}')" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Helper</button>`:''}
       </div>`;
     })():''}`;
 }
@@ -2220,8 +2222,8 @@ async function setAvatar(){
 function jobCard(j,profile){
   const color=CAT_COLOR[j.category]||'#3D6B50';
   const name=profile?.name||'Someone';
-  const rating=profile?.rating?`<span style="color:var(--yellow);font-size:11px;font-weight:800">★ ${profile.rating}</span>`:`<span style="color:var(--muted);font-size:11px;font-weight:700">New</span>`;
-  const locBadge=j.location_verified?`<span style="color:var(--lime);font-size:10px">✅</span>`:`<span style="color:var(--yellow);font-size:10px">⚠️</span>`;
+  const rating=profile?.rating?`<span style="color:var(--yellow);font-size:12.5px;font-weight:800">★ ${profile.rating}</span>`:`<span style="color:var(--muted);font-size:12.5px;font-weight:700">New</span>`;
+  const locBadge=j.location_verified?`<span style="color:var(--lime);font-size:11.5px">✅</span>`:`<span style="color:var(--yellow);font-size:11.5px">⚠️</span>`;
   return `<div class="job-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="jc-badge">${j.category||'other'}</div>
     <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
@@ -2254,14 +2256,14 @@ function listCard(j,profile){
   return `<div class="list-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="lc-top">
       <span class="lc-title">${esc(j.title)}</span>
-      <div style="display:flex;flex-direction:row;align-items:center;gap:4px;flex-shrink:0">${myAppliedTaskIds.has(j.id)?'<span style="font-size:10px;font-weight:800;color:var(--lime);letter-spacing:.5px">Applied-</span>':''}<span class="lc-budget">$${j.price??'?'}</span></div>
+      <div style="display:flex;flex-direction:row;align-items:center;gap:4px;flex-shrink:0">${myAppliedTaskIds.has(j.id)?'<span style="font-size:11.5px;font-weight:800;color:var(--lime);letter-spacing:.5px">Applied-</span>':''}<span class="lc-budget">$${j.price??'?'}</span></div>
     </div>
     <div class="lc-desc">${esc(j.description||'')}</div>
     <div class="lc-foot">
       <div class="lc-poster">
         <div class="lc-av">${avatarCircle(name,profile?.avatar_color,'20px','9px',false)}</div>
         <span class="lc-name">${esc(name)}</span>
-        <span style="color:var(--yellow);font-size:11px;font-weight:800;flex-shrink:0">${rating}</span>
+        <span style="color:var(--yellow);font-size:12.5px;font-weight:800;flex-shrink:0">${rating}</span>
       </div>
       <span class="lc-meta">${locLabel?`${esc(locLabel)} · `:''}${timeAgo(j.created_at)}</span>
     </div>
@@ -2271,7 +2273,7 @@ function listCard(j,profile){
 async function openJob(j){
   activeJob=j;const color=CAT_COLOR[j.category]||'#3D6B50';
   document.getElementById('m-title').textContent=j.title;
-  const locTag=j.location_verified?'<span style="color:var(--lime);font-size:11px">GPS Verified</span>':'<span style="color:var(--yellow);font-size:11px">GPS Unverified</span>';
+  const locTag=j.location_verified?'<span style="color:var(--lime);font-size:12.5px">GPS Verified</span>':'<span style="color:var(--yellow);font-size:12.5px">GPS Unverified</span>';
   let modalLocLabel=null;
   if(gpsLat&&gpsLng&&j.lat&&j.lng){
     const d=haversineKm(gpsLat,gpsLng,j.lat,j.lng);
@@ -2290,11 +2292,11 @@ async function openJob(j){
       sb.from('tasks').select('*',{count:'exact',head:true}).eq('poster_id',pid).eq('status','completed')
     ]);
     const pname=prof?.name||'Someone';
-    const prating=prof?.rating?`<span style="color:var(--yellow);font-size:13px;font-weight:800">★ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:12px;font-weight:700">New</span>`;
+    const prating=prof?.rating?`<span style="color:var(--yellow);font-size:14px;font-weight:800">★ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:13.5px;font-weight:700">New</span>`;
     document.getElementById('m-poster').innerHTML=`
       <div onclick="openOtherProfile('${pid}')" style="cursor:pointer;flex-shrink:0">${avatarCircle(pname,prof?.avatar_color,'32px','13px')}</div>
       <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
-        <div style="font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
+        <div style="font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
         <div style="display:flex;align-items:center;gap:5px">${prating}</div>
       </div>`;
   }
@@ -2518,22 +2520,22 @@ async function openApplicants(taskId,taskTitle){
     const p=app.profiles||{};
     const name=p.name||'Someone';
     const rating=p.rating?`★ ${p.rating}`:'New';
-    const bio=p.bio?`<div style="font-size:12px;color:#aaa;margin:4px 0 8px;line-height:1.4">${esc(p.bio)}</div>`:'';
+    const bio=p.bio?`<div style="font-size:13.5px;color:#aaa;margin:4px 0 8px;line-height:1.4">${esc(p.bio)}</div>`:'';
     return `<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;border:1.5px solid var(--border)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:8px">
           <div onclick="openOtherProfile('${app.applicant_id}')" style="cursor:pointer;flex-shrink:0">${avatarCircle(name,p.avatar_color,'42px','17px')}</div>
           <div>
             <div style="font-size:15px;font-weight:800">${esc(name)}</div>
-            <div style="font-size:12px;color:var(--yellow);font-weight:800">${rating}</div>
+            <div style="font-size:13.5px;color:var(--yellow);font-weight:800">${rating}</div>
           </div>
         </div>
-        <div style="font-size:11px;color:var(--muted)">${timeAgo(app.created_at)}</div>
+        <div style="font-size:12.5px;color:var(--muted)">${timeAgo(app.created_at)}</div>
       </div>
       ${bio}
       <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="openChatWithApplicant('${taskId}','${esc(name)}','${app.applicant_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Chat</button>
-        <button onclick="assignApplicant('${taskId}','${app.id}','${app.applicant_id}','${esc(name)}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">✅ Assign</button>
+        <button onclick="openChatWithApplicant('${taskId}','${esc(name)}','${app.applicant_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+        <button onclick="assignApplicant('${taskId}','${app.id}','${app.applicant_id}','${esc(name)}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">✅ Assign</button>
       </div>
     </div>`;
   }).join('');
@@ -2770,7 +2772,7 @@ async function loadMyJobs(){
       const color=CAT_COLOR[cat]||'#3D6B50';
       let appBadge,actionBtn='',appMenu='';
       if(app.status==='pending'){
-        appBadge=`<span style="color:var(--yellow);font-size:12px;font-weight:800">Pending</span>`;
+        appBadge=`<span style="color:var(--yellow);font-size:13.5px;font-weight:800">Pending</span>`;
         appMenu=`<div class="card-menu-wrap">
           <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-app-${app.id}')" aria-label="More options">⋮</button>
           <div class="card-menu-drop" id="cm-app-${app.id}">
@@ -2778,7 +2780,7 @@ async function loadMyJobs(){
           </div>
         </div>`;
       } else if(app.status==='assigned'){
-        appBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">Assigned</span>`;
+        appBadge=`<span style="color:var(--teal);font-size:13.5px;font-weight:800">Assigned</span>`;
         appMenu=`<div class="card-menu-wrap">
           <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-app-${app.id}')" aria-label="More options">⋮</button>
           <div class="card-menu-drop" id="cm-app-${app.id}">
@@ -2786,7 +2788,7 @@ async function loadMyJobs(){
           </div>
         </div>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Chat</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
         </div>`;
       }
       return `<div class="job-card" style="--jc:${color};cursor:default;overflow:visible">
@@ -2806,7 +2808,7 @@ async function loadMyJobs(){
       const posterName=j.profiles?.name||'Neighbour';
       return `<div class="job-card" style="--jc:${color};cursor:default;overflow:visible">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <span style="color:var(--teal);font-size:12px;font-weight:800">Help Request</span>
+          <span style="color:var(--teal);font-size:13.5px;font-weight:800">Help Request</span>
           <div class="card-menu-wrap">
             <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-ho-${j.id}')" aria-label="More options">⋮</button>
             <div class="card-menu-drop" id="cm-ho-${j.id}">
@@ -2817,7 +2819,7 @@ async function loadMyJobs(){
         <div class="jc-top"><div class="jc-title">${esc(j.title)}</div></div>
         <div class="jc-desc">${esc(j.description||'')}</div>
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Chat</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
         </div>
       </div>`;
     }).join('');
@@ -2831,18 +2833,18 @@ async function loadMyJobs(){
     const color=CAT_COLOR[j.category]||'#3D6B50';
     const daysLeft=j.expires_at?Math.ceil((new Date(j.expires_at)-now)/(1000*60*60*24)):null;
 
-    const gpsTag=j.status==='open'?(j.location_verified?` · <span style="color:var(--lime);font-size:11px;font-weight:800">GPS</span>`:`· <span style="color:var(--yellow);font-size:11px;font-weight:800">⚠️ Unverified</span>`):'';
+    const gpsTag=j.status==='open'?(j.location_verified?` · <span style="color:var(--lime);font-size:12.5px;font-weight:800">GPS</span>`:`· <span style="color:var(--yellow);font-size:12.5px;font-weight:800">⚠️ Unverified</span>`):'';
     let statusBadge;
-    if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:12px;font-weight:800">Active</span>`;
-    else statusBadge=`<span style="color:var(--lime);font-size:12px;font-weight:800">Open${daysLeft!==null?` · ${daysLeft}d left`:''}${gpsTag}</span>`;
+    if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:13.5px;font-weight:800">Active</span>`;
+    else statusBadge=`<span style="color:var(--lime);font-size:13.5px;font-weight:800">Open${daysLeft!==null?` · ${daysLeft}d left`:''}${gpsTag}</span>`;
 
     let actionBtn='';
     let cardMenu='';
     if(j.status==='open'){
       const appCount=applicantCounts[j.id]||0;
       const appBadge=appCount>0?`<div style="margin-top:8px;padding:8px 12px;background:rgba(92,138,106,.08);border:1.5px solid rgba(92,138,106,.20);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:13px;font-weight:800;color:var(--purple)">${appCount} interested</span>
-        <button onclick="event.stopPropagation();openApplicants('${j.id}','${esc(j.title)}')" style="padding:6px 14px;border-radius:100px;background:var(--purple);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer">Review →</button>
+        <span style="font-size:14px;font-weight:800;color:var(--purple)">${appCount} interested</span>
+        <button onclick="event.stopPropagation();openApplicants('${j.id}','${esc(j.title)}')" style="padding:6px 14px;border-radius:100px;background:var(--btn-a);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">Review →</button>
       </div>`:'';
       cardMenu=`<div class="card-menu-wrap">
         <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-${j.id}')" aria-label="More options">⋮</button>
@@ -2863,7 +2865,7 @@ async function loadMyJobs(){
           </div>
         </div>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">✅ Complete</button>
+          <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">✅ Complete</button>
         </div>`;
       } else {
         cardMenu=`<div class="card-menu-wrap">
@@ -2873,8 +2875,8 @@ async function loadMyJobs(){
           </div>
         </div>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Chat</button>
-          <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">✅ Complete</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+          <button onclick="event.stopPropagation();chatComplete('${j.id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">✅ Complete</button>
         </div>`;
       }
     }
@@ -3064,11 +3066,11 @@ async function loadMessages(){
     const msgTime=t.last_msg_created_at?timeAgo(t.last_msg_created_at):'';
     const isUnread=t.has_unread===true;
     const rowBg=isUnread?'background:rgba(236,72,153,.08);border-color:rgba(236,72,153,.3)':'';
-    const unreadBadge=isUnread?`<span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;background:var(--pink);color:#fff;font-size:9px;font-weight:800;letter-spacing:.5px;vertical-align:middle;flex-shrink:0">NEW</span>`:'';
+    const unreadBadge=isUnread?`<span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;background:var(--pink);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.5px;vertical-align:middle;flex-shrink:0">NEW</span>`:'';
     let statusTag='';
     if(!isPoster){
-      if(t.app_status==='pending') statusTag=`<span style="font-size:10px;color:var(--yellow);font-weight:800;margin-left:6px">Pending</span>`;
-      else if(t.app_status==='assigned'||t.task_status==='claimed') statusTag=`<span style="font-size:10px;color:var(--teal);font-weight:800;margin-left:6px">Assigned</span>`;
+      if(t.app_status==='pending') statusTag=`<span style="font-size:11.5px;color:var(--yellow);font-weight:800;margin-left:6px">Pending</span>`;
+      else if(t.app_status==='assigned'||t.task_status==='claimed') statusTag=`<span style="font-size:11.5px;color:var(--teal);font-weight:800;margin-left:6px">Assigned</span>`;
     }
     return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
       ${avatarCircle(otherName,null,'28px','12px')}
@@ -3120,7 +3122,7 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   const initial=((otherName||'?')[0]).toUpperCase();
   avEl.textContent=initial;
   const otherEl=document.getElementById('chat-other');
-  otherEl.innerHTML=`${esc(otherName+ratingStr)}<span style="font-size:10px;opacity:.5;margin-left:4px">›</span>`;
+  otherEl.innerHTML=`${esc(otherName+ratingStr)}<span style="font-size:11.5px;opacity:.5;margin-left:4px">›</span>`;
   document.getElementById('chat-modal').classList.add('open');
 
   // if we don't have a convId yet, look it up
@@ -3153,14 +3155,14 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   const isDoer=task.doer_id===pid;
   const isHO=isHelperContact(task);
 
-  const withdrawBtn=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Withdraw</button>`;
+  const withdrawBtn=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Withdraw</button>`;
   const cancelHOLabel=isPoster?'Cancel':'Decline';
-  const cancelHOBtn=`<button onclick="cancelHelpOffer('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">${cancelHOLabel}</button>`;
+  const cancelHOBtn=`<button onclick="cancelHelpOffer('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">${cancelHOLabel}</button>`;
   if(task.status==='claimed'){
     let btns='';
     if(isPoster){
-      btns+=`<button onclick="chatComplete('${taskId}','${task.doer_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">✅ Mark Complete</button>`;
-      btns+=isHO?cancelHOBtn:`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Unclaim</button>`;
+      btns+=`<button onclick="chatComplete('${taskId}','${task.doer_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">✅ Mark Complete</button>`;
+      btns+=isHO?cancelHOBtn:`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Unclaim</button>`;
     } else if(isDoer){
       btns+=isHO?cancelHOBtn:withdrawBtn;
     }
@@ -3189,8 +3191,8 @@ async function loadChatMessages(){
   el.innerHTML=data.map(m=>{
     const isMe=m.sender_id===pid||m.sender_id===me.id;
     const isSys=m.body?.startsWith('✅')||m.body?.startsWith('↩️')||m.body?.startsWith('🎉')||m.body?.startsWith('Thanks for');
-    if(isSys&&!isMe)return`<div style="text-align:center;margin:10px 0"><span style="font-size:12px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">${linkify(esc(m.body||''))}</span></div>`;
-    return`<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div style="max-width:75%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--purple)':'var(--surface2)'};font-size:14px;font-weight:600;line-height:1.4">${linkify(esc(m.body||''))}<div style="font-size:10px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
+    if(isSys&&!isMe)return`<div style="text-align:center;margin:10px 0"><span style="font-size:13.5px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">${linkify(esc(m.body||''))}</span></div>`;
+    return`<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div style="max-width:75%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--btn-a)':'var(--surface2)'};color:${isMe?'#fff':'var(--text)'};font-size:14px;font-weight:600;line-height:1.4">${linkify(esc(m.body||''))}<div style="font-size:11.5px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
   }).join('');
   el.scrollTop=el.scrollHeight;
 
@@ -3234,7 +3236,7 @@ async function claimFromChat(taskId){
   const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id').eq('id',taskId).single();
   const actionsEl=document.getElementById('chat-actions');
   if(task?.status==='claimed'){
-    actionsEl.innerHTML=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Unclaim</button>`;
+    actionsEl.innerHTML=`<button onclick="chatUnclaim('${taskId}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Unclaim</button>`;
     actionsEl.style.display='flex';
   }
   loadMessages();loadJobs();
@@ -3405,7 +3407,7 @@ async function updateForkHelperCard(){
         </div>
         <div style="flex:1;min-width:0">
           <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">You're listed as a helper</div>
-          <div style="font-size:13px;font-weight:700;color:var(--lime)">${expiresLabel} · <button onclick="nav('profile')" style="background:none;border:none;padding:0;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;text-decoration:underline">Manage in Profile →</button></div>
+          <div style="font-size:14px;font-weight:700;color:var(--lime)">${expiresLabel} · <button onclick="nav('profile')" style="background:none;border:none;padding:0;font-size:13.5px;font-weight:800;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;text-decoration:underline">Manage in Profile →</button></div>
         </div>
       </div>`;
   } else {
@@ -3420,7 +3422,7 @@ async function updateForkHelperCard(){
         <div style="flex:1;min-width:0">
           <div style="font-size:14px;font-weight:800;color:var(--text)">${statusLabel}</div>
         </div>
-        <button onclick="helperEnteredFromFork=true;nav('helper')" style="flex-shrink:0;padding:9px 16px;border-radius:100px;border:none;background:var(--lime);color:#fff;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer">Renew ✨</button>
+        <button onclick="helperEnteredFromFork=true;nav('helper')" style="flex-shrink:0;padding:9px 16px;border-radius:100px;border:none;background:var(--btn-lime);color:#fff;font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">Renew ✨</button>
       </div>`;
   }
 }
@@ -3433,7 +3435,7 @@ function forkHelperCardNew(){
       </div>
       <div>
         <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">Find me work</div>
-        <div style="font-size:13px;font-weight:700;color:var(--muted)">I want to offer a skill or service</div>
+        <div style="font-size:14px;font-weight:700;color:var(--muted)">I want to offer a skill or service</div>
       </div>
     </button>`;
 }
@@ -3456,7 +3458,7 @@ function updateProfileHelperBlock(prof){
         </div>
         <div style="flex:1">
           <div style="font-size:15px;font-weight:800;color:var(--text)">Become a Helper</div>
-          <div style="font-size:12px;font-weight:700;color:var(--muted)">Offer your skills to neighbours nearby</div>
+          <div style="font-size:13.5px;font-weight:700;color:var(--muted)">Offer your skills to neighbours nearby</div>
         </div>
         <span style="font-size:18px;color:var(--muted)">›</span>
       </button>`;
@@ -3468,7 +3470,7 @@ function updateProfileHelperBlock(prof){
     const expiry=prof.helper_expires_at?new Date(prof.helper_expires_at):null;
     const expiresLabel=expiry?`Expires ${expiry.toLocaleDateString('en-CA',{month:'short',day:'numeric'})}`:'';
     const cats=(prof.helper_categories||[]).slice(0,3);
-    const catsHtml=cats.length?cats.map(c=>`<span style="font-size:10px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:2px 8px">${esc(c)}</span>`).join(' '):'';
+    const catsHtml=cats.length?cats.map(c=>`<span style="font-size:11.5px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:2px 8px">${esc(c)}</span>`).join(' '):'';
     el.innerHTML=`
       <div style="border-radius:var(--radius);border:1.5px solid rgba(46,125,82,.15);background:rgba(46,125,82,.03);padding:16px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:${catsHtml?'10px':'0'}">
@@ -3477,11 +3479,11 @@ function updateProfileHelperBlock(prof){
           </div>
           <div style="flex:1;min-width:0">
             <div style="font-size:15px;font-weight:800;color:var(--lime)">Helper listing active</div>
-            ${expiresLabel?`<div style="font-size:11px;font-weight:700;color:var(--muted)">${expiresLabel}</div>`:''}
+            ${expiresLabel?`<div style="font-size:12.5px;font-weight:700;color:var(--muted)">${expiresLabel}</div>`:''}
           </div>
         </div>
         ${catsHtml?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${catsHtml}</div>`:''}
-        <button onclick="nav('helper')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">Edit Helper Profile</button>
+        <button onclick="nav('helper')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Edit Helper Profile</button>
       </div>`;
   } else {
     // Paused or expired
@@ -3496,10 +3498,10 @@ function updateProfileHelperBlock(prof){
           </div>
           <div style="flex:1">
             <div style="font-size:15px;font-weight:800;color:var(--text)">${label}</div>
-            <div style="font-size:11px;font-weight:700;color:var(--muted)">Your profile is hidden from searches</div>
+            <div style="font-size:12.5px;font-weight:700;color:var(--muted)">Your profile is hidden from searches</div>
           </div>
         </div>
-        <button onclick="nav('helper')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:none;background:var(--lime);color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer">${expired?'Renew Listing ✨':'Resume Listing ✨'}</button>
+        <button onclick="nav('helper')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:none;background:var(--btn-lime);color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">${expired?'Renew Listing ✨':'Resume Listing ✨'}</button>
       </div>`;
   }
 }
@@ -3513,16 +3515,16 @@ let hpRateType='free',hpSelectedCategories=new Set();
 async function openHelperScreen(){
   // show loading in categories
   const container=document.getElementById('hp-categories');
-  if(container)container.innerHTML='<span style="font-size:12px;color:var(--muted)">Loading categories…</span>';
+  if(container)container.innerHTML='<span style="font-size:13.5px;color:var(--muted)">Loading categories…</span>';
 
   // fetch categories from DB
   const{data:cats,error:catErr}=await sb.from('helper_categories').select('*').eq('active',true).order('sort_order');
   if(catErr){
-    if(container)container.innerHTML=`<span style="font-size:12px;color:#DC5046">Could not load categories — check RLS policy on helper_categories table.</span>`;
+    if(container)container.innerHTML=`<span style="font-size:13.5px;color:#DC5046">Could not load categories — check RLS policy on helper_categories table.</span>`;
   } else if(cats&&container){
     container.innerHTML=cats.map(c=>`
       <button id="hpcat-${c.id}" onclick="toggleHPCategory('${c.name}',${c.id})"
-        style="padding:8px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .15s">
+        style="padding:8px 14px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .15s">
         ${c.emoji||''} ${c.name}
       </button>`).join('');
   }
@@ -3853,13 +3855,13 @@ async function openRatingsSheet(){
   el.innerHTML=pending.map((item,idx)=>`
     <div id="rating-item-${idx}" style="background:var(--surface);border-radius:var(--radius-sm);border:1.5px solid var(--border);padding:16px;margin-bottom:12px">
       <div style="font-size:15px;font-weight:800;margin-bottom:2px">${esc(item.title)}</div>
-      <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:12px">${item.role==='poster'?'You posted':'You helped'} · ${item.otherName}${item.price?' · $'+item.price:''}</div>
-      <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:8px">${esc(item.prompt)}</div>
+      <div style="font-size:13.5px;color:var(--muted);font-weight:700;margin-bottom:12px">${item.role==='poster'?'You posted':'You helped'} · ${item.otherName}${item.price?' · $'+item.price:''}</div>
+      <div style="font-size:13.5px;font-weight:800;color:var(--muted);margin-bottom:8px">${esc(item.prompt)}</div>
       <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px" id="stars-${idx}">
         ${[1,2,3,4,5].map(n=>`<span style="font-size:32px;cursor:pointer" onclick="setSheetRating(${idx},${n},'${item.taskId}','${item.ratedId}')" id="star-${idx}-${n}">☆</span>`).join('')}
       </div>
       <button id="submit-${idx}" onclick="submitSheetRating(${idx},'${item.taskId}','${item.ratedId}')"
-        style="width:100%;padding:12px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;opacity:.4" disabled>
+        style="width:100%;padding:12px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;opacity:.4" disabled>
         Submit Rating
       </button>
     </div>`).join('');
