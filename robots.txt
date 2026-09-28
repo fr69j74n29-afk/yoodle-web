@@ -1,5 +1,5 @@
 # robots.txt — Yoodle (yoodle.ca)
-# Last updated: May 2025
+# Last updated: September 2026
 
 # ── Allow all well-behaved crawlers on public pages ──────────────────────────
 User-agent: *
@@ -8,6 +8,7 @@ Allow: /index.html
 Allow: /faq.html
 Allow: /how-it-works.html
 Allow: /privacy.html
+Allow: /terms.html
 
 # Private, auth-gated, or technical files — no indexing value
 Disallow: /profile.html
@@ -25,6 +26,7 @@ Allow: /$
 Allow: /faq.html
 Allow: /how-it-works.html
 Allow: /privacy.html
+Allow: /terms.html
 Disallow: /profile.html
 Disallow: /sw.js
 Disallow: /OneSignalSDKWorker.js
@@ -36,6 +38,7 @@ Allow: /$
 Allow: /faq.html
 Allow: /how-it-works.html
 Allow: /privacy.html
+Allow: /terms.html
 Disallow: /profile.html
 
 # ── Anthropic (Claude) ────────────────────────────────────────────────────────
@@ -44,6 +47,7 @@ Allow: /$
 Allow: /faq.html
 Allow: /how-it-works.html
 Allow: /privacy.html
+Allow: /terms.html
 Disallow: /profile.html
 
 User-agent: anthropic-ai
@@ -51,6 +55,7 @@ Allow: /$
 Allow: /faq.html
 Allow: /how-it-works.html
 Allow: /privacy.html
+Allow: /terms.html
 Disallow: /profile.html
 
 # ── Perplexity ────────────────────────────────────────────────────────────────
@@ -59,6 +64,7 @@ Allow: /$
 Allow: /faq.html
 Allow: /how-it-works.html
 Allow: /privacy.html
+Allow: /terms.html
 Disallow: /profile.html
 
 # ── Meta (Llama) ──────────────────────────────────────────────────────────────
@@ -74,6 +80,7 @@ Allow: /$
 Allow: /faq.html
 Allow: /how-it-works.html
 Allow: /privacy.html
+Allow: /terms.html
 Disallow: /profile.html
 
 # ── Sitemap ───────────────────────────────────────────────────────────────────
