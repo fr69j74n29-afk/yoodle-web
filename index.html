@@ -1871,36 +1871,41 @@ async function loadJobs() {
   if(_loadingEl)_loadingEl.style.display='flex';
   if(_dataEl)_dataEl.style.display='none';
 
-  // fetch helpers for map (separate, no radius restriction)
-  const{data:helpers}=await sb.from('profiles')
-    .select('id,name,rating,last_lat,last_lng,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,show_on_map')
-    .eq('visible_on_map', true)
-    .neq('id', pid||'00000000-0000-0000-0000-000000000000');
+  // Helpers, business listings and jobs are independent — fetch in parallel (one round trip instead of three)
+  const _hasLoc=!!(userLat&&userLng);
+  const[{data:helpers},{data:bizData},_jobsRes]=await Promise.all([
+    // helpers for map (separate, no radius restriction)
+    sb.from('profiles')
+      .select('id,name,rating,last_lat,last_lng,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,show_on_map')
+      .eq('visible_on_map', true)
+      .neq('id', pid||'00000000-0000-0000-0000-000000000000'),
+    // business listings for map
+    sb.rpc('get_business_listings',{
+      user_lat:userLat||43.6532,
+      user_lng:userLng||-79.3832,
+      radius_km:RADIUS_KM
+    }),
+    // jobs — only when we have a location (same as before)
+    _hasLoc?sb.rpc('get_open_jobs_near',{
+      user_lat:userLat,
+      user_lng:userLng,
+      radius_km:RADIUS_KM,
+      lim:120,
+      exclude_user_id:pid||null
+    }):Promise.resolve(null)
+  ]);
   allHelpers=helpers||[];
-
-  // fetch business listings for map
-  const{data:bizData}=await sb.rpc('get_business_listings',{
-    user_lat:userLat||43.6532,
-    user_lng:userLng||-79.3832,
-    radius_km:RADIUS_KM
-  });
   allBizListings=bizData||[];
 
   // if no user location, show prompt
-  if(!userLat||!userLng){
+  if(!_hasLoc){
     if(ltc)ltc.innerHTML=emptyState('📍','Share your location','Tap the locate button on the map to see nearby jobs');
     const lbl=document.getElementById('list-sub');
     if(lbl)lbl.textContent='Enable location to browse jobs';
     return;
   }
 
-  const{data,error}=await sb.rpc('get_open_jobs_near',{
-    user_lat:userLat,
-    user_lng:userLng,
-    radius_km:RADIUS_KM,
-    lim:120,
-    exclude_user_id:pid||null
-  });
+  const{data,error}=_jobsRes;
 
   if(error){
     if(ltc)ltc.innerHTML=emptyState('😕','Error loading jobs',error.message);
