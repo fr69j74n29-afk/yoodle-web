@@ -397,6 +397,17 @@ body.theme-sage-dark .le{color:#E0C45A}
 .setting-i:last-child{border-radius:var(--radius-sm) var(--radius-sm) var(--radius) var(--radius)}
 .btn-so{width:100%;padding:16px;border-radius:var(--radius);background:var(--surface);color:#DC5046;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:1.5px solid rgba(220,80,70,.20);cursor:pointer;margin-top:20px}
 .btn-del{display:block;margin:14px auto 0;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;text-decoration:underline;cursor:pointer}
+.em-card{padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border);display:none}
+.em-row{display:flex;align-items:center;gap:14px}
+.em-t{font-size:15px;font-weight:800;color:var(--text)}
+.em-d{font-size:13.5px;font-weight:600;color:var(--muted);line-height:1.5;margin-top:3px}
+.sw{position:relative;width:52px;height:30px;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.sw span{position:absolute;inset:0;border-radius:99px;background:var(--border);transition:background .2s;cursor:pointer}
+.sw span::after{content:'';position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.sw input:checked+span{background:var(--btn-a)}
+.sw input:checked+span::after{transform:translateX(22px)}
+.sw input:focus-visible+span{outline:2px solid var(--purple);outline-offset:2px}
 .del-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1500;display:none;align-items:flex-end;justify-content:center}
 .del-ov.open{display:flex}
 .del-sheet{width:100%;max-width:480px;background:var(--surface);border-radius:26px 26px 0 0;padding:22px 22px calc(var(--sab) + 22px);color:var(--text)}
@@ -856,6 +867,16 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <div id="notif-tip" style="display:none;background:rgba(92,138,106,.06);border:1.5px solid rgba(92,138,106,.18);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px">
         <div style="font-size:14px;font-weight:800;color:var(--purple);margin-bottom:6px">Push Notifications</div>
         <div id="notif-tip-body" style="font-size:13.5px;color:var(--muted);line-height:1.6;font-weight:700"></div>
+      </div>
+      <!-- Email notifications -->
+      <div class="em-card" id="em-card">
+        <div class="em-row">
+          <div style="flex:1;min-width:0">
+            <div class="em-t">Email me about unread messages</div>
+            <div class="em-d">One email when a message has waited 30 minutes unread.</div>
+          </div>
+          <label class="sw" aria-label="Email me about unread messages"><input type="checkbox" id="em-toggle" onchange="setEmailNotifications(this.checked)"><span></span></label>
+        </div>
       </div>
       <!-- Theme picker -->
       <div style="padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
@@ -1521,6 +1542,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const _notifTaskId = _notifParams.get('task_id');
   const _notifConvId = _notifParams.get('conv_id');
   const _refCode = _notifParams.get('ref');
+  const _openEmail = _notifParams.get('open')==='email-settings';
+  if(_openEmail) window._openEmailSettings = true;
   if(_refCode){
     localStorage.setItem('yoodle_ref', _refCode);
   }
@@ -1528,7 +1551,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window._pendingNotifTaskId = _notifTaskId;
     window._pendingNotifConvId = _notifConvId;
   }
-  if(_notifTaskId || _refCode){
+  if(_notifTaskId || _refCode || _openEmail){
     window.history.replaceState({}, '', '/');
   }
   if(window.navigator.standalone===true||window.matchMedia('(display-mode:standalone)').matches){
@@ -2315,6 +2338,7 @@ async function showApp(){
   loadJobs();
   closeAuthSheet();
   restoreGuestDraft();
+  if(window._openEmailSettings)nav('profile');
   // Silent GPS refresh on login — only when permission was ALREADY granted and the
   // 30-min cache is stale. Fresh cache → no GPS at all (battery). Never prompts.
   // Permissions API may be absent on older iOS Safari (<16) → try/catch falls back
@@ -3281,6 +3305,7 @@ if(!url){
 }
 // populate helper status block
 updateProfileHelperBlock(prof);
+loadEmailPref();
 const pid=myProfileId||me.id;
 // fetch all stats in parallel
 const[
@@ -3627,6 +3652,22 @@ function avatarCircle(name,color,size='36px',fontSize='14px',border=true){
   return`<div style="width:${size};height:${size};border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${fontSize};color:#fff;flex-shrink:0;font-family:'Nunito',sans-serif">${esc(initial)}</div>`;
 }
 function timeAgo(d){const m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
+async function loadEmailPref(){
+  const card=document.getElementById('em-card');
+  if(!sb||!me){card.style.display='none';return;}
+  const{data,error}=await sb.from('profiles').select('email_opt_out').eq('id',myProfileId||me.id).maybeSingle();
+  if(error||!data){card.style.display='none';return;} // column not added yet → hide
+  document.getElementById('em-toggle').checked=!data.email_opt_out;
+  card.style.display='block';
+  if(window._openEmailSettings){window._openEmailSettings=false;setTimeout(()=>{card.scrollIntoView({behavior:'smooth',block:'center'});card.style.borderColor='var(--purple)';},300);}
+}
+async function setEmailNotifications(on){
+  if(!sb||!me)return;
+  const t=document.getElementById('em-toggle');
+  const{error}=await sb.from('profiles').update({email_opt_out:!on}).eq('id',myProfileId||me.id);
+  if(error){t.checked=!on;return toast('❌ '+error.message);}
+  toast(on?'📬 Email notifications on':'🔕 Email notifications off');
+}
 async function saveBio(){
   if(!sb||!me)return toast('Not signed in');
   const bio=document.getElementById('p-bio').value.trim();
