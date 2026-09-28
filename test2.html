@@ -1550,14 +1550,6 @@ function initMap() {
     updateZoomLimits();
     updateCircleOverlay();
   });
-  // Snap-back (like the original Leaflet map): pinch past the 1 km ring to read
-  // street names, then on release ease back to the 1 km view.
-  map.on('zoomend',()=>{
-    try{
-      const z1=kmToZoom(1,map.getCenter().lat);
-      if(isFinite(z1)&&map.getZoom()>z1+0.01)map.easeTo({zoom:z1,duration:350});
-    }catch(e){}
-  });
   map.on('moveend',()=>{
     const c=map.getCenter();
     userLat=c.lat; userLng=c.lng;
@@ -1814,8 +1806,9 @@ function updateZoomLimits() {
   if(!map)return;
   const lat=map.getCenter().lat;
   // MapLibre throws on invalid limits (e.g. hidden container → 0px radius) — validate first
-  // Zoom out: stop at 25 km. Zoom in: a pinch may go STREET_ZOOM levels past the
-  // 1 km ring so street names show; on release it snaps back (see 'zoomend').
+  // Zoom out: stop at 25 km. Zoom in: allow STREET_ZOOM levels past the 1 km ring
+  // so street names show (vector styles label side streets only when close in).
+  // Search radius stays clamped at 1 km (RADIUS_KM); the ring fades out past it.
   const mn=kmToZoom(25,lat), mx=Math.min(kmToZoom(1,lat)+STREET_ZOOM,18);
   if(!isFinite(mn)||!isFinite(mx)||mn<0||mx>24||mn>=mx)return;
   try{
@@ -1824,7 +1817,7 @@ function updateZoomLimits() {
   }catch(e){}
 }
 
-var STREET_ZOOM=3; // how far a pinch may go past the 1 km ring (3 ≈ 8× closer) before snapping back
+var STREET_ZOOM=3; // extra zoom-in beyond the 1 km ring (3 ≈ 8× closer)
 function updateCircleOverlay() {
   if(!map)return;
   const mask=document.getElementById('map-overlay-mask');
