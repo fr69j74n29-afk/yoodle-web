@@ -234,12 +234,19 @@ body.theme-sage-dark .le{color:#E0C45A}
 }
 .top-wm{font-size:30px}
 .top-right{display:flex;align-items:center;gap:8px}
-.pts-badge{display:flex;align-items:center;gap:5px;background:var(--surface2);border:1.5px solid var(--border);border-radius:100px;padding:6px 14px 6px 10px;cursor:pointer;transition:transform .15s}
-.pts-badge:active{transform:scale(.95)}
-.pts-ico{font-size:16px;line-height:1}
-.pts-val{font-size:14px;font-weight:800;color:var(--yellow)}
-.pts-new{font-size:10.5px;font-weight:800;color:var(--bg);background:var(--lime);border-radius:100px;padding:2px 6px;text-transform:uppercase;letter-spacing:.5px;animation:pts-pulse 2s ease-in-out infinite}
-@keyframes pts-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.theme-btn{width:38px;height:38px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:transform .15s}
+.theme-btn:active{transform:scale(.92)}
+.theme-btn svg{width:19px;height:19px;display:block}
+.theme-btn .ic-sun{display:none}
+body.theme-sage-dark .theme-btn .ic-sun{display:block}
+body.theme-sage-dark .theme-btn .ic-moon{display:none}
+.inv-card{padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)}
+.inv-row{display:flex;align-items:center;gap:12px}
+.inv-t{font-size:15px;font-weight:800;color:var(--text)}
+.inv-d{font-size:13.5px;color:var(--muted);font-weight:700;margin-top:3px;line-height:1.5}
+.inv-pts{font-size:22px;font-weight:800;color:var(--yellow);line-height:1;text-align:right}
+.inv-pts-l{font-size:11.5px;color:var(--muted);font-weight:800;text-align:right}
+.inv-btn{margin-top:12px;width:100%;padding:11px;border:none;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit}
 .top-avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--purple);overflow:hidden;cursor:pointer;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--purple);flex-shrink:0}
 .top-avatar img{width:100%;height:100%;object-fit:cover}
 
@@ -684,11 +691,10 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   <div class="top-bar">
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
     <div class="top-right">
-      <div class="pts-badge" onclick="openReferralModal()" id="pts-badge" style="display:none">
-        <span class="pts-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="var(--yellow)" stroke="none" style="display:block"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z"/></svg></span>
-        <span class="pts-val" id="pts-val">0</span>
-        <span class="pts-new" id="pts-new">New</span>
-      </div>
+      <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Switch light/dark mode" title="Switch light/dark mode">
+        <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
     </div>
   </div>
 
@@ -900,19 +906,16 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         </div>
         <div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5">To report someone, open their profile or your chat with them and tap Report. We review reports within 24 hours.</div>
       </div>
-      <!-- Theme picker -->
-      <div style="padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
-        <div style="font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Theme</div>
-        <div class="theme-row">
-          <div class="theme-opt" id="t-sage-light" onclick="setTheme('sage-light')">
-            <div class="theme-swatch" style="background:linear-gradient(135deg,#F5F4EF 50%,#5C8A6A 50%)"></div>
-            <div class="theme-name">Light</div>
+      <!-- Invite neighbours (referrals) -->
+      <div class="inv-card" id="inv-card">
+        <div class="inv-row">
+          <div style="flex:1;min-width:0">
+            <div class="inv-t">Invite neighbours to Yoodle</div>
+            <div class="inv-d">Share your link — you both get 10 points when they join. <span id="inv-count"></span></div>
           </div>
-          <div class="theme-opt" id="t-sage-dark" onclick="setTheme('sage-dark')">
-            <div class="theme-swatch" style="background:linear-gradient(135deg,#0D120F 50%,#178A52 50%)"></div>
-            <div class="theme-name">Dark</div>
-          </div>
+          <div><div class="inv-pts" id="inv-pts">0</div><div class="inv-pts-l">points</div></div>
         </div>
+        <button class="inv-btn" onclick="openReferralModal()">Invite neighbours</button>
       </div>
       <button class="btn-so" onclick="signOut()">Sign Out</button>
       <button class="btn-del" onclick="openDeleteAccount()">Delete my account</button>
@@ -1273,17 +1276,13 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <div class="ref-how-t">How It Works</div>
       <div class="ref-step"><div class="ref-step-n">1</div><div class="ref-step-t">Share your link with friends and neighbours</div></div>
       <div class="ref-step"><div class="ref-step-n">2</div><div class="ref-step-t">They sign up using your link — you <strong style="color:var(--lime)">both</strong> get <strong style="color:var(--yellow)">10 points</strong></div></div>
-      <div class="ref-step"><div class="ref-step-n">3</div><div class="ref-step-t">Use points to boost job posts and unlock perks (coming soon!)</div></div>
+      <div class="ref-step"><div class="ref-step-n">3</div><div class="ref-step-t">Points will unlock perks as Yoodle grows</div></div>
     </div>
     <div class="ref-link-box">
       <div class="ref-link-url" id="ref-link-url">yoodle.ca?ref=...</div>
       <button class="ref-copy-btn" onclick="copyRefLink()">Copy</button>
     </div>
     <button class="ref-share-btn" onclick="shareRefLink()">Share Your Link</button>
-    <div class="ref-coming">
-      <div class="ref-coming-t">Coming Soon</div>
-      <div class="ref-coming-d">Bump up your job posts so more helpers see them, priority badges, and more ways to earn and spend points.</div>
-    </div>
   </div>
 </div>
 
@@ -1378,6 +1377,9 @@ function setTheme(name){
     if(el)el.classList.toggle('active',t===name);
   });
   _refreshBaseStyle();
+}
+function toggleTheme(){
+  setTheme(document.body.classList.contains('theme-sage-dark')?'sage-light':'sage-dark');
 }
 function initTheme(){
   const saved=localStorage.getItem('yoodle-theme');
@@ -4629,7 +4631,6 @@ async function submitRating(){
 
 // ── REFERRAL POINTS SYSTEM ──
 let myPoints=0, myRefCode='', myRefCount=0;
-const REF_SEEN_KEY='yoodle_pts_seen';
 
 async function processReferral(){
   if(!sb||!me)return;
@@ -4658,24 +4659,14 @@ async function loadPoints(){
     const{count}=await sb.from('referrals').select('id',{count:'exact',head:true}).eq('referrer_id',pid);
     myRefCount=count||0;
     // update UI
-    const badge=document.getElementById('pts-badge');
-    const valEl=document.getElementById('pts-val');
-    const newEl=document.getElementById('pts-new');
-    if(badge){
-      badge.style.display='flex';
-      valEl.textContent=myPoints;
-      // show "New" badge until user has opened the modal once
-      const seen=localStorage.getItem(REF_SEEN_KEY);
-      newEl.style.display=seen?'none':'inline';
-    }
+    const ptsEl=document.getElementById('inv-pts');
+    if(ptsEl)ptsEl.textContent=myPoints;
+    const cntEl=document.getElementById('inv-count');
+    if(cntEl)cntEl.textContent=myRefCount?("You've invited "+myRefCount+(myRefCount===1?' neighbour.':' neighbours.')):'';
   }catch(e){console.log('loadPoints:',e);}
 }
 
 function openReferralModal(){
-  // mark as seen
-  localStorage.setItem(REF_SEEN_KEY,'1');
-  const newEl=document.getElementById('pts-new');
-  if(newEl)newEl.style.display='none';
   // populate modal
   document.getElementById('ref-pts-big').textContent=myPoints;
   document.getElementById('ref-count').textContent=myRefCount;
