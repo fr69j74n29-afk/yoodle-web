@@ -7,6 +7,7 @@
 <title>Yoodle · Internal Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="admin-geo.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -488,6 +489,24 @@ body::before {
   text-align: right;
   flex-shrink: 0;
 }
+
+/* REGION TABLES */
+.region-table { width: 100%; border-collapse: collapse; }
+.region-table th {
+  font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--muted); text-align: right;
+  padding: 0 0 10px; border-bottom: 1px solid var(--border);
+}
+.region-table th:first-child, .region-table td:first-child { text-align: left; }
+.region-table td {
+  font-size: 13px; font-weight: 700; color: var(--text); text-align: right;
+  padding: 9px 0; border-bottom: 1px solid var(--border);
+}
+.region-table td.num { font-family: var(--mono); font-size: 12px; width: 76px; }
+.region-table td.num.helpers { color: var(--lime); }
+.region-table tr.muted td { color: var(--muted); }
+.region-table tr:last-child td { border-bottom: none; }
+.region-note { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 12px; line-height: 1.6; }
 
 /* REFRESH */
 .dash-footer {
@@ -1008,6 +1027,19 @@ body::before {
 
     </div>
 
+    <!-- MEMBERS & HELPERS BY REGION -->
+    <div class="section-title">MEMBERS &amp; HELPERS BY REGION</div>
+    <div class="breakdown-grid">
+      <div class="breakdown-card">
+        <h3>By Country</h3>
+        <div id="region-countries"></div>
+      </div>
+      <div class="breakdown-card">
+        <h3>Canada by Province</h3>
+        <div id="region-provinces"></div>
+      </div>
+    </div>
+
     <!-- NEW ACCOUNTS CHART -->
     <div class="chart-card">
       <div class="chart-card-header">
@@ -1212,6 +1244,9 @@ async function loadStats() {
     // Growth chart
     renderGrowthChart(recentProfiles || []);
 
+    // Members & helpers by country / province
+    loadRegions();
+
     // Reload activity section
     loadRecentActivity();
     loadAmbassadors();
@@ -1343,6 +1378,70 @@ function renderGrowthChart(profiles) {
       }
     }
   });
+}
+
+// ── MEMBERS & HELPERS BY REGION ──
+// No country/province is stored on profiles, so each profile is located from
+// coordinates (helper pin → last known GPS → latest job posted) and classified
+// offline by admin-geo.js. Members = all profiles; Helpers = visible_on_map
+// (same definition as the Active Helpers card).
+async function loadRegions() {
+  const cEl = document.getElementById('region-countries');
+  const pEl = document.getElementById('region-provinces');
+  if (!cEl || !pEl) return;
+  const spinner = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  cEl.innerHTML = pEl.innerHTML = spinner;
+
+  try {
+    if (!window.YoodleGeo) throw new Error('admin-geo.js not loaded');
+    const [{ data: profiles, error: pErr }, { data: tasks, error: tErr }] = await Promise.all([
+      sb.from('profiles').select('id, visible_on_map, helper_lat, helper_lng, last_lat, last_lng'),
+      sb.from('tasks').select('poster_id, lat, lng, created_at').not('lat', 'is', null).order('created_at', { ascending: false })
+    ]);
+    if (pErr) throw pErr;
+    if (tErr) throw tErr;
+
+    const taskLoc = {};   // poster_id → latest job coords
+    (tasks || []).forEach(t => { if (t.poster_id && !taskLoc[t.poster_id]) taskLoc[t.poster_id] = [t.lat, t.lng]; });
+
+    const countries = {}, provinces = {};
+    let unknown = { m: 0, h: 0 }, canUnknownProv = { m: 0, h: 0 };
+    (profiles || []).forEach(p => {
+      const loc = p.helper_lat != null && p.helper_lng != null ? [p.helper_lat, p.helper_lng]
+                : p.last_lat != null && p.last_lng != null ? [p.last_lat, p.last_lng]
+                : taskLoc[p.id] || null;
+      const isHelper = p.visible_on_map === true;
+      const r = loc ? YoodleGeo.regionOf(loc[0], loc[1]) : { country: null, province: null };
+      if (!r.country) { unknown.m++; if (isHelper) unknown.h++; return; }
+      const c = countries[r.country] || (countries[r.country] = { m: 0, h: 0 });
+      c.m++; if (isHelper) c.h++;
+      if (r.country === 'Canada') {
+        const bucket = r.province ? (provinces[r.province] || (provinces[r.province] = { m: 0, h: 0 })) : canUnknownProv;
+        bucket.m++; if (isHelper) bucket.h++;
+      }
+    });
+
+    const rows = (entries, extra) => {
+      const sorted = entries.sort((a, b) => b[1].m - a[1].m || b[1].h - a[1].h || a[0].localeCompare(b[0]));
+      const body = sorted.map(([name, v]) =>
+        `<tr><td>${esc(name)}</td><td class="num">${v.m}</td><td class="num helpers">${v.h}</td></tr>`).join('');
+      const tail = extra && extra.v.m ? `<tr class="muted"><td>${esc(extra.label)}</td><td class="num">${extra.v.m}</td><td class="num">${extra.v.h}</td></tr>` : '';
+      return body || tail
+        ? `<table class="region-table"><thead><tr><th>Region</th><th>Members</th><th>Helpers</th></tr></thead><tbody>${body}${tail}</tbody></table>`
+        : '<div style="padding:14px 0;color:var(--muted);font-size:13px">No located members yet.</div>';
+    };
+
+    const located = (profiles || []).length - unknown.m;
+    cEl.innerHTML = rows(Object.entries(countries), { label: 'No location on file', v: unknown }) +
+      `<div class="region-note">${located} of ${(profiles || []).length} members located · from helper pin, last GPS or latest job</div>`;
+    pEl.innerHTML = rows(
+      Object.entries(provinces).map(([code, v]) => [YoodleGeo.PROV_NAMES[code] || code, v]),
+      { label: 'Canada — province unclear', v: canUnknownProv });
+  } catch (err) {
+    console.error('Region load error:', err);
+    const msg = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load regions: ${esc(err.message || err)}</div>`;
+    cEl.innerHTML = pEl.innerHTML = msg;
+  }
 }
 
 // ── ADMIN TOAST ──
