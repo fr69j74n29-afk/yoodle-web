@@ -1314,7 +1314,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <div class="live-chips" id="live-chips"></div>
     </div>
     <button class="btn-primary" id="live-share-btn" onclick="shareMyHelperPage()">Message friends</button>
-    <button class="live-later" onclick="closeLiveScreen()">Maybe later</button>
+    <button class="live-later" onclick="logShare('later');closeLiveScreen()">Maybe later</button>
   </div>
 </div>
 
@@ -4428,7 +4428,12 @@ function helperShareText(address,cats){
   return `Hi! I'm now offering ${helperShareSkills(cats)} around ${helperShareArea(address)} on Yoodle, a free neighbourhood odd-jobs app. If you or anyone you know needs a hand, here's my page:`;
 }
 let liveShareData=null;
+// Usage tracking → public.share_events (insert-own only; read via admin_share_stats). Never blocks sharing.
+function logShare(ev){
+  try{if(sb&&me)sb.from('share_events').insert({profile_id:myProfileId||me.id,event:ev}).then(()=>{},()=>{});}catch(e){}
+}
 function openLiveScreen(d){
+  logShare('shown');
   liveShareData=d;
   document.getElementById('live-area').textContent=helperShareArea(d.address);
   document.getElementById('live-rate').textContent=d.rateType==='free'||!d.rate?'🤝 Free':`💰 $${d.rate}${d.rateType==='hourly'?' / hour':d.rateType==='daily'?' / day':' flat'}`;
@@ -4438,6 +4443,7 @@ function openLiveScreen(d){
 }
 function closeLiveScreen(){document.getElementById('live-ov').classList.remove('open');}
 async function shareMyHelperPage(d){
+  const fromProfile=d===null;
   if(d===undefined||d instanceof Event)d=liveShareData;
   if(!d){
     const{data}=await sb.from('profiles').select('helper_address,helper_categories').eq('id',myProfileId||me.id).maybeSingle();
@@ -4446,10 +4452,11 @@ async function shareMyHelperPage(d){
   const url=`https://yoodle.ca/helpers/${myProfileId||me.id}`;
   const text=helperShareText(d.address,d.categories);
   if(navigator.share){
-    try{await navigator.share({text,url});closeLiveScreen();}catch(e){}
+    try{await navigator.share({text,url});logShare(fromProfile?'profile_share':'shared');closeLiveScreen();}catch(e){}
     return;
   }
   const full=text+' '+url;
+  logShare(fromProfile?'profile_share':'copied');
   try{await navigator.clipboard.writeText(full);}catch(e){
     const ta=document.createElement('textarea');ta.value=full;ta.style.position='fixed';ta.style.opacity='0';
     document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);

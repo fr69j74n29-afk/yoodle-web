@@ -955,7 +955,7 @@ body::before {
     <div class="dash-user">
       <div class="dash-avatar" id="dash-avatar">?</div>
       <span class="dash-name" id="dash-name"></span>
-      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadReports()">↻ Refresh</button>
+      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadShareStats();loadReports()">↻ Refresh</button>
     </div>
   </div>
 
@@ -1068,6 +1068,10 @@ body::before {
     <!-- NEWEST USERS -->
     <div class="section-title">NEWEST USERS — LAST 5</div>
     <div id="recent-users" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
+
+    <!-- HELPER PAGE SHARING (share_events) -->
+    <div class="section-title">HELPER PAGE SHARING — LAST 30 DAYS</div>
+    <div id="share-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
 
     <!-- AMBASSADOR APPLICATIONS -->
     <div class="section-title">AMBASSADOR APPLICATIONS</div>
@@ -1578,6 +1582,34 @@ async function loadRecentUsers() {
   }).join('');
 }
 
+// ── HELPER PAGE SHARING (admin-only RPC over share_events) ──
+async function loadShareStats() {
+  const el = document.getElementById('share-stats');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_share_stats', { p_days: 30 });
+  if (error) {
+    el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load sharing stats: ${esc(error.message)}</div>`;
+    return;
+  }
+  const m = {};
+  (data || []).forEach(r => { m[r.event] = r; });
+  const n = k => Number(m[k]?.events || 0), p = k => Number(m[k]?.people || 0);
+  const shown = n('shown'), sharedPeople = p('shared') + p('copied');
+  const rate = shown ? Math.round(sharedPeople / p('shown') * 100) + '%' : '—';
+  const rows = [
+    ['Share screen shown (new helpers)', n('shown'), p('shown')],
+    ['Shared via share sheet', n('shared'), p('shared')],
+    ['Copied link (desktop)', n('copied'), p('copied')],
+    ['Maybe later', n('later'), p('later')],
+    ['Shared from Profile button', n('profile_share'), p('profile_share')],
+  ];
+  el.innerHTML = `<table class="region-table"><thead><tr><th>Action</th><th>Times</th><th>People</th></tr></thead><tbody>${
+    rows.map(r => `<tr><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num helpers">${r[2]}</td></tr>`).join('')
+  }</tbody></table>
+  <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Share rate from the new-helper screen: <b style="color:var(--text)">${rate}</b> of people shown it shared or copied their link. "Shared" means they picked an app in the share sheet; sending isn't confirmed.</div>`;
+}
+
 async function loadRecentActivity() {
   const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const jobsEl = document.getElementById('activity-jobs');
@@ -1882,6 +1914,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
       show('screen-dashboard');
       loadStats();
       loadRecentUsers();
+      loadShareStats();
       loadReports();
       loadRecentActivity();
       loadAmbassadors();
