@@ -1010,19 +1010,25 @@ body::before {
       </div>
 
       <div class="breakdown-card">
-        <h3>Conversations by Status</h3>
+        <h3>Conversations (all users)</h3>
         <div id="conv-breakdown">
           <div class="bar-row">
-            <span class="bar-label">Active</span>
-            <div class="bar-track"><div class="bar-fill" id="bar-conv-active" style="background:#A3E635"></div></div>
-            <span class="bar-count" id="cnt-conv-active">—</span>
+            <span class="bar-label">Live</span>
+            <div class="bar-track"><div class="bar-fill" id="bar-conv-live" style="background:#A3E635"></div></div>
+            <span class="bar-count" id="cnt-conv-live">—</span>
           </div>
           <div class="bar-row">
-            <span class="bar-label">Archived</span>
-            <div class="bar-track"><div class="bar-fill" id="bar-conv-archived" style="background:#666680"></div></div>
-            <span class="bar-count" id="cnt-conv-archived">—</span>
+            <span class="bar-label">Msg last 7d</span>
+            <div class="bar-track"><div class="bar-fill" id="bar-conv-recent" style="background:#06B6D4"></div></div>
+            <span class="bar-count" id="cnt-conv-recent">—</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Closed</span>
+            <div class="bar-track"><div class="bar-fill" id="bar-conv-closed" style="background:#666680"></div></div>
+            <span class="bar-count" id="cnt-conv-closed">—</span>
           </div>
         </div>
+        <div id="conv-rows" style="margin-top:10px"></div>
       </div>
 
     </div>
@@ -1191,13 +1197,11 @@ async function loadStats() {
       { count: userCount },
       { data: helpers },
       { data: taskStatuses },
-      { data: convStatuses },
       { data: recentProfiles }
     ] = await Promise.all([
       sb.from('profiles').select('*', { count: 'exact', head: true }),
       sb.from('profiles').select('id, visible_on_map, show_on_map').eq('visible_on_map', true),
       sb.from('tasks').select('status, poster_id').neq('poster_id', EXCLUDED_POSTER),
-      sb.from('conversations').select('status'),
       sb.from('profiles')
         .select('created_at')
         .gte('created_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
@@ -1227,18 +1231,7 @@ async function loadStats() {
       }, 200);
     });
 
-    const cCounts = { active: 0, archived: 0 };
-    (convStatuses || []).forEach(c => {
-      const s = c.status?.toLowerCase();
-      if (s in cCounts) cCounts[s]++;
-    });
-    const cTotal = Math.max(1, Object.values(cCounts).reduce((a, b) => a + b, 0));
-    Object.entries(cCounts).forEach(([status, count]) => {
-      document.getElementById(`cnt-conv-${status}`).textContent = count;
-      setTimeout(() => {
-        document.getElementById(`bar-conv-${status}`).style.width = ((count / cTotal) * 100).toFixed(1) + '%';
-      }, 200);
-    });
+    loadConvOverview();
 
     const now = new Date();
     document.getElementById('last-updated').textContent = 'Last updated: ' + now.toLocaleTimeString();
@@ -1580,6 +1573,32 @@ async function loadRecentUsers() {
       <span style="font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap" title="${escAttr(timeAgo(u.created_at))}">${esc(date)}</span>
     </div>`;
   }).join('');
+}
+
+// ── CONVERSATIONS (admin-only RPC; RLS would otherwise limit to the admin's own chats) ──
+// Live = conversation active and job open (not expired) or claimed — i.e. visible in users' Messages.
+async function loadConvOverview() {
+  const rowsEl = document.getElementById('conv-rows');
+  const { data, error } = await sb.rpc('admin_conversation_overview');
+  if (error) {
+    if (rowsEl) rowsEl.innerHTML = `<div style="color:var(--muted);font-size:12px">Could not load conversations: ${esc(error.message)}</div>`;
+    return;
+  }
+  const total = Math.max(1, data.total || 0);
+  const vals = { live: data.live || 0, recent: data.recent7 || 0, closed: (data.total || 0) - (data.live || 0) };
+  Object.entries(vals).forEach(([k, v]) => {
+    document.getElementById(`cnt-conv-${k}`).textContent = v;
+    setTimeout(() => { document.getElementById(`bar-conv-${k}`).style.width = ((v / total) * 100).toFixed(1) + '%'; }, 200);
+  });
+  const rows = data.rows || [];
+  if (!rowsEl) return;
+  rowsEl.innerHTML = rows.length ? rows.map(r => {
+    const last = r.last_msg ? new Date(r.last_msg).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—';
+    return `<div style="padding:8px 0;border-top:1px solid var(--border);font-size:12.5px">
+      <div style="font-weight:700;color:var(--text)">${r.live ? '🟢' : '⚪'} ${esc(r.poster || '—')} ↔ ${esc(r.helper || '—')}</div>
+      <div style="color:var(--muted)">${esc(r.job || '—')} · ${esc(r.job_status || '')} · ${r.msgs} msg${r.msgs === 1 ? '' : 's'} · last ${esc(last)}</div>
+    </div>`;
+  }).join('') : '<div style="color:var(--muted);font-size:12px">No live or recent conversations.</div>';
 }
 
 // ── HELPER PAGE SHARING (admin-only RPC over share_events) ──
