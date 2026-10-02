@@ -250,6 +250,21 @@ body.theme-sage-dark .theme-btn .ic-moon{display:none}
 .top-avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--purple);overflow:hidden;cursor:pointer;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--purple);flex-shrink:0}
 .top-avatar img{width:100%;height:100%;object-fit:cover}
 
+/* ── SHARE-AFTER-SETUP SCREEN ── */
+.live-ov{position:fixed;inset:0;z-index:1150;background:var(--bg);display:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.live-ov.open{display:block}
+.live-in{max-width:440px;margin:0 auto;padding:max(48px,calc(var(--sat,0px) + 32px)) 24px max(32px,calc(var(--sab,0px) + 24px));min-height:100%;display:flex;flex-direction:column;text-align:center}
+.live-emoji{font-size:56px;line-height:1;margin-bottom:14px}
+.live-title{font-size:26px;font-weight:900;color:var(--text);margin-bottom:8px}
+.live-sub{font-size:15px;font-weight:700;color:var(--muted);line-height:1.5;margin-bottom:24px}
+.live-card{text-align:left;border-radius:var(--radius);border:1.5px solid rgba(46,125,82,.18);background:var(--surface);padding:16px;margin-bottom:28px}
+.live-card-h{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.live-card-t{font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px}
+.live-card-m{font-size:13.5px;font-weight:700;color:var(--muted);margin-bottom:10px}
+.live-chips{display:flex;flex-wrap:wrap;gap:6px}
+.live-chip{font-size:12px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:3px 10px}
+.live-later{margin-top:14px;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;padding:12px;text-decoration:underline}
+
 /* ── REFERRAL MODAL ── */
 .ref-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;display:none;align-items:flex-end;justify-content:center}
 .ref-modal.open{display:flex}
@@ -1283,6 +1298,23 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <button class="ref-copy-btn" onclick="copyRefLink()">Copy</button>
     </div>
     <button class="ref-share-btn" onclick="shareRefLink()">Share Your Link</button>
+  </div>
+</div>
+
+<!-- SHARE-AFTER-SETUP SCREEN -->
+<div class="live-ov" id="live-ov" role="dialog" aria-modal="true" aria-labelledby="live-title">
+  <div class="live-in">
+    <div class="live-emoji">🎉</div>
+    <div class="live-title" id="live-title">You're live on Yoodle!</div>
+    <div class="live-sub">Neighbours near you can now find you. Share your page with friends to get your first job faster.</div>
+    <div class="live-card">
+      <div class="live-card-h">What neighbours see</div>
+      <div class="live-card-t">Local Helper in <span id="live-area"></span></div>
+      <div class="live-card-m" id="live-rate"></div>
+      <div class="live-chips" id="live-chips"></div>
+    </div>
+    <button class="btn-primary" id="live-share-btn" onclick="shareMyHelperPage()">Message friends</button>
+    <button class="live-later" onclick="closeLiveScreen()">Maybe later</button>
   </div>
 </div>
 
@@ -4182,6 +4214,7 @@ function updateProfileHelperBlock(prof){
         </div>
         ${catsHtml?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${catsHtml}</div>`:''}
         <button onclick="nav('helper')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Edit Helper Profile</button>
+        <button onclick="shareMyHelperPage(null)" style="width:100%;margin-top:8px;padding:10px;border-radius:var(--radius-sm);border:none;background:var(--btn-lime);color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Share my page</button>
       </div>`;
   } else {
     // Paused or expired
@@ -4354,6 +4387,12 @@ async function saveHelperProfile(){
   const rate=hpRateType==='free'?null:parseFloat(document.getElementById('hp-rate').value)||null;
   const categories=Array.from(hpSelectedCategories);
   const expiresAt=new Date(Date.now()+90*24*60*60*1000).toISOString();
+  // First-time setup = no helper address and no categories before this save (edits/renewals skip the share screen)
+  let firstTime=false;
+  try{
+    const{data:prev}=await sb.from('profiles').select('helper_address,helper_categories').eq('id',myProfileId||me.id).maybeSingle();
+    firstTime=!prev?.helper_address&&!(prev?.helper_categories||[]).length;
+  }catch(e){}
   const{error}=await sb.from('profiles').update({
     visible_on_map:true,
     show_on_map:helperShowOnMap,
@@ -4372,6 +4411,52 @@ async function saveHelperProfile(){
   const returnTo=helperEnteredFromFork?'browse':'profile';
   helperEnteredFromFork=false;
   nav(returnTo);
+  if(firstTime)openLiveScreen({address,categories,rate,rateType:hpRateType});
+}
+
+// ── SHARE MY HELPER PAGE ──
+function helperShareArea(address){
+  const parts=String(address||'').split(',').map(p=>p.trim()).filter(p=>p&&!/^\d/.test(p)&&!/^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i.test(p));
+  return (parts.length>=3?parts[parts.length-3]:parts[0])||'my area'; // neighbourhood, not street
+}
+function helperShareSkills(cats){
+  const c=(cats||[]).slice(0,3).map(s=>String(s).toLowerCase());
+  if(!c.length)return 'help with odd jobs';
+  return c.length===1?c[0]:c.slice(0,-1).join(', ')+' and '+c[c.length-1];
+}
+function helperShareText(address,cats){
+  return `Hi! I'm now offering ${helperShareSkills(cats)} around ${helperShareArea(address)} on Yoodle, a free neighbourhood odd-jobs app. If you or anyone you know needs a hand, here's my page:`;
+}
+let liveShareData=null;
+function openLiveScreen(d){
+  liveShareData=d;
+  document.getElementById('live-area').textContent=helperShareArea(d.address);
+  document.getElementById('live-rate').textContent=d.rateType==='free'||!d.rate?'🤝 Free':`💰 $${d.rate}${d.rateType==='hourly'?' / hour':d.rateType==='daily'?' / day':' flat'}`;
+  document.getElementById('live-chips').innerHTML=(d.categories||[]).map(c=>`<span class="live-chip">${esc(c)}</span>`).join('');
+  document.getElementById('live-share-btn').textContent=navigator.share?'Message friends':'Copy link';
+  document.getElementById('live-ov').classList.add('open');
+}
+function closeLiveScreen(){document.getElementById('live-ov').classList.remove('open');}
+async function shareMyHelperPage(d){
+  if(d===undefined||d instanceof Event)d=liveShareData;
+  if(!d){
+    const{data}=await sb.from('profiles').select('helper_address,helper_categories').eq('id',myProfileId||me.id).maybeSingle();
+    d={address:data?.helper_address,categories:data?.helper_categories};
+  }
+  const url=`https://yoodle.ca/helpers/${myProfileId||me.id}`;
+  const text=helperShareText(d.address,d.categories);
+  if(navigator.share){
+    try{await navigator.share({text,url});closeLiveScreen();}catch(e){}
+    return;
+  }
+  const full=text+' '+url;
+  try{await navigator.clipboard.writeText(full);}catch(e){
+    const ta=document.createElement('textarea');ta.value=full;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+  }
+  const btn=document.getElementById('live-share-btn');
+  if(btn&&document.getElementById('live-ov').classList.contains('open')){btn.textContent='Copied! ✓';setTimeout(()=>btn.textContent='Copy link',2000);}
+  toast('📋 Copied! Paste it into a message');
 }
 
 function cancelHelperProfile(){
