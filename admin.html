@@ -1606,7 +1606,10 @@ async function loadShareStats() {
   const el = document.getElementById('share-stats');
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
-  const { data, error } = await sb.rpc('admin_share_stats', { p_days: 30 });
+  const [{ data, error }, { data: logins, error: loginErr }] = await Promise.all([
+    sb.rpc('admin_share_stats', { p_days: 30 }),
+    sb.rpc('admin_share_logins', { p_days: 30 })
+  ]);
   if (error) {
     el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load sharing stats: ${esc(error.message)}</div>`;
     return;
@@ -1623,10 +1626,22 @@ async function loadShareStats() {
     ['Maybe later', n('later'), p('later')],
     ['Shared from Profile button', n('profile_share'), p('profile_share')],
   ];
+  // Shared-link logins (share_link_events): someone opened a shared /helpers/{id} link,
+  // tapped Contact on Yoodle and was signed in (new or existing account). Once per visitor+helper.
+  const lm = {};
+  (logins || []).forEach(r => { lm[r.src] = r; });
+  const lv = k => Number(lm[k]?.visitors || 0), lh = k => Number(lm[k]?.helpers || 0);
+  const loginRows = loginErr ? '' : [
+    ['Signed in from own shared link', lv('share'), lh('share')],
+    ['Signed in from forwarded link', lv('fwd'), lh('fwd')],
+  ].map(r => `<tr><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num helpers">${r[2]}</td></tr>`).join('');
   el.innerHTML = `<table class="region-table"><thead><tr><th>Action</th><th>Times</th><th>People</th></tr></thead><tbody>${
     rows.map(r => `<tr><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num helpers">${r[2]}</td></tr>`).join('')
   }</tbody></table>
-  <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Share rate from the new-helper screen: <b style="color:var(--text)">${rate}</b> of people shown it shared or copied their link. "Shared" means they picked an app in the share sheet; sending isn't confirmed.</div>`;
+  <div style="padding:14px 0 4px;font-size:12px;font-weight:800;color:var(--muted)">LINK CLICKED → SIGNED IN</div>
+  ${loginErr ? `<div style="padding:6px 0;color:var(--muted);font-size:13px">Could not load: ${esc(loginErr.message)}</div>` :
+  `<table class="region-table"><thead><tr><th>Source</th><th>People signed in</th><th>Helpers</th></tr></thead><tbody>${loginRows}</tbody></table>`}
+  <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Share rate from the new-helper screen: <b style="color:var(--text)">${rate}</b> of people shown it shared or copied their link. "Shared" means they picked an app in the share sheet; sending isn't confirmed. "Signed in" counts people who opened a shared helper link, tapped Contact on Yoodle and were signed in (each person counted once per helper); "Helpers" is how many different helpers' links led to it.</div>`;
 }
 
 async function loadRecentActivity() {

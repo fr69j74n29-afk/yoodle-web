@@ -1761,6 +1761,13 @@ window.addEventListener('DOMContentLoaded', () => {
   const _refCode = _notifParams.get('ref');
   const _openEmail = _notifParams.get('open')==='email-settings';
   if(_openEmail) window._openEmailSettings = true;
+  // Helper page "Contact on Yoodle" deep link: ?helper={id}[&s=share|fwd] — kept in localStorage
+  // so it survives sign-in (Google OAuth reloads the page). Handled in handleHelperLanding().
+  const _landHelper = _notifParams.get('helper');
+  if(_landHelper && /^[0-9a-f-]{36}$/i.test(_landHelper)){
+    const _landSrc = _notifParams.get('s');
+    try{localStorage.setItem('yoodle_helper_land', JSON.stringify({h:_landHelper, s:(_landSrc==='share'||_landSrc==='fwd')?_landSrc:null, ts:Date.now()}));}catch(e){}
+  }
   if(_refCode){
     localStorage.setItem('yoodle_ref', _refCode);
   }
@@ -1768,7 +1775,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window._pendingNotifTaskId = _notifTaskId;
     window._pendingNotifConvId = _notifConvId;
   }
-  if(_notifTaskId || _refCode || _openEmail){
+  if(_notifTaskId || _refCode || _openEmail || _landHelper){
     window.history.replaceState({}, '', '/');
   }
   if(window.navigator.standalone===true||window.matchMedia('(display-mode:standalone)').matches){
@@ -2785,6 +2792,7 @@ async function showApp(){
   subscribeToMessages();
   registerOneSignal();
   processReferral();
+  handleHelperLanding();
   loadPoints();
   setTimeout(async()=>{
     if(window._pendingNotifTaskId){
@@ -4465,7 +4473,7 @@ async function shareMyHelperPage(d){
     const{data}=await sb.from('profiles').select('helper_address,helper_categories').eq('id',myProfileId||me.id).maybeSingle();
     d={address:data?.helper_address,categories:data?.helper_categories};
   }
-  const url=`https://yoodle.ca/helpers/${myProfileId||me.id}`;
+  const url=`https://yoodle.ca/helpers/${myProfileId||me.id}?s=share`;
   const text=helperShareText(d.address,d.categories);
   if(navigator.share){
     try{await navigator.share({text,url});logShare(fromProfile?'profile_share':'shared');closeLiveScreen();}catch(e){}
@@ -4486,7 +4494,7 @@ async function shareMyHelperPage(d){
 async function shareOtherHelperPage(){
   const d=window._opShare;
   if(!d)return;
-  const url=`https://yoodle.ca/helpers/${d.id}`;
+  const url=`https://yoodle.ca/helpers/${d.id}?s=fwd`;
   const cats=(d.categories||[]).filter(c=>String(c).toLowerCase()!=='other');
   const skills=cats.length?helperShareSkills(cats):'odd jobs';
   const area=d.address?helperShareArea(d.address):'';
@@ -4760,6 +4768,20 @@ async function submitRating(){
 
 // ── REFERRAL POINTS SYSTEM ──
 let myPoints=0, myRefCode='', myRefCount=0;
+
+// Arrived via a helper page link (?helper=…): once signed in, log the shared-link login
+// (share_link_events via log_share_login, once per visitor+helper) and open that helper's profile.
+async function handleHelperLanding(){
+  if(!sb||!me)return;
+  let d=null;
+  try{d=JSON.parse(localStorage.getItem('yoodle_helper_land')||'null');localStorage.removeItem('yoodle_helper_land');}catch(e){}
+  if(!d||!d.h||Date.now()-(d.ts||0)>7*24*60*60*1000)return;
+  const mine=myProfileId||me.id;
+  if(d.h===mine)return;
+  if(d.s)sb.rpc('log_share_login',{p_helper:d.h,p_src:d.s}).then(()=>{},()=>{});
+  if(iBlockedIds.has(d.h))return;
+  setTimeout(()=>openOtherProfile(d.h),900);
+}
 
 async function processReferral(){
   if(!sb||!me)return;
