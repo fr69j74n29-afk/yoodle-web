@@ -23,7 +23,7 @@
   --orange: #F97316;
   --yellow: #FCD34D;
   --text: #F0F0F5;
-  --muted: #666680;
+  --muted: #A3A3B8; /* was #666680 (3.3:1 on --surface); now ~7.4:1 */
   --mono: 'Space Mono', monospace;
   --sans: 'Nunito', sans-serif;
 }
@@ -668,7 +668,7 @@ body::before {
 .ac-badge.open { background: rgba(163,230,53,.12); color: #A3E635; border: 1px solid rgba(163,230,53,.25); }
 .ac-badge.claimed { background: rgba(6,182,212,.12); color: #06B6D4; border: 1px solid rgba(6,182,212,.25); }
 .ac-badge.completed { background: rgba(155,89,212,.12); color: #9B59D4; border: 1px solid rgba(155,89,212,.25); }
-.ac-badge.cancelled { background: rgba(102,102,128,.12); color: #666680; border: 1px solid rgba(102,102,128,.25); }
+.ac-badge.cancelled { background: rgba(163,163,184,.12); color: var(--muted); border: 1px solid rgba(163,163,184,.3); }
 .ac-badge.pending { background: rgba(249,115,22,.12); color: #F97316; border: 1px solid rgba(249,115,22,.25); }
 .ac-badge.approved { background: rgba(163,230,53,.12); color: #A3E635; border: 1px solid rgba(163,230,53,.25); }
 .ac-badge.rejected { background: rgba(239,68,68,.12); color: #EF4444; border: 1px solid rgba(239,68,68,.25); }
@@ -1066,7 +1066,7 @@ body::before {
     <!-- REPORTS (moderation — review within 24 h) -->
     <div class="section-title">REPORTS — REVIEW WITHIN 24 HOURS</div>
     <div class="activity-tabs">
-      <button class="activity-tab active" onclick="switchReportTab(this,'open')">🚩 Open <span id="rep-open-count" style="opacity:.5"></span></button>
+      <button class="activity-tab active" onclick="switchReportTab(this,'open')">🚩 Open <span id="rep-open-count" style="opacity:.8"></span></button>
       <button class="activity-tab" onclick="switchReportTab(this,'all')">📋 All</button>
     </div>
     <div id="reports-list" class="activity-panel" style="margin-bottom:28px"></div>
@@ -1082,8 +1082,8 @@ body::before {
     <!-- AMBASSADOR APPLICATIONS -->
     <div class="section-title">AMBASSADOR APPLICATIONS</div>
     <div class="activity-tabs">
-      <button class="activity-tab active" onclick="switchAmbTab(this,'pending')">🕐 Pending <span id="amb-pending-count" style="opacity:.5"></span></button>
-      <button class="activity-tab" onclick="switchAmbTab(this,'all')">📋 All <span id="amb-all-count" style="opacity:.5"></span></button>
+      <button class="activity-tab active" onclick="switchAmbTab(this,'pending')">🕐 Pending <span id="amb-pending-count" style="opacity:.8"></span></button>
+      <button class="activity-tab" onclick="switchAmbTab(this,'all')">📋 All <span id="amb-all-count" style="opacity:.8"></span></button>
     </div>
     <div id="amb-pending" class="activity-panel"></div>
     <div id="amb-all" class="activity-panel" style="display:none"></div>
@@ -1092,8 +1092,8 @@ body::before {
     <div class="section-title">RECENT ACTIVITY — LAST 48 HOURS</div>
 
     <div class="activity-tabs">
-      <button class="activity-tab active" onclick="switchActivityTab(this,'jobs')">📋 Jobs <span id="activity-jobs-count" style="opacity:.5"></span></button>
-      <button class="activity-tab" onclick="switchActivityTab(this,'helpers')">🙋 Helpers <span id="activity-helpers-count" style="opacity:.5"></span></button>
+      <button class="activity-tab active" onclick="switchActivityTab(this,'jobs')">📋 Jobs <span id="activity-jobs-count" style="opacity:.8"></span></button>
+      <button class="activity-tab" onclick="switchActivityTab(this,'helpers')">🙋 Helpers <span id="activity-helpers-count" style="opacity:.8"></span></button>
     </div>
 
     <div id="activity-jobs" class="activity-panel"></div>
@@ -1838,10 +1838,10 @@ function openAdminMsg(type, userId, userName, taskId, taskTitle) {
 
   if (type === 'job') {
     titleEl.textContent = 'Message Job Poster';
-    ctxEl.innerHTML = `TO: ${esc(userName)}<br>RE: "${esc(taskTitle)}"<br><span style="font-size:9px;opacity:.6">This message will appear in their Messages tab, linked to this job.</span>`;
+    ctxEl.innerHTML = `TO: ${esc(userName)}<br>RE: "${esc(taskTitle)}"<br><span style="font-size:11px;color:var(--muted)">This message will appear in their Messages tab, linked to this job.</span>`;
   } else {
     titleEl.textContent = 'Message Helper';
-    ctxEl.innerHTML = `TO: ${esc(userName)}<br>RE: Helper profile<br><span style="font-size:9px;opacity:.6">This will create a conversation in their Messages tab.</span>`;
+    ctxEl.innerHTML = `TO: ${esc(userName)}<br>RE: Helper profile<br><span style="font-size:11px;color:var(--muted)">This will create a conversation in their Messages tab.</span>`;
   }
   document.getElementById('admin-msg-modal').style.display = 'flex';
   bodyEl.focus();
