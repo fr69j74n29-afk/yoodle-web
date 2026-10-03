@@ -46,7 +46,7 @@
   --purple:#5C8A6A;--lime:#2E7D52;--pink:#3D6B50;
   --teal:#4A9E7A;--orange:#F97316;--yellow:#C8A96E;
   --bg:#F5F4EF;--surface:#FFFFFF;--surface2:#EFF0EA;
-  --border:#D4D6CD;--text:#1E2620;--muted:#7A8A7C;
+  --border:#D4D6CD;--text:#1E2620;--muted:#7A8A7C;--text2:#4A5A4E;
   --radius:20px;--radius-sm:12px;
   --btn-a:#5C8A6A;--btn-b:#3D6B50;--btn-lime:#2E7D52; /* filled buttons with white text */
   --sat:env(safe-area-inset-top,0px);
@@ -70,7 +70,7 @@ body.theme-sage-dark{
   --btn-a:#178A52;--btn-b:#0F6B3C;--btn-lime:#15803D;
   --teal:#3AC0CF;--orange:#FF8A3D;--yellow:#F0CF5A;
   --bg:#050706;--surface:#0D120F;--surface2:#141A16;
-  --border:#232C25;--text:#F0EFEA;--muted:#93A596;
+  --border:#232C25;--text:#F0EFEA;--muted:#93A596;--text2:#C9CFC9;
   --badge-bg:rgba(255,255,255,.06);
 }
 /* shared dark overrides */
@@ -328,7 +328,7 @@ body.theme-sage-dark .theme-btn .ic-moon{display:none}
 .lc-cat{font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--jc,var(--purple));display:flex;align-items:center;gap:4px;flex-shrink:0}
 .lc-budget{font-size:17px;font-weight:800;color:var(--lime);white-space:nowrap;flex-shrink:0}
 .lc-title{font-size:15px;font-weight:800;line-height:1.3;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lc-desc{font-size:13.5px;color:#aaa;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
+.lc-desc{font-size:13.5px;color:var(--text2);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
 .lc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .lc-poster{display:flex;align-items:center;gap:5px;min-width:0}
 .lc-av{width:20px;height:20px;border-radius:50%;background:var(--surface2);font-size:10.5px;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--muted);flex-shrink:0}
@@ -342,7 +342,7 @@ body.theme-sage-dark .theme-btn .ic-moon{display:none}
 .jc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
 .jc-title{font-size:16px;font-weight:800;line-height:1.3;flex:1;padding-right:10px}
 .jc-budget{font-size:18px;font-weight:800;color:var(--lime);white-space:nowrap}
-.jc-desc{font-size:14px;color:#bbb;line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.jc-desc{font-size:14px;color:var(--text2);line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 /* 3-dot overflow menu */
 .card-menu-wrap{position:relative;z-index:10}
 .card-menu-btn{width:32px;height:32px;border-radius:50%;background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;line-height:1;padding:0}
@@ -533,7 +533,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-stat-rating{font-size:14px;font-weight:800;color:var(--yellow);margin-top:4px}
 .op-bio{background:var(--surface2);border-radius:var(--radius-sm);border:1.5px solid var(--border);padding:14px 16px;word-break:break-word;overflow-wrap:break-word}
 .op-bio-lbl{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
-.op-bio-text{font-size:14px;font-weight:600;color:#ccc;line-height:1.7;word-break:break-word;overflow-wrap:break-word}
+.op-bio-text{font-size:14px;font-weight:600;color:var(--text2);line-height:1.7;word-break:break-word;overflow-wrap:break-word}
 .op-bio-empty{font-size:14px;color:var(--muted);font-style:italic;font-weight:600}
 
 @media(min-width:481px){
@@ -3231,7 +3231,7 @@ async function openApplicants(taskId,taskTitle){
     const p=app.profiles||{};
     const name=p.name||'Someone';
     const rating=p.rating?`★ ${p.rating}`:'New';
-    const bio=p.bio?`<div style="font-size:13.5px;color:#aaa;margin:4px 0 8px;line-height:1.4">${esc(p.bio)}</div>`:'';
+    const bio=p.bio?`<div style="font-size:13.5px;color:var(--text2);margin:4px 0 8px;line-height:1.4">${esc(p.bio)}</div>`:'';
     return `<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;border:1.5px solid var(--border)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:8px">
