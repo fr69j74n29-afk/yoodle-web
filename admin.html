@@ -1574,17 +1574,10 @@ async function loadShareStats() {
   (data || []).forEach(r => { m[r.event] = r; });
   const n = k => Number(m[k]?.events || 0), p = k => Number(m[k]?.people || 0);
   // "You're live" screen is shown once per new helper, so count people, not times.
-  // "Maybe later" is just how the screen gets closed (sharers tap it too), so it isn't shown;
-  // "closed without sharing" = people shown minus people who shared or copied.
+  // "Maybe later" is just how the screen gets closed (sharers tap it too), so it isn't shown.
   const seen = p('shown');
   const sharedPeople = Math.min(p('shared') + p('copied'), seen);
-  const closed = Math.max(seen - sharedPeople, 0);
-  const pct = v => seen ? Math.round(v / seen * 100) + '%' : '—';
-  const screenRows = [
-    ['Saw the "You\'re live" screen', seen, seen ? '100%' : '—'],
-    ['Shared or copied their link', sharedPeople, pct(sharedPeople)],
-    ['Closed without sharing', closed, pct(closed)],
-  ];
+  const pct = seen ? Math.round(sharedPeople / seen * 100) + '%' : '—';
   // Shared-link logins (share_link_events): someone opened a shared /helpers/{id} link,
   // tapped Contact on Yoodle and was signed in (new or existing account). Once per visitor+helper.
   const lm = {};
@@ -1595,9 +1588,9 @@ async function loadShareStats() {
     ['Signed in from forwarded link', lv('fwd'), lh('fwd')],
   ].map(r => `<tr><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num helpers">${r[2]}</td></tr>`).join('');
   el.innerHTML = `<div style="padding:6px 0 4px;font-size:12px;font-weight:800;color:var(--muted)">NEW-HELPER "YOU'RE LIVE" SCREEN</div>
-  <table class="region-table"><thead><tr><th>Outcome</th><th>People</th><th>%</th></tr></thead><tbody>${
-    screenRows.map(r => `<tr><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num helpers">${r[2]}</td></tr>`).join('')
-  }</tbody></table>
+  <table class="region-table"><thead><tr><th>Outcome</th><th>People</th><th>%</th></tr></thead><tbody>
+    <tr><td>Shared or copied their link</td><td class="num">${sharedPeople} of ${seen}</td><td class="num helpers">${pct}</td></tr>
+  </tbody></table>
   <div style="padding:14px 0 4px;font-size:12px;font-weight:800;color:var(--muted)">PROFILE "SHARE MY PAGE" BUTTON</div>
   <table class="region-table"><thead><tr><th>Action</th><th>Times</th><th>People</th></tr></thead><tbody>
     <tr><td>Shared or copied from Profile</td><td class="num">${n('profile_share')}</td><td class="num helpers">${p('profile_share')}</td></tr>
