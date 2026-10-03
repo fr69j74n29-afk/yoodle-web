@@ -1573,14 +1573,17 @@ async function loadShareStats() {
   const m = {};
   (data || []).forEach(r => { m[r.event] = r; });
   const n = k => Number(m[k]?.events || 0), p = k => Number(m[k]?.people || 0);
-  const shown = n('shown'), sharedPeople = p('shared') + p('copied');
-  const rate = shown ? Math.round(sharedPeople / p('shown') * 100) + '%' : '—';
-  const rows = [
-    ['Share screen shown (new helpers)', n('shown'), p('shown')],
-    ['Shared via share sheet', n('shared'), p('shared')],
-    ['Copied link (desktop)', n('copied'), p('copied')],
-    ['Maybe later', n('later'), p('later')],
-    ['Shared from Profile button', n('profile_share'), p('profile_share')],
+  // "You're live" screen is shown once per new helper, so count people, not times.
+  // "Maybe later" is just how the screen gets closed (sharers tap it too), so it isn't shown;
+  // "closed without sharing" = people shown minus people who shared or copied.
+  const seen = p('shown');
+  const sharedPeople = Math.min(p('shared') + p('copied'), seen);
+  const closed = Math.max(seen - sharedPeople, 0);
+  const pct = v => seen ? Math.round(v / seen * 100) + '%' : '—';
+  const screenRows = [
+    ['Saw the "You\'re live" screen', seen, seen ? '100%' : '—'],
+    ['Shared or copied their link', sharedPeople, pct(sharedPeople)],
+    ['Closed without sharing', closed, pct(closed)],
   ];
   // Shared-link logins (share_link_events): someone opened a shared /helpers/{id} link,
   // tapped Contact on Yoodle and was signed in (new or existing account). Once per visitor+helper.
@@ -1591,13 +1594,18 @@ async function loadShareStats() {
     ['Signed in from own shared link', lv('share'), lh('share')],
     ['Signed in from forwarded link', lv('fwd'), lh('fwd')],
   ].map(r => `<tr><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num helpers">${r[2]}</td></tr>`).join('');
-  el.innerHTML = `<table class="region-table"><thead><tr><th>Action</th><th>Times</th><th>People</th></tr></thead><tbody>${
-    rows.map(r => `<tr><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num helpers">${r[2]}</td></tr>`).join('')
+  el.innerHTML = `<div style="padding:6px 0 4px;font-size:12px;font-weight:800;color:var(--muted)">NEW-HELPER "YOU'RE LIVE" SCREEN</div>
+  <table class="region-table"><thead><tr><th>Outcome</th><th>People</th><th>%</th></tr></thead><tbody>${
+    screenRows.map(r => `<tr><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num helpers">${r[2]}</td></tr>`).join('')
   }</tbody></table>
+  <div style="padding:14px 0 4px;font-size:12px;font-weight:800;color:var(--muted)">PROFILE "SHARE MY PAGE" BUTTON</div>
+  <table class="region-table"><thead><tr><th>Action</th><th>Times</th><th>People</th></tr></thead><tbody>
+    <tr><td>Shared or copied from Profile</td><td class="num">${n('profile_share')}</td><td class="num helpers">${p('profile_share')}</td></tr>
+  </tbody></table>
   <div style="padding:14px 0 4px;font-size:12px;font-weight:800;color:var(--muted)">LINK CLICKED → SIGNED IN</div>
   ${loginErr ? `<div style="padding:6px 0;color:var(--muted);font-size:13px">Could not load: ${esc(loginErr.message)}</div>` :
   `<table class="region-table"><thead><tr><th>Source</th><th>People signed in</th><th>Helpers</th></tr></thead><tbody>${loginRows}</tbody></table>`}
-  <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Share rate from the new-helper screen: <b style="color:var(--text)">${rate}</b> of people shown it shared or copied their link. "Shared" means they picked an app in the share sheet; sending isn't confirmed. "Signed in" counts people who opened a shared helper link, tapped Contact on Yoodle and were signed in (each person counted once per helper); "Helpers" is how many different helpers' links led to it.</div>`;
+  <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">New-helper screen: ${p('shared')} shared via the share sheet (picked an app; sending isn't confirmed), ${p('copied')} copied the link on desktop. "Signed in" counts people who opened a shared helper link, tapped Contact on Yoodle and were signed in (each person counted once per helper); "Helpers" is how many different helpers' links led to it.</div>`;
 }
 
 async function loadRecentActivity() {
