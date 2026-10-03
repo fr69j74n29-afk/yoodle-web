@@ -519,6 +519,9 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-hdr-wm{font-family:'Fredoka One',cursive;font-size:22px;line-height:1}
 .op-close{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:18px;flex-shrink:0}
 .op-close:active{background:var(--border)}
+.op-hdr-act{display:flex;align-items:center;gap:10px}
+.op-share{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);flex-shrink:0;padding:0}
+.op-share:active{background:var(--border)}
 .op-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 20px calc(var(--sab) + 28px);display:flex;flex-direction:column;gap:16px}
 .op-hero{display:flex;align-items:center;gap:14px}
 .op-av{width:32px;height:32px;border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
@@ -1244,7 +1247,12 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   <div class="op-sheet">
     <div class="op-hdr">
       <div class="op-hdr-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
-      <div class="op-close" onclick="closeOtherProfile()">✕</div>
+      <div class="op-hdr-act">
+        <button class="op-share" id="op-share-btn" style="display:none" onclick="shareOtherHelperPage()" aria-label="Share this helper" title="Share">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+        </button>
+        <div class="op-close" onclick="closeOtherProfile()">✕</div>
+      </div>
     </div>
     <div class="op-scroll" id="op-content">
       <div class="loading"><div class="spinner"></div></div>
@@ -2436,10 +2444,13 @@ async function openOtherProfile(userId){
   const modal=document.getElementById('op-modal');
   const content=document.getElementById('op-content');
   content.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  const opShareBtn=document.getElementById('op-share-btn');
+  if(opShareBtn)opShareBtn.style.display='none';
+  window._opShare=null;
   modal.classList.add('open');
 
   const [profRes,posterRatingRes,helperRatingRes,posterStatsRes,helperStatsRes]=await Promise.all([
-    sb.from('profiles').select('id,name,bio,rating,task_count,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,visible_on_map').eq('id',userId).maybeSingle(),
+    sb.from('profiles').select('id,name,bio,rating,task_count,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,visible_on_map,helper_address').eq('id',userId).maybeSingle(),
     sb.rpc('get_poster_rating',{user_id:userId}),
     sb.rpc('get_helper_rating',{user_id:userId}),
     sb.from('tasks').select('id,status').eq('poster_id',userId),
@@ -2467,6 +2478,11 @@ async function openOtherProfile(userId){
 
     const initial=((prof.name||'?')[0]).toUpperCase();
     window._opName=prof.name||'this person';
+    // Share button (header): only for active helpers — their public page yoodle.ca/helpers/{id} needs visible_on_map
+    if(prof.visible_on_map&&userId!==(myProfileId||me?.id)&&!iBlockedIds.has(userId)){
+      window._opShare={id:userId,address:prof.helper_address,categories:prof.helper_categories};
+      if(opShareBtn)opShareBtn.style.display='flex';
+    }
 
   content.innerHTML=`
     <div class="op-hero">
@@ -4463,6 +4479,27 @@ async function shareMyHelperPage(d){
   }
   const btn=document.getElementById('live-share-btn');
   if(btn&&document.getElementById('live-ov').classList.contains('open')){btn.textContent='Copied! ✓';setTimeout(()=>btn.textContent='Copy link',2000);}
+  toast('📋 Copied! Paste it into a message');
+}
+
+// ── SHARE ANOTHER HELPER'S PAGE (profile sheet header) ──
+async function shareOtherHelperPage(){
+  const d=window._opShare;
+  if(!d)return;
+  const url=`https://yoodle.ca/helpers/${d.id}`;
+  const cats=(d.categories||[]).filter(c=>String(c).toLowerCase()!=='other');
+  const skills=cats.length?helperShareSkills(cats):'odd jobs';
+  const area=d.address?helperShareArea(d.address):'';
+  const text=`Check out this local helper on Yoodle: ${skills}${area&&area!=='my area'?` around ${area}`:''}. Free to contact:`;
+  if(navigator.share){
+    try{await navigator.share({text,url});}catch(e){}
+    return;
+  }
+  const full=text+' '+url;
+  try{await navigator.clipboard.writeText(full);}catch(e){
+    const ta=document.createElement('textarea');ta.value=full;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+  }
   toast('📋 Copied! Paste it into a message');
 }
 
