@@ -524,6 +524,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-hdr-act{display:flex;align-items:center;gap:10px}
 .op-share{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);flex-shrink:0;padding:0}
 .op-share:active{background:var(--border)}
+.op-share.sm{width:32px;height:32px}
 .op-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 20px calc(var(--sab) + 28px);display:flex;flex-direction:column;gap:16px}
 .op-hero{display:flex;align-items:center;gap:14px}
 .op-av{width:32px;height:32px;border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
@@ -1082,7 +1083,12 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   <div class="modal-sheet">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
       <div class="modal-handle" style="margin:0"></div>
-      <button onclick="document.getElementById('modal').classList.remove('open')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;line-height:1">✕</button>
+      <div class="op-hdr-act">
+        <button class="op-share sm" onclick="shareJob()" aria-label="Share this job" title="Share">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+        </button>
+        <button onclick="document.getElementById('modal').classList.remove('open')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;line-height:1">✕</button>
+      </div>
     </div>
     <div class="modal-title" id="m-title">—</div>
     <div class="modal-meta" id="m-meta">—</div>
@@ -1096,7 +1102,6 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     </div>
     <div style="display:flex;gap:10px;align-items:stretch;margin-top:8px">
       <button class="btn-primary" id="m-action" onclick="jobAction()" style="flex:1;margin-top:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M7 11v8m0-8L9.5 4.5a1.8 1.8 0 0 1 3.4 1.2L12 9h6.2a2 2 0 0 1 2 2.4l-1.2 6A2 2 0 0 1 17 19H7"/><path d="M7 11H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3"/></svg>I Can Help</button>
-      <button onclick="shareJob()" title="Share this job" style="width:52px;border-radius:var(--radius);background:var(--surface2);border:1.5px solid var(--yellow);color:var(--yellow);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
     </div>
     <button class="btn-destructive" id="m-unclaim" onclick="unclaimJob()" style="display:none;width:100%;padding:16px;border-radius:var(--radius);background:transparent;color:#DC5046;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:1.5px solid rgba(220,80,70,.25);cursor:pointer;margin-top:10px">Unclaim Job</button>
     <button id="m-report" onclick="reportJob()" style="display:none;margin:14px auto 0;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:700;text-decoration:underline;cursor:pointer">Report this job</button>
@@ -3067,19 +3072,22 @@ async function openJob(j){
 }
 function closeModal(e){if(e.target.id==='modal')document.getElementById('modal').classList.remove('open');}
 
-function shareJob(){
+async function shareJob(){
   if(!activeJob)return;
   const url=`${window.location.origin}/job.html?job=${activeJob.id}`;
   const title=activeJob.title||'Local job on Yoodle';
   const text=`Someone near you needs help: "${title}". Apply free on Yoodle.`;
   if(navigator.share){
-    navigator.share({title,text,url}).catch(()=>{});
-  } else {
-    // fallback: copy to clipboard
-    navigator.clipboard?.writeText(url).then(()=>toast('🔗 Link copied!')).catch(()=>{
-      prompt('Copy this link:',url);
-    });
+    try{await navigator.share({title,text,url});}catch(e){}
+    return;
   }
+  // fallback (desktop): copy message + link, same as shareOtherHelperPage()
+  const full=text+' '+url;
+  try{await navigator.clipboard.writeText(full);}catch(e){
+    const ta=document.createElement('textarea');ta.value=full;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+  }
+  toast('📋 Copied! Paste it into a message');
 }
 
 async function jobAction(){
