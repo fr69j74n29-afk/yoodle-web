@@ -1431,6 +1431,12 @@ let recentJobs = [];
 let recentHelpers = [];
 let currentActivityTab = 'jobs';
 let adminUserId = null;   // set after auth
+let protectedIds = new Set();   // admin + auto-reply accounts — no Suspend buttons for these (admin_protected_ids)
+async function loadProtectedIds() {
+  const { data, error } = await sb.rpc('admin_protected_ids');
+  protectedIds = new Set(error ? [] : (data || []).map(x => x.user_id || x));
+  if (adminUserId) protectedIds.add(adminUserId);
+}
 
 function switchActivityTab(btn, tab) {
   document.querySelectorAll('.activity-tab').forEach(b => b.classList.remove('active'));
@@ -1487,7 +1493,7 @@ async function loadReports() {
              <button class="btn-out" style="margin:0" onclick="resolveReport('${r.id}','dismissed')">Dismiss</button>`
           : `<button class="btn-out" style="margin:0" onclick="resolveReport('${r.id}','open')">Reopen</button>`}
         ${taskLive ? `<button class="btn-out" style="margin:0" onclick="removeReportedTask('${r.task_id}')">Remove job</button>` : ''}
-        ${r.reported_suspended
+        ${protectedIds.has(r.reported_id) ? '' : r.reported_suspended
           ? `<button class="btn-out" style="margin:0" onclick="suspendUser('${r.reported_id}',false)">Unsuspend user</button>`
           : `<button class="btn-out" style="margin:0;color:var(--pink);border-color:rgba(236,72,153,.4)" onclick="suspendUser('${r.reported_id}',true)">Suspend user</button>`}
       </div>
@@ -1519,7 +1525,7 @@ async function suspendUser(userId, suspend) {
 }
 // Suspend / Unsuspend button for activity cards (admin accounts can't be suspended — the RPC refuses)
 function suspendBtn(userId, suspendedIds) {
-  if (!userId) return '';
+  if (!userId || protectedIds.has(userId)) return '';
   return suspendedIds.has(userId)
     ? `<button class="btn-admin-msg" onclick="suspendUser('${userId}',false)">Unsuspend</button>`
     : `<button class="btn-admin-msg btn-admin-danger" onclick="suspendUser('${userId}',true)">⛔ Suspend</button>`;
@@ -1628,7 +1634,7 @@ async function loadConvOverview() {
 }
 // Suspend / Unsuspend button for one side of a live conversation (admin accounts are refused by the RPC)
 function convSuspendBtn(userId, name, role, suspendedIds) {
-  if (!userId) return '';
+  if (!userId || protectedIds.has(userId)) return '';
   const who = esc(name || role);
   return suspendedIds.has(userId)
     ? `<button class="btn-admin-msg" onclick="suspendUser('${userId}',false)">Unsuspend ${who}</button>`
@@ -1992,13 +1998,17 @@ sb.auth.onAuthStateChange(async (_event, session) => {
       adminUserId = session.user.id;
       populateUser(session.user);
       show('screen-dashboard');
-      loadStats();
-      loadRecentUsers();
-      loadShareStats();
-      loadReports();
-      loadSuspended();
-      loadRecentActivity();
-      loadAmbassadors();
+      // protected (admin) ids first, so no list renders a Suspend button for an admin account.
+      // Chained, not awaited — Supabase advises against awaiting calls inside onAuthStateChange.
+      loadProtectedIds().finally(() => {
+        loadStats();
+        loadRecentUsers();
+        loadShareStats();
+        loadReports();
+        loadSuspended();
+        loadRecentActivity();
+        loadAmbassadors();
+      });
     } catch (err) {
       console.error('Auth handler error:', err);
       dashboardReady = false;
