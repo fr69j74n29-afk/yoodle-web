@@ -728,6 +728,8 @@ body::before {
   flex-shrink: 0;
 }
 .btn-admin-msg:hover { background: rgba(155,89,212,.18); border-color: var(--purple); }
+.btn-admin-msg.btn-admin-danger { color: var(--pink); border-color: rgba(236,72,153,.4); background: rgba(236,72,153,.08); }
+.btn-admin-msg.btn-admin-danger:hover { background: rgba(236,72,153,.18); border-color: var(--pink); }
 
 .ac-helper-row {
   display: flex;
@@ -1512,6 +1514,23 @@ async function suspendUser(userId, suspend) {
   if (error) return alert('Error: ' + error.message);
   loadReports();
   loadSuspended();
+  loadRecentActivity();
+}
+// Suspend / Unsuspend button for activity cards (admin accounts can't be suspended — the RPC refuses)
+function suspendBtn(userId, suspendedIds) {
+  if (!userId) return '';
+  return suspendedIds.has(userId)
+    ? `<button class="btn-admin-msg" onclick="suspendUser('${userId}',false)">Unsuspend</button>`
+    : `<button class="btn-admin-msg btn-admin-danger" onclick="suspendUser('${userId}',true)">⛔ Suspend</button>`;
+}
+// Cancel a job from Recent Activity (open/claimed → cancelled via admin_remove_task)
+async function adminCancelJob(taskId, title) {
+  if (!confirm(`Cancel "${title}"?\n\nIt will disappear from the map and lists, and its chats will be hidden from Messages.`)) return;
+  const { error } = await sb.rpc('admin_remove_task', { p_task_id: taskId });
+  if (error) return alert('Error: ' + error.message);
+  adminToast('Job cancelled');
+  loadRecentActivity();
+  loadStats();
 }
 
 // ── SUSPENDED ACCOUNTS (admin-only RPC; suspended_users has RLS with no policies) ──
@@ -1660,6 +1679,10 @@ async function loadRecentActivity() {
     recentJobs = jobs || [];
     recentHelpers = helpers2 || [];
 
+    // Suspended ids (admin-only RPC) so cards show Unsuspend instead of Suspend
+    const { data: suspRows } = await sb.rpc('admin_list_suspended');
+    const suspendedIds = new Set((suspRows || []).map(r => r.user_id));
+
     // Fetch poster profiles for jobs
     const posterIds = [...new Set(recentJobs.map(j => j.poster_id).filter(Boolean))];
     const posterProfiles = {};
@@ -1691,7 +1714,11 @@ async function loadRecentActivity() {
           ${j.description ? `<div class="ac-desc">${esc(j.description)}</div>` : ''}
           <div class="ac-footer">
             <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${j.address ? '📍 ' + esc(j.address) : ''}</span>
-            <button class="btn-admin-msg" onclick="openAdminMsg('job','${j.poster_id}','${escAttr(poster.name || 'User')}','${j.id}','${escAttr(j.title || '')}')">💬 Message Poster</button>
+            <span style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end">
+              <button class="btn-admin-msg" onclick="openAdminMsg('job','${j.poster_id}','${escAttr(poster.name || 'User')}','${j.id}','${escAttr(j.title || '')}')">💬 Message Poster</button>
+              ${['open', 'claimed'].includes(statusClass) ? `<button class="btn-admin-msg btn-admin-danger" onclick="adminCancelJob('${j.id}','${escAttr(j.title || 'this job')}')">✕ Cancel job</button>` : ''}
+              ${suspendBtn(j.poster_id, suspendedIds)}
+            </span>
           </div>
         </div>`;
       }).join('');
@@ -1717,7 +1744,10 @@ async function loadRecentActivity() {
                 ${h.phone ? ' · 📱 ' + esc(h.phone) : ''}
               </div>
             </div>
-            <button class="btn-admin-msg" onclick="openAdminMsg('helper','${h.id}','${escAttr(h.name || 'Helper')}','','')">💬 Message</button>
+            <span style="display:flex;flex-direction:column;gap:6px">
+              <button class="btn-admin-msg" onclick="openAdminMsg('helper','${h.id}','${escAttr(h.name || 'Helper')}','','')">💬 Message</button>
+              ${suspendBtn(h.id, suspendedIds)}
+            </span>
           </div>
           ${h.helper_address ? `<div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:8px;margin-left:54px">📍 ${esc(h.helper_address)}</div>` : ''}
           ${h.bio ? `<div class="ac-helper-bio" style="margin-left:54px">${esc(h.bio)}</div>` : ''}
