@@ -955,7 +955,7 @@ body::before {
     <div class="dash-user">
       <div class="dash-avatar" id="dash-avatar">?</div>
       <span class="dash-name" id="dash-name"></span>
-      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadShareStats();loadReports()">↻ Refresh</button>
+      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadShareStats();loadReports();loadSuspended()">↻ Refresh</button>
     </div>
   </div>
 
@@ -994,9 +994,9 @@ body::before {
       </div>
     </div>
 
-    <!-- CONVERSATION DETAILS (live 🟢 + messaged in last 7 days ⚪) -->
+    <!-- CONVERSATION DETAILS (live only) -->
     <div class="breakdown-card" style="margin-bottom:32px">
-      <h3>Conversations — live &amp; recent</h3>
+      <h3>Live conversations</h3>
       <div id="conv-rows"></div>
     </div>
 
@@ -1037,6 +1037,10 @@ body::before {
       <button class="activity-tab" onclick="switchReportTab(this,'all')">📋 All</button>
     </div>
     <div id="reports-list" class="activity-panel" style="margin-bottom:28px"></div>
+
+    <!-- SUSPENDED ACCOUNTS (admin-only RPC admin_list_suspended) -->
+    <div class="section-title">SUSPENDED ACCOUNTS <span id="susp-count" style="opacity:.8"></span></div>
+    <div id="suspended-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
 
     <!-- NEWEST USERS -->
     <div class="section-title">NEWEST USERS — LAST 5</div>
@@ -1507,6 +1511,36 @@ async function suspendUser(userId, suspend) {
   const { error } = await sb.rpc('admin_suspend_user', { p_user_id: userId, p_suspend: suspend, p_reason: reason || null });
   if (error) return alert('Error: ' + error.message);
   loadReports();
+  loadSuspended();
+}
+
+// ── SUSPENDED ACCOUNTS (admin-only RPC; suspended_users has RLS with no policies) ──
+async function loadSuspended() {
+  const el = document.getElementById('suspended-list');
+  const cnt = document.getElementById('susp-count');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_list_suspended');
+  if (error) {
+    if (cnt) cnt.textContent = '';
+    el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load suspended accounts: ${esc(error.message)}</div>`;
+    return;
+  }
+  if (cnt) cnt.textContent = '(' + (data ? data.length : 0) + ')';
+  if (!data || !data.length) {
+    el.innerHTML = '<div style="padding:14px 0;color:var(--muted);font-size:13px">No suspended accounts.</div>';
+    return;
+  }
+  el.innerHTML = data.map((u, i) => {
+    const date = u.suspended_at ? new Date(u.suspended_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 0;${i ? 'border-top:1px solid var(--border);' : ''}">
+      <div style="min-width:0">
+        <div style="font-size:14px;font-weight:700;color:var(--text);word-break:break-all">${esc(u.name || '—')} · ${esc(u.email || '—')}</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-top:2px">${esc(u.reason || 'No reason given')} · <span title="${escAttr(timeAgo(u.suspended_at))}">${esc(date)}</span></div>
+      </div>
+      <button class="btn-out" style="margin:0;white-space:nowrap" onclick="suspendUser('${u.user_id}',false)">Unsuspend</button>
+    </div>`;
+  }).join('');
 }
 
 // ── NEWEST USERS (admin-only RPC, reads auth.users) ──
@@ -1546,15 +1580,15 @@ async function loadConvOverview() {
     return;
   }
   animateNumber('stat-conv-live', data.live || 0);
-  const rows = data.rows || [];
+  const rows = (data.rows || []).filter(r => r.live);
   if (!rowsEl) return;
   rowsEl.innerHTML = rows.length ? rows.map(r => {
     const last = r.last_msg ? new Date(r.last_msg).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—';
     return `<div style="padding:8px 0;border-top:1px solid var(--border);font-size:12.5px">
-      <div style="font-weight:700;color:var(--text)">${r.live ? '🟢' : '⚪'} ${esc(r.poster || '—')} ↔ ${esc(r.helper || '—')}</div>
+      <div style="font-weight:700;color:var(--text)">🟢 ${esc(r.poster || '—')} ↔ ${esc(r.helper || '—')}</div>
       <div style="color:var(--muted)">${esc(r.job || '—')} · ${esc(r.job_status || '')} · ${r.msgs} msg${r.msgs === 1 ? '' : 's'} · last ${esc(last)}</div>
     </div>`;
-  }).join('') : '<div style="color:var(--muted);font-size:12px">No live or recent conversations.</div>';
+  }).join('') : '<div style="color:var(--muted);font-size:12px">No live conversations.</div>';
 }
 
 // ── HELPER PAGE SHARING (admin-only RPC over share_events) ──
@@ -1907,6 +1941,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
       loadRecentUsers();
       loadShareStats();
       loadReports();
+      loadSuspended();
       loadRecentActivity();
       loadAmbassadors();
     } catch (err) {
