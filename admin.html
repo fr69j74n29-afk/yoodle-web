@@ -1507,7 +1507,7 @@ async function removeReportedTask(taskId) {
   loadReports();
 }
 async function suspendUser(userId, suspend) {
-  const reason = suspend ? prompt('Suspend this user? Their open jobs are cancelled, their helper listing is hidden, and they can no longer post or message.\n\nReason (optional):') : null;
+  const reason = suspend ? prompt('Suspend this user? Their open and claimed jobs are cancelled, their helper listing is hidden, and they can no longer post or message.\n\nReason (optional):') : null;
   if (suspend && reason === null) return;           // cancelled
   if (!suspend && !confirm('Unsuspend this user? (Cancelled jobs and helper listing are not restored automatically.)')) return;
   const { error } = await sb.rpc('admin_suspend_user', { p_user_id: userId, p_suspend: suspend, p_reason: reason || null });
