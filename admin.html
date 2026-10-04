@@ -1515,6 +1515,7 @@ async function suspendUser(userId, suspend) {
   loadReports();
   loadSuspended();
   loadRecentActivity();
+  loadConvOverview();
 }
 // Suspend / Unsuspend button for activity cards (admin accounts can't be suspended — the RPC refuses)
 function suspendBtn(userId, suspendedIds) {
@@ -1591,7 +1592,11 @@ async function loadRecentUsers() {
 // Live = conversation active and job open (not expired) or claimed — i.e. visible in users' Messages.
 async function loadConvOverview() {
   const rowsEl = document.getElementById('conv-rows');
-  const { data, error } = await sb.rpc('admin_conversation_overview');
+  const [{ data, error }, { data: suspRows }] = await Promise.all([
+    sb.rpc('admin_conversation_overview'),
+    sb.rpc('admin_list_suspended')
+  ]);
+  const suspendedIds = new Set((suspRows || []).map(x => x.user_id));
   if (error) {
     if (rowsEl) rowsEl.innerHTML = `<div style="color:var(--muted);font-size:12px">Could not load conversations: ${esc(error.message)}</div>`;
     const liveEl = document.getElementById('stat-conv-live');
@@ -1613,8 +1618,21 @@ async function loadConvOverview() {
       <div style="font-weight:700;color:var(--text)">🟢 ${esc(r.poster || '—')} ↔ ${esc(r.helper || '—')}</div>
       <div style="color:var(--muted)">${esc(r.job || '—')} · ${esc(r.job_status || '')} · ${r.msgs} msg${r.msgs === 1 ? '' : 's'} · last <span title="${r.last_msg ? escAttr(timeAgo(r.last_msg)) : ''}">${esc(last)}</span></div>
       ${hist ? `<div style="margin-top:6px;padding:6px 10px;background:var(--surface2);border-radius:8px">${hist}</div>` : ''}
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+        ${r.task_id && ['open', 'claimed'].includes(r.job_status) ? `<button class="btn-admin-msg btn-admin-danger" onclick="adminCancelJob('${r.task_id}','${escAttr(r.job || 'this job')}')">✕ Cancel job</button>` : ''}
+        ${convSuspendBtn(r.poster_id, r.poster, 'poster', suspendedIds)}
+        ${convSuspendBtn(r.helper_id, r.helper, 'helper', suspendedIds)}
+      </div>
     </div>`;
   }).join('') : '<div style="color:var(--muted);font-size:12px">No live conversations.</div>';
+}
+// Suspend / Unsuspend button for one side of a live conversation (admin accounts are refused by the RPC)
+function convSuspendBtn(userId, name, role, suspendedIds) {
+  if (!userId) return '';
+  const who = esc(name || role);
+  return suspendedIds.has(userId)
+    ? `<button class="btn-admin-msg" onclick="suspendUser('${userId}',false)">Unsuspend ${who}</button>`
+    : `<button class="btn-admin-msg btn-admin-danger" onclick="suspendUser('${userId}',true)">⛔ Suspend ${who} <span style="opacity:.75;font-weight:600">(${role})</span></button>`;
 }
 
 // ── HELPER PAGE SHARING (admin-only RPC over share_events) ──
