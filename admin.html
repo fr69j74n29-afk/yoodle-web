@@ -1602,10 +1602,17 @@ async function loadConvOverview() {
   const rows = (data.rows || []).filter(r => r.live);
   if (!rowsEl) return;
   rowsEl.innerHTML = rows.length ? rows.map(r => {
-    const last = r.last_msg ? new Date(r.last_msg).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '—';
+    const fmt = t => { const d = new Date(t); return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + ' · ' + d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }); };
+    const last = r.last_msg ? fmt(r.last_msg) : '—';
+    // last 2 messages (oldest → newest), from admin_conversation_overview().rows[].last2
+    const hist = (r.last2 || []).map(m => `<div style="font-size:12.5px;line-height:1.5;padding:3px 0;color:var(--text)">
+        <b>${esc(m.sender || '?')}:</b> ${esc(m.body || '')}
+        <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${esc(fmt(m.at))}</span>
+      </div>`).join('');
     return `<div style="padding:8px 0;border-top:1px solid var(--border);font-size:12.5px">
       <div style="font-weight:700;color:var(--text)">🟢 ${esc(r.poster || '—')} ↔ ${esc(r.helper || '—')}</div>
-      <div style="color:var(--muted)">${esc(r.job || '—')} · ${esc(r.job_status || '')} · ${r.msgs} msg${r.msgs === 1 ? '' : 's'} · last ${esc(last)}</div>
+      <div style="color:var(--muted)">${esc(r.job || '—')} · ${esc(r.job_status || '')} · ${r.msgs} msg${r.msgs === 1 ? '' : 's'} · last <span title="${r.last_msg ? escAttr(timeAgo(r.last_msg)) : ''}">${esc(last)}</span></div>
+      ${hist ? `<div style="margin-top:6px;padding:6px 10px;background:var(--surface2);border-radius:8px">${hist}</div>` : ''}
     </div>`;
   }).join('') : '<div style="color:var(--muted);font-size:12px">No live conversations.</div>';
 }
