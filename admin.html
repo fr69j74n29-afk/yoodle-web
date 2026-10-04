@@ -973,7 +973,7 @@ body::before {
       <div class="stat-card users">
         <div class="stat-label"><span class="stat-icon">👤</span> Registered Users</div>
         <div class="stat-num loading-val" id="stat-users">—</div>
-        <div class="stat-sub">Total profiles created</div>
+        <div class="stat-sub" id="stat-users-detail">Active accounts (suspended excluded)</div>
       </div>
       <div class="stat-card helpers" style="--accent: linear-gradient(90deg, #A3E635, #FCD34D);">
         <div class="stat-label"><span class="stat-icon">🙋</span> Active Helpers</div>
@@ -1171,7 +1171,8 @@ async function loadStats() {
       { count: userCount },
       { data: helpers },
       { data: taskStatuses },
-      { data: recentProfiles }
+      { data: recentProfiles },
+      { data: suspRows, error: suspErr }
     ] = await Promise.all([
       sb.from('profiles').select('*', { count: 'exact', head: true }),
       sb.from('profiles').select('id, visible_on_map, show_on_map').eq('visible_on_map', true),
@@ -1179,10 +1180,17 @@ async function loadStats() {
       sb.from('profiles')
         .select('created_at')
         .gte('created_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: true }),
+      sb.rpc('admin_list_suspended')
     ]);
 
-    animateNumber('stat-users', userCount ?? 0);
+    // Registered users = active accounts (total − suspended); detail line shows both
+    const totalUsers = userCount ?? 0;
+    const suspendedCount = suspErr ? null : (suspRows || []).length;
+    animateNumber('stat-users', suspendedCount === null ? totalUsers : totalUsers - suspendedCount);
+    document.getElementById('stat-users-detail').textContent = suspendedCount === null
+      ? 'Total profiles created'
+      : `${totalUsers} total · ${suspendedCount} suspended`;
 
     // Active helpers breakdown
     const allHelpers = helpers || [];
@@ -1521,7 +1529,7 @@ async function suspendUser(userId, suspend) {
   loadReports();
   loadSuspended();
   loadRecentActivity();
-  loadConvOverview();
+  loadStats();   // refreshes Registered Users (net of suspended) + Live conversations
 }
 // Suspend / Unsuspend button for activity cards (admin accounts can't be suspended — the RPC refuses)
 function suspendBtn(userId, suspendedIds) {
