@@ -530,8 +530,8 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-av{width:32px;height:32px;border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
 .op-name{font-size:20px;font-weight:800;line-height:1.2;word-break:break-word;overflow-wrap:break-word}
 .op-mod-links{display:flex;align-items:center;gap:6px;margin-top:3px;font-size:12.5px;color:var(--muted)}
-.op-mod-links button{background:none;border:none;padding:2px 0;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;color:var(--muted);text-decoration:underline;cursor:pointer}
-.op-mod-links .op-mod-block{color:#DC5046}
+.op-mod-links button{background:none;border:none;padding:2px 0;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;color:#DC5046;text-decoration:underline;cursor:pointer}
+.op-mod-links .op-mod-unblock{color:var(--muted)}
 .op-stats{background:var(--surface2);border-radius:var(--radius-sm);border:1.5px solid var(--border);overflow:hidden}
 .op-stats-row{display:grid;grid-template-columns:1fr 1fr}
 .op-stat{padding:14px 16px;display:flex;flex-direction:column;gap:4px}
@@ -1096,7 +1096,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     <div class="modal-title" id="m-title">—</div>
     <div class="modal-meta" id="m-meta">—</div>
     <div class="modal-desc" id="m-desc">—</div>
-    <button id="m-report" onclick="reportJob()" style="display:none;margin:-14px 0 18px;padding:2px 0;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;text-decoration:underline;cursor:pointer">Report this job</button>
+    <button id="m-report" onclick="reportJob()" style="display:none;margin:-14px 0 18px;padding:2px 0;background:none;border:none;color:#DC5046;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;text-decoration:underline;cursor:pointer">Report this job</button>
     <div class="modal-grid">
       <div class="modal-pill"><div class="modal-pill-l">Budget</div><div class="modal-pill-v" id="m-budget" style="color:var(--lime)">—</div></div>
       <div class="modal-pill" id="m-poster-pill">
@@ -2496,7 +2496,7 @@ async function openOtherProfile(userId){
           <button onclick="openReport('${userId}',window._opName,null,null)">Report</button>
           <span aria-hidden="true">·</span>
           ${iBlockedIds.has(userId)
-            ?`<button onclick="unblockUser('${userId}')">Unblock</button>`
+            ?`<button class="op-mod-unblock" onclick="unblockUser('${userId}')">Unblock</button>`
             :`<button class="op-mod-block" onclick="openBlock('${userId}',window._opName)">Block</button>`}
         </div>`:''}
       </div>
