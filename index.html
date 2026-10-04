@@ -529,6 +529,9 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-hero{display:flex;align-items:center;gap:14px}
 .op-av{width:32px;height:32px;border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
 .op-name{font-size:20px;font-weight:800;line-height:1.2;word-break:break-word;overflow-wrap:break-word}
+.op-mod-links{display:flex;align-items:center;gap:6px;margin-top:3px;font-size:12.5px;color:var(--muted)}
+.op-mod-links button{background:none;border:none;padding:2px 0;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;color:var(--muted);text-decoration:underline;cursor:pointer}
+.op-mod-links .op-mod-block{color:#DC5046}
 .op-stats{background:var(--surface2);border-radius:var(--radius-sm);border:1.5px solid var(--border);overflow:hidden}
 .op-stats-row{display:grid;grid-template-columns:1fr 1fr}
 .op-stat{padding:14px 16px;display:flex;flex-direction:column;gap:4px}
@@ -2487,7 +2490,16 @@ async function openOtherProfile(userId){
   content.innerHTML=`
     <div class="op-hero">
       <div class="op-av">${esc(initial)}</div>
-      <div class="op-name">${esc(prof.name||'Yoodler')}</div>
+      <div style="min-width:0">
+        <div class="op-name">${esc(prof.name||'Yoodler')}</div>
+        ${(me&&userId!==(myProfileId||me.id))?`<div class="op-mod-links">
+          <button onclick="openReport('${userId}',window._opName,null,null)">Report</button>
+          <span aria-hidden="true">·</span>
+          ${iBlockedIds.has(userId)
+            ?`<button onclick="unblockUser('${userId}')">Unblock</button>`
+            :`<button class="op-mod-block" onclick="openBlock('${userId}',window._opName)">Block</button>`}
+        </div>`:''}
+      </div>
     </div>
     <div class="op-stats">
       <div class="op-stats-row">
@@ -2523,12 +2535,7 @@ async function openOtherProfile(userId){
         ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Helper')}')" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Helper</button>`:''}
       </div>`;
     })():''}
-    ${(me&&userId!==(myProfileId||me.id))?`<div style="display:flex;gap:10px;justify-content:center;margin-top:4px">
-      <button onclick="openReport('${userId}',window._opName,null,null)" style="flex:1;padding:12px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Report</button>
-      ${iBlockedIds.has(userId)
-        ?`<button onclick="unblockUser('${userId}')" style="flex:1;padding:12px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Unblock</button>`
-        :`<button onclick="openBlock('${userId}',window._opName)" style="flex:1;padding:12px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.3);color:#DC5046;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Block</button>`}
-    </div>`:''}`;
+`;
 }
 
 let browseMode='map'; // 'map' | 'list'
