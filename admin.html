@@ -883,6 +883,20 @@ body::before {
 .btn-send-admin-msg:hover { opacity: .9; transform: translateY(-1px); }
 .btn-send-admin-msg:disabled { opacity: .4; pointer-events: none; }
 
+/* Type-to-confirm sheet for admin actions (adminConfirm) */
+.ac-body { font-size: 13.5px; line-height: 1.6; color: var(--muted); margin-bottom: 14px; }
+.ac-body b { color: var(--text); }
+.ac-lbl { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: .5px; color: var(--muted); margin: 0 0 6px; text-transform: uppercase; }
+.ac-inp { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-family: var(--sans); font-size: 14px; font-weight: 700; outline: none; margin-bottom: 14px; }
+.ac-inp:focus { border-color: var(--purple); }
+.ac-word { font-family: var(--mono); letter-spacing: 1px; text-transform: uppercase; }
+.ac-btns { display: flex; gap: 10px; }
+.ac-btns button { flex: 1; padding: 13px; border-radius: 10px; font-family: var(--sans); font-size: 14px; font-weight: 900; cursor: pointer; }
+.ac-cancel { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.ac-go { border: none; color: #fff; background: var(--pink); }
+.ac-go.safe { background: linear-gradient(135deg, var(--purple), #7C3AED); }
+.ac-go:disabled { opacity: .35; pointer-events: none; }
+
 .admin-toast {
   position: fixed;
   bottom: 30px;
@@ -1086,6 +1100,28 @@ body::before {
       <button class="btn-out" onclick="signOut()">Sign out</button>
     </div>
 
+  </div>
+</div>
+
+<!-- ADMIN CONFIRM (type-to-confirm safety step for cancel / suspend / unsuspend / ambassador / report actions) -->
+<div class="admin-msg-overlay" id="ac-modal" style="display:none;z-index:250" onclick="if(event.target.id==='ac-modal')acClose(null)">
+  <div class="admin-msg-card">
+    <div class="admin-msg-header">
+      <h3 id="ac-title">Are you sure?</h3>
+      <button class="admin-msg-close" onclick="acClose(null)">✕</button>
+    </div>
+    <div class="admin-msg-context" id="ac-target"></div>
+    <div class="ac-body" id="ac-body"></div>
+    <div id="ac-reason-wrap">
+      <label class="ac-lbl" id="ac-reason-lbl" for="ac-reason">Reason</label>
+      <textarea class="admin-msg-textarea" id="ac-reason" style="min-height:70px;margin-bottom:14px" oninput="acCheck()"></textarea>
+    </div>
+    <label class="ac-lbl" for="ac-word">Type <span id="ac-word-hint" style="color:var(--text)"></span> to confirm</label>
+    <input class="ac-inp ac-word" id="ac-word" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="acCheck()" onkeydown="if(event.key==='Enter'&&!document.getElementById('ac-go').disabled)acGo()">
+    <div class="ac-btns">
+      <button class="ac-cancel" onclick="acClose(null)">Go back</button>
+      <button class="ac-go" id="ac-go" disabled onclick="acGo()">Confirm</button>
+    </div>
   </div>
 </div>
 
@@ -1516,24 +1552,97 @@ async function loadReports() {
     </div>`;
   }).join('');
 }
+// ── SAFETY STEP: type-to-confirm sheet. Resolves {reason} on confirm, null on Go back / ✕ / outside tap / Esc ──
+var _acResolve = null, _acOpts = null;
+function adminConfirm(o) {
+  _acOpts = o;
+  document.getElementById('ac-title').textContent = o.title;
+  document.getElementById('ac-target').innerHTML = o.target || '';
+  document.getElementById('ac-target').style.display = o.target ? 'block' : 'none';
+  document.getElementById('ac-body').innerHTML = o.body || '';
+  const rw = document.getElementById('ac-reason-wrap'), r = document.getElementById('ac-reason');
+  rw.style.display = o.reason ? 'block' : 'none';
+  r.value = '';
+  r.placeholder = o.reason === 'required' ? 'Required' : 'Optional';
+  document.getElementById('ac-reason-lbl').textContent = (o.reasonLabel || 'Reason') + (o.reason === 'required' ? ' (required)' : ' (optional)');
+  document.getElementById('ac-word-hint').textContent = o.word;
+  const w = document.getElementById('ac-word'); w.value = ''; w.placeholder = o.word;
+  const go = document.getElementById('ac-go');
+  go.textContent = o.button; go.className = 'ac-go' + (o.danger === false ? ' safe' : ''); go.disabled = true;
+  document.getElementById('ac-modal').style.display = 'flex';
+  setTimeout(() => (o.reason === 'required' ? r : w).focus(), 60);
+  return new Promise(res => { _acResolve = res; });
+}
+function acCheck() {
+  const o = _acOpts; if (!o) return;
+  const okWord = document.getElementById('ac-word').value.trim().toUpperCase() === o.word;
+  const okReason = o.reason !== 'required' || document.getElementById('ac-reason').value.trim().length >= 3;
+  document.getElementById('ac-go').disabled = !(okWord && okReason);
+}
+function acGo() {
+  const reason = document.getElementById('ac-reason').value.trim() || null;
+  acClose({ reason });
+}
+function acClose(result) {
+  document.getElementById('ac-modal').style.display = 'none';
+  const r = _acResolve; _acResolve = null; _acOpts = null;
+  if (r) r(result);
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && _acResolve) acClose(null); });
+async function _profileName(userId) {
+  try { const { data } = await sb.from('profiles').select('name').eq('id', userId).maybeSingle(); return data?.name || 'this user'; } catch (e) { return 'this user'; }
+}
+async function _taskTitle(taskId) {
+  try { const { data } = await sb.from('tasks').select('title').eq('id', taskId).maybeSingle(); return data?.title || 'this job'; } catch (e) { return 'this job'; }
+}
+
 async function resolveReport(id, status) {
-  const note = status === 'open' ? null : (prompt('Optional note (what you did):') || null);
+  let note = null;
+  if (status !== 'open') {   // Reopen is an undo — no safety step
+    const resolve = status === 'resolved';
+    const ok = await adminConfirm({
+      title: resolve ? 'Resolve this report?' : 'Dismiss this report?',
+      body: resolve ? 'Marks the report as handled and moves it out of Open reports.' : 'Marks the report as not needing action and moves it out of Open reports.',
+      reason: 'optional', reasonLabel: 'Note (what you did)',
+      word: resolve ? 'RESOLVE' : 'DISMISS', button: resolve ? 'Resolve report' : 'Dismiss report', danger: false
+    });
+    if (!ok) return;
+    note = ok.reason;
+  }
   const { error } = await sb.rpc('admin_resolve_report', { p_report_id: id, p_status: status, p_note: note });
   if (error) return alert('Error: ' + error.message);
+  adminToast(status === 'open' ? 'Report reopened' : status === 'resolved' ? 'Report resolved' : 'Report dismissed');
   loadReports();
 }
 async function removeReportedTask(taskId) {
-  if (!confirm('Remove this job? It will be cancelled and disappear from the map and lists.')) return;
+  const title = await _taskTitle(taskId);
+  const ok = await adminConfirm({
+    title: 'Remove this job?', target: '📋 ' + esc(title),
+    body: 'The job is <b>cancelled</b> and disappears from the map and lists. This can’t be undone from admin.',
+    word: 'CANCEL', button: 'Remove job'
+  });
+  if (!ok) return;
   const { error } = await sb.rpc('admin_remove_task', { p_task_id: taskId });
   if (error) return alert('Error: ' + error.message);
+  adminToast('Job removed');
   loadReports();
 }
 async function suspendUser(userId, suspend) {
-  const reason = suspend ? prompt('Suspend this user? Their open and claimed jobs are cancelled, their helper listing is hidden, and they can no longer post or message.\n\nReason (optional):') : null;
-  if (suspend && reason === null) return;           // cancelled
-  if (!suspend && !confirm('Unsuspend this user? (Cancelled jobs and helper listing are not restored automatically.)')) return;
-  const { error } = await sb.rpc('admin_suspend_user', { p_user_id: userId, p_suspend: suspend, p_reason: reason || null });
+  const name = await _profileName(userId);
+  const ok = await adminConfirm(suspend ? {
+    title: 'Suspend this account?', target: '👤 ' + esc(name),
+    body: 'Their <b>open and claimed jobs are cancelled</b>, their helper listing is hidden, and they can no longer post or message. Unsuspending later does <b>not</b> restore cancelled jobs.',
+    reason: 'required', reasonLabel: 'Reason',
+    word: 'SUSPEND', button: 'Suspend account'
+  } : {
+    title: 'Unsuspend this account?', target: '👤 ' + esc(name),
+    body: 'They can post and message again. Cancelled jobs and their helper listing are <b>not</b> restored automatically.',
+    word: 'UNSUSPEND', button: 'Unsuspend account', danger: false
+  });
+  if (!ok) return;
+  const { error } = await sb.rpc('admin_suspend_user', { p_user_id: userId, p_suspend: suspend, p_reason: suspend ? ok.reason : null });
   if (error) return alert('Error: ' + error.message);
+  adminToast(suspend ? 'Account suspended' : 'Account unsuspended');
   loadReports();
   loadSuspended();
   loadRecentActivity();
@@ -1548,7 +1657,12 @@ function suspendBtn(userId, suspendedIds) {
 }
 // Cancel a job from Recent Activity (open/claimed → cancelled via admin_remove_task)
 async function adminCancelJob(taskId, title) {
-  if (!confirm(`Cancel "${title}"?\n\nIt will disappear from the map and lists, and its chats will be hidden from Messages.`)) return;
+  const ok = await adminConfirm({
+    title: 'Cancel this job?', target: '📋 ' + esc(title),
+    body: 'It disappears from the map and lists, and its chats are hidden from Messages. This can\u2019t be undone from admin.',
+    word: 'CANCEL', button: 'Cancel job'
+  });
+  if (!ok) return;
   const { error } = await sb.rpc('admin_remove_task', { p_task_id: taskId });
   if (error) return alert('Error: ' + error.message);
   adminToast('Job cancelled');
@@ -1923,6 +2037,14 @@ async function loadAmbassadors() {
 
 async function updateAmbStatus(id, status) {
   const card = document.getElementById('amb-' + id);
+  const who = card?.querySelector('.ac-title')?.textContent || 'this applicant';
+  const approve = status === 'approved';
+  const ok = await adminConfirm({
+    title: approve ? 'Approve ambassador?' : 'Reject ambassador?', target: '🙋 ' + esc(who),
+    body: approve ? 'Marks the application as approved.' : 'Marks the application as rejected and moves it out of Pending.',
+    word: approve ? 'APPROVE' : 'REJECT', button: approve ? 'Approve' : 'Reject', danger: !approve
+  });
+  if (!ok) return;
   if (card) card.style.opacity = '.5';
   try {
     const { error } = await sb.from('ambassador_applications').update({ status }).eq('id', id);
