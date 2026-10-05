@@ -2618,8 +2618,12 @@ function saveGuestPost(){
   openAuthSheet('post');
 }
 const AFTER_LOGIN_KEY='yoodle_after_login';
+// Onboarding path: which landing choice led to sign-in. Saved here, sent once after sign-in
+// by recordOnboardPath() → set_onboard_path() (write-once, only for accounts < 24 h old).
+const ONBOARD_KEY='yoodle_onboard';
 function openAuthSheet(mode){
   try{if(mode==='helper')localStorage.setItem(AFTER_LOGIN_KEY,'helper');else localStorage.removeItem(AFTER_LOGIN_KEY);}catch(e){}
+  try{localStorage.setItem(ONBOARD_KEY,JSON.stringify({p:mode==='post'?'post_job':mode==='helper'?'find_work':'sign_in',ts:Date.now()}));}catch(e){}
   const h=document.getElementById('ga-sheet-h'),p=document.getElementById('ga-sheet-p'),dc=document.getElementById('ga-draft');
   dc.style.display='none';
   if(mode==='post'){
@@ -2793,6 +2797,7 @@ async function showApp(){
   registerOneSignal();
   processReferral();
   handleHelperLanding();
+  recordOnboardPath();
   loadPoints();
   setTimeout(async()=>{
     if(window._pendingNotifTaskId){
@@ -4771,6 +4776,15 @@ async function handleHelperLanding(){
   if(d.s)sb.rpc('log_share_login',{p_helper:d.h,p_src:d.s}).then(()=>{},()=>{});
   if(iBlockedIds.has(d.h))return;
   setTimeout(()=>openOtherProfile(d.h),900);
+}
+
+// Landing choice → profiles.onboard_path (fire-and-forget; the server ignores existing accounts)
+function recordOnboardPath(){
+  if(!sb||!me)return;
+  let d=null;
+  try{d=JSON.parse(localStorage.getItem(ONBOARD_KEY)||'null');localStorage.removeItem(ONBOARD_KEY);}catch(e){}
+  if(!d||!d.p||Date.now()-(d.ts||0)>24*60*60*1000)return;
+  sb.rpc('set_onboard_path',{p_path:d.p}).then(()=>{},()=>{});
 }
 
 async function processReferral(){

@@ -957,7 +957,7 @@ body::before {
     <div class="dash-user">
       <div class="dash-avatar" id="dash-avatar">?</div>
       <span class="dash-name" id="dash-name"></span>
-      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadShareStats();loadReports();loadSuspended()">↻ Refresh</button>
+      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadOnboardStats();loadShareStats();loadReports();loadSuspended()">↻ Refresh</button>
     </div>
   </div>
 
@@ -1047,6 +1047,10 @@ body::before {
     <!-- NEWEST USERS -->
     <div class="section-title">NEWEST USERS — LAST 5</div>
     <div id="recent-users" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
+
+    <!-- HOW NEW MEMBERS JOINED (profiles.onboard_path) -->
+    <div class="section-title">HOW NEW MEMBERS JOINED — LAST 30 DAYS</div>
+    <div id="onboard-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
 
     <!-- HELPER PAGE SHARING (share_events) -->
     <div class="section-title">HELPER PAGE SHARING — LAST 30 DAYS</div>
@@ -1649,6 +1653,30 @@ function convSuspendBtn(userId, name, role, suspendedIds) {
     : `<button class="btn-admin-msg btn-admin-danger" onclick="suspendUser('${userId}',true)">⛔ Suspend ${who} <span style="opacity:.75;font-weight:600">(${role})</span></button>`;
 }
 
+// ── HOW NEW MEMBERS JOINED (admin-only RPC over profiles.onboard_path) ──
+async function loadOnboardStats() {
+  const el = document.getElementById('onboard-stats');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_onboard_paths', { p_days: 30 });
+  if (error) {
+    el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`;
+    return;
+  }
+  const m = {};
+  (data || []).forEach(r => { m[r.path] = Number(r.people || 0); });
+  const total = Object.values(m).reduce((a, b) => a + b, 0);
+  const pct = n => total ? Math.round(n / total * 100) + '%' : '—';
+  const rows = [
+    ['Post a job', m.post_job || 0],
+    ['Find me work', m.find_work || 0],
+    ['Sign in link', m.sign_in || 0],
+    ['Not recorded', m.unknown || 0],
+  ].map(r => `<tr><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num helpers">${pct(r[1])}</td></tr>`).join('');
+  el.innerHTML = `<table class="region-table"><thead><tr><th>Landing choice</th><th>New members</th><th>%</th></tr></thead><tbody>${rows}</tbody></table>
+  <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">New accounts created in the last 30 days (demo accounts excluded). "Not recorded" = joined before tracking started (5 Oct 2026), or opened the email sign-in link on a different device/browser.</div>`;
+}
+
 // ── HELPER PAGE SHARING (admin-only RPC over share_events) ──
 async function loadShareStats() {
   const el = document.getElementById('share-stats');
@@ -2011,6 +2039,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
       loadProtectedIds().finally(() => {
         loadStats();
         loadRecentUsers();
+        loadOnboardStats();
         loadShareStats();
         loadReports();
         loadSuspended();
