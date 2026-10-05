@@ -1989,7 +1989,7 @@ function renderMapPins(){
       html:`<div style="width:38px;height:38px;border-radius:50%;background:${color};border:3px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer">${emoji}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
-    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:1,onClick:()=>openJob(job)});
+    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:1,onClick:()=>{logTap('job',job.id,'pin');openJob(job);}});
     jobMarkers.push(marker);
   });
 
@@ -2003,7 +2003,7 @@ function renderMapPins(){
       html:`<div style="width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif">${initial}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
-    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:1,onClick:()=>openOtherProfile(h.id)});
+    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:1,onClick:()=>{logTap('helper',h.id,'pin');openOtherProfile(h.id);}});
     helperMarkers.push(marker);
   });
 
@@ -2064,6 +2064,11 @@ function openBizListing(biz){
   }
   document.getElementById('biz-modal').classList.add('open');
   logBizEvent(biz.id,'pin_tap');
+}
+
+// Tap tracking → public.tap_events via log_tap() (server skips self-taps and repeats within 10 min). Never blocks the UI.
+function logTap(kind,id,src){
+  try{if(sb&&me&&id)sb.rpc('log_tap',{p_kind:kind,p_target:id,p_src:src}).then(()=>{},()=>{});}catch(e){}
 }
 
 function logBizEvent(listingId,eventType){
@@ -2189,7 +2194,7 @@ function renderSheetContent(){
       const cats=(h.helper_categories||[]).slice(0,4).map(c=>`<span style="font-size:11.5px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:2px 8px;white-space:nowrap">${c}</span>`).join('');
       const rateLabel=h.helper_rate_type==='free'||!h.helper_rate?'Free':
         `$${h.helper_rate}${h.helper_rate_type==='hourly'?'/hr':h.helper_rate_type==='daily'?'/day':' flat'}`;
-      return `<div onclick="openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
+      return `<div onclick="logTap('helper','${h.id}','card');openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
         <div style="display:flex;align-items:center;gap:12px">
           ${avatarCircle(name,h.avatar_color,'28px','12px')}
           <div style="min-width:0;flex:1">
@@ -2248,7 +2253,7 @@ function renderListTabContent(){
       const rateLabel=h.helper_rate_type==='free'||!h.helper_rate?'Free':`$${h.helper_rate}${h.helper_rate_type==='hourly'?'/hr':h.helper_rate_type==='daily'?'/day':' flat'}`;
       let distLabel='';
       if(gpsLat&&gpsLng&&h.last_lat&&h.last_lng){const d=haversineKm(gpsLat,gpsLng,h.last_lat,h.last_lng);distLabel=d<=1?'Less than 1 km away':`${d.toFixed(1)} km away`;}
-      return `<div onclick="openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
+      return `<div onclick="logTap('helper','${h.id}','card');openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
         <div style="display:flex;align-items:center;gap:12px">
           ${avatarCircle(name,h.avatar_color,'28px','12px')}
           <div style="min-width:0;flex:1">
@@ -2991,7 +2996,7 @@ function listCard(j,profile){
     const d=haversineKm(gpsLat,gpsLng,j.lat,j.lng);
     locLabel=d<=1?'Less than 1 km away':`${d.toFixed(1)} km away`;
   }
-  return `<div class="list-card" style="--jc:${color}" onclick='openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
+  return `<div class="list-card" style="--jc:${color}" onclick='logTap("job","${j.id}","card");openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="lc-top">
       <span class="lc-title">${esc(j.title)}</span>
       <div style="display:flex;flex-direction:row;align-items:center;gap:4px;flex-shrink:0">${myAppliedTaskIds.has(j.id)?'<span style="font-size:11.5px;font-weight:800;color:var(--lime);letter-spacing:.5px">Applied-</span>':''}<span class="lc-budget">$${j.price??'?'}</span></div>

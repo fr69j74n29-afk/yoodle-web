@@ -957,7 +957,7 @@ body::before {
     <div class="dash-user">
       <div class="dash-avatar" id="dash-avatar">?</div>
       <span class="dash-name" id="dash-name"></span>
-      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadOnboardStats();loadShareStats();loadReports();loadSuspended()">↻ Refresh</button>
+      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadOnboardStats();loadShareStats();loadTapStats();loadReports();loadSuspended()">↻ Refresh</button>
     </div>
   </div>
 
@@ -1051,6 +1051,10 @@ body::before {
     <!-- HELPER PAGE SHARING (share_events) -->
     <div class="section-title">HELPER PAGE SHARING — LAST 30 DAYS</div>
     <div id="share-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
+
+    <!-- WHAT PEOPLE TAP (tap_events) -->
+    <div class="section-title">WHAT PEOPLE TAP — LAST 30 DAYS</div>
+    <div id="tap-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
 
     <!-- RECENT ACTIVITY -->
     <div class="section-title">RECENT ACTIVITY — LAST 48 HOURS</div>
@@ -1721,6 +1725,23 @@ async function loadShareStats() {
   <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">New-helper screen: ${p('shared')} shared via the share sheet (picked an app; sending isn't confirmed), ${p('copied')} copied the link on desktop. "Signed in" counts people who opened a shared helper link, tapped Contact on Yoodle and were signed in (each person counted once per helper); "Helpers" is how many different helpers' links led to it.</div>`;
 }
 
+// ── WHAT PEOPLE TAP (admin-only RPC over tap_events) ──
+async function loadTapStats() {
+  const el = document.getElementById('tap-stats');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const groups = [['area', 'HOT AREAS', 'Area'], ['helper', 'TOP HELPERS', 'Helper'], ['job', 'TOP JOBS', 'Job']];
+  const res = await Promise.all(groups.map(g => sb.rpc('admin_tap_top', { p_group: g[0], p_days: 30, p_limit: 10 })));
+  el.innerHTML = groups.map((g, i) => {
+    const { data, error } = res[i];
+    const head = `<div style="padding:${i ? 14 : 6}px 0 4px;font-size:12px;font-weight:800;color:var(--muted)">${g[1]}</div>`;
+    if (error) return head + `<div style="padding:6px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`;
+    if (!data || !data.length) return head + `<div style="padding:6px 0;color:var(--muted);font-size:13px">No taps yet.</div>`;
+    const rows = data.map(r => `<tr><td>${esc(r.label || '—')}${r.sub && g[0] !== 'area' ? `<div style="font-size:11.5px;color:var(--muted)">${esc(r.sub)}</div>` : (g[0] === 'area' && r.sub && r.sub !== r.label ? `<div style="font-size:11.5px;color:var(--muted)">${esc(r.sub)}</div>` : '')}</td><td class="num">${Number(r.taps)}</td><td class="num helpers">${Number(r.people)}</td></tr>`).join('');
+    return head + `<table class="region-table"><thead><tr><th>${g[2]}</th><th>Taps</th><th>People</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }).join('') + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Taps on map pins and list cards by signed-in members. Your own taps, admin and demo accounts are excluded; the same person tapping the same job or helper again within 10 minutes counts once. Area = neighbourhood (or city) of the job or helper.</div>`;
+}
+
 async function loadRecentActivity() {
   const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const jobsEl = document.getElementById('activity-jobs');
@@ -2041,6 +2062,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
         loadRecentUsers();
         loadOnboardStats();
         loadShareStats();
+        loadTapStats();
         loadReports();
         loadSuspended();
         loadRecentActivity();
