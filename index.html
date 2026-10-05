@@ -418,6 +418,8 @@ body.theme-sage-dark .theme-btn .ic-moon{display:none}
 .setting-i:first-child{border-radius:var(--radius) var(--radius) var(--radius-sm) var(--radius-sm)}
 .setting-i:last-child{border-radius:var(--radius-sm) var(--radius-sm) var(--radius) var(--radius)}
 .btn-so{width:100%;padding:16px;border-radius:var(--radius);background:var(--surface);color:#DC5046;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:1.5px solid rgba(220,80,70,.20);cursor:pointer;margin-top:20px}
+.set-gear{flex-shrink:0;width:44px;height:44px;border-radius:50%;background:var(--surface);border:1.5px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.set-gear:active{transform:scale(.94)}
 .btn-del{display:block;margin:14px auto 0;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;text-decoration:underline;cursor:pointer}
 .em-card{padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border);display:none}
 .em-row{display:flex;align-items:center;gap:14px}
@@ -854,6 +856,8 @@ svg.star-off{fill:none;stroke:#4a4a4a}
           <div class="profile-nm" id="pnm" style="margin-bottom:2px">—</div>
           <div id="pem" style="font-size:13.5px;color:var(--muted)">—</div>
         </div>
+        <!-- Settings gear (opens #settings-sheet: email, blocked users, help, delete account) -->
+        <button class="set-gear" onclick="openSettings()" aria-label="Settings" title="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       </div>
 
       <div class="stats-row" style="grid-template-columns:1fr 1fr">
@@ -890,32 +894,6 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         <div style="font-size:14px;font-weight:800;color:var(--purple);margin-bottom:6px">Push Notifications</div>
         <div id="notif-tip-body" style="font-size:13.5px;color:var(--muted);line-height:1.6;font-weight:700"></div>
       </div>
-      <!-- Email notifications -->
-      <div class="em-card" id="em-card">
-        <div class="em-row">
-          <div style="flex:1;min-width:0">
-            <div class="em-t">Email me about unread messages</div>
-            <div class="em-d">One email when a message has waited 30 minutes unread.</div>
-          </div>
-          <label class="sw" aria-label="Email me about unread messages"><input type="checkbox" id="em-toggle" onchange="setEmailNotifications(this.checked)"><span></span></label>
-        </div>
-      </div>
-      <!-- Blocked users -->
-      <div style="padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
-        <div style="font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Blocked users</div>
-        <div id="blocked-list" style="font-size:14px;color:var(--muted);font-weight:600">—</div>
-      </div>
-      <!-- Help & Support -->
-      <div style="padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
-        <div style="font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Help &amp; Support</div>
-        <div style="display:flex;flex-direction:column;gap:10px;font-size:15px;font-weight:700">
-          <a href="mailto:support@yoodle.ca" style="color:var(--text);text-decoration:none">Contact us · <span style="color:var(--purple)">support@yoodle.ca</span></a>
-          <a href="https://yoodle.ca/faq" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">FAQ ›</a>
-          <a href="https://yoodle.ca/terms" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">Terms of Use ›</a>
-          <a href="https://yoodle.ca/privacy" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">Privacy Policy ›</a>
-        </div>
-        <div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5">To report someone, open their profile or your chat with them and tap Report. We review reports within 24 hours.</div>
-      </div>
       <!-- Invite neighbours (referrals) -->
       <div class="inv-card" id="inv-card">
         <div class="inv-row">
@@ -928,7 +906,6 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         <button class="inv-btn" onclick="openReferralModal()">Invite neighbours</button>
       </div>
       <button class="btn-so" onclick="signOut()">Sign Out</button>
-      <button class="btn-del" onclick="openDeleteAccount()">Delete my account</button>
     </div>
   </div>
 
@@ -1235,6 +1212,44 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <div style="font-size:14px;color:var(--muted);font-weight:700;margin-bottom:16px">Rate these to complete the job lifecycle</div>
     </div>
     <div id="ratings-sheet-list" style="flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch"></div>
+  </div>
+</div>
+
+<!-- SETTINGS SHEET (moved from Profile, 5 Oct 2026) -->
+<div class="modal-ov" id="settings-sheet" onclick="if(event.target.id==='settings-sheet')closeSettings()">
+  <div class="modal-sheet" style="max-height:90dvh">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:22px;font-weight:800">Settings</div>
+      <button onclick="closeSettings()" aria-label="Close" style="background:var(--surface2);border:none;border-radius:50%;width:34px;height:34px;font-size:18px;color:var(--muted);cursor:pointer">✕</button>
+    </div>
+      <!-- Email notifications -->
+      <div class="em-card" id="em-card">
+        <div class="em-row">
+          <div style="flex:1;min-width:0">
+            <div class="em-t">Email me about unread messages</div>
+            <div class="em-d">One email when a message has waited 30 minutes unread.</div>
+          </div>
+          <label class="sw" aria-label="Email me about unread messages"><input type="checkbox" id="em-toggle" onchange="setEmailNotifications(this.checked)"><span></span></label>
+        </div>
+      </div>
+      <!-- Blocked users -->
+      <div style="padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
+        <div style="font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Blocked users</div>
+        <div id="blocked-list" style="font-size:14px;color:var(--muted);font-weight:600">—</div>
+      </div>
+      <!-- Help & Support -->
+      <div style="padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
+        <div style="font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Help &amp; Support</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:15px;font-weight:700">
+          <a href="mailto:support@yoodle.ca" style="color:var(--text);text-decoration:none">Contact us · <span style="color:var(--purple)">support@yoodle.ca</span></a>
+          <a href="https://yoodle.ca/faq" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">FAQ ›</a>
+          <a href="https://yoodle.ca/terms" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">Terms of Use ›</a>
+          <a href="https://yoodle.ca/privacy" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">Privacy Policy ›</a>
+        </div>
+        <div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5">To report someone, open their profile or your chat with them and tap Report. We review reports within 24 hours.</div>
+      </div>
+      <button class="btn-del" onclick="openDeleteAccount()">Delete my account</button>
   </div>
 </div>
 
@@ -2741,6 +2756,8 @@ function openDeleteAccount(){
   document.getElementById('del-ov').classList.add('open');
   setTimeout(()=>i.focus(),60);
 }
+function openSettings(){document.getElementById('settings-sheet').classList.add('open');loadEmailPref();loadBlockedList();}
+function closeSettings(){document.getElementById('settings-sheet').classList.remove('open');}
 function closeDeleteAccount(){document.getElementById('del-ov').classList.remove('open');}
 async function confirmDeleteAccount(){
   if(document.getElementById('del-inp').value.trim().toUpperCase()!=='DELETE')return;
@@ -4106,7 +4123,7 @@ async function loadEmailPref(){
   if(error||!data){card.style.display='none';return;} // column not added yet → hide
   document.getElementById('em-toggle').checked=!data.email_opt_out;
   card.style.display='block';
-  if(window._openEmailSettings){window._openEmailSettings=false;setTimeout(()=>{card.scrollIntoView({behavior:'smooth',block:'center'});card.style.borderColor='var(--purple)';},300);}
+  if(window._openEmailSettings){window._openEmailSettings=false;setTimeout(()=>{document.getElementById('settings-sheet').classList.add('open');card.style.borderColor='var(--purple)';},300);}
 }
 async function setEmailNotifications(on){
   if(!sb||!me)return;
