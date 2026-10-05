@@ -1730,10 +1730,13 @@ function updateRadiusCounts(){
   });
   const jobCount=sheetJobs.length;
   const helperCount=sheetHelpers.length;
-  document.getElementById('map-jobs-count').textContent=jobCount;
-  // hide the "need help" line when there are no jobs in range
+  // corner card counts only jobs that get a red pin (same filter as renderMapPins);
+  // list/sheet tabs keep the full count (featured jobs show there but aren't pinned)
+  const pinnedJobCount=sheetJobs.filter(j=>j.show_on_map&&j.status==='open'&&j.poster_id!==FEATURED_POSTER_ID).length;
+  document.getElementById('map-jobs-count').textContent=pinnedJobCount;
+  // hide the "need help" line when there are no pinned jobs in range
   const jobsRow=document.getElementById('map-jobs-row');
-  if(jobsRow)jobsRow.style.display=jobCount>0?'flex':'none';
+  if(jobsRow)jobsRow.style.display=pinnedJobCount>0?'flex':'none';
   document.getElementById('map-helpers-count').textContent=helperCount;
   document.getElementById('sheet-jobs-count').textContent=jobCount;
   document.getElementById('sheet-helpers-count').textContent=helperCount;
