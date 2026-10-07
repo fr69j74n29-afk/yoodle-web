@@ -971,7 +971,7 @@ body::before {
     <div class="dash-user">
       <div class="dash-avatar" id="dash-avatar">?</div>
       <span class="dash-name" id="dash-name"></span>
-      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadOnboardStats();loadShareStats();loadTapStats();loadReports();loadSuspended()">↻ Refresh</button>
+      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadOnboardStats();loadShareStats();loadTapStats();loadSearchStats();loadReports();loadSuspended()">↻ Refresh</button>
     </div>
   </div>
 
@@ -1069,6 +1069,10 @@ body::before {
     <!-- WHAT PEOPLE TAP (tap_events) -->
     <div class="section-title">WHAT PEOPLE TAP — LAST 30 DAYS</div>
     <div id="tap-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
+
+    <!-- FIND A HELPER SEARCHES (search_events) -->
+    <div class="section-title">FIND A HELPER — MOST SEARCHED — LAST 30 DAYS</div>
+    <div id="search-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
 
     <!-- RECENT ACTIVITY -->
     <div class="section-title">RECENT ACTIVITY — LAST 48 HOURS</div>
@@ -1856,6 +1860,19 @@ async function loadTapStats() {
   }).join('') + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Taps on map pins and list cards by signed-in members. Your own taps, admin and demo accounts are excluded; the same person tapping the same job or helper again within 10 minutes counts once. Area = neighbourhood (or city) of the job or helper.</div>`;
 }
 
+// ── FIND A HELPER SEARCHES (admin-only RPC over search_events + tap_events.filter_category) ──
+async function loadSearchStats() {
+  const el = document.getElementById('search-stats');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_search_top', { p_days: 30, p_limit: 15 });
+  if (error) { el.innerHTML = `<div style="padding:6px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`; return; }
+  if (!data || !data.length) { el.innerHTML = `<div style="padding:10px 0;color:var(--muted);font-size:13px">No searches yet.</div>`; return; }
+  const rows = data.map(r => `<tr><td>${esc((r.emoji ? r.emoji + ' ' : '') + (r.category || '—'))}</td><td class="num">${Number(r.searches)}</td><td class="num helpers">${Number(r.people)}</td><td class="num">${Number(r.no_helpers)}</td><td class="num">${Number(r.helper_taps)}</td></tr>`).join('');
+  el.innerHTML = `<table class="region-table"><thead><tr><th>Category</th><th>Searches</th><th>People</th><th>0 nearby</th><th>Taps after</th></tr></thead><tbody>${rows}</tbody></table>`
+    + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Category picks in the map's Find a helper button by signed-in members. Admin and demo accounts are excluded; the same person picking the same category again within 10 minutes counts once. 0 nearby = searches with no matching helper inside their radius (unmet demand). Taps after = helper pins/cards tapped while that category was on.</div>`;
+}
+
 async function loadRecentActivity() {
   const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const jobsEl = document.getElementById('activity-jobs');
@@ -2185,6 +2202,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
         loadOnboardStats();
         loadShareStats();
         loadTapStats();
+        loadSearchStats();
         loadReports();
         loadSuspended();
         loadRecentActivity();

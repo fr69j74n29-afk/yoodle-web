@@ -1862,6 +1862,7 @@ function hsPick(k){
     btn.classList.add('on');lbl.textContent=`${ysEmoji(hsCat)} ${ysLabel(hsCat)}`;x.style.display='inline-flex';
     if(!document.getElementById('app-map').classList.contains('active'))nav('map');
     const n=ysBaseHelpers.filter(hsMatch).length;
+    logSearch(hsCat,n);
     toast(n?`✨ ${n} ${ysLabel(hsCat)} ${n===1?'helper':'helpers'} nearby`:`No ${ysLabel(hsCat)} helpers within ${RADIUS_KM} km yet — try zooming out`);
   }else{
     btn.classList.remove('on');lbl.textContent='Find a helper';x.style.display='none';
@@ -2224,8 +2225,13 @@ function openBizListing(biz){
 }
 
 // Tap tracking → public.tap_events via log_tap() (server skips self-taps and repeats within 10 min). Never blocks the UI.
+// p_filter = Find-a-helper category active when a helper is tapped (only sent when one is on).
 function logTap(kind,id,src){
-  try{if(sb&&me&&id)sb.rpc('log_tap',{p_kind:kind,p_target:id,p_src:src}).then(()=>{},()=>{});}catch(e){}
+  try{if(sb&&me&&id){const a={p_kind:kind,p_target:id,p_src:src};if(kind==='helper'&&hsCat)a.p_filter=hsCat;sb.rpc('log_tap',a).then(()=>{},()=>{});}}catch(e){}
+}
+// Find-a-helper category picks → public.search_events via log_search() (server skips repeats within 10 min). Never blocks the UI.
+function logSearch(cat,n){
+  try{if(sb&&me&&cat)sb.rpc('log_search',{p_category:cat,p_helpers:n|0,p_radius:Math.round(RADIUS_KM)||0}).then(()=>{},()=>{});}catch(e){}
 }
 
 function logBizEvent(listingId,eventType){
