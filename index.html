@@ -528,6 +528,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-share:active{background:var(--border)}
 .op-share.sm{width:32px;height:32px}
 .op-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 20px calc(var(--sab) + 28px);display:flex;flex-direction:column;gap:16px}
+.op-scroll>*{flex-shrink:0} /* long helper bios: don't squeeze (and clip) the stats/bio cards — let the sheet scroll */
 .op-hero{display:flex;align-items:center;gap:14px}
 .op-av{width:32px;height:32px;border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
 .op-name{font-size:20px;font-weight:800;line-height:1.2;word-break:break-word;overflow-wrap:break-word}
@@ -2532,10 +2533,10 @@ async function openOtherProfile(userId){
         </div>
       </div>
     </div>
-    <div class="op-bio">
+    ${(prof.bio||!prof.visible_on_map)?`<div class="op-bio">
       <div class="op-bio-lbl">About</div>
       ${prof.bio?`<div class="op-bio-text">${esc(prof.bio)}</div>`:`<div class="op-bio-empty">No bio yet.</div>`}
-    </div>
+    </div>`:''}<!-- About hidden when empty and the helper listing below has its own description -->
     ${prof.visible_on_map?(()=>{
       const cats=(prof.helper_categories||[]);
       const rateLabel=prof.helper_rate_type==='free'||!prof.helper_rate
