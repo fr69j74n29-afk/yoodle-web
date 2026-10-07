@@ -609,32 +609,20 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   text-decoration:none;transition:color .15s;letter-spacing:.3px
 }
 .ds-nav a:hover{color:var(--purple)}
-/* ── MAP SEARCH (test.html) ── */
-#ys-wrap{position:absolute;top:12px;left:12px;right:12px;z-index:12;pointer-events:none}
-.ys-bar{pointer-events:all;display:flex;align-items:center;gap:8px;height:46px;padding:0 6px 0 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:100px;box-shadow:0 4px 16px rgba(0,0,0,.10);cursor:text}
-.ys-bar.focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(92,138,106,.18),0 4px 16px rgba(0,0,0,.10)}
-.ys-ico{width:18px;height:18px;color:var(--muted);flex-shrink:0}
-#ys-input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:'Nunito',sans-serif;font-size:16px;font-weight:700;color:var(--text);height:100%;-webkit-appearance:none;appearance:none}
-#ys-input::placeholder{color:var(--muted)}
-#ys-input::-webkit-search-cancel-button{display:none}
-.ys-cancel{border:none;background:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:var(--purple);cursor:pointer;padding:6px 10px}
-.ys-chips{pointer-events:all;display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+/* ── MAP CATEGORIES (test.html) ── */
+#ys-wrap{position:absolute;top:12px;left:0;right:0;z-index:12;pointer-events:none}
+.ys-chips{pointer-events:all;display:flex;gap:6px;overflow-x:auto;padding:0 12px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;cursor:grab}
+.ys-chips.drag{cursor:grabbing;scroll-behavior:auto}
 .ys-chips::-webkit-scrollbar{display:none}
-.ys-chip{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 12px;border-radius:100px;background:var(--surface);border:1.5px solid var(--border);font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;color:var(--text);box-shadow:0 2px 6px rgba(0,0,0,.06);white-space:nowrap;cursor:pointer}
+.ys-chip{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 13px;border-radius:100px;background:var(--surface);border:1.5px solid var(--border);font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.10);white-space:nowrap;cursor:pointer;user-select:none;-webkit-user-select:none}
 .ys-chip.on{background:var(--purple);border-color:var(--purple);color:#fff}
-#ys-active.ys-chip{height:30px;box-shadow:none;flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
-.ys-panel{position:absolute;top:66px;left:12px;right:12px;z-index:13;max-height:calc(100% - 140px);overflow-y:auto;background:var(--surface);border:1.5px solid var(--border);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.16);padding:12px}
-.ys-seg{display:flex;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:12px}
-.ys-seg button{flex:1;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;padding:8px 0;border-radius:8px;color:var(--muted);cursor:pointer}
-.ys-seg button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.ys-ph{font-size:10.5px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:2px 4px 8px}
-.ys-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-.ys-cat{display:flex;align-items:center;gap:6px;min-width:0;padding:10px 8px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--text);cursor:pointer;text-align:left}
-.ys-cat .e{font-size:17px;flex-shrink:0}
-.ys-cat .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ys-cat .n{margin-left:auto;flex-shrink:0;font-size:11.5px;font-weight:900;color:var(--purple);background:var(--surface2);border-radius:100px;padding:1px 8px}
-.ys-cat .n.z{color:var(--muted)}
-.ys-none{grid-column:1/-1;font-size:13.5px;color:var(--muted);font-weight:700;padding:8px 4px}
+/* desktop (mouse): arrow buttons to scroll the chip row; hidden on touch screens */
+.ys-arrow{display:none;pointer-events:all;position:absolute;top:0;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:20px;font-weight:800;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.14);z-index:2;padding:0 0 2px}
+.ys-arrow-l{left:6px}.ys-arrow-r{right:6px}
+@media (hover:hover) and (pointer:fine){
+  .ys-chips{padding:0 46px 4px}
+  .ys-arrow.show{display:flex;align-items:center;justify-content:center}
+}
 .ys-sheet{position:absolute;left:12px;right:12px;bottom:76px;z-index:11;background:var(--surface);border:1.5px solid var(--border);border-radius:18px;box-shadow:0 -4px 22px rgba(0,0,0,.12);padding:12px 14px}
 .ys-sh{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .ys-sh b{font-size:15.5px;font-weight:900;color:var(--text)}
@@ -781,7 +769,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         <span style="font-size:14px;font-weight:800;color:#fff;font-family:'Nunito',sans-serif">List</span>
       </button>
       <!-- Corner count card — bottom left -->
-      <div id="map-counts" style="position:absolute;top:118px;left:12px;z-index:10;pointer-events:all;display:none">
+      <div id="map-counts" style="position:absolute;top:60px;left:12px;z-index:10;pointer-events:all;display:none">
         <button onclick="openRadiusSheet()" style="background:rgba(255,255,255,.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:16px;padding:10px 14px;cursor:pointer;display:flex;flex-direction:column;gap:7px;min-width:148px;box-shadow:0 4px 16px rgba(0,0,0,.1)">
           <div style="font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px" id="map-radius-corner">WITHIN — KM</div>
           <div id="map-counts-loading" style="display:none;font-size:12.5px;font-weight:800;color:var(--muted);align-items:center;gap:6px">
@@ -797,24 +785,11 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         </button>
       </div>
 
-      <!-- MAP SEARCH (test.html) — floating bar + category chips + dropdown panel + results sheet -->
+      <!-- MAP CATEGORIES (test.html) — category chip row + results sheet -->
       <div id="ys-wrap">
-        <div id="ys-bar" class="ys-bar" onclick="ysFocus()">
-          <svg class="ys-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <span id="ys-active" class="ys-chip on" style="display:none" onclick="event.stopPropagation();ysClear()"></span>
-          <input id="ys-input" type="search" enterkeyhint="search" autocomplete="off" placeholder="Search helpers &amp; jobs"
-            oninput="ysOnInput(this.value)" onfocus="ysOpenPanel()" onkeydown="if(event.key==='Enter'){this.blur();ysClosePanel();}">
-          <button id="ys-cancel" class="ys-cancel" style="display:none" onclick="event.stopPropagation();ysCancel()">Cancel</button>
-        </div>
+        <button class="ys-arrow ys-arrow-l" id="ys-arrow-l" onclick="ysScrollChips(-1)" aria-label="Scroll categories left">‹</button>
         <div id="ys-chips" class="ys-chips"></div>
-      </div>
-      <div id="ys-panel" class="ys-panel" style="display:none">
-        <div class="ys-seg">
-          <button id="ys-seg-help" class="on" onclick="ysSetMode('help')">Find help</button>
-          <button id="ys-seg-work" onclick="ysSetMode('work')">Find work</button>
-        </div>
-        <div class="ys-ph">Categories near you</div>
-        <div id="ys-grid" class="ys-grid"></div>
+        <button class="ys-arrow ys-arrow-r" id="ys-arrow-r" onclick="ysScrollChips(1)" aria-label="Scroll categories right">›</button>
       </div>
       <div id="ys-sheet" class="ys-sheet" style="display:none"></div>
 
@@ -1806,9 +1781,10 @@ function updateRadiusCounts(){
   ysRender();
 }
 
-// ══ MAP SEARCH (test.html, 5 Oct 2026) ══
-// Client-side only: filters the jobs/helpers already loaded (no Supabase changes).
-// Categories come from the helper_categories table, shared by helpers and (now) jobs.
+// ══ MAP CATEGORIES (test.html, 7 Oct 2026) ══
+// A row of category chips on the map. Picking one filters pins, counts, list and radius sheet.
+// Client-side only (no Supabase changes). Categories come from the helper_categories table,
+// shared by helper profiles and (now) jobs.
 const YS_FALLBACK_CATS=[
   {name:'Cleaning',emoji:'🧹'},{name:'Yard & Garden',emoji:'🌿'},{name:'Moving & Lifting',emoji:'📦'},
   {name:'Errands',emoji:'🛒'},{name:'Pet Care',emoji:'🐾'},{name:'Snow & Seasonal',emoji:'❄️'},
@@ -1817,25 +1793,17 @@ const YS_FALLBACK_CATS=[
 ];
 // old job category keys → shared category names (lowercase)
 const YS_ALIAS={assembly:'handyman',yard:'yard & garden',moving:'moving & lifting'};
-let ysCats=YS_FALLBACK_CATS.slice(), ysCat=null, ysQuery='', ysMode='help', ysPanelOpen=false;
-let ysBaseJobs=[], ysBaseHelpers=[], ysInputTimer=null;
+let ysCats=YS_FALLBACK_CATS.slice(), ysCat=null;
+let ysBaseJobs=[], ysBaseHelpers=[];
 
 function ysKey(s){s=String(s||'').trim().toLowerCase();return YS_ALIAS[s]||s;}
 function ysJobCat(j){return ysKey(j.category||'other');}
 function ysHelperCats(h){return (h.helper_categories||[]).map(ysKey);}
 function ysEmoji(cat){const c=ysCats.find(x=>ysKey(x.name)===ysKey(cat));return c?c.emoji:'';}
 function ysLabel(cat){const c=ysCats.find(x=>ysKey(x.name)===ysKey(cat));return c?c.name:cat;}
-function ysJobOk(j){
-  if(ysCat&&ysJobCat(j)!==ysCat)return false;
-  if(ysQuery){const t=`${j.title||''} ${j.description||''} ${ysJobCat(j)}`.toLowerCase();if(!t.includes(ysQuery))return false;}
-  return true;
-}
-function ysHelperOk(h){
-  if(ysCat&&!ysHelperCats(h).includes(ysCat))return false;
-  if(ysQuery){const t=`${h.helper_bio||''} ${ysHelperCats(h).join(' ')}`.toLowerCase();if(!t.includes(ysQuery))return false;}
-  return true;
-}
-function ysActive(){return !!(ysCat||ysQuery);}
+function ysJobOk(j){return !ysCat||ysJobCat(j)===ysCat;}
+function ysHelperOk(h){return !ysCat||ysHelperCats(h).includes(ysCat);}
+function ysAttr(k){return esc(k).replace(/'/g,"\\'");}
 
 async function ysInit(){
   try{
@@ -1848,52 +1816,60 @@ async function ysInit(){
     }
   }catch(e){}
   ysRenderChips();ysRenderPostCats();ysRender();
+  ysInitChipScroll();
 }
 
 function ysRenderChips(){
   const el=document.getElementById('ys-chips');if(!el)return;
-  el.innerHTML=ysCats.filter(c=>ysKey(c.name)!=='other').map(c=>{
-    const k=ysKey(c.name);
-    return `<button class="ys-chip${ysCat===k?' on':''}" onclick="ysPick('${esc(k).replace(/'/g,"\\'")}')">${c.emoji||''} ${esc(c.name)}</button>`;
-  }).join('');
+  const keep=el.scrollLeft;
+  el.innerHTML=`<button class="ys-chip${ysCat?'':' on'}" onclick="ysPick(null)">All</button>`+
+    ysCats.filter(c=>ysKey(c.name)!=='other').map(c=>{
+      const k=ysKey(c.name);
+      return `<button class="ys-chip${ysCat===k?' on':''}" onclick="ysPick('${ysAttr(k)}')">${c.emoji||''} ${esc(c.name)}</button>`;
+    }).join('');
+  el.scrollLeft=keep;
+  ysInitChipScroll(); // once; also covers guests (ysInit runs only after sign-in)
+  ysUpdateArrows();
 }
 
-function ysCounts(){
-  const counts={};
-  ysCats.forEach(c=>counts[ysKey(c.name)]=0);
-  if(ysMode==='help'){ysBaseHelpers.forEach(h=>new Set(ysHelperCats(h)).forEach(k=>{if(k in counts)counts[k]++;}));}
-  else{ysBaseJobs.forEach(j=>{const k=ysJobCat(j);if(k in counts)counts[k]++;});}
-  return counts;
+// ── desktop scrolling for the chip row: mouse wheel, click-and-drag, ‹ › arrows ──
+let ysDragMoved=false;
+function ysInitChipScroll(){
+  const el=document.getElementById('ys-chips');
+  if(!el||el._ysInit)return;el._ysInit=true;
+  // vertical mouse wheel → horizontal scroll (trackpads already scroll sideways)
+  el.addEventListener('wheel',e=>{
+    if(Math.abs(e.deltaY)>Math.abs(e.deltaX)&&el.scrollWidth>el.clientWidth){e.preventDefault();el.scrollBy({left:e.deltaY,behavior:'auto'});}
+  },{passive:false});
+  // click-and-drag with the mouse (touch already scrolls natively)
+  let down=false,startX=0,startL=0;
+  el.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;down=true;ysDragMoved=false;startX=e.clientX;startL=el.scrollLeft;});
+  window.addEventListener('pointermove',e=>{
+    if(!down)return;const dx=e.clientX-startX;
+    if(Math.abs(dx)>4){ysDragMoved=true;el.classList.add('drag');}
+    if(ysDragMoved)el.scrollLeft=startL-dx;
+  });
+  window.addEventListener('pointerup',()=>{if(!down)return;down=false;el.classList.remove('drag');});
+  // a drag shouldn't also count as a click on the chip under the mouse
+  el.addEventListener('click',e=>{if(ysDragMoved){e.stopPropagation();e.preventDefault();ysDragMoved=false;}},true);
+  el.addEventListener('scroll',ysUpdateArrows,{passive:true});
+  window.addEventListener('resize',ysUpdateArrows);
+  ysUpdateArrows();
 }
-
-function ysRenderGrid(){
-  const el=document.getElementById('ys-grid');if(!el)return;
-  const counts=ysCounts();
-  const list=ysCats.filter(c=>!ysQuery||c.name.toLowerCase().includes(ysQuery));
-  if(!list.length){el.innerHTML=`<div class="ys-none">No category matches "${esc(ysQuery)}" — press Search to look in descriptions.</div>`;return;}
-  el.innerHTML=list.map(c=>{
-    const k=ysKey(c.name),n=counts[k]||0;
-    return `<button class="ys-cat" onclick="ysPick('${esc(k).replace(/'/g,"\\'")}')"><span class="e">${c.emoji||''}</span><span class="t">${esc(c.name)}</span><span class="n${n?'':' z'}">${n}</span></button>`;
-  }).join('');
-}
-
-function ysRenderBar(){
-  const chip=document.getElementById('ys-active'),inp=document.getElementById('ys-input');
-  if(!chip||!inp)return;
-  if(ysCat&&!ysPanelOpen){
-    chip.style.display='inline-flex';chip.textContent=`${ysEmoji(ysCat)} ${ysLabel(ysCat)} ✕`;
-    inp.placeholder='';
-  }else{
-    chip.style.display='none';inp.placeholder='Search helpers & jobs';
-  }
+function ysScrollChips(dir){const el=document.getElementById('ys-chips');if(el)el.scrollBy({left:dir*Math.max(160,el.clientWidth*0.6),behavior:'smooth'});}
+function ysUpdateArrows(){
+  const el=document.getElementById('ys-chips'),l=document.getElementById('ys-arrow-l'),r=document.getElementById('ys-arrow-r');
+  if(!el||!l||!r)return;
+  const max=el.scrollWidth-el.clientWidth;
+  l.classList.toggle('show',el.scrollLeft>4);
+  r.classList.toggle('show',max>4&&el.scrollLeft<max-4);
 }
 
 function ysRender(){
-  ysRenderBar();ysRenderChips();
-  if(ysPanelOpen)ysRenderGrid();
+  ysRenderChips();
   const sheet=document.getElementById('ys-sheet');if(!sheet)return;
-  if(!ysActive()||ysPanelOpen){sheet.style.display='none';return;}
-  const label=ysCat?ysLabel(ysCat):`"${ysQuery}"`;
+  if(!ysCat){sheet.style.display='none';return;}
+  const label=ysLabel(ysCat);
   const hs=sheetHelpers,js=sheetJobs;
   const hTitle=hs.length?`${hs.length} ${hs.length===1?'helper':'helpers'} · ${esc(label)}`:`No ${esc(label)} helpers nearby`;
   const cards=hs.slice(0,2).map(h=>{
@@ -1904,50 +1880,14 @@ function ysRender(){
   const jobsLine=js.length
     ?`<div class="ys-sh" style="margin-top:10px"><span style="font-size:13.5px;font-weight:800;color:var(--text)">${js.length} ${js.length===1?'job needs':'jobs need'} help</span><button class="ys-link" onclick="ysSeeAll('jobs')">See jobs ›</button></div>`
     :`<div class="ys-empty"><div><b>No ${esc(label)} jobs nearby yet.</b><br>Need a hand? Post one, it's free.</div><button class="ys-cta" onclick="ysPostJob()">Post job</button></div>`;
-  sheet.innerHTML=`<div class="ys-sh"><b>${hTitle}</b>${hs.length?`<button class="ys-link" onclick="ysSeeAll('helpers')">See all ›</button>`:''}</div>${cards?`<div class="ys-hl">${cards}</div>`:''}${jobsLine}`;
+  sheet.innerHTML=`<div class="ys-sh"><b>${hTitle}</b><span style="display:flex;gap:12px;align-items:center">${hs.length?`<button class="ys-link" onclick="ysSeeAll('helpers')">See all ›</button>`:''}<button class="ys-link" style="color:var(--muted)" onclick="ysPick(null)" aria-label="Clear category">✕</button></span></div>${cards?`<div class="ys-hl">${cards}</div>`:''}${jobsLine}`;
   sheet.style.display='block';
 }
 
-function ysFocus(){const i=document.getElementById('ys-input');if(i)i.focus();}
-function ysOpenPanel(){
-  ysPanelOpen=true;
-  document.getElementById('ys-bar').classList.add('focus');
-  document.getElementById('ys-cancel').style.display='block';
-  document.getElementById('ys-panel').style.display='block';
-  document.getElementById('ys-chips').style.display='none';
-  ysRender();
-}
-function ysClosePanel(){
-  ysPanelOpen=false;
-  document.getElementById('ys-bar').classList.remove('focus');
-  document.getElementById('ys-cancel').style.display='none';
-  document.getElementById('ys-panel').style.display='none';
-  document.getElementById('ys-chips').style.display='flex';
-  ysRender();
-}
-function ysCancel(){
-  const i=document.getElementById('ys-input');
-  if(i){i.value='';i.blur();}
-  ysQuery='';ysClosePanel();ysApply();
-}
-function ysOnInput(v){
-  clearTimeout(ysInputTimer);
-  ysInputTimer=setTimeout(()=>{ysQuery=v.trim().toLowerCase();if(ysQuery)ysCat=null;ysApply();},200);
-}
-function ysSetMode(m){
-  ysMode=m;
-  document.getElementById('ys-seg-help').classList.toggle('on',m==='help');
-  document.getElementById('ys-seg-work').classList.toggle('on',m==='work');
-  ysRenderGrid();
-}
 function ysPick(k){
-  ysCat=(ysCat===k&&!ysPanelOpen)?null:k; // tapping the active chip again clears it
-  ysQuery='';
-  const i=document.getElementById('ys-input');if(i){i.value='';i.blur();}
-  ysClosePanel();ysApply();
+  ysCat=(k&&ysCat!==k)?k:null; // tapping the active chip again clears it
+  updateRadiusCounts();renderMapPins();ysRender();
 }
-function ysClear(){ysCat=null;ysQuery='';const i=document.getElementById('ys-input');if(i)i.value='';ysApply();}
-function ysApply(){updateRadiusCounts();renderMapPins();ysRender();}
 function ysSeeAll(tab){browseMode='list';nav('browse');switchListTab(tab);}
 function ysPostJob(){const k=ysCat;nav('postjob');if(k)ysSetPostCat(k);}
 
@@ -1957,7 +1897,7 @@ function ysRenderPostCats(){
   const cur=ysKey(document.getElementById('p-cat').value);
   el.innerHTML=ysCats.map(c=>{
     const k=ysKey(c.name);
-    return `<button type="button" class="${cur===k?'on':''}" onclick="ysSetPostCat('${esc(k).replace(/'/g,"\\'")}')">${c.emoji||''} ${esc(c.name)}</button>`;
+    return `<button type="button" class="${cur===k?'on':''}" onclick="ysSetPostCat('${ysAttr(k)}')">${c.emoji||''} ${esc(c.name)}</button>`;
   }).join('');
 }
 function ysSetPostCat(k){
