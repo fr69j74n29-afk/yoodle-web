@@ -2220,6 +2220,12 @@ function logSearch(cat,n){
   try{if(sb&&me&&cat)sb.rpc('log_search',{p_category:cat,p_helpers:n|0,p_radius:Math.round(RADIUS_KM)||0}).then(()=>{},()=>{});}catch(e){}
 }
 
+// Active-member tracking → public.daily_active via log_active() (one row per person per Toronto day). At most once per 15 min per tab. Never blocks the UI.
+let _lastActivePing=0;
+function logActive(){
+  try{if(sb&&me){const n=Date.now();if(n-_lastActivePing<15*60*1000)return;_lastActivePing=n;sb.rpc('log_active').then(()=>{},()=>{});}}catch(e){}
+}
+
 function logBizEvent(listingId,eventType){
   if(!sb)return;
   const viewerId=myProfileId||me?.id||null;
@@ -2955,6 +2961,7 @@ async function showApp(){
   processReferral();
   handleHelperLanding();
   recordOnboardPath();
+  logActive();
   loadPoints();
   setTimeout(async()=>{
     if(window._pendingNotifTaskId){
@@ -3057,6 +3064,7 @@ function startUnreadPoller(){
 function _onVisibility(){
   if(document.visibilityState==='visible'){
     refreshUnreadCount();
+    logActive();
     // Restore GPS cache if in-memory was lost (e.g. post-form reset)
     if(!gpsLat||!gpsLng){
       const _c=_restoreCachedGps();
