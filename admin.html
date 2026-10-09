@@ -1912,11 +1912,16 @@ async function loadAgencyStats() {
   const el = document.getElementById('agency-stats');
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
-  const { data, error } = await sb.rpc('admin_agency_stats', { p_days: 30 });
-  if (error) { el.innerHTML = `<div style="padding:6px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`; return; }
-  if (!data || !data.length) { el.innerHTML = `<div style="padding:10px 0;color:var(--muted);font-size:13px">No agency jobs yet.</div>`; return; }
+  const [{ data, error }, { data: runs }] = await Promise.all([
+    sb.rpc('admin_agency_stats', { p_days: 30 }),
+    sb.rpc('admin_agency_sync_last')
+  ]);
+  const r0 = runs && runs[0];
+  const syncLine = r0 ? `<div style="padding:4px 0 8px;font-size:12.5px;color:${r0.error ? '#DC5046' : 'var(--muted)'}">Last sync ${esc(new Date(r0.ran_at).toLocaleString('en-CA', { timeZone: 'America/Toronto', dateStyle: 'medium', timeStyle: 'short' }))}: ${r0.error ? 'FAILED — ' + esc(r0.error) : `${Number(r0.found)} on site · +${Number(r0.inserted)} new · ${Number(r0.updated)} updated · ${Number(r0.reopened)} reopened · ${Number(r0.closed)} closed${(r0.skipped || []).length ? ' · ' + r0.skipped.length + ' skipped (' + esc(r0.skipped.map(x => x.title + ': ' + x.reason).join('; ')) + ')' : ''}`}</div>` : '';
+  if (error) { el.innerHTML = syncLine + `<div style="padding:6px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`; return; }
+  if (!data || !data.length) { el.innerHTML = syncLine + `<div style="padding:10px 0;color:var(--muted);font-size:13px">No agency jobs yet.</div>`; return; }
   const rows = data.map(r => `<tr><td>${esc(r.title || '—')}<div style="font-size:11.5px;color:var(--muted)">${esc(r.agency || '')} · ${esc(r.status || '')}</div></td><td class="num">${Number(r.opens)}</td><td class="num helpers">${Number(r.open_people)}</td><td class="num">${Number(r.applies)}</td><td class="num helpers">${Number(r.apply_people)}</td></tr>`).join('');
-  el.innerHTML = `<table class="region-table"><thead><tr><th>Job</th><th>Opens</th><th>People</th><th>Apply taps</th><th>People</th></tr></thead><tbody>${rows}</tbody></table>`
+  el.innerHTML = syncLine + `<table class="region-table"><thead><tr><th>Job</th><th>Opens</th><th>People</th><th>Apply taps</th><th>People</th></tr></thead><tbody>${rows}</tbody></table>`
     + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Opens = job card opened (pin, list, shared link). Apply taps = taps on the Apply button that open the agency's site — whether they finished applying there is only known to the agency. Signed-out visitors are counted per browser. Admin, demo and test accounts are excluded; repeats by the same person within 10 minutes count once.</div>`;
 }
 
