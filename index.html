@@ -3738,7 +3738,7 @@ async function loadMyJobs(){
   const pid=myProfileId||me.id;
   let q;
   if(myTab==='posted'){
-    q=sb.from('tasks').select('*').eq('poster_id',pid).in('status',['open','claimed']).order('created_at',{ascending:false});
+    q=sb.from('tasks').select('*').eq('poster_id',pid).in('status',['open','claimed']).neq('type','admin_note').order('created_at',{ascending:false});
   } else {
     // fetch applications by this user with task details
     q=sb.from('applications').select('id,status,created_at,tasks!inner(*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color))').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','claimed']).order('created_at',{ascending:false});
@@ -4178,6 +4178,14 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   const pid=myProfileId||me.id;
   const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id,type').eq('id',taskId).single();
   if(!task)return;
+  // "Yoodle team" thread (9 Oct 2026): no job buttons; the member can hide it
+  if(task.type==='admin_note'){
+    if(task.doer_id===pid&&task.status==='claimed'){
+      actionsEl.innerHTML=`<button onclick="hideTeamThread()" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Hide this chat</button>`;
+      actionsEl.style.display='flex';
+    }
+    return;
+  }
 
   const isPoster=task.poster_id===pid;
   const isDoer=task.doer_id===pid;
@@ -4309,6 +4317,17 @@ async function claimFromChat(taskId){
 async function sendSystemMessage(convId,taskId,senderId,receiverId,body){
   if(!convId)return;
   await sb.from('messages').insert({conversation_id:convId,task_id:taskId,sender_id:senderId,receiver_id:receiverId,body});
+}
+
+// Member hides a "Yoodle team" chat (9 Oct 2026) — closes the thread; a later team message opens a new one
+async function hideTeamThread(){
+  if(!sb||!me||!activeChatConvId)return;
+  const{error}=await sb.rpc('hide_team_thread',{p_conversation:activeChatConvId});
+  if(error)return toast('❌ '+error.message);
+  document.getElementById('chat-modal').classList.remove('open');
+  activeChatConvId=null;
+  toast('Chat hidden');
+  loadMessages();refreshUnreadCount();
 }
 
 async function cancelHelpOffer(taskId){

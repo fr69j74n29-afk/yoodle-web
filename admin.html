@@ -1251,7 +1251,7 @@ async function loadStats() {
     ] = await Promise.all([
       sb.from('profiles').select('*', { count: 'exact', head: true }),
       sb.from('profiles').select('id, visible_on_map, show_on_map').eq('visible_on_map', true),
-      sb.from('tasks').select('status, poster_id').neq('poster_id', EXCLUDED_POSTER),
+      sb.from('tasks').select('status, poster_id').neq('poster_id', EXCLUDED_POSTER).neq('type', 'admin_note'),
       sb.from('profiles')
         .select('created_at')
         .gte('created_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
@@ -1455,7 +1455,7 @@ async function loadRegions() {
     if (!window.YoodleGeo) throw new Error('admin-geo.js not loaded');
     const [{ data: profiles, error: pErr }, { data: tasks, error: tErr }] = await Promise.all([
       sb.from('profiles').select('id, visible_on_map, helper_lat, helper_lng, last_lat, last_lng'),
-      sb.from('tasks').select('poster_id, lat, lng, created_at').not('lat', 'is', null).order('created_at', { ascending: false })
+      sb.from('tasks').select('poster_id, lat, lng, created_at').not('lat', 'is', null).neq('type', 'admin_note').order('created_at', { ascending: false })
     ]);
     if (pErr) throw pErr;
     if (tErr) throw tErr;
@@ -1925,6 +1925,7 @@ async function loadRecentActivity() {
     const [{ data: jobs, error: jobErr }, { data: helpers2, error: helpErr }] = await Promise.all([
       sb.from('tasks')
         .select('id, title, description, price, status, address, created_at, poster_id, category')
+        .neq('type', 'admin_note')
         .gte('created_at', cutoff)
         .order('created_at', { ascending: false })
         .limit(5),
@@ -2127,10 +2128,10 @@ function openAdminMsg(type, userId, userName, taskId, taskTitle) {
 
   if (type === 'job') {
     titleEl.textContent = 'Message Job Poster';
-    ctxEl.innerHTML = `TO: ${esc(userName)}<br>RE: "${esc(taskTitle)}"<br><span style="font-size:11px;color:var(--muted)">This message will appear in their Messages tab, linked to this job.</span>`;
+    ctxEl.innerHTML = `TO: ${esc(userName)}<br>RE: "${esc(taskTitle)}"<br><span style="font-size:11px;color:var(--muted)">Sent from <b>Yoodle team</b> into their Messages tab (one ongoing thread per member). The job title is added at the top.</span>`;
   } else {
     titleEl.textContent = 'Message Helper';
-    ctxEl.innerHTML = `TO: ${esc(userName)}<br>RE: Helper profile<br><span style="font-size:11px;color:var(--muted)">This will create a conversation in their Messages tab.</span>`;
+    ctxEl.innerHTML = `TO: ${esc(userName)}<br>RE: Helper profile<br><span style="font-size:11px;color:var(--muted)">Sent from <b>Yoodle team</b> into their Messages tab (one ongoing thread per member). Replies arrive in the Yoodle team account's Messages.</span>`;
   }
   document.getElementById('admin-msg-modal').style.display = 'flex';
   bodyEl.focus();
@@ -2151,50 +2152,12 @@ async function sendAdminMsg() {
   btn.textContent = 'Sending…';
 
   try {
-    const { type, userId, userName, taskId, taskTitle } = adminMsgData;
-    let targetTaskId = taskId;
-    let posterId, applicantId;
-
-    if (type === 'helper') {
-      // Create a lightweight help_offer task for the conversation
-      const { data: newTask, error: taskErr } = await sb.from('tasks').insert({
-        poster_id: adminUserId,
-        title: 'Message from Yoodle Team',
-        description: 'A message from the Yoodle admin team about your helper profile.',
-        price: 0,
-        category: 'other',
-        status: 'claimed',
-        doer_id: userId,
-        lat: 43.6532,
-        lng: -79.3832
-      }).select('id').single();
-      if (taskErr) throw taskErr;
-      targetTaskId = newTask.id;
-      posterId = adminUserId;
-      applicantId = userId;
-    } else {
-      // Job: admin is the applicant reaching out to the poster
-      posterId = userId;
-      applicantId = adminUserId;
-    }
-
-    // Create conversation
-    const { data: convId, error: convErr } = await sb.rpc('create_conversation', {
-      p_task_id: targetTaskId,
-      p_poster_id: posterId,
-      p_applicant_id: applicantId
-    });
-    if (convErr) throw convErr;
-
-    // Insert message
-    const { error: msgErr } = await sb.from('messages').insert({
-      conversation_id: convId,
-      task_id: targetTaskId,
-      sender_id: adminUserId,
-      receiver_id: userId,
-      body: body
-    });
-    if (msgErr) throw msgErr;
+    const { type, userId, userName, taskTitle } = adminMsgData;
+    // 9 Oct 2026: one "Yoodle team" thread per member (task type admin_note) via admin_send_message().
+    // Replaces the old fake "Message from Yoodle Team" job / applying to the poster's job.
+    const text = (type === 'job' && taskTitle) ? `About your job "${taskTitle}":\n${body}` : body;
+    const { error: sendErr } = await sb.rpc('admin_send_message', { p_user: userId, p_body: text });
+    if (sendErr) throw sendErr;
 
     closeAdminMsg();
     adminToast('✅ Message sent to ' + userName);
