@@ -3060,10 +3060,16 @@ function startUnreadPoller(){
   // re-check whenever the tab comes back into focus
   document.removeEventListener('visibilitychange',_onVisibility);
   document.addEventListener('visibilitychange',_onVisibility);
+  window.removeEventListener('online',_onOnline);
+  window.addEventListener('online',_onOnline);
 }
 function _onVisibility(){
+  if(document.visibilityState!=='visible'){_hiddenAt=Date.now();return;}
   if(document.visibilityState==='visible'){
-    refreshUnreadCount();
+    const _away=_hiddenAt?Date.now()-_hiddenAt:0;_hiddenAt=0;
+    // Away >30s (iOS may leave a dead socket looking "joined") or not joined → reconnect
+    if(me&&sb&&(_away>30000||realtimeChannel?.state!=='joined'))subscribeToMessages();
+    _catchUpMessages(); // includes refreshUnreadCount()
     logActive();
     // Restore GPS cache if in-memory was lost (e.g. post-form reset)
     if(!gpsLat||!gpsLng){
@@ -3088,7 +3094,7 @@ function _onVisibility(){
 function subscribeToMessages(){
   if(!sb||!me)return;
   if(realtimeChannel)sb.removeChannel(realtimeChannel);
-  realtimeChannel=sb.channel('messages-notify').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},payload=>{
+  const ch=realtimeChannel=sb.channel('messages-notify').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},payload=>{
     const msg=payload.new;const pid=myProfileId||me.id;
     if(msg.receiver_id===pid&&msg.sender_id!==pid){
       playNotificationSound();
@@ -3096,15 +3102,38 @@ function subscribeToMessages(){
       if(chatOpen){
         sb.rpc('mark_conversation_read',{p_conversation_id:activeChatConvId,p_user_id:pid})
           .then(()=>refreshUnreadCount());
-        loadChatMessages();
+        loadChatMessages(true);
       } else {
         refreshUnreadCount();
         const msgView=document.getElementById('app-messages');
         if(msgView?.classList.contains('active'))loadMessages();
       }
     }
-  }).subscribe();
+  }).subscribe(status=>{
+    if(ch!==realtimeChannel)return; // old channel closing after a resubscribe — ignore
+    if(status==='SUBSCRIBED'){_rtRetry=0;return;}
+    if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED')_scheduleRtResubscribe();
+  });
 }
+// Realtime keep-alive: the socket dies when the phone sleeps / tab is backgrounded.
+// Reconnect with backoff, and on return pull anything missed while away.
+let _rtRetry=0,_rtTimer=null,_hiddenAt=0;
+function _scheduleRtResubscribe(){
+  if(_rtTimer||!sb||!me)return;
+  const d=Math.min(30000,2000*Math.pow(2,_rtRetry++));
+  _rtTimer=setTimeout(()=>{_rtTimer=null;if(document.visibilityState==='visible'&&me&&sb)subscribeToMessages();},d);
+}
+function _catchUpMessages(){
+  if(!sb||!me)return;
+  refreshUnreadCount();
+  if(activeChatConvId){
+    const pid=myProfileId||me.id;
+    loadChatMessages(true);
+    sb.rpc('mark_conversation_read',{p_conversation_id:activeChatConvId,p_user_id:pid}).then(()=>refreshUnreadCount(),()=>{});
+  }
+  if(document.getElementById('app-messages')?.classList.contains('active'))loadMessages();
+}
+function _onOnline(){if(me&&sb){subscribeToMessages();_catchUpMessages();}}
 
 
 async function setAvatar(){
@@ -4066,8 +4095,8 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   }
 }
 
-async function loadChatMessages(){
-  const el=document.getElementById('chat-messages');el.innerHTML=spin();
+async function loadChatMessages(quiet){
+  const el=document.getElementById('chat-messages');if(!quiet)el.innerHTML=spin();
   if(!sb||!me||!activeChatConvId)return;
   const pid=myProfileId||me.id;
 
@@ -4114,6 +4143,42 @@ async function sendMessage(){
   });
   if(error){toast('❌ '+error.message);return;}
   loadChatMessages();
+  maybeAskPushAfterSend();
+}
+// After someone sends a message: ask them to turn on push (or, on iPhone Safari,
+// add to Home Screen) so they see the reply. At most once per 7 days per device.
+function _pushReady(){
+  if(isIos()&&!isInStandaloneMode())return false;
+  return window.Notification?.permission==='granted';
+}
+function maybeAskPushAfterSend(){
+  const iosBrowser=isIos()&&!isInStandaloneMode();
+  try{
+    if(_pushReady())return;
+    if(!iosBrowser&&!window.Notification)return;            // browser can't do push at all
+    if(window.Notification?.permission==='denied')return;   // can't re-ask; Profile explains the fix
+    if(document.getElementById('push-ask'))return;
+    const k='yoodle_push_ask',last=+(localStorage.getItem(k)||0);
+    if(Date.now()-last<7*864e5)return;
+    localStorage.setItem(k,String(Date.now()));
+  }catch(e){return;}
+  const body=iosBrowser
+    ?'On iPhone, replies can only reach you when Yoodle is on your Home Screen. Tap <strong style="color:var(--text)">Share</strong>, then <strong style="color:var(--text)">Add to Home Screen</strong>, and open Yoodle from there.'
+    :'Turn on notifications so you don\'t miss their reply, even when Yoodle is closed.';
+  const btns=iosBrowser
+    ?`<button id="pa-ok" style="flex:1;padding:12px;border:none;border-radius:var(--radius-sm);background:var(--btn-a);color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Got it</button>`
+    :`<button id="pa-no" style="flex:1;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Not now</button><button id="pa-ok" style="flex:1;padding:12px;border:none;border-radius:var(--radius-sm);background:var(--btn-a);color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Turn on</button>`;
+  const w=document.createElement('div');
+  w.id='push-ask';
+  w.style.cssText='position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + var(--sab,0px))';
+  w.innerHTML=`<div style="width:100%;max-width:420px;background:var(--surface);color:var(--text);border-radius:var(--radius);padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.25);font-family:'Nunito',sans-serif"><div style="font-size:28px;line-height:1;margin-bottom:8px">🔔</div><div style="font-size:18px;font-weight:800;margin-bottom:6px">Get notified when they reply</div><div style="font-size:14.5px;color:var(--muted);line-height:1.45;margin-bottom:16px">${body}</div><div style="display:flex;gap:10px">${btns}</div></div>`;
+  const close=()=>w.remove();
+  w.addEventListener('click',e=>{if(e.target===w)close();});
+  setTimeout(()=>{
+    document.body.appendChild(w);
+    w.querySelector('#pa-no')?.addEventListener('click',close);
+    w.querySelector('#pa-ok').addEventListener('click',()=>{close();if(!iosBrowser)requestNotifPermission();});
+  },700);
 }
 
 async function claimFromChat(taskId){
@@ -4730,22 +4795,22 @@ function updateNotifNudge(){
   const nudge=document.getElementById('notif-nudge');
   const nudgeText=document.getElementById('notif-nudge-text');
   if(!nudge)return;
-  const granted=Notification?.permission==='granted';
+  const granted=window.Notification?.permission==='granted';
   const iosNotReady=isIos()&&!isInStandaloneMode();
   if(granted&&!iosNotReady){
     nudge.style.display='none';
   } else {
     nudge.style.display='flex';
     if(iosNotReady) nudgeText.textContent='Add to Home Screen for notifications';
-    else if(Notification?.permission==='denied') nudgeText.textContent='Notifications blocked — tap to fix';
+    else if(window.Notification?.permission==='denied') nudgeText.textContent='Notifications blocked — tap to fix';
     else nudgeText.textContent='Tap to enable notifications';
   }
 }
 
 async function requestNotifPermission(){
   if(isIos()&&!isInStandaloneMode()){nav('profile');return;}
-  if(Notification?.permission==='denied'){nav('profile');return;}
-  if(Notification?.permission==='granted'){updateNotifNudge();return;}
+  if(window.Notification?.permission==='denied'){nav('profile');return;}
+  if(window.Notification?.permission==='granted'){updateNotifNudge();return;}
   toast('🔔 Requesting permission…');
   try{
     if(window.OneSignalDeferred){
@@ -4774,10 +4839,10 @@ function updateNotifTip(){
   } else if(isIos()&&isInStandaloneMode()){
     tip.style.display='block';
     body.innerHTML='You\'re using Yoodle as an app! Make sure you\'ve allowed notifications when prompted.';
-  } else if(Notification?.permission==='granted'){
+  } else if(window.Notification?.permission==='granted'){
     tip.style.display='block';
     body.innerHTML='Push notifications are enabled on this device.';
-  } else if(Notification?.permission==='denied'){
+  } else if(window.Notification?.permission==='denied'){
     tip.style.display='block';
     body.innerHTML='Notifications are blocked. Go to your browser settings and allow notifications for yoodle.ca.';
   } else {
