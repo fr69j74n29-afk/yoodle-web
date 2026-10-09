@@ -532,6 +532,10 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-hero{display:flex;align-items:center;gap:14px}
 .op-av{width:32px;height:32px;border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
 .op-name{font-size:20px;font-weight:800;line-height:1.2;word-break:break-word;overflow-wrap:break-word}
+.op-active{font-size:12.5px;font-weight:700;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px}
+.op-active .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);opacity:.6;flex:none}
+.op-active.on{color:var(--text)}
+.op-active.on .dot{background:#22C55E;opacity:1}
 .op-mod-links{display:flex;align-items:center;gap:6px;margin-top:3px;font-size:12.5px;color:var(--muted)}
 .op-mod-links button{background:none;border:none;padding:2px 0;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;color:#DC5046;text-decoration:underline;cursor:pointer}
 .op-mod-links .op-mod-unblock{color:var(--muted)}
@@ -1938,6 +1942,10 @@ window.addEventListener('DOMContentLoaded', () => {
   if(_notifTaskId){
     window._pendingNotifTaskId = _notifTaskId;
     window._pendingNotifConvId = _notifConvId;
+    // Email "Reply" links (9 Oct 2026): keep through sign-in — Google OAuth reloads the page
+    if(/^[0-9a-f-]{36}$/i.test(_notifTaskId)){
+      try{localStorage.setItem('yoodle_chat_land', JSON.stringify({t:_notifTaskId, c:(_notifConvId&&/^[0-9a-f-]{36}$/i.test(_notifConvId))?_notifConvId:null, ts:Date.now()}));}catch(e){}
+    }
   }
   if(_notifTaskId || _refCode || _openEmail || _landHelper){
     window.history.replaceState({}, '', '/');
@@ -2684,15 +2692,20 @@ async function openOtherProfile(userId){
   window._opShare=null;
   modal.classList.add('open');
 
-  const [profRes,posterRatingRes,helperRatingRes,posterStatsRes,helperStatsRes]=await Promise.all([
+  const [profRes,posterRatingRes,helperRatingRes,posterStatsRes,helperStatsRes,lastActiveRes]=await Promise.all([
     sb.from('profiles').select('id,name,bio,rating,task_count,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,visible_on_map,helper_address').eq('id',userId).maybeSingle(),
     sb.rpc('get_poster_rating',{user_id:userId}),
     sb.rpc('get_helper_rating',{user_id:userId}),
     sb.from('tasks').select('id,status').eq('poster_id',userId),
-    sb.from('applications').select('id,status').eq('applicant_id',userId)
+    sb.from('applications').select('id,status').eq('applicant_id',userId),
+    sb.rpc('get_last_active',{p_user:userId})
   ]);
 
   const prof=profRes.data;
+  // Last active (9 Oct 2026): coarse bucket only — today / week / month / older; blank if unknown or RPC missing
+  const _la=lastActiveRes&&!lastActiveRes.error?lastActiveRes.data:null;
+  const _laTxt={today:'Active today',week:'Active this week',month:'Active this month',older:'Last active over a month ago'}[_la]||'';
+  const lastActiveHtml=(_laTxt&&userId!==(myProfileId||me?.id))?`<div class="op-active${_la==='today'?' on':''}"><span class="dot"></span>${_laTxt}</div>`:'';
   if(!prof){content.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;font-weight:700">👤 Profile not found.</div>';return;}
 
   const allPosted=posterStatsRes.data||[];
@@ -2724,6 +2737,7 @@ async function openOtherProfile(userId){
       <div class="op-av">${esc(initial)}</div>
       <div style="min-width:0">
         <div class="op-name">${esc(prof.name||'Yoodler')}</div>
+        ${lastActiveHtml}
         ${(me&&userId!==(myProfileId||me.id))?`<div class="op-mod-links">
           <button onclick="openReport('${userId}',window._opName,null,null)">Report</button>
           <span aria-hidden="true">·</span>
@@ -3043,13 +3057,17 @@ async function showApp(){
   logActive();
   loadPoints();
   setTimeout(async()=>{
-    if(window._pendingNotifTaskId){
-      const tid=window._pendingNotifTaskId;
-      const cid=window._pendingNotifConvId;
-      window._pendingNotifTaskId=null;
-      window._pendingNotifConvId=null;
-      await openChatFromNotification(tid,cid);
-    }
+    let tid=window._pendingNotifTaskId||null;
+    let cid=window._pendingNotifConvId||null;
+    window._pendingNotifTaskId=null;
+    window._pendingNotifConvId=null;
+    // Deep link saved before sign-in (yoodle_chat_land, 9 Oct 2026) — used once, 7-day limit
+    try{
+      const d=JSON.parse(localStorage.getItem('yoodle_chat_land')||'null');
+      localStorage.removeItem('yoodle_chat_land');
+      if(!tid&&d&&d.t&&Date.now()-(d.ts||0)<7*24*60*60*1000){tid=d.t;cid=d.c||null;}
+    }catch(e){}
+    if(tid)await openChatFromNotification(tid,cid);
   },1500);
   loadPendingRatings();
   refreshUnreadCount();
@@ -4098,8 +4116,20 @@ function closeChat(){
 
 async function openChatFromNotification(taskId,convId){
   if(!me||!sb)return;
-  nav('messages');
   const pid=myProfileId||me.id;
+  if(!convId){
+    // ?task_id= with no conv_id (job links, nudge emails — 9 Oct 2026): my active chat on that job, else the job sheet
+    const{data:mine}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('status','active')
+      .or(`poster_id.eq.${pid},applicant_id.eq.${pid}`).order('created_at',{ascending:false}).limit(1);
+    if(mine&&mine[0]){convId=mine[0].id;}
+    else{
+      const{data:job}=await sb.from('tasks').select('*').eq('id',taskId).maybeSingle();
+      if(job&&job.status==='open')openJob(job);
+      else toast('This job is no longer available');
+      return;
+    }
+  }
+  nav('messages');
   const{data:conv}=await sb.from('conversations')
     .select('id,poster_id,applicant_id,tasks(title)')
     .eq('id',convId).single();
