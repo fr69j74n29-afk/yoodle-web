@@ -1963,12 +1963,13 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-  sb.auth.getSession().then(({data:{session}})=>{
-    if(session){me=session.user;showApp();}
-  });
+  // Start-up once per signed-in user (Oct 2026). Supabase also fires auth events on token refresh
+  // (~hourly) and tab focus, and getSession + INITIAL_SESSION both fire on load — each used to rerun
+  // the whole showApp() (≈24 API calls + map recentre). Now repeats only update the session user.
+  sb.auth.getSession().then(({data:{session}})=>{ if(session)_startApp(session); });
   sb.auth.onAuthStateChange((_e,session)=>{
-    if(session){me=session.user;showApp();}
-    else{me=null;showAuthScreen();}
+    if(session)_startApp(session);
+    else{me=null;_appStartedFor=null;showAuthScreen();}
   });
 });
 
@@ -3026,6 +3027,13 @@ function oneSignalLogout(){
 async function signOut(){oneSignalLogout();if(sb)await sb.auth.signOut();else showAuthScreen();}
 function showAuthScreen(){document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';}
 
+let _appStartedFor=null;
+function _startApp(session){
+  me=session.user;
+  if(_appStartedFor===session.user.id)return;
+  _appStartedFor=session.user.id;
+  showApp();
+}
 async function showApp(){
   document.getElementById('view-auth').style.display='none';
   const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
@@ -3178,6 +3186,8 @@ function _onVisibility(){
   if(document.visibilityState!=='visible'){_hiddenAt=Date.now();return;}
   if(document.visibilityState==='visible'){
     const _away=_hiddenAt?Date.now()-_hiddenAt:0;_hiddenAt=0;
+    // Back after 10+ min away: re-check suspension/terms (Oct 2026). Jobs/helpers already refresh on tab return.
+    if(me&&sb&&_away>10*60*1000)checkAccountGates();
     // Away >30s (iOS may leave a dead socket looking "joined") or not joined → reconnect
     if(me&&sb&&(_away>30000||realtimeChannel?.state!=='joined'))subscribeToMessages();
     _catchUpMessages(); // includes refreshUnreadCount()
