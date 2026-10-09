@@ -1028,7 +1028,7 @@ body::before {
       <div class="stat-card jobs">
         <div class="stat-label"><span class="stat-icon">📋</span> Open Jobs</div>
         <div class="stat-num loading-val" id="stat-open-jobs">—</div>
-        <div class="stat-sub">Job posts with status open</div>
+        <div class="stat-sub" id="stat-open-jobs-detail">Direct · agency</div>
       </div>
       <div class="stat-card convs">
         <div class="stat-label"><span class="stat-icon">💬</span> Live Conversations</div>
@@ -1255,7 +1255,7 @@ async function loadStats() {
     ] = await Promise.all([
       sb.from('profiles').select('*', { count: 'exact', head: true }),
       sb.from('profiles').select('id, visible_on_map, show_on_map').eq('visible_on_map', true),
-      sb.from('tasks').select('status, poster_id').neq('poster_id', EXCLUDED_POSTER).neq('type', 'admin_note'),
+      sb.from('tasks').select('status, poster_id, type').neq('poster_id', EXCLUDED_POSTER).neq('type', 'admin_note'),
       sb.from('profiles')
         .select('created_at')
         .gte('created_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
@@ -1282,8 +1282,11 @@ async function loadStats() {
       `${mappedHelpers.length} mapped · ${listOnlyHelpers} list-only`;
 
     // Open jobs (same rule as the old "Open" bar: status open, admin auto-reply poster excluded)
-    const openJobs = (taskStatuses || []).filter(t => t.status?.toLowerCase() === 'open').length;
-    animateNumber('stat-open-jobs', openJobs);
+    // Split (Oct 2026): direct = posted by members; agency = synced partner listings (type 'agency_job')
+    const openRows = (taskStatuses || []).filter(t => t.status?.toLowerCase() === 'open');
+    const agencyOpen = openRows.filter(t => t.type === 'agency_job').length;
+    animateNumber('stat-open-jobs', openRows.length);
+    document.getElementById('stat-open-jobs-detail').textContent = `${openRows.length - agencyOpen} direct · ${agencyOpen} agency`;
 
     loadConvOverview();
 
