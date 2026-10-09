@@ -4786,7 +4786,7 @@ async function hpDetectLocation(){
         hpGpsPending={lat,lng,display,vague:!(road||area),city:city||area||''};
         document.getElementById('hp-gps-confirm-addr').textContent=display;
         document.getElementById('hp-gps-confirm').style.display='block';
-        st.textContent='Please confirm the address below';st.className='loc-status loading';
+        st.textContent='Please confirm the address below';st.className='loc-status manual';
       }catch(e){st.textContent='Could not detect your street — type it and pick from the suggestions';st.className='loc-status manual';}
       reset();
     },
