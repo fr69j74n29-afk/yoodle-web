@@ -980,12 +980,22 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <!-- ADDRESS -->
       <div class="form-g">
         <label class="form-lbl">Your available area</label>
-        <div style="position:relative">
+        <div class="loc-row">
+          <div class="loc-autocomplete-wrap">
           <input class="form-inp" id="hp-loc" type="text" placeholder="Start typing your address…" autocomplete="off"
             oninput="onHPLocInput(this.value)" onfocus="if(this.value.length>2)showHPSuggestions()" onblur="setTimeout(hideHPSuggestions,200)">
           <div class="loc-suggestions" id="hp-loc-suggestions"></div>
+          </div>
+          <button class="btn-gps" id="hp-gps-btn" onclick="hpDetectLocation()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>GPS</button>
         </div>
         <div class="loc-status" id="hp-loc-status">Select your area from suggestions</div>
+        <div id="hp-gps-confirm" style="display:none;margin-top:8px;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2)">
+          <div style="font-size:15px;font-weight:600;color:var(--text);line-height:1.45;margin-bottom:10px">Is this your street? <b id="hp-gps-confirm-addr"></b></div>
+          <div style="display:flex;gap:8px">
+            <button onclick="hpGpsConfirm(false)" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--text);font-family:'Nunito',sans-serif;font-size:14.5px;font-weight:800;cursor:pointer">No, I'll type it</button>
+            <button onclick="hpGpsConfirm(true)" style="flex:1;padding:10px;border:none;border-radius:var(--radius-sm);background:var(--btn-a);color:#fff;font-family:'Nunito',sans-serif;font-size:14.5px;font-weight:800;cursor:pointer">Yes, that's right</button>
+          </div>
+        </div>
         <div style="font-size:12.5px;color:var(--yellow);font-weight:700;margin-top:8px;line-height:1.5">Remember to update your location if you move — e.g. going to your cottage for the weekend.</div>
       </div>
 
@@ -4580,7 +4590,7 @@ function hpAskArea(){
     :'Add your street?';
   const hpAskBody=hpSameSpot>0
     ?`Your pin sits in the middle of ${esc(city)}, so neighbours can't tell you apart. <b>Add your street address to stand out.</b>`
-    :`Right now your pin sits in the middle of ${esc(city)}. Adding your street name (no house number needed) helps nearby neighbours find you.`;
+    :`Right now your pin sits in the middle of ${esc(city)}. Adding your street name helps nearby neighbours find you.`;
   const w=document.createElement('div');
   w.id='hp-area-ask';
   w.style.cssText='position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + var(--sab,0px))';
@@ -4603,9 +4613,9 @@ function hpAskArea(){
 function hpStartAddArea(city){
   {
     const inp=document.getElementById('hp-loc');
-    inp.value='';inp.placeholder=`Street name in ${city} (no house number needed)`;
+    inp.value='';inp.placeholder=`Street name in ${city}`;
     hpLat=null;hpLng=null;hpLocVague=false;
-    const st=document.getElementById('hp-loc-status');st.textContent='Type your street name, then pick it from the suggestions';st.className='loc-status';
+    const st=document.getElementById('hp-loc-status');st.textContent='Type your street name and pick it from the suggestions, or tap GPS';st.className='loc-status';
     // Focus first, then jump (no smooth scroll): focusing during a smooth scroll left the iPhone caret floating above the box (9 Oct 2026)
     try{inp.focus({preventScroll:true});}catch(e){inp.focus();}
     try{inp.scrollIntoView({block:'center'});}catch(e){}
@@ -4704,6 +4714,7 @@ function onHPRateInput(){
 
 function onHPLocInput(val){
   hpLat=null;hpLng=null;
+  if(hpGpsPending){hpGpsPending=null;document.getElementById('hp-gps-confirm').style.display='none';}
   clearTimeout(hpLocDebounceTimer);
   const sug=document.getElementById('hp-loc-suggestions');
   if(val.length<3){sug.classList.remove('open');return;}
@@ -4749,11 +4760,61 @@ function selectHPSuggestion(i){
   document.getElementById('hp-loc-suggestions').classList.remove('open');
 }
 
+// Helper-profile GPS button (9 Oct 2026): street-level reverse lookup, house number dropped,
+// coordinates rounded to 3 decimals (~100 m) so the saved point isn't the helper's front door.
+async function hpDetectLocation(){
+  const btn=document.getElementById('hp-gps-btn');const inp=document.getElementById('hp-loc');const st=document.getElementById('hp-loc-status');
+  const reset=()=>{btn.disabled=false;btn.innerHTML=ICO.nav+'GPS';};
+  if(isDemoAccount){demoLocationNote();inp.value='Downtown Toronto, ON';hpLat=DEMO_CENTER.lat;hpLng=DEMO_CENTER.lng;hpLocVague=false;hpLocVagueAck=false;st.textContent='📍 Demo account — downtown Toronto';st.className='loc-status manual';return;}
+  if(!navigator.geolocation){st.textContent='GPS not available — type your street name';st.className='loc-status manual';return;}
+  btn.disabled=true;btn.textContent='Locating…';st.textContent='Getting your location…';st.className='loc-status loading';
+  navigator.geolocation.getCurrentPosition(
+    async pos=>{
+      const lat=+pos.coords.latitude.toFixed(3),lng=+pos.coords.longitude.toFixed(3);
+      try{
+        const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=17&addressdetails=1&format=json`,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
+        const d=await r.json();const a=d.address||{};
+        const road=a.road||a.pedestrian||'';
+        const area=a.neighbourhood||a.suburb||a.quarter||a.city_district||'';
+        const city=a.city||a.town||a.village||a.municipality||'';
+        const prov=a.state_code||a.state||'';
+        const seen=new Set();
+        const display=[road,area,city,prov].filter(v=>{if(!v||seen.has(v))return false;seen.add(v);return true;}).join(', ');
+        if(!display)throw new Error('no address');
+        // Safety check (9 Oct 2026): GPS can be off (laptops, weak signal) — hold the result until the helper confirms it
+        inp.value=display;hpLat=null;hpLng=null;
+        hpGpsPending={lat,lng,display,vague:!(road||area),city:city||area||''};
+        document.getElementById('hp-gps-confirm-addr').textContent=display;
+        document.getElementById('hp-gps-confirm').style.display='block';
+        st.textContent='Please confirm the address below';st.className='loc-status loading';
+      }catch(e){st.textContent='Could not detect your street — type it and pick from the suggestions';st.className='loc-status manual';}
+      reset();
+    },
+    ()=>{st.textContent='Location denied — type your street name and pick from the suggestions';st.className='loc-status manual';reset();},
+    {timeout:10000,enableHighAccuracy:true}
+  );
+}
+
+let hpGpsPending=null;
+function hpGpsConfirm(ok){
+  const p=hpGpsPending;hpGpsPending=null;
+  document.getElementById('hp-gps-confirm').style.display='none';
+  if(!p)return;
+  if(ok){
+    hpLat=p.lat;hpLng=p.lng;hpLocVague=p.vague;hpLocVagueAck=false;
+    const st=document.getElementById('hp-loc-status');
+    st.textContent=`📍 ${p.display} — your exact address is never shown`;st.className='loc-status verified';
+  }else{
+    hpStartAddArea(p.city||'your city');
+  }
+}
+
 function showHPSuggestions(){document.getElementById('hp-loc-suggestions').classList.add('open');}
 function hideHPSuggestions(){document.getElementById('hp-loc-suggestions').classList.remove('open');}
 
 async function saveHelperProfile(){
   if(!sb||!me)return toast('Not signed in');
+  if(hpGpsPending)return toast('⚠️ Please confirm your GPS address first');
   if(!hpLat||!hpLng)return toast('⚠️ Please select your area from suggestions');
   if(hpLocVague&&!hpLocVagueAck){hpAskArea();return;}
   const address=document.getElementById('hp-loc').value||'';
