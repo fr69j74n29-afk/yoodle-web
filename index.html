@@ -2129,7 +2129,7 @@ function updateCircleOverlay() {
 function fuzzyCoords(lat,lng){return[lat+(Math.random()-.5)*.0014,lng+(Math.random()-.5)*.0018];}
 
 let helperMarkers=[];
-let myHelperPin=null,hpFocusAreaNext=false; // own helper pin (9 Oct 2026): drawn for the helper themself; tap may open the area field
+let myHelperPin=null,hpFocusAreaNext=false,myIsTester=false; // own helper pin (9 Oct 2026): drawn for the helper themself; tap may open the area field
 let allBizListings=[], bizMarkers=[];
 
 function renderMapPins(){
@@ -2309,7 +2309,7 @@ async function loadJobs() {
   const[{data:helpers},{data:bizData},_jobsRes,_meRes]=await Promise.all([
     // helpers for map (separate, no radius restriction)
     sb.from('profiles')
-      .select('id,name,rating,last_lat,last_lng,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,show_on_map')
+      .select('id,name,rating,last_lat,last_lng,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,show_on_map,is_tester')
       .eq('visible_on_map', true)
       .neq('id', pid||'00000000-0000-0000-0000-000000000000'),
     // business listings for map
@@ -2327,10 +2327,12 @@ async function loadJobs() {
       exclude_user_id:pid||null
     }):Promise.resolve(null),
     // own helper row — the helpers query above excludes me (own pin, 9 Oct 2026)
-    pid?sb.from('profiles').select('id,name,last_lat,last_lng,show_on_map,visible_on_map,helper_address').eq('id',pid).maybeSingle():Promise.resolve({data:null})
+    pid?sb.from('profiles').select('id,name,last_lat,last_lng,show_on_map,visible_on_map,helper_address,is_tester').eq('id',pid).maybeSingle():Promise.resolve({data:null})
   ]);
-  allHelpers=(helpers||[]).filter(h=>!hiddenUserIds.has(h.id));
-  const _mp=_meRes?.data; // same rule as other helpers' pins: active listing (not paused) with a location
+  const _mp=_meRes?.data;
+  myIsTester=!!_mp?.is_tester; // test accounts (profiles.is_tester) are only shown to other test accounts
+  allHelpers=(helpers||[]).filter(h=>!hiddenUserIds.has(h.id)&&(!h.is_tester||myIsTester));
+  // own pin: same rule as other helpers' pins — active listing (not paused) with a location
   myHelperPin=(_mp&&_mp.visible_on_map&&_mp.show_on_map&&_mp.last_lat&&_mp.last_lng)?_mp:null;
   allBizListings=bizData||[];
 
