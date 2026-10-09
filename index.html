@@ -4571,20 +4571,25 @@ function hpAskArea(){
   const _hpKey=(a,b)=>(+a).toFixed(4)+','+(+b).toFixed(4);
   const _hpK=_hpKey(hpLat,hpLng);
   const hpSameSpot=(allHelpers||[]).filter(h=>h.show_on_map&&h.last_lat&&h.last_lng&&_hpKey(h.last_lat,h.last_lng)===_hpK).length;
+  // Readability (9 Oct 2026): warning + bold count as the headline when others share the spot; body in full text colour.
+  const hpAskIcon=hpSameSpot>0?'⚠️':'📍';
+  const hpAskTitle=hpSameSpot>0
+    ?`${hpSameSpot} other helper${hpSameSpot===1?' is':'s are'} pinned to this exact spot`
+    :'Add your neighbourhood?';
   const hpAskBody=hpSameSpot>0
-    ?`${hpSameSpot} other helper${hpSameSpot===1?' is':'s are'} pinned on this exact spot, the middle of ${esc(city)}. Add your neighbourhood to stand out.`
+    ?`Your pin sits in the middle of ${esc(city)}, so neighbours can't tell you apart. <b>Add your neighbourhood to stand out.</b>`
     :`Right now your pin sits in the middle of ${esc(city)}. Adding your neighbourhood, street or postal code helps nearby neighbours find you.`;
   const w=document.createElement('div');
   w.id='hp-area-ask';
   w.style.cssText='position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + var(--sab,0px))';
   w.innerHTML=`<div style="width:100%;max-width:420px;background:var(--surface);color:var(--text);border-radius:var(--radius);padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.25);font-family:'Nunito',sans-serif">
-    <div style="font-size:28px;line-height:1;margin-bottom:8px">📍</div>
-    <div style="font-size:18px;font-weight:800;margin-bottom:6px">Add your neighbourhood?</div>
-    <div style="font-size:14.5px;color:var(--muted);line-height:1.45;margin-bottom:6px">${hpAskBody}</div>
-    <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:16px">🔒 Your exact address is never shown.</div>
+    <div style="font-size:28px;line-height:1;margin-bottom:8px">${hpAskIcon}</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:6px">${hpAskTitle}</div>
+    <div style="font-size:15px;color:var(--text);font-weight:600;line-height:1.45;margin-bottom:8px">${hpAskBody}</div>
+    <div style="font-size:13.5px;color:var(--text);opacity:.8;font-weight:700;margin-bottom:16px">🔒 Your exact address is never shown.</div>
     <div style="display:flex;gap:10px">
       <button id="hpa-skip" style="flex:1;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Skip, use ${esc(city.length>14?'city':city)}</button>
-      <button id="hpa-add" style="flex:1;padding:12px;border:none;border-radius:var(--radius-sm);background:var(--btn-a);color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Add area</button>
+      <button id="hpa-add" style="flex:1;padding:12px;border:none;border-radius:var(--radius-sm);background:var(--btn-a);color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Add neighbourhood</button>
     </div></div>`;
   document.body.appendChild(w);
   const close=()=>w.remove();
