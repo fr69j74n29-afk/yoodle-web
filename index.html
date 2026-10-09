@@ -3247,7 +3247,7 @@ async function openJob(j){
     window._mPosterName=pname;
     const prating=prof?.rating?`<span style="color:var(--yellow);font-size:14px;font-weight:800">★ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:13.5px;font-weight:700">New</span>`;
     document.getElementById('m-poster').innerHTML=`
-      <div onclick="openOtherProfile('${pid}')" style="cursor:pointer;flex-shrink:0">${avatarCircle(pname,prof?.avatar_color,'32px','13px')}</div>
+      <div style="flex-shrink:0">${avatarCircle(pname,prof?.avatar_color,'32px','13px')}</div><!-- not clickable (8 Oct 2026): name + rating only -->
       <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
         <div style="font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
         <div style="display:flex;align-items:center;gap:5px">${prating}</div>
