@@ -798,6 +798,11 @@ svg.star-off{fill:none;stroke:#4a4a4a}
             <div class="spinner" style="width:12px;height:12px;border-width:2px"></div> Loading…
           </div>
           <div id="map-counts-data" style="display:flex;flex-direction:column;gap:6px">
+            <div id="map-jobs-row" style="display:none;align-items:center;gap:8px">
+              <span style="width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0;display:inline-block"></span>
+              <span style="font-size:15px;font-weight:800;color:var(--text)" id="map-jobs-count">0</span>
+              <span style="font-size:13.5px;font-weight:700;color:var(--muted)">need help</span>
+            </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="width:10px;height:10px;border-radius:50%;background:#5C8A6A;flex-shrink:0;display:inline-block"></span>
               <span style="font-size:15px;font-weight:800;color:var(--text)" id="map-helpers-count">0</span>
@@ -1766,7 +1771,14 @@ function updateRadiusCounts(){
   sheetHelpers=ysBaseHelpers.filter(ysHelperOk);
   const jobCount=sheetJobs.length;
   const helperCount=sheetHelpers.length;
-  // corner card shows helpers only ("need help" line removed 5 Oct 2026)
+  // corner card: "need help" (jobs) line restored 8 Oct 2026 — counts the same jobs the map pins
+  // (show_on_map, open, not the featured poster); hidden at 0. Helpers line always shown.
+  const pinnedJobCount=sheetJobs.filter(j=>j.show_on_map&&j.status==='open'&&j.poster_id!==FEATURED_POSTER_ID).length;
+  const jobsRow=document.getElementById('map-jobs-row');
+  if(jobsRow){
+    document.getElementById('map-jobs-count').textContent=pinnedJobCount;
+    jobsRow.style.display=pinnedJobCount>0?'flex':'none';
+  }
   document.getElementById('map-helpers-count').textContent=helperCount;
   document.getElementById('sheet-jobs-count').textContent=jobCount;
   document.getElementById('sheet-helpers-count').textContent=helperCount;
