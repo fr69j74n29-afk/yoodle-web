@@ -2674,7 +2674,14 @@ async function openOtherProfile(userId){
         </div>`:''}
       </div>
     </div>
-    <div class="op-stats">
+    ${prof.visible_on_map?`<div class="op-stats">
+      <div class="op-stats-row" style="grid-template-columns:1fr">
+        <div class="op-stat" style="border-right:none">
+          <div class="op-stat-role">Helper rating</div>
+          <div class="op-stat-rating">${hRatingStr}</div>
+        </div>
+      </div>
+    </div>`:`<div class="op-stats">
       <div class="op-stats-row">
         <div class="op-stat">
           <div class="op-stat-role">As Poster</div>
@@ -2689,7 +2696,7 @@ async function openOtherProfile(userId){
           <div class="op-stat-rating">${hRatingStr}</div>
         </div>
       </div>
-    </div>
+    </div>`}<!-- helpers (visible_on_map): rating only, no poster/helper counts (8 Oct 2026) -->
     ${(prof.bio||!prof.visible_on_map)?`<div class="op-bio">
       <div class="op-bio-lbl">About</div>
       ${prof.bio?`<div class="op-bio-text">${esc(prof.bio)}</div>`:`<div class="op-bio-empty">No bio yet.</div>`}
