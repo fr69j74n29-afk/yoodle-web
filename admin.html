@@ -1923,9 +1923,19 @@ async function loadAgencyStats() {
   const syncLine = r0 ? `<div style="padding:4px 0 8px;font-size:12.5px;color:${r0.error ? '#DC5046' : 'var(--muted)'}">Last sync ${esc(new Date(r0.ran_at).toLocaleString('en-CA', { timeZone: 'America/Toronto', dateStyle: 'medium', timeStyle: 'short' }))}: ${r0.error ? 'FAILED — ' + esc(r0.error) : `${Number(r0.found)} on site · +${Number(r0.inserted)} new · ${Number(r0.updated)} updated · ${Number(r0.reopened)} reopened · ${Number(r0.closed)} closed${(r0.skipped || []).length ? ' · ' + r0.skipped.length + ' skipped (' + esc(r0.skipped.map(x => x.title + ': ' + x.reason).join('; ')) + ')' : ''}`}</div>` : '';
   if (error) { el.innerHTML = syncLine + `<div style="padding:6px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`; return; }
   if (!data || !data.length) { el.innerHTML = syncLine + `<div style="padding:10px 0;color:var(--muted);font-size:13px">No agency jobs yet.</div>`; return; }
-  const rows = data.map(r => `<tr><td>${esc(r.title || '—')}<div style="font-size:11.5px;color:var(--muted)">${esc(r.agency || '')} · ${esc(r.status || '')}</div></td><td class="num">${Number(r.opens)}</td><td class="num helpers">${Number(r.open_people)}</td><td class="num">${Number(r.applies)}</td><td class="num helpers">${Number(r.apply_people)}</td></tr>`).join('');
-  el.innerHTML = syncLine + `<table class="region-table"><thead><tr><th>Job</th><th>Opens</th><th>People</th><th>Apply taps</th><th>People</th></tr></thead><tbody>${rows}</tbody></table>`
-    + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Opens = job card opened (pin, list, shared link). Apply taps = taps on the Apply button that open the agency's site — whether they finished applying there is only known to the agency. Signed-out visitors are counted per browser. Admin, demo and test accounts are excluded; repeats by the same person within 10 minutes count once.</div>`;
+  // One row per agency (Roman, 9 Oct): totals across its jobs. "People" counts can't be summed across jobs, so they're not shown here.
+  const byAgency = {};
+  data.forEach(r => {
+    const k = r.agency || 'Agency';
+    const g = byAgency[k] || (byAgency[k] = { open: 0, opens: 0, applies: 0 });
+    if (r.status === 'open') g.open++;
+    g.opens += Number(r.opens) || 0;
+    g.applies += Number(r.applies) || 0;
+  });
+  const rows = Object.entries(byAgency).sort((x, y) => y[1].opens - x[1].opens)
+    .map(([name, g]) => `<tr><td>${esc(name)}</td><td class="num">${g.open}</td><td class="num">${g.opens}</td><td class="num helpers">${g.applies}</td></tr>`).join('');
+  el.innerHTML = syncLine + `<table class="region-table"><thead><tr><th>Agency</th><th>Open jobs</th><th>Opens</th><th>Apply taps</th></tr></thead><tbody>${rows}</tbody></table>`
+    + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Totals per agency, last 30 days. Opens = job cards opened (pin, list, shared link). Apply taps = taps on the Apply button that open the agency's site — whether they finished applying there is only known to the agency. Signed-out visitors are counted per browser. Admin, demo and test accounts are excluded; repeats by the same person on the same job within 10 minutes count once.</div>`;
 }
 
 // ── FIND A HELPER SEARCHES (admin-only RPC over search_events + tap_events.filter_category) ──
@@ -1952,7 +1962,7 @@ async function loadRecentActivity() {
     const [{ data: jobs, error: jobErr }, { data: helpers2, error: helpErr }] = await Promise.all([
       sb.from('tasks')
         .select('id, title, description, price, status, address, created_at, poster_id, category')
-        .neq('type', 'admin_note')
+        .not('type', 'in', '(admin_note,agency_job)')   // agency jobs have their own section (Oct 2026)
         .gte('created_at', cutoff)
         .order('created_at', { ascending: false })
         .limit(5),
