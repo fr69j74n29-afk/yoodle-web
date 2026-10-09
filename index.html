@@ -1110,6 +1110,14 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   </div>
 </div>
 
+<!-- STACKED JOBS SHEET (several jobs on one spot — opened from a count bubble on the map) -->
+<div class="modal-ov" id="stack-modal" onclick="if(event.target.id==='stack-modal')document.getElementById('stack-modal').classList.remove('open')">
+  <div class="modal-sheet" style="max-height:80vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="stack-title" style="margin-bottom:12px">—</div>
+    <div class="jobs-grid" id="stack-list"></div>
+  </div>
+</div>
 <!-- JOB MODAL -->
 <div class="modal-ov" id="modal" onclick="closeModal(event)">
   <div class="modal-sheet">
@@ -1125,9 +1133,10 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     <div class="modal-title" id="m-title">—</div>
     <div class="modal-meta" id="m-meta">—</div>
     <div class="modal-desc" id="m-desc">—</div>
+    <div id="m-agency-note" style="display:none;margin:-8px 0 18px;padding:10px 12px;border-radius:12px;background:var(--surface2);color:var(--muted);font-size:13px;font-weight:700;line-height:1.45"></div>
     <button id="m-report" onclick="reportJob()" style="display:none;margin:-14px 0 18px;padding:2px 0;background:none;border:none;color:#DC5046;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;text-decoration:underline;cursor:pointer">Report this job</button>
     <div class="modal-grid">
-      <div class="modal-pill"><div class="modal-pill-l">Budget</div><div class="modal-pill-v" id="m-budget" style="color:var(--lime)">—</div></div>
+      <div class="modal-pill"><div class="modal-pill-l" id="m-budget-l">Budget</div><div class="modal-pill-v" id="m-budget" style="color:var(--lime)">—</div></div>
       <div class="modal-pill" id="m-poster-pill">
         <div class="modal-pill-l">Posted by</div>
         <div id="m-poster" style="display:flex;align-items:center;gap:8px;margin-top:8px">—</div>
@@ -2158,9 +2167,21 @@ function renderMapPins(){
 
   // ── JOB BUBBLES (tasks with show_on_map=true) ──
   const publicJobs=(allJobs||[]).filter(j=>j.show_on_map&&j.lat&&j.lng&&j.status==='open'&&j.poster_id!==FEATURED_POSTER_ID&&ysJobOk(j));
-  publicJobs.forEach(job=>{
-    const color='#EF4444';
-    const emoji=CAT_EMOJI[job.category]||ysEmoji(job.category)||'📋';
+  // Stacks (Oct 2026): jobs on the same spot (~10 m, e.g. agency jobs at a city centre) → one bubble
+  // with a count; tap opens #stack-modal listing them. Agency jobs use a blue bubble with 💼.
+  const _jGroups={};
+  publicJobs.forEach(j=>{const k=(+j.lat).toFixed(4)+','+(+j.lng).toFixed(4);(_jGroups[k]=_jGroups[k]||[]).push(j);});
+  Object.values(_jGroups).filter(g=>g.length>1).forEach(g=>{
+    const allAgency=g.every(isAgencyJob);
+    const color=allAgency?AGENCY_PIN:'#EF4444';
+    const[fLat,fLng]=g[0]._fuzzy||(g[0]._fuzzy=fuzzyCoords(g[0].lat,g[0].lng));
+    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:${color};border:3px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer">${allAgency?'💼':'📋'}<span style="position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#fff;color:#111;font:800 12px/20px 'Nunito',sans-serif;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.25)">${g.length}</span></div>`;
+    jobMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:2,onClick:()=>openJobStack(g)}));
+  });
+  publicJobs.filter(j=>_jGroups[(+j.lat).toFixed(4)+','+(+j.lng).toFixed(4)].length===1).forEach(job=>{
+    const _ag=isAgencyJob(job);
+    const color=_ag?AGENCY_PIN:'#EF4444';
+    const emoji=_ag?'💼':(CAT_EMOJI[job.category]||ysEmoji(job.category)||'📋');
     const[fLat,fLng]=job._fuzzy||(job._fuzzy=fuzzyCoords(job.lat,job.lng));
     const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
       html:`<div style="width:38px;height:38px;border-radius:50%;background:${color};border:3px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer">${emoji}</div>`,
@@ -2274,6 +2295,22 @@ function openBizListing(biz){
 
 // Tap tracking → public.tap_events via log_tap() (server skips self-taps and repeats within 10 min). Never blocks the UI.
 // p_filter = Find-a-helper category active when a helper is tapped (only sent when one is on).
+// Agency jobs (Oct 2026): tasks.type='agency_job' with tasks.url = the agency's apply link.
+// get_open_jobs_near doesn't return type, so a job with a url is treated as an agency job.
+const AGENCY_PIN='#2563EB'; // agency job bubbles (blue) — regular jobs stay red #EF4444
+function openJobStack(g){
+  const place=(g[0].address||'').split(',')[0].trim();
+  document.getElementById('stack-title').textContent=`${g.length} jobs${place?' in '+place:' here'}`;
+  document.getElementById('stack-list').innerHTML=g.map(j=>listCard(j,j.profiles)).join('');
+  document.getElementById('stack-modal').classList.add('open');
+}
+function isAgencyJob(j){return !!(j&&(j.type==='agency_job'||j.url));}
+function agencyPay(j){return j.price!=null?`$${j.price}/hr`:'See posting';}
+// Opens + Apply taps → public.agency_events via log_agency_event() (signed-out viewers counted by a random browser id). Never blocks the UI.
+function yAnonId(){try{let a=localStorage.getItem('yoodle_anon');if(!a){a=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2));localStorage.setItem('yoodle_anon',a);}return a;}catch(e){return null;}}
+function logAgency(taskId,ev){
+  try{if(sb&&taskId)sb.rpc('log_agency_event',{p_task:taskId,p_event:ev,p_anon:me?null:yAnonId()}).then(()=>{},()=>{});}catch(e){}
+}
 function logTap(kind,id,src){
   try{if(sb&&me&&id){const a={p_kind:kind,p_target:id,p_src:src};if(kind==='helper'&&hsCat)a.p_filter=hsCat;sb.rpc('log_tap',a).then(()=>{},()=>{});}}catch(e){}
 }
@@ -3285,7 +3322,7 @@ function listCard(j,profile){
   return `<div class="list-card" style="--jc:${color}" onclick='logTap("job","${j.id}","card");openJob(${JSON.stringify(j).replace(/'/g,"&#39;")})'>
     <div class="lc-top">
       <span class="lc-title">${esc(j.title)}</span>
-      <div style="display:flex;flex-direction:row;align-items:center;gap:4px;flex-shrink:0">${myAppliedTaskIds.has(j.id)?'<span style="font-size:11.5px;font-weight:800;color:var(--lime);letter-spacing:.5px">Applied-</span>':''}<span class="lc-budget">$${j.price??'?'}</span></div>
+      <div style="display:flex;flex-direction:row;align-items:center;gap:4px;flex-shrink:0">${myAppliedTaskIds.has(j.id)?'<span style="font-size:11.5px;font-weight:800;color:var(--lime);letter-spacing:.5px">Applied-</span>':''}<span class="lc-budget">${isAgencyJob(j)?agencyPay(j):`$${j.price??'?'}`}</span></div>
     </div>
     <div class="lc-desc">${esc(j.description||'')}</div>
     <div class="lc-foot">
@@ -3310,7 +3347,11 @@ async function openJob(j){
   }
   document.getElementById('m-meta').innerHTML=`${modalLocLabel?`${ICO.pin}${esc(modalLocLabel)} `:''}${locTag} &nbsp;·&nbsp; ${timeAgo(j.created_at)}`;
   document.getElementById('m-desc').textContent=j.description||'';
-  document.getElementById('m-budget').textContent=`$${j.price??'?'}`;
+  const _agency=isAgencyJob(j);
+  document.getElementById('m-budget').textContent=_agency?agencyPay(j):`$${j.price??'?'}`;
+  document.getElementById('m-budget-l').textContent=_agency?'Pay':'Budget';
+  const _an=document.getElementById('m-agency-note');_an.style.display='none';_an.textContent='';
+  if(_agency)logAgency(j.id,'open');
 
   // fetch poster profile for trust signals
   document.getElementById('m-poster').innerHTML=`<div class="spinner" style="width:16px;height:16px"></div>`;
@@ -3336,7 +3377,18 @@ async function openJob(j){
   btn.disabled=false;btn.style.display='block';unclaimBtn.style.display='none';
   btn.onclick=()=>jobAction();
 
-  if(j.status==='completed'){
+  if(_agency){
+    const _pn=window._mPosterName||'the agency';
+    _an.textContent=`Listed by ${_pn}. You apply directly with the agency on their website — Yoodle isn't part of the hiring.`;
+    _an.style.display='block';
+    const _short=_pn.split(' ')[0];
+    if(j.status==='open'&&/^https:\/\//i.test(j.url||'')){
+      btn.textContent=`Apply directly with ${_short} ↗`;
+      btn.onclick=()=>{logAgency(j.id,'apply');window.open(j.url,'_blank','noopener');};
+    } else {
+      btn.textContent='No longer available';btn.disabled=true;
+    }
+  } else if(j.status==='completed'){
     btn.textContent='Job Completed';btn.disabled=true;
   } else if(j.status==='claimed'){
     if(isPoster){
@@ -3379,7 +3431,7 @@ async function shareJob(){
   if(!activeJob)return;
   const url=`${window.location.origin}/job.html?job=${activeJob.id}`;
   const title=activeJob.title||'Local job on Yoodle';
-  const text=`Someone near you needs help: "${title}". Apply free on Yoodle.`;
+  const text=isAgencyJob(activeJob)?`Job opening near you: "${title}". See it on Yoodle.`:`Someone near you needs help: "${title}". Apply free on Yoodle.`;
   if(navigator.share){
     try{await navigator.share({title,text,url});}catch(e){}
     return;

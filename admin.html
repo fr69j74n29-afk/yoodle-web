@@ -995,7 +995,7 @@ body::before {
     <div class="dash-user">
       <div class="dash-avatar" id="dash-avatar">?</div>
       <span class="dash-name" id="dash-name"></span>
-      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadOnboardStats();loadShareStats();loadTapStats();loadSearchStats();loadReports();loadSuspended()">↻ Refresh</button>
+      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadOnboardStats();loadShareStats();loadTapStats();loadAgencyStats();loadSearchStats();loadReports();loadSuspended()">↻ Refresh</button>
     </div>
   </div>
 
@@ -1096,6 +1096,10 @@ body::before {
     <!-- WHAT PEOPLE TAP (tap_events) -->
     <div class="section-title">WHAT PEOPLE TAP — LAST 30 DAYS</div>
     <div id="tap-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
+
+    <!-- AGENCY JOBS (agency_events) -->
+    <div class="section-title">AGENCY JOBS — LAST 30 DAYS</div>
+    <div id="agency-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
 
     <!-- FIND A HELPER SEARCHES (search_events) -->
     <div class="section-title">FIND A HELPER — MOST SEARCHED — LAST 30 DAYS</div>
@@ -1903,6 +1907,19 @@ async function loadTapStats() {
   }).join('') + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Taps on job map pins and list cards by signed-in members. Your own taps, admin and demo accounts are excluded; the same person tapping the same job again within 10 minutes counts once.</div>`;
 }
 
+// ── AGENCY JOBS (admin-only RPC over agency_events) ──
+async function loadAgencyStats() {
+  const el = document.getElementById('agency-stats');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_agency_stats', { p_days: 30 });
+  if (error) { el.innerHTML = `<div style="padding:6px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`; return; }
+  if (!data || !data.length) { el.innerHTML = `<div style="padding:10px 0;color:var(--muted);font-size:13px">No agency jobs yet.</div>`; return; }
+  const rows = data.map(r => `<tr><td>${esc(r.title || '—')}<div style="font-size:11.5px;color:var(--muted)">${esc(r.agency || '')} · ${esc(r.status || '')}</div></td><td class="num">${Number(r.opens)}</td><td class="num helpers">${Number(r.open_people)}</td><td class="num">${Number(r.applies)}</td><td class="num helpers">${Number(r.apply_people)}</td></tr>`).join('');
+  el.innerHTML = `<table class="region-table"><thead><tr><th>Job</th><th>Opens</th><th>People</th><th>Apply taps</th><th>People</th></tr></thead><tbody>${rows}</tbody></table>`
+    + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Opens = job card opened (pin, list, shared link). Apply taps = taps on the Apply button that open the agency's site — whether they finished applying there is only known to the agency. Signed-out visitors are counted per browser. Admin, demo and test accounts are excluded; repeats by the same person within 10 minutes count once.</div>`;
+}
+
 // ── FIND A HELPER SEARCHES (admin-only RPC over search_events + tap_events.filter_category) ──
 async function loadSearchStats() {
   const el = document.getElementById('search-stats');
@@ -2208,6 +2225,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
         loadOnboardStats();
         loadShareStats();
         loadTapStats();
+        loadAgencyStats();
         loadSearchStats();
         loadReports();
         loadSuspended();
