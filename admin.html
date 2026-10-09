@@ -399,6 +399,30 @@ body::before {
   align-items: center;
 }
 
+.stat-live {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--lime);
+  white-space: nowrap;
+}
+.stat-live .live-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--lime);
+  margin: 0 6px 3px 2px;
+  vertical-align: middle;
+  box-shadow: 0 0 0 0 rgba(163,230,53,.6);
+  animation: livePulse 2s infinite;
+}
+.stat-live.zero { color: var(--muted); }
+.stat-live.zero .live-dot { background: var(--muted); animation: none; }
+@keyframes livePulse {
+  0% { box-shadow: 0 0 0 0 rgba(163,230,53,.6); }
+  70% { box-shadow: 0 0 0 8px rgba(163,230,53,0); }
+  100% { box-shadow: 0 0 0 0 rgba(163,230,53,0); }
+}
 .stat-num.loading-val {
   color: var(--border);
 }
@@ -986,7 +1010,10 @@ body::before {
     <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
       <div class="stat-card users">
         <div class="stat-label"><span class="stat-icon">👤</span> Registered Users</div>
-        <div class="stat-num loading-val" id="stat-users">—</div>
+        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+          <div class="stat-num loading-val" id="stat-users">—</div>
+          <div class="stat-live" id="stat-users-live" title="Members active in the last 15 minutes (admin &amp; demo accounts excluded)"></div>
+        </div>
         <div class="stat-sub" id="stat-users-detail">Active accounts (suspended excluded)</div>
       </div>
       <div class="stat-card helpers" style="--accent: linear-gradient(90deg, #A3E635, #FCD34D);">
@@ -1240,6 +1267,8 @@ async function loadStats() {
       ? 'Total profiles created'
       : `${totalUsers} total · ${suspendedCount} suspended`;
 
+    loadLiveNow();
+
     // Active helpers breakdown
     const allHelpers = helpers || [];
     const mappedHelpers = allHelpers.filter(h => h.show_on_map === true);
@@ -1276,6 +1305,18 @@ async function loadStats() {
   btn.classList.remove('spinning');
   btn.textContent = '↻ Refresh';
 }
+
+// ── LIVE NOW (admin_live_now RPC over daily_active; active in last 15 min) ──
+async function loadLiveNow() {
+  const el = document.getElementById('stat-users-live');
+  if (!el || !sb) return;
+  const { data, error } = await sb.rpc('admin_live_now', { p_minutes: 15 });
+  if (error) { el.textContent = ''; return; }
+  const n = Number(data) || 0;
+  el.classList.toggle('zero', n === 0);
+  el.innerHTML = `(<span class="live-dot"></span>${n} live)`;
+}
+setInterval(() => { if (document.visibilityState === 'visible') loadLiveNow(); }, 60000);
 
 function animateNumber(id, target) {
   const el = document.getElementById(id);
