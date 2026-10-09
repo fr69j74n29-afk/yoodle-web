@@ -4604,8 +4604,9 @@ function hpStartAddArea(city){
     inp.value='';inp.placeholder=`Street name in ${city} (no house number needed)`;
     hpLat=null;hpLng=null;hpLocVague=false;
     const st=document.getElementById('hp-loc-status');st.textContent='Type your street name, then pick it from the suggestions';st.className='loc-status';
-    try{inp.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}
-    setTimeout(()=>inp.focus(),250);
+    // Focus first, then jump (no smooth scroll): focusing during a smooth scroll left the iPhone caret floating above the box (9 Oct 2026)
+    try{inp.focus({preventScroll:true});}catch(e){inp.focus();}
+    try{inp.scrollIntoView({block:'center'});}catch(e){}
   }
 }
 let hpRateType='free',hpSelectedCategories=new Set();
