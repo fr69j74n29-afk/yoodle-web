@@ -1803,7 +1803,7 @@ const YS_FALLBACK_CATS=[
   {name:'Cleaning',emoji:'🧹'},{name:'Yard & Garden',emoji:'🌿'},{name:'Moving & Lifting',emoji:'📦'},
   {name:'Errands',emoji:'🛒'},{name:'Pet Care',emoji:'🐾'},{name:'Snow & Seasonal',emoji:'❄️'},
   {name:'Handyman',emoji:'🔧'},{name:'Tech Help',emoji:'💻'},{name:'Tutoring',emoji:'📚'},
-  {name:'Childcare',emoji:'👶'},{name:'Other',emoji:'✨'}
+  {name:'Childcare',emoji:'👶'},{name:'General Labour',emoji:'👷'},{name:'Other',emoji:'✨'}
 ];
 // old job category keys → shared category names (lowercase)
 const YS_ALIAS={assembly:'handyman',yard:'yard & garden',moving:'moving & lifting'};
@@ -2150,15 +2150,32 @@ function renderMapPins(){
 
   // ── HELPER PINS (profiles with visible_on_map=true AND show_on_map=true) ──
   const publicHelpers=(allHelpers||[]).filter(h=>h.show_on_map&&h.last_lat&&h.last_lng&&ysHelperOk(h));
+  // Fan-out (8 Oct 2026): helpers who entered only a city (e.g. "Toronto, Ontario") get the exact same
+  // geocode and stack into one pile. Group identical spots (~10 m) and spread them on a sunflower spiral
+  // in screen pixels around one shared (fuzzed) point — every pin visible + tappable at any zoom, and
+  // the order is by id so pins don't reshuffle on reload.
+  const _hGroups={};
+  publicHelpers.forEach(h=>{const k=(+h.last_lat).toFixed(4)+','+(+h.last_lng).toFixed(4);(_hGroups[k]=_hGroups[k]||[]).push(h);});
+  const _hFan=new Map(); // helper id → {lat,lng,off:[dx,dy]}
+  Object.values(_hGroups).forEach(g=>{
+    if(g.length<2)return;
+    g.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+    const[cLat,cLng]=g[0]._fuzzy||(g[0]._fuzzy=fuzzyCoords(g[0].last_lat,g[0].last_lng));
+    g.forEach((h,i)=>{
+      const r=27*Math.sqrt(i+0.5), t=i*2.39996; // 137.5° golden angle, ≥41px between pins (pins are 38px)
+      _hFan.set(h.id,{lat:cLat,lng:cLng,off:[Math.round(r*Math.cos(t)),Math.round(r*Math.sin(t))]});
+    });
+  });
   publicHelpers.forEach(h=>{
     const name=h.name||'Helper';
     const initial=name.charAt(0).toUpperCase();
-    const[fLat,fLng]=h._fuzzy||(h._fuzzy=fuzzyCoords(h.last_lat,h.last_lng));
+    const _fan=_hFan.get(h.id);
+    const[fLat,fLng]=_fan?[_fan.lat,_fan.lng]:(h._fuzzy||(h._fuzzy=fuzzyCoords(h.last_lat,h.last_lng)));
     const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
       html:`<div style="width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif">${initial}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
-    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:hsMatch(h)?3:1,onClick:()=>{logTap('helper',h.id,'pin');openOtherProfile(h.id);}});
+    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:hsMatch(h)?3:1,offset:_fan?_fan.off:[0,0],onClick:()=>{logTap('helper',h.id,'pin');openOtherProfile(h.id);}});
     // chosen category → matching helpers glow amber, others fade
     if(hsCat){const d=marker.getElement().firstElementChild;if(d)d.classList.add(hsMatch(h)?'hs-pin-glow':'hs-pin-dim');}
     helperMarkers.push(marker);
@@ -4502,6 +4519,49 @@ function onHelperToggle(){}  // no-op — toggle removed
 
 // ── HELPER PROFILE SCREEN ──
 let hpLat=null,hpLng=null,hpLocSuggestionsData=[],hpLocDebounceTimer=null;
+// Vague-location soft ask (8 Oct 2026): city/province/country-only locations all land on one point
+// (e.g. 7 helpers on Toronto City Hall). On save we ask once for a neighbourhood/street/postal code;
+// "Skip" saves as-is. Nobody is blocked.
+let hpLocVague=false,hpLocVagueAck=false;
+const HP_VAGUE_TYPES=['city','town','village','municipality','county','state_district','state','province','region','country','administrative'];
+function hpIsVagueItem(item){
+  const t=item?.addresstype;
+  if(t)return HP_VAGUE_TYPES.includes(t);
+  const a=item?.address||{};
+  return !(a.road||a.house_number||a.neighbourhood||a.suburb||a.quarter||a.postcode||a.hamlet||a.residential);
+}
+function hpIsVagueText(addr){ // saved profiles: "Toronto, Ontario" / "Ontario" / "Canada" → vague
+  return String(addr||'').split(',').map(x=>x.trim()).filter(Boolean).length<=2;
+}
+function hpAskArea(){
+  if(document.getElementById('hp-area-ask'))return;
+  const city=(String(document.getElementById('hp-loc').value||'').split(',')[0]||'').trim()||'your city';
+  const w=document.createElement('div');
+  w.id='hp-area-ask';
+  w.style.cssText='position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + var(--sab,0px))';
+  w.innerHTML=`<div style="width:100%;max-width:420px;background:var(--surface);color:var(--text);border-radius:var(--radius);padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.25);font-family:'Nunito',sans-serif">
+    <div style="font-size:28px;line-height:1;margin-bottom:8px">📍</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:6px">Add your neighbourhood?</div>
+    <div style="font-size:14.5px;color:var(--muted);line-height:1.45;margin-bottom:6px">Right now your pin sits in the middle of ${esc(city)}. Adding your neighbourhood, street or postal code helps nearby neighbours find you.</div>
+    <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:16px">🔒 Your exact address is never shown.</div>
+    <div style="display:flex;gap:10px">
+      <button id="hpa-skip" style="flex:1;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Skip, use ${esc(city.length>14?'city':city)}</button>
+      <button id="hpa-add" style="flex:1;padding:12px;border:none;border-radius:var(--radius-sm);background:var(--btn-a);color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Add area</button>
+    </div></div>`;
+  document.body.appendChild(w);
+  const close=()=>w.remove();
+  w.addEventListener('click',e=>{if(e.target===w)close();});
+  w.querySelector('#hpa-skip').addEventListener('click',()=>{close();hpLocVagueAck=true;saveHelperProfile();});
+  w.querySelector('#hpa-add').addEventListener('click',()=>{
+    close();
+    const inp=document.getElementById('hp-loc');
+    inp.value='';inp.placeholder=`Neighbourhood, street or postal code in ${city}`;
+    hpLat=null;hpLng=null;hpLocVague=false;
+    const st=document.getElementById('hp-loc-status');st.textContent='Type your area, then pick it from the suggestions';st.className='loc-status';
+    try{inp.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}
+    setTimeout(()=>inp.focus(),250);
+  });
+}
 let hpRateType='free',hpSelectedCategories=new Set();
 
 async function openHelperScreen(){
@@ -4529,6 +4589,7 @@ async function openHelperScreen(){
   if(prof?.helper_address){
     document.getElementById('hp-loc').value=prof.helper_address;
     hpLat=prof.helper_lat;hpLng=prof.helper_lng;
+    hpLocVague=hpIsVagueText(prof.helper_address);hpLocVagueAck=false;
     const st=document.getElementById('hp-loc-status');
     st.textContent=`📍 ${prof.helper_address}`;st.className='loc-status verified';
   }
@@ -4631,6 +4692,7 @@ function selectHPSuggestion(i){
   const display=[road,area,city,prov].filter(v=>{if(!v||seen.has(v))return false;seen.add(v);return true;}).join(', ');
   document.getElementById('hp-loc').value=display||item.display_name.split(',').slice(0,3).join(',').trim();
   hpLat=parseFloat(item.lat);hpLng=parseFloat(item.lon);
+  hpLocVague=hpIsVagueItem(item);hpLocVagueAck=false;
   const st=document.getElementById('hp-loc-status');
   st.textContent=`📍 ${esc(city||area||display)}`;st.className='loc-status verified';
   document.getElementById('hp-loc-suggestions').classList.remove('open');
@@ -4642,6 +4704,7 @@ function hideHPSuggestions(){document.getElementById('hp-loc-suggestions').class
 async function saveHelperProfile(){
   if(!sb||!me)return toast('Not signed in');
   if(!hpLat||!hpLng)return toast('⚠️ Please select your area from suggestions');
+  if(hpLocVague&&!hpLocVagueAck){hpAskArea();return;}
   const address=document.getElementById('hp-loc').value||'';
   const bio=document.getElementById('hp-bio').value||'';
   const rate=hpRateType==='free'?null:parseFloat(document.getElementById('hp-rate').value)||null;
