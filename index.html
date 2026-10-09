@@ -221,7 +221,7 @@ body.theme-sage-dark .le{color:#E0C45A}
   .ga-sheet{bottom:50%;border-radius:26px;transform:translate(-50%,60%);opacity:0;pointer-events:none;transition:transform .25s,opacity .25s;max-width:420px}
   .ga-sheet.open{transform:translate(-50%,50%);opacity:1;pointer-events:auto}
   .ga-grab{display:none}
-  #view-auth .ds-nav{order:0;margin:0 auto;padding-top:18px}
+  #view-auth{padding-top:33px} /* desktop: keep the space of the removed top nav */
 }
 
 /* ── MAIN APP ── */
@@ -565,8 +565,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   /* Show desktop intro strip */
   .desktop-strip{display:flex!important}
 
-  /* Reorder desktop: nav → wordmark → tagline → headline → 1-2-3 → sign-in */
-  .ds-nav{order:1}
+  /* Reorder desktop: wordmark → tagline → headline → 1-2-3 → sign-in */
   .auth-wm{order:2}
   .auth-tag{order:3}
   .auth-h{order:4}
@@ -600,19 +599,6 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .ds-title{font-size:14px;font-weight:800;margin-bottom:5px;color:var(--text)}
 .ds-desc{font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.55}
 .ds-div{width:1px;background:var(--border);align-self:stretch;flex-shrink:0}
-.ds-nav{
-  display:none;width:100%;max-width:680px;
-  justify-content:center;gap:24px;
-  margin-bottom:20px;position:relative;z-index:1;flex-shrink:0
-}
-@media(min-width:481px){
-  .ds-nav{display:flex}
-}
-.ds-nav a{
-  color:var(--muted);font-size:13.5px;font-weight:800;
-  text-decoration:none;transition:color .15s;letter-spacing:.3px
-}
-.ds-nav a:hover{color:var(--purple)}
 /* ── FIND A HELPER (7 Oct 2026) ── */
 .hs-btn{display:flex;align-items:center;gap:6px;height:38px;padding:0 13px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;max-width:210px;transition:transform .15s}
 .hs-btn:active{transform:scale(.96)}
@@ -655,15 +641,6 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 
 <!-- AUTH -->
 <div id="view-auth">
-
-  <!-- DESKTOP ONLY: page nav links -->
-  <nav class="ds-nav">
-    <a href="/how-it-works">How It Works</a>
-    <a href="/faq">FAQ</a>
-    <a href="/ambassadors">Ambassadors</a>
-    <a href="/privacy">Privacy</a>
-    <a href="/terms">Terms</a>
-  </nav>
 
   <div class="ga-wrap">
     <div class="ga-hdr">
