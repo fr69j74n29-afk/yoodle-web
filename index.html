@@ -2129,6 +2129,7 @@ function updateCircleOverlay() {
 function fuzzyCoords(lat,lng){return[lat+(Math.random()-.5)*.0014,lng+(Math.random()-.5)*.0018];}
 
 let helperMarkers=[];
+let myHelperPin=null,hpFocusAreaNext=false; // own helper pin (9 Oct 2026): drawn for the helper themself; tap may open the area field
 let allBizListings=[], bizMarkers=[];
 
 function renderMapPins(){
@@ -2159,7 +2160,7 @@ function renderMapPins(){
   // in screen pixels around one shared (fuzzed) point — every pin visible + tappable at any zoom, and
   // the order is by id so pins don't reshuffle on reload.
   const _hGroups={};
-  publicHelpers.forEach(h=>{const k=(+h.last_lat).toFixed(4)+','+(+h.last_lng).toFixed(4);(_hGroups[k]=_hGroups[k]||[]).push(h);});
+  [...publicHelpers,...(myHelperPin?[myHelperPin]:[])].forEach(h=>{const k=(+h.last_lat).toFixed(4)+','+(+h.last_lng).toFixed(4);(_hGroups[k]=_hGroups[k]||[]).push(h);});
   const _hFan=new Map(); // helper id → {lat,lng,off:[dx,dy]}
   Object.values(_hGroups).forEach(g=>{
     if(g.length<2)return;
@@ -2184,6 +2185,15 @@ function renderMapPins(){
     if(hsCat){const d=marker.getElement().firstElementChild;if(d)d.classList.add(hsMatch(h)?'hs-pin-glow':'hs-pin-dim');}
     helperMarkers.push(marker);
   });
+  // Own helper pin (9 Oct 2026): takes its slot in the fan-out, white ring + "You" tag, never dimmed by search.
+  // Tap: city-only location → helper profile with the area field ready; otherwise my profile as neighbours see it.
+  if(myHelperPin){
+    const m=myHelperPin,_fan=_hFan.get(m.id);
+    const[fLat,fLng]=_fan?[_fan.lat,_fan.lng]:(m._fuzzy||(m._fuzzy=fuzzyCoords(m.last_lat,m.last_lng)));
+    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid #fff;box-shadow:0 0 0 2px #2E7D52,0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${esc((m.name||'Y').charAt(0).toUpperCase())}<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span></div>`;
+    const vague=hpIsVagueText(m.helper_address);
+    helperMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:4,offset:_fan?_fan.off:[0,0],onClick:()=>{if(vague){hpFocusAreaNext=true;nav('helper');}else openOtherProfile(m.id);}}));
+  }
 
   // ── BUSINESS FLAG PINS ──
   bizMarkers.forEach(m=>m.remove());bizMarkers=[];
@@ -2296,7 +2306,7 @@ async function loadJobs() {
 
   // Helpers, business listings and jobs are independent — fetch in parallel (one round trip instead of three)
   const _hasLoc=!!(userLat&&userLng);
-  const[{data:helpers},{data:bizData},_jobsRes]=await Promise.all([
+  const[{data:helpers},{data:bizData},_jobsRes,_meRes]=await Promise.all([
     // helpers for map (separate, no radius restriction)
     sb.from('profiles')
       .select('id,name,rating,last_lat,last_lng,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,show_on_map')
@@ -2315,9 +2325,13 @@ async function loadJobs() {
       radius_km:RADIUS_KM,
       lim:120,
       exclude_user_id:pid||null
-    }):Promise.resolve(null)
+    }):Promise.resolve(null),
+    // own helper row — the helpers query above excludes me (own pin, 9 Oct 2026)
+    pid?sb.from('profiles').select('id,name,last_lat,last_lng,show_on_map,visible_on_map,helper_address').eq('id',pid).maybeSingle():Promise.resolve({data:null})
   ]);
   allHelpers=(helpers||[]).filter(h=>!hiddenUserIds.has(h.id));
+  const _mp=_meRes?.data; // same rule as other helpers' pins: active listing (not paused) with a location
+  myHelperPin=(_mp&&_mp.visible_on_map&&_mp.show_on_map&&_mp.last_lat&&_mp.last_lng)?_mp:null;
   allBizListings=bizData||[];
 
   // if no user location, show prompt
@@ -4576,15 +4590,18 @@ function hpAskArea(){
   const close=()=>w.remove();
   w.addEventListener('click',e=>{if(e.target===w)close();});
   w.querySelector('#hpa-skip').addEventListener('click',()=>{close();hpLocVagueAck=true;saveHelperProfile();});
-  w.querySelector('#hpa-add').addEventListener('click',()=>{
-    close();
+  w.querySelector('#hpa-add').addEventListener('click',()=>{close();hpStartAddArea(city);});
+}
+// "Add area": clear the location field and focus it (soft-ask card + own-pin tap, 9 Oct 2026)
+function hpStartAddArea(city){
+  {
     const inp=document.getElementById('hp-loc');
     inp.value='';inp.placeholder=`Neighbourhood, street or postal code in ${city}`;
     hpLat=null;hpLng=null;hpLocVague=false;
     const st=document.getElementById('hp-loc-status');st.textContent='Type your area, then pick it from the suggestions';st.className='loc-status';
     try{inp.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}
     setTimeout(()=>inp.focus(),250);
-  });
+  }
 }
 let hpRateType='free',hpSelectedCategories=new Set();
 
@@ -4633,6 +4650,8 @@ async function openHelperScreen(){
     const cat=cats?.find(c=>c.name===name);
     if(cat) applyHPCategoryStyle(cat.id,true);
   });
+  // own-pin tap with a city-only location → go straight to adding the neighbourhood (9 Oct 2026)
+  if(hpFocusAreaNext){hpFocusAreaNext=false;if(hpLocVague)hpStartAddArea((String(prof?.helper_address||'').split(',')[0]||'').trim()||'your city');}
 }
 
 function toggleHPCategory(name,id){
