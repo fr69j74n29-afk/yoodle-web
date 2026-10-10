@@ -995,7 +995,7 @@ body::before {
     <div class="dash-user">
       <div class="dash-avatar" id="dash-avatar">?</div>
       <span class="dash-name" id="dash-name"></span>
-      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadOnboardStats();loadShareStats();loadTapStats();loadAgencyStats();loadSearchStats();loadReports();loadSuspended()">↻ Refresh</button>
+      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadOnboardStats();loadShareStats();loadTapStats();loadAgencyStats();loadSearchStats();loadReports();loadSuspended();loadPros()">↻ Refresh</button>
     </div>
   </div>
 
@@ -1080,6 +1080,10 @@ body::before {
       <button class="activity-tab" onclick="switchReportTab(this,'all')">📋 All</button>
     </div>
     <div id="reports-list" class="activity-panel" style="margin-bottom:28px"></div>
+
+    <!-- YOODLE PROS (pro.yoodle.ca) — approve / licence checks (10 Oct 2026) -->
+    <div class="section-title">YOODLE PROS — LICENCE CHECKS <span id="pros-count" style="opacity:.8"></span></div>
+    <div id="pros-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
 
     <!-- NEWEST USERS -->
     <div class="section-title">NEWEST USERS — LAST 5</div>
@@ -1751,6 +1755,81 @@ async function loadSuspended() {
   }).join('');
 }
 
+// ── YOODLE PROS (pro.yoodle.ca, 10 Oct 2026) ──
+// Reads pro_profiles + pro_credentials (admin can read all via is_admin() RLS); writes only via admin_set_pro_status().
+async function loadPros() {
+  const el = document.getElementById('pros-list');
+  const cnt = document.getElementById('pros-count');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const [{ data: pros, error }, { data: creds }] = await Promise.all([
+    sb.from('pro_profiles').select('*').order('created_at', { ascending: false }),
+    sb.from('pro_credentials').select('*')
+  ]);
+  if (error) { if (cnt) cnt.textContent = ''; el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load pros: ${esc(error.message)}</div>`; return; }
+  const ids = (pros || []).map(p => p.profile_id);
+  const profs = {};
+  if (ids.length) {
+    const { data: ps } = await sb.from('profiles').select('id,name,helper_address,visible_on_map,helper_expires_at,is_tester').in('id', ids);
+    (ps || []).forEach(p => profs[p.id] = p);
+  }
+  const credOf = {}; (creds || []).forEach(c => credOf[c.profile_id] = c);
+  const pending = (pros || []).filter(p => p.status === 'pending').length;
+  if (cnt) cnt.textContent = '(' + (pros || []).length + (pending ? ' · ' + pending + ' pending' : '') + ')';
+  if (!pros || !pros.length) { el.innerHTML = '<div style="padding:14px 0;color:var(--muted);font-size:13px">No pros yet. They sign up at pro.yoodle.ca.</div>'; return; }
+  const order = { pending: 0, approved: 1, suspended: 2 };
+  pros.sort((a, b) => (order[a.status] - order[b.status]) || (new Date(b.created_at) - new Date(a.created_at)));
+  const pill = s => `<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;${s === 'approved' ? 'background:rgba(76,195,138,.15);color:#4CC38A' : s === 'suspended' ? 'background:rgba(220,80,70,.15);color:#DC5046' : 'background:rgba(224,196,90,.18);color:#E0C45A'}">${esc(s.toUpperCase())}</span>`;
+  el.innerHTML = pros.map((p, i) => {
+    const pr = profs[p.profile_id] || {}, c = credOf[p.profile_id] || {};
+    const date = new Date(p.created_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+    const listing = pr.visible_on_map === false ? 'listing paused' : (pr.helper_expires_at && new Date(pr.helper_expires_at) > new Date() ? 'on map' : 'listing expired');
+    const lic = [c.licence_body, c.licence_type, c.licence_number].filter(Boolean).join(' · ') || '— none —';
+    const ins = c.insurer ? esc(c.insurer) + (c.insurance_expires ? ' · expires ' + esc(c.insurance_expires) : '') : '— none —';
+    const id = p.profile_id;
+    return `<div style="padding:14px 0;${i ? 'border-top:1px solid var(--border);' : ''}">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+        <div style="min-width:0">
+          <div style="font-size:14px;font-weight:700;color:var(--text)">${esc(pr.name || '—')}${p.business_name ? ' · ' + esc(p.business_name) : ''}${pr.is_tester ? ' <span style="font-size:10.5px;color:var(--muted)">[TEST]</span>' : ''}</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px">${esc((p.trades || []).join(', '))} · ${esc(pr.helper_address || 'no area')} · ${esc(listing)} · joined ${esc(date)}</div>
+        </div>
+        ${pill(p.status)}
+      </div>
+      <div style="font-size:13px;color:var(--text);margin-top:8px">🪪 Licence: <b>${esc(lic)}</b></div>
+      <div style="font-size:13px;color:var(--text);margin-top:2px">🛡️ Insurance: ${ins}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:10px;font-size:13px;color:var(--text)">
+        <label style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" id="pro-lic-${id}" ${p.licence_verified_at ? 'checked' : ''}> Licence checked</label>
+        <label style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" id="pro-ins-${id}" ${p.insurance_verified_at ? 'checked' : ''}> Insurance checked</label>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+        ${p.status !== 'approved' ? `<button class="btn-out" style="margin:0" onclick="setProStatus('${id}','approved')">Approve</button>` : `<button class="btn-out" style="margin:0" onclick="setProStatus('${id}','approved')">Save checks</button>`}
+        ${p.status !== 'suspended' ? `<button class="btn-out" style="margin:0" onclick="setProStatus('${id}','suspended')">Suspend pro listing</button>` : `<button class="btn-out" style="margin:0" onclick="setProStatus('${id}','pending')">Back to pending</button>`}
+      </div>
+    </div>`;
+  }).join('') + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Check the licence number with the issuing body (Skilled Trades Ontario, ESA, TSSA) before ticking <b>Licence checked</b> — that is what shows the <b>✓ Verified licence</b> badge. Pending and approved pros are on the map either way; <b>Suspend pro listing</b> hides the pro badge only (to remove the person, suspend the account).</div>`;
+}
+async function setProStatus(id, status) {
+  const lic = document.getElementById('pro-lic-' + id)?.checked || false;
+  const ins = document.getElementById('pro-ins-' + id)?.checked || false;
+  const name = await _profileName(id);
+  const word = status === 'approved' ? 'APPROVE' : status === 'suspended' ? 'SUSPEND' : 'PENDING';
+  const ok = await adminConfirm({
+    title: status === 'approved' ? 'Approve this pro?' : status === 'suspended' ? 'Suspend this pro listing?' : 'Move back to pending?',
+    target: '🔧 ' + esc(name),
+    body: status === 'approved'
+      ? `Licence checked: <b>${lic ? 'yes — shows ✓ Verified licence' : 'no — no badge'}</b> · Insurance checked: <b>${ins ? 'yes' : 'no'}</b>.`
+      : status === 'suspended' ? 'Their Pro status is hidden (no pro badge). Their account, chats and helper pin are not touched.'
+      : 'They show as a pending pro again (no Verified badge unless Licence checked is ticked).',
+    word, button: status === 'approved' ? 'Approve' : status === 'suspended' ? 'Suspend pro listing' : 'Move to pending',
+    danger: status === 'suspended'
+  });
+  if (!ok) return;
+  const { error } = await sb.rpc('admin_set_pro_status', { p_profile: id, p_status: status, p_licence_ok: lic, p_insurance_ok: ins });
+  if (error) return alert('Error: ' + error.message);
+  adminToast(status === 'approved' ? 'Pro saved' : status === 'suspended' ? 'Pro listing suspended' : 'Pro moved to pending');
+  loadPros();
+}
+
 // ── NEWEST USERS (admin-only RPC, reads auth.users) ──
 async function loadRecentUsers() {
   const el = document.getElementById('recent-users');
@@ -2238,6 +2317,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
         loadSearchStats();
         loadReports();
         loadSuspended();
+        loadPros();
         loadRecentActivity();
         loadAmbassadors();
       });
