@@ -2814,6 +2814,13 @@ async function openOtherProfile(userId){
       ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Pro')}',true)" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:${PRO_PIN};border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Pro</button>`:''}
     </div>`;
   })():'';
+  // Share (header button) for a live Pro listing — same button as helper pages (10 Oct 2026).
+  // No public /pros page yet, so the link opens the profile in the app: yoodle.ca/?helper={id}&s=pro
+  if(_proLive&&userId!==(myProfileId||me?.id)&&!iBlockedIds.has(userId)){
+    const _sa=_pro.address?helperShareArea(_pro.address):'';   // same rule as helper shares: neighbourhood, never the street
+    window._opShare={...(window._opShare||{id:userId}),pro:{trades:_pro.trades,business:_pro.business_name,verified:!!_pro.licence_verified_at,area:_sa&&_sa!=='my area'?_sa:''}};
+    if(opShareBtn)opShareBtn.style.display='flex';
+  }
 
   content.innerHTML=`
     <div class="op-hero">
@@ -5062,11 +5069,19 @@ async function shareMyHelperPage(d){
 async function shareOtherHelperPage(){
   const d=window._opShare;
   if(!d)return;
-  const url=`https://yoodle.ca/helpers/${d.id}?s=fwd`;
-  const cats=(d.categories||[]).filter(c=>String(c).toLowerCase()!=='other');
-  const skills=cats.length?helperShareSkills(cats):'odd jobs';
-  const area=d.address?helperShareArea(d.address):'';
-  const text=`Check out this local helper on Yoodle: ${skills}${area&&area!=='my area'?` around ${area}`:''}. Free to contact:`;
+  let url,text;
+  if(d.pro){
+    // Pro card share (10 Oct 2026): opens the profile in the app (no public /pros page yet)
+    url=`https://yoodle.ca/?helper=${d.id}&s=pro`;
+    const trades=(d.pro.trades||[]).map(k=>proTrade(k).label).join(', ')||'home services';
+    text=`Check out this local pro on Yoodle: ${d.pro.business?d.pro.business+' — ':''}${trades}${d.pro.area?` around ${d.pro.area}`:''}${d.pro.verified?' (verified licence)':''}. Contact free:`;
+  }else{
+    url=`https://yoodle.ca/helpers/${d.id}?s=fwd`;
+    const cats=(d.categories||[]).filter(c=>String(c).toLowerCase()!=='other');
+    const skills=cats.length?helperShareSkills(cats):'odd jobs';
+    const area=d.address?helperShareArea(d.address):'';
+    text=`Check out this local helper on Yoodle: ${skills}${area&&area!=='my area'?` around ${area}`:''}. Free to contact:`;
+  }
   if(navigator.share){
     try{await navigator.share({text,url});}catch(e){}
     return;
