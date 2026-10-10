@@ -2228,7 +2228,7 @@ function renderMapPins(){
   const _helperAt=new Set([...publicHelpers,...(myHelperPin?[myHelperPin]:[])].map(h=>h.id));
   (allPros||[]).forEach(p=>{
     const t=proTrade((p.trades||[])[0]);
-    const[fLat,fLng]=p._fuzzy||(p._fuzzy=fuzzyCoords(p.lat,p.lng));
+    const[fLat,fLng]=[p.lat,p.lng]; // business address is public (Yoodle Pro Terms) — exact pin, no offset
     const ver=p.licence_verified_at?`<span style="position:absolute;right:-5px;bottom:-5px;width:17px;height:17px;border-radius:50%;background:#1F8E5A;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid #fff">✓</span>`:'';
     const you=p.mine?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#000;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span>`:'';
     const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:${PRO_PIN};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer">${t.emoji}${ver}${you}</div>`;
@@ -2801,7 +2801,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
   const _proLive=_pro&&_pro.visible&&_pro.status!=='suspended'&&_pro.expires_at&&new Date(_pro.expires_at)>new Date();
   const proHtml=_proLive?(()=>{
     const isMe=userId===(myProfileId||me?.id);
-    const area=String(_pro.address||'').split(',').map(x=>x.trim()).filter(x=>x&&!/^\d/.test(x)&&x!=='Canada').slice(-3).join(', ');
+    const area=String(_pro.address||'').trim(); // full business address (public per Yoodle Pro Terms)
     return `<div class="op-bio" style="margin-top:12px;border-top:1px solid var(--border);padding-top:16px">
       <div class="op-bio-lbl" style="color:${PRO_PIN}">Yoodle Pro</div>
       ${_pro.business_name?`<div style="font-size:15px;font-weight:800;margin-bottom:6px">${esc(_pro.business_name)}</div>`:''}
@@ -2810,7 +2810,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
         ?'<span style="font-size:12.5px;font-weight:800;color:#1F8E5A;background:rgba(31,142,90,.1);border-radius:100px;padding:3px 10px">✓ Verified licence</span>'
         :'<span style="font-size:12.5px;font-weight:800;color:var(--muted);background:rgba(127,127,127,.12);border-radius:100px;padding:3px 10px">Licence not verified</span>'}</div>
       ${_pro.bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(_pro.bio)}</div>`:''}
-      <div style="font-size:13px;color:var(--muted)">📍 ${esc(area||'Area not set')} · travels up to ${Number(_pro.service_radius_km)||25} km</div>
+      <div style="font-size:13px;color:var(--muted)">📍 ${area?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(area)}" target="_blank" rel="noopener" style="color:inherit">${esc(area)}</a>`:'Address not set'}<br>Travels up to ${Number(_pro.service_radius_km)||25} km</div>
       ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Pro')}',true)" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:${PRO_PIN};border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Pro</button>`:''}
     </div>`;
   })():'';
