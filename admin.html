@@ -1770,7 +1770,7 @@ async function loadPros() {
   const ids = (pros || []).map(p => p.profile_id);
   const profs = {};
   if (ids.length) {
-    const { data: ps } = await sb.from('profiles').select('id,name,helper_address,visible_on_map,helper_expires_at,is_tester').in('id', ids);
+    const { data: ps } = await sb.from('profiles').select('id,name,is_tester').in('id', ids);
     (ps || []).forEach(p => profs[p.id] = p);
   }
   const credOf = {}; (creds || []).forEach(c => credOf[c.profile_id] = c);
@@ -1783,7 +1783,8 @@ async function loadPros() {
   el.innerHTML = pros.map((p, i) => {
     const pr = profs[p.profile_id] || {}, c = credOf[p.profile_id] || {};
     const date = new Date(p.created_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
-    const listing = pr.visible_on_map === false ? 'listing paused' : (pr.helper_expires_at && new Date(pr.helper_expires_at) > new Date() ? 'on map' : 'listing expired');
+    // Pro listing has its own pause/expiry since pros_v2 (10 Oct 2026)
+    const listing = p.visible === false ? 'pro listing paused' : (p.expires_at && new Date(p.expires_at) > new Date() ? 'on map until ' + new Date(p.expires_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' }) : 'pro listing expired');
     const lic = [c.licence_body, c.licence_type, c.licence_number].filter(Boolean).join(' · ') || '— none —';
     const ins = c.insurer ? esc(c.insurer) + (c.insurance_expires ? ' · expires ' + esc(c.insurance_expires) : '') : '— none —';
     const id = p.profile_id;
@@ -1791,7 +1792,7 @@ async function loadPros() {
       <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
         <div style="min-width:0">
           <div style="font-size:14px;font-weight:700;color:var(--text)">${esc(pr.name || '—')}${p.business_name ? ' · ' + esc(p.business_name) : ''}${pr.is_tester ? ' <span style="font-size:10.5px;color:var(--muted)">[TEST]</span>' : ''}</div>
-          <div style="font-size:12.5px;color:var(--muted);margin-top:2px">${esc((p.trades || []).join(', '))} · ${esc(pr.helper_address || 'no area')} · ${esc(listing)} · joined ${esc(date)}</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px">${esc((p.trades || []).join(', '))} · ${esc(p.address || 'no area')} · ${esc(listing)} · joined ${esc(date)}</div>
         </div>
         ${pill(p.status)}
       </div>
