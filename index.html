@@ -1925,7 +1925,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const _landHelper = _notifParams.get('helper');
   if(_landHelper && /^[0-9a-f-]{36}$/i.test(_landHelper)){
     const _landSrc = _notifParams.get('s');
-    try{localStorage.setItem('yoodle_helper_land', JSON.stringify({h:_landHelper, s:(_landSrc==='share'||_landSrc==='fwd')?_landSrc:null, ts:Date.now()}));}catch(e){}
+    try{localStorage.setItem('yoodle_helper_land', JSON.stringify({h:_landHelper, s:(_landSrc==='share'||_landSrc==='fwd'||_landSrc==='pro')?_landSrc:null, ts:Date.now()}));}catch(e){}
   }
   if(_refCode){
     localStorage.setItem('yoodle_ref', _refCode);
@@ -2234,7 +2234,7 @@ function renderMapPins(){
     const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:${PRO_PIN};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer">${t.emoji}${ver}${you}</div>`;
     // same person also listed as a helper → nudge the pro pin so the two never sit exactly on top of each other
     const off=_helperAt.has(p.profile_id)?[24,-24]:[0,0];
-    proMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:p.mine?4:2,offset:off,onClick:()=>openOtherProfile(p.profile_id)}));
+    proMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:p.mine?4:2,offset:off,onClick:()=>openOtherProfile(p.profile_id,'pro')}));
   });
 
   // ── BUSINESS FLAG PINS ──
@@ -2740,7 +2740,7 @@ async function loadBlockedList(){
   </div>`).join('');
 }
 
-async function openOtherProfile(userId){
+async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pro pin / pro share link, 10 Oct 2026)
   if(hiddenUserIds.has(userId)&&!iBlockedIds.has(userId)){toast('This profile is not available');return;}
   // Remember whichever modal is currently open so we can restore it on close
   _opParentModal=document.querySelector('.modal-ov.open')||null;
@@ -2814,11 +2814,12 @@ async function openOtherProfile(userId){
       ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Pro')}',true)" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:${PRO_PIN};border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Pro</button>`:''}
     </div>`;
   })():'';
-  // Share (header button) for a live Pro listing — same button as helper pages (10 Oct 2026).
-  // No public /pros page yet, so the link opens the profile in the app: yoodle.ca/?helper={id}&s=pro
-  if(_proLive&&userId!==(myProfileId||me?.id)&&!iBlockedIds.has(userId)){
+  const proMode=mode==='pro'&&_proLive;
+  // Share (header button) on the Pro card — also on your own Pro card so pros can promote themselves (10 Oct 2026).
+  // No public /pros page yet, so the link opens the Pro card in the app: yoodle.ca/?helper={id}&s=pro
+  if(proMode&&!iBlockedIds.has(userId)){
     const _sa=_pro.address?helperShareArea(_pro.address):'';   // same rule as helper shares: neighbourhood, never the street
-    window._opShare={...(window._opShare||{id:userId}),pro:{trades:_pro.trades,business:_pro.business_name,verified:!!_pro.licence_verified_at,area:_sa&&_sa!=='my area'?_sa:''}};
+    window._opShare={id:userId,pro:{trades:_pro.trades,business:_pro.business_name,verified:!!_pro.licence_verified_at,area:_sa&&_sa!=='my area'?_sa:''}};
     if(opShareBtn)opShareBtn.style.display='flex';
   }
 
@@ -2837,7 +2838,7 @@ async function openOtherProfile(userId){
         </div>`:''}
       </div>
     </div>
-    ${proHtml}
+    ${_proLive?`<button onclick="openOtherProfile('${userId}','pro')" style="width:100%;margin-top:12px;padding:12px 14px;border-radius:var(--radius);background:transparent;border:1.5px solid ${PRO_PIN};color:${PRO_PIN};font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;text-align:left">🔧 Also a Yoodle Pro — ${esc(proTradesText(_pro.trades))} ›</button>`:''}
     ${prof.visible_on_map?`<div class="op-stats">
       <div class="op-stats-row" style="grid-template-columns:1fr">
         <div class="op-stat" style="border-right:none">
@@ -2880,6 +2881,14 @@ async function openOtherProfile(userId){
       </div>`;
     })():''}
 `;
+  // Pro card (10 Oct 2026): keep only the name/last-active/report-block header + the Pro block —
+  // no poster/helper stats, About or helper listing (those belong to the person's yoodle.ca profile).
+  if(proMode){
+    const hero=content.querySelector('.op-hero');
+    content.innerHTML='';
+    if(hero)content.appendChild(hero);
+    content.insertAdjacentHTML('beforeend',proHtml);
+  }
 }
 
 let browseMode='map'; // 'map' | 'list'
@@ -5361,9 +5370,9 @@ async function handleHelperLanding(){
   if(!d||!d.h||Date.now()-(d.ts||0)>7*24*60*60*1000)return;
   const mine=myProfileId||me.id;
   if(d.h===mine)return;
-  if(d.s)sb.rpc('log_share_login',{p_helper:d.h,p_src:d.s}).then(()=>{},()=>{});
+  if(d.s==='share'||d.s==='fwd')sb.rpc('log_share_login',{p_helper:d.h,p_src:d.s}).then(()=>{},()=>{});
   if(iBlockedIds.has(d.h))return;
-  setTimeout(()=>openOtherProfile(d.h),900);
+  setTimeout(()=>openOtherProfile(d.h,d.s==='pro'?'pro':undefined),900);
 }
 
 // Landing choice → profiles.onboard_path (fire-and-forget; the server ignores existing accounts)
