@@ -1505,10 +1505,12 @@ function isHelperContact(task){
 
 let contactHelperId=null;
 let contactHelperName='';
+let contactIsPro=false; // 10 Oct 2026: contacting a Yoodle Pro → anchor the request at the pro listing
 
-function openContactModal(helperId, helperName){
+function openContactModal(helperId, helperName, isPro){
   if(!sb||!me)return toast('Sign in to contact helpers');
   if(helperId===me.id||helperId===myProfileId)return toast("That's you!");
+  contactIsPro=!!isPro;
   contactHelperId=helperId;
   contactHelperName=helperName;
   document.getElementById('contact-helper-name').textContent=helperName;
@@ -1526,17 +1528,20 @@ async function submitContactHelper(){
   const pid=myProfileId||me.id;
 
   // get my name + helper's location for the task anchor
-  const [{data:myProf},{data:helperProf}]=await Promise.all([
+  const [{data:myProf},{data:helperProf0}]=await Promise.all([
     sb.from('profiles').select('name').eq('id',pid).single(),
-    sb.from('profiles').select('last_lat,last_lng,helper_address').eq('id',contactHelperId).single()
+    contactIsPro
+      ?sb.from('pro_profiles').select('lat,lng,address').eq('profile_id',contactHelperId).maybeSingle()
+      :sb.from('profiles').select('last_lat,last_lng,helper_address').eq('id',contactHelperId).single()
   ]);
+  const helperProf=contactIsPro&&helperProf0?{last_lat:helperProf0.lat,last_lng:helperProf0.lng,helper_address:helperProf0.address}:helperProf0;
   const myName=myProf?.name||'Someone';
 
   // create task anchor: type=help_offer, status=claimed, poster=me, doer=helper
   const{data:task,error:taskErr}=await sb.from('tasks').insert({
     poster_id:pid,
     doer_id:contactHelperId,
-    title:'Help request to '+contactHelperName,
+    title:(contactIsPro?'Job request to ':'Help request to ')+contactHelperName,
     description:msg,
     price:0,
     category:'other',
@@ -2136,6 +2141,12 @@ function fuzzyCoords(lat,lng){return[lat+(Math.random()-.5)*.0014,lng+(Math.rand
 let helperMarkers=[];
 let myHelperPin=null,hpFocusAreaNext=false,myIsTester=false; // own helper pin (9 Oct 2026): drawn for the helper themself; tap may open the area field
 let allBizListings=[], bizMarkers=[];
+// ── YOODLE PROS (10 Oct 2026): pro listings from pro.yoodle.ca — orange pins, separate from helper pins ──
+const PRO_PIN='#EA6A12';
+const PRO_TRADE_FALLBACK={plumber:{emoji:'🚰',label:'Plumber'},hvac:{emoji:'❄️',label:'HVAC'},electrician:{emoji:'⚡',label:'Electrician'}};
+let PRO_TRADES=null, allPros=[], proMarkers=[];
+function proTrade(k){return (PRO_TRADES&&PRO_TRADES[k])||PRO_TRADE_FALLBACK[k]||{emoji:'🔧',label:k};}
+function proTradesText(arr){return (arr||[]).map(k=>{const t=proTrade(k);return t.emoji+' '+t.label;}).join(' · ');}
 
 function renderMapPins(){
   // clear existing
@@ -2211,6 +2222,20 @@ function renderMapPins(){
     const vague=hpIsVagueText(m.helper_address);
     helperMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:4,offset:_fan?_fan.off:[0,0],onClick:()=>{if(vague){hpFocusAreaNext=true;nav('helper');}else openOtherProfile(m.id);}}));
   }
+
+  // ── PRO PINS (orange, trade emoji; ✓ = licence checked) ──
+  proMarkers.forEach(m=>m.remove());proMarkers=[];
+  const _helperAt=new Set([...publicHelpers,...(myHelperPin?[myHelperPin]:[])].map(h=>h.id));
+  (allPros||[]).forEach(p=>{
+    const t=proTrade((p.trades||[])[0]);
+    const[fLat,fLng]=p._fuzzy||(p._fuzzy=fuzzyCoords(p.lat,p.lng));
+    const ver=p.licence_verified_at?`<span style="position:absolute;right:-5px;bottom:-5px;width:17px;height:17px;border-radius:50%;background:#1F8E5A;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid #fff">✓</span>`:'';
+    const you=p.mine?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#000;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span>`:'';
+    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:${PRO_PIN};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer">${t.emoji}${ver}${you}</div>`;
+    // same person also listed as a helper → nudge the pro pin so the two never sit exactly on top of each other
+    const off=_helperAt.has(p.profile_id)?[24,-24]:[0,0];
+    proMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:p.mine?4:2,offset:off,onClick:()=>openOtherProfile(p.profile_id)}));
+  });
 
   // ── BUSINESS FLAG PINS ──
   bizMarkers.forEach(m=>m.remove());bizMarkers=[];
@@ -2318,6 +2343,28 @@ function setListRadius(el,km){
   loadJobs();
 }
 
+// Pro listings (pro.yoodle.ca, 10 Oct 2026): pending + approved are readable by everyone (RLS); show only live ones.
+async function loadPros(pid){
+  try{
+    if(!PRO_TRADES){
+      const{data:tr}=await sb.from('pro_trades').select('key,label,emoji');
+      PRO_TRADES={};(tr||[]).forEach(t=>PRO_TRADES[t.key]={emoji:t.emoji||'🔧',label:t.label});
+    }
+    const{data:pros}=await sb.from('pro_profiles')
+      .select('profile_id,trades,business_name,status,licence_verified_at,lat,lng,address,visible,expires_at')
+      .eq('visible',true).gt('expires_at',new Date().toISOString()).not('lat','is',null);
+    const live=(pros||[]).filter(p=>p.status!=='suspended'&&!hiddenUserIds.has(p.profile_id));
+    const ids=live.map(p=>p.profile_id);
+    let names={};
+    if(ids.length){
+      const{data:ps}=await sb.from('profiles').select('id,name,is_tester').in('id',ids);
+      (ps||[]).forEach(p=>names[p.id]=p);
+    }
+    allPros=live.filter(p=>names[p.profile_id]&&(!names[p.profile_id].is_tester||myIsTester))
+      .map(p=>({...p,name:names[p.profile_id].name,mine:p.profile_id===pid}));
+  }catch(e){console.warn('pros',e);allPros=[];}
+}
+
 async function loadJobs() {
   if (!sb) {
     const ltc=document.getElementById('list-tab-content');
@@ -2368,6 +2415,7 @@ async function loadJobs() {
   // own pin: same rule as other helpers' pins — active listing (not paused) with a location
   myHelperPin=(_mp&&_mp.visible_on_map&&_mp.show_on_map&&_mp.last_lat&&_mp.last_lng)?_mp:null;
   allBizListings=bizData||[];
+  await loadPros(pid);
 
   // if no user location, show prompt
   if(!_hasLoc){
@@ -2707,13 +2755,14 @@ async function openOtherProfile(userId){
   window._opShare=null;
   modal.classList.add('open');
 
-  const [profRes,posterRatingRes,helperRatingRes,posterStatsRes,helperStatsRes,lastActiveRes]=await Promise.all([
+  const [profRes,posterRatingRes,helperRatingRes,posterStatsRes,helperStatsRes,lastActiveRes,proRes]=await Promise.all([
     sb.from('profiles').select('id,name,bio,rating,task_count,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,visible_on_map,helper_address').eq('id',userId).maybeSingle(),
     sb.rpc('get_poster_rating',{user_id:userId}),
     sb.rpc('get_helper_rating',{user_id:userId}),
     sb.from('tasks').select('id,status').eq('poster_id',userId),
     sb.from('applications').select('id,status').eq('applicant_id',userId),
-    sb.rpc('get_last_active',{p_user:userId})
+    sb.rpc('get_last_active',{p_user:userId}),
+    sb.from('pro_profiles').select('trades,business_name,bio,address,service_radius_km,licence_verified_at,status,visible,expires_at').eq('profile_id',userId).maybeSingle()
   ]);
 
   const prof=profRes.data;
@@ -2747,6 +2796,25 @@ async function openOtherProfile(userId){
       if(opShareBtn)opShareBtn.style.display='flex';
     }
 
+  // Pro listing block (pro.yoodle.ca, 10 Oct 2026) — shown when the person has a live Pro listing
+  const _pro=proRes&&!proRes.error?proRes.data:null;
+  const _proLive=_pro&&_pro.visible&&_pro.status!=='suspended'&&_pro.expires_at&&new Date(_pro.expires_at)>new Date();
+  const proHtml=_proLive?(()=>{
+    const isMe=userId===(myProfileId||me?.id);
+    const area=String(_pro.address||'').split(',').map(x=>x.trim()).filter(x=>x&&!/^\d/.test(x)&&x!=='Canada').slice(-3).join(', ');
+    return `<div class="op-bio" style="margin-top:12px;border-top:1px solid var(--border);padding-top:16px">
+      <div class="op-bio-lbl" style="color:${PRO_PIN}">Yoodle Pro</div>
+      ${_pro.business_name?`<div style="font-size:15px;font-weight:800;margin-bottom:6px">${esc(_pro.business_name)}</div>`:''}
+      <div style="font-size:14px;font-weight:800;margin-bottom:8px">${esc(proTradesText(_pro.trades))}</div>
+      <div style="margin-bottom:10px">${_pro.licence_verified_at
+        ?'<span style="font-size:12.5px;font-weight:800;color:#1F8E5A;background:rgba(31,142,90,.1);border-radius:100px;padding:3px 10px">✓ Verified licence</span>'
+        :'<span style="font-size:12.5px;font-weight:800;color:var(--muted);background:rgba(127,127,127,.12);border-radius:100px;padding:3px 10px">Licence not verified</span>'}</div>
+      ${_pro.bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(_pro.bio)}</div>`:''}
+      <div style="font-size:13px;color:var(--muted)">📍 ${esc(area||'Area not set')} · travels up to ${Number(_pro.service_radius_km)||25} km</div>
+      ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Pro')}',true)" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:${PRO_PIN};border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Pro</button>`:''}
+    </div>`;
+  })():'';
+
   content.innerHTML=`
     <div class="op-hero">
       <div class="op-av">${esc(initial)}</div>
@@ -2762,6 +2830,7 @@ async function openOtherProfile(userId){
         </div>`:''}
       </div>
     </div>
+    ${proHtml}
     ${prof.visible_on_map?`<div class="op-stats">
       <div class="op-stats-row" style="grid-template-columns:1fr">
         <div class="op-stat" style="border-right:none">
