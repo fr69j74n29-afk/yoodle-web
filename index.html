@@ -1131,6 +1131,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         <div id="m-poster" style="display:flex;align-items:center;gap:8px;margin-top:8px">—</div>
       </div>
     </div>
+    <div id="m-applied" style="display:none;margin:2px 0 8px;font-size:13px;font-weight:700;color:var(--muted)"></div>
     <div style="display:flex;gap:10px;align-items:stretch;margin-top:8px">
       <button class="btn-primary" id="m-action" onclick="jobAction()" style="flex:1;margin-top:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M7 11v8m0-8L9.5 4.5a1.8 1.8 0 0 1 3.4 1.2L12 9h6.2a2 2 0 0 1 2 2.4l-1.2 6A2 2 0 0 1 17 19H7"/><path d="M7 11H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3"/></svg>I Can Help</button>
     </div>
@@ -3476,6 +3477,15 @@ async function openJob(j){
   document.getElementById('m-report').style.display=(me&&!isPoster)?'block':'none';
   const btn=document.getElementById('m-action');const unclaimBtn=document.getElementById('m-unclaim');
   tapConfirmReset(btn);tapConfirmReset(unclaimBtn);
+  // "N people have applied" — counts everyone who ever applied (get_applied_count); hidden at 0 and on agency jobs
+  const appliedEl=document.getElementById('m-applied');appliedEl.style.display='none';
+  if(sb&&!_agency&&j.id){
+    sb.rpc('get_applied_count',{p_task_id:j.id}).then(({data})=>{
+      if(activeJob?.id!==j.id||!(data>0))return;
+      appliedEl.textContent=data===1?'1 person has applied':`${data} people have applied`;
+      appliedEl.style.display='block';
+    },()=>{});
+  }
   btn.disabled=false;btn.style.display='block';unclaimBtn.style.display='none';
   btn.onclick=()=>jobAction();
 
