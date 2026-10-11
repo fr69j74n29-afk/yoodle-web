@@ -3517,7 +3517,7 @@ async function openJob(j){
             } else if(data&&data.status==='assigned'){
               btn.textContent='You are assigned!';btn.disabled=true;
             } else {
-              btn.innerHTML=ICO.hand+"I'm Interested";btn.disabled=false;
+              btn.textContent="I'm Interested";btn.disabled=false;
               btn.onclick=()=>applyForJob(j.id,j.poster_id,j.title);
             }
           });
@@ -3594,7 +3594,7 @@ async function applyForJob(taskId,posterId,jobTitle){
     {task_id:taskId,applicant_id:pid,status:'pending'},
     {onConflict:'task_id,applicant_id'}
   );
-  if(error){btn.innerHTML=ICO.hand+"I'm Interested";btn.disabled=false;return toast('❌ '+error.message);}
+  if(error){btn.textContent="I'm Interested";btn.disabled=false;return toast('❌ '+error.message);}
 
   // get applicant name
   const{data:myProf}=await sb.from('profiles').select('name').eq('id',pid).single();
