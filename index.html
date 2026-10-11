@@ -784,6 +784,11 @@ svg.star-off{fill:none;stroke:#4a4a4a}
               <span style="font-size:15px;font-weight:800;color:var(--text)" id="map-jobs-count">0</span>
               <span style="font-size:13.5px;font-weight:700;color:var(--muted)">need help</span>
             </div>
+            <div id="map-agency-row" style="display:none;align-items:center;gap:8px">
+              <span style="width:10px;height:10px;border-radius:50%;background:#2563EB;flex-shrink:0;display:inline-block"></span>
+              <span style="font-size:15px;font-weight:800;color:var(--text)" id="map-agency-count">0</span>
+              <span style="font-size:13.5px;font-weight:700;color:var(--muted)">agency jobs 💼</span>
+            </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="width:10px;height:10px;border-radius:50%;background:#5C8A6A;flex-shrink:0;display:inline-block"></span>
               <span style="font-size:15px;font-weight:800;color:var(--text)" id="map-helpers-count">0</span>
@@ -1778,11 +1783,19 @@ function updateRadiusCounts(){
   const helperCount=sheetHelpers.length;
   // corner card: "need help" (jobs) line restored 8 Oct 2026 — counts the same jobs the map pins
   // (show_on_map, open, not the featured poster); hidden at 0. Helpers line always shown.
-  const pinnedJobCount=sheetJobs.filter(j=>j.show_on_map&&j.status==='open'&&j.poster_id!==FEATURED_POSTER_ID).length;
+  // 11 Oct 2026: split — red "need help" = neighbour jobs only, blue "agency jobs" = isAgencyJob(); each hidden at 0.
+  const pinnedJobs=sheetJobs.filter(j=>j.show_on_map&&j.status==='open'&&j.poster_id!==FEATURED_POSTER_ID);
+  const pinnedAgencyCount=pinnedJobs.filter(isAgencyJob).length;
+  const pinnedJobCount=pinnedJobs.length-pinnedAgencyCount;
   const jobsRow=document.getElementById('map-jobs-row');
   if(jobsRow){
     document.getElementById('map-jobs-count').textContent=pinnedJobCount;
     jobsRow.style.display=pinnedJobCount>0?'flex':'none';
+  }
+  const agencyRow=document.getElementById('map-agency-row');
+  if(agencyRow){
+    document.getElementById('map-agency-count').textContent=pinnedAgencyCount;
+    agencyRow.style.display=pinnedAgencyCount>0?'flex':'none';
   }
   document.getElementById('map-helpers-count').textContent=helperCount;
   document.getElementById('sheet-jobs-count').textContent=jobCount;
