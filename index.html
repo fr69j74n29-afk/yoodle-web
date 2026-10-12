@@ -2214,6 +2214,9 @@ function renderMapPins(){
     const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:2,onClick:()=>{logTap('job',job.id,'pin');openJob(job);}});
     jobMarkers.push(marker);
   });
+  // Find-a-helper filter on (12 Oct 2026): fade all job pins (neighbour + agency, single + stacks) and stop their pulse,
+  // so the matching helpers stand out. Cleared when the filter is removed (hsPick → renderMapPins).
+  if(hsCat)jobMarkers.forEach(m=>{const d=m.getElement().firstElementChild;if(d){d.classList.remove('job-glow-new','job-glow-intro');d.classList.add('hs-pin-dim');}});
   if(publicJobs.some(j=>!isAgencyJob(j)))_jobGlowIntroDone=true; // later re-renders don't replay the 3 pulses
 
   // ── HELPER PINS (profiles with visible_on_map=true AND show_on_map=true) ──
