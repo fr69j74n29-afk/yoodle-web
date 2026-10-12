@@ -1107,7 +1107,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 </div>
 
 <!-- STACKED JOBS SHEET (several jobs on one spot — opened from a count bubble on the map) -->
-<div class="modal-ov" id="stack-modal" onclick="if(event.target.id==='stack-modal')document.getElementById('stack-modal').classList.remove('open')">
+<div class="modal-ov" id="stack-modal" onclick="if(event.target.id==='stack-modal')closeOv('stack-modal')">
   <div class="modal-sheet" style="max-height:80vh;overflow-y:auto">
     <div class="modal-handle"></div>
     <div class="modal-title" id="stack-title" style="margin-bottom:12px">—</div>
@@ -1123,7 +1123,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
         <button class="op-share sm" onclick="shareJob()" aria-label="Share this job" title="Share">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
         </button>
-        <button onclick="document.getElementById('modal').classList.remove('open')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;line-height:1">✕</button>
+        <button onclick="closeOv('modal')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;line-height:1">✕</button>
       </div>
     </div>
     <div class="modal-title" id="m-title">—</div>
@@ -1146,11 +1146,11 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   </div>
 </div>
 <!-- BUSINESS LISTING MODAL -->
-<div class="modal-ov" id="biz-modal" onclick="if(event.target.id==='biz-modal')document.getElementById('biz-modal').classList.remove('open')">
+<div class="modal-ov" id="biz-modal" onclick="if(event.target.id==='biz-modal')closeOv('biz-modal')">
   <div class="modal-sheet">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
       <div class="modal-handle" style="margin:0"></div>
-      <button onclick="document.getElementById('biz-modal').classList.remove('open')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;line-height:1">✕</button>
+      <button onclick="closeOv('biz-modal')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;line-height:1">✕</button>
     </div>
     <div style="height:4px;background:linear-gradient(90deg,#BA7517,#FAC775);border-radius:4px;margin-bottom:16px"></div>
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
@@ -1181,11 +1181,11 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <button class="star-btn" aria-label="Rate 5 stars" onclick="setRating(5)"><svg class="star-off" viewBox="0 0 24 24" stroke-width="1.8" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
     </div>
     <button class="btn-primary" id="rating-submit-btn" onclick="submitRating()" disabled>Submit Rating</button>
-    <button onclick="document.getElementById('rating-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Skip</button>
+    <button onclick="closeOv('rating-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Skip</button>
   </div>
 </div>
 <!-- EDIT JOB MODAL -->
-<div class="modal-ov" id="edit-modal" onclick="if(event.target.id==='edit-modal')document.getElementById('edit-modal').classList.remove('open')">
+<div class="modal-ov" id="edit-modal" onclick="if(event.target.id==='edit-modal')closeOv('edit-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title" style="margin-bottom:20px">Edit Job</div>
@@ -1203,12 +1203,12 @@ svg.star-off{fill:none;stroke:#4a4a4a}
       <input class="form-inp" id="edit-budget" type="number" min="0" placeholder="e.g. 50">
     </div>
     <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
-    <button onclick="document.getElementById('edit-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
+    <button onclick="closeOv('edit-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
   </div>
 </div>
 
 <!-- CANCEL CONFIRMATION MODAL -->
-<div class="modal-ov" id="cancel-confirm-modal" onclick="if(event.target.id==='cancel-confirm-modal')document.getElementById('cancel-confirm-modal').classList.remove('open')">
+<div class="modal-ov" id="cancel-confirm-modal" onclick="if(event.target.id==='cancel-confirm-modal')closeOv('cancel-confirm-modal')">
   <div class="modal-sheet" style="text-align:center">
     <div class="modal-handle"></div>
     <div style="font-size:40px;margin-bottom:12px">🗑️</div>
@@ -1217,23 +1217,23 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     <input type="hidden" id="cancel-confirm-job-id">
     <input type="hidden" id="cancel-confirm-type" value="job">
     <button onclick="confirmCancelJob()" style="width:100%;padding:16px;border-radius:var(--radius);background:#DC5046;border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer" id="cancel-confirm-btn">Yes, cancel job</button>
-    <button onclick="document.getElementById('cancel-confirm-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Keep it</button>
+    <button onclick="closeOv('cancel-confirm-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Keep it</button>
   </div>
 </div>
 
 <!-- APPLICANTS MODAL -->
-<div class="modal-ov" id="applicants-modal" onclick="if(event.target.id==='applicants-modal')document.getElementById('applicants-modal').classList.remove('open')">
+<div class="modal-ov" id="applicants-modal" onclick="if(event.target.id==='applicants-modal')closeOv('applicants-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title" style="margin-bottom:4px">Interested People</div>
     <div style="font-size:14px;color:var(--muted);margin-bottom:20px" id="applicants-job-title">—</div>
     <div id="applicants-list"><div class="loading"><div class="spinner"></div></div></div>
-    <button onclick="document.getElementById('applicants-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:16px">Close</button>
+    <button onclick="closeOv('applicants-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:16px">Close</button>
   </div>
 </div>
 
 <!-- APPLIED CONFIRMATION MODAL -->
-<div class="modal-ov" id="applied-modal" onclick="if(event.target.id==='applied-modal')document.getElementById('applied-modal').classList.remove('open')">
+<div class="modal-ov" id="applied-modal" onclick="if(event.target.id==='applied-modal')closeOv('applied-modal')">
   <div class="modal-sheet" style="text-align:center">
     <div class="modal-handle"></div>
     <div style="font-size:48px;margin-bottom:12px">🙋</div>
@@ -1242,12 +1242,12 @@ svg.star-off{fill:none;stroke:#4a4a4a}
     <div style="font-size:14px;color:var(--muted);margin-bottom:28px">Awaiting the poster's response. You'll be notified when assigned.</div>
     <button class="btn-primary" id="applied-chat-btn" onclick="openAppliedChat()">Ask a Question</button>
     <button id="applied-withdraw-btn" onclick="withdrawFromConfirm()" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:10px">Withdraw Interest</button>
-    <button onclick="document.getElementById('applied-modal').classList.remove('open')" style="width:100%;padding:12px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-top:6px">Close</button>
+    <button onclick="closeOv('applied-modal')" style="width:100%;padding:12px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-top:6px">Close</button>
   </div>
 </div>
 
 <!-- RADIUS SHEET -->
-<div class="modal-ov" id="radius-sheet" onclick="if(event.target.id==='radius-sheet')document.getElementById('radius-sheet').classList.remove('open')">
+<div class="modal-ov" id="radius-sheet" onclick="if(event.target.id==='radius-sheet')closeOv('radius-sheet')">
   <div class="modal-sheet" style="max-height:85dvh;display:flex;flex-direction:column;padding:0">
     <div style="padding:16px 20px 0;flex-shrink:0">
       <div class="modal-handle"></div>
@@ -1262,7 +1262,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 </div>
 
 <!-- RATINGS SHEET -->
-<div class="modal-ov" id="ratings-sheet" onclick="if(event.target.id==='ratings-sheet')document.getElementById('ratings-sheet').classList.remove('open')">
+<div class="modal-ov" id="ratings-sheet" onclick="if(event.target.id==='ratings-sheet')closeOv('ratings-sheet')">
   <div class="modal-sheet" style="max-height:85dvh;display:flex;flex-direction:column;padding:0">
     <div style="padding:16px 20px 0;flex-shrink:0">
       <div class="modal-handle"></div>
@@ -1330,7 +1330,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 </div>
 
 <!-- CONTACT HELPER MODAL -->
-<div class="modal-ov" id="contact-modal" onclick="if(event.target.id==='contact-modal')document.getElementById('contact-modal').classList.remove('open')">
+<div class="modal-ov" id="contact-modal" onclick="if(event.target.id==='contact-modal')closeOv('contact-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title" style="margin-bottom:4px">Ask a Question</div>
@@ -1411,13 +1411,13 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 </div>
 
 <!-- BLOCK CONFIRM -->
-<div class="modal-ov" id="block-modal" style="z-index:1200" onclick="if(event.target.id==='block-modal')document.getElementById('block-modal').classList.remove('open')">
+<div class="modal-ov" id="block-modal" style="z-index:1200" onclick="if(event.target.id==='block-modal')closeOv('block-modal')">
   <div class="modal-sheet" style="text-align:center">
     <div class="modal-handle"></div>
     <div class="modal-title" style="margin-bottom:8px" id="block-title">Block?</div>
     <div style="font-size:14px;color:var(--muted);margin-bottom:22px;line-height:1.5">They won't be able to message you, and you won't see each other's jobs, helper listing or conversations. They aren't notified. You can unblock anytime in Profile.</div>
     <button id="block-go" onclick="confirmBlock()" style="width:100%;padding:16px;border-radius:var(--radius);background:#DC5046;border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer">Block</button>
-    <button onclick="document.getElementById('block-modal').classList.remove('open')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
+    <button onclick="closeOv('block-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
   </div>
 </div>
 
@@ -1535,8 +1535,8 @@ function openContactModal(helperId, helperName, isPro){
   contactHelperName=helperName;
   document.getElementById('contact-helper-name').textContent=helperName;
   document.getElementById('contact-msg').value='';
-  document.getElementById('contact-modal').classList.add('open');
-  document.getElementById('op-modal').classList.remove('open');
+  openOv('contact-modal');
+  closeOv('op-modal');
 }
 
 async function submitContactHelper(){
@@ -1590,7 +1590,7 @@ async function submitContactHelper(){
     body:msg
   });
 
-  document.getElementById('contact-modal').classList.remove('open');
+  closeOv('contact-modal');
   btn.disabled=false;btn.textContent='Send Message';
   toast('✅ Message sent to '+contactHelperName+'!');
   loadMessages();loadMyJobs();
@@ -1882,9 +1882,9 @@ function _hsInList(){return document.getElementById('app-list')?.classList.conta
 function hsOpen(){
   // from the list, stay in the list (8 Oct 2026); from anywhere else, go to the map as before
   if(!document.getElementById('app-map').classList.contains('active')&&!_hsInList())nav('map');
-  hsRenderGrid();document.getElementById('hs-ov').classList.add('open');
+  hsRenderGrid();openOv('hs-ov');
 }
-function hsClose(){document.getElementById('hs-ov').classList.remove('open');}
+function hsClose(){closeOv('hs-ov');}
 function hsToggle(){document.getElementById('hs-ov').classList.contains('open')?hsClose():hsOpen();}
 function hsPick(k){
   hsCat=k||null;hsClose();
@@ -2327,7 +2327,7 @@ function openBizListing(biz){
     aDir.onclick=()=>logBizEvent(biz.id,'directions_tap');
     actions.appendChild(aDir);
   }
-  document.getElementById('biz-modal').classList.add('open');
+  openOv('biz-modal');
   logBizEvent(biz.id,'pin_tap');
 }
 
@@ -2340,7 +2340,7 @@ function openJobStack(g){
   const place=(g[0].address||'').split(',')[0].trim();
   document.getElementById('stack-title').textContent=`${g.length} jobs${place?' in '+place:' here'}`;
   document.getElementById('stack-list').innerHTML=g.map(j=>listCard(j,j.profiles)).join('');
-  document.getElementById('stack-modal').classList.add('open');
+  openOv('stack-modal');
 }
 function isAgencyJob(j){return !!(j&&(j.type==='agency_job'||j.url));}
 function agencyPay(j){return j.price!=null?`$${j.price}/hr`:'See posting';}
@@ -2486,7 +2486,7 @@ function mapFilterCat(el,cat){document.querySelectorAll('.map-cat').forEach(c=>c
 function listFilterCat(el,cat){document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');listCatFilter=cat;renderListGrid(allJobs);}
 
 function openRadiusSheet(){
-  document.getElementById('radius-sheet').classList.add('open');
+  openOv('radius-sheet');
   renderSheetContent();
 }
 
@@ -2616,7 +2616,7 @@ function renderListGrid(jobs){
 let _opParentModal=null;
 
 function closeOtherProfile(){
-  document.getElementById('op-modal').classList.remove('open');
+  closeOv('op-modal');
   if(_opParentModal){
     _opParentModal.classList.add('open');
     _opParentModal=null;
@@ -2697,9 +2697,9 @@ function openReport(reportedId,name,taskId,convId){
   document.getElementById('report-reasons').innerHTML=REPORT_REASONS.map((r,i)=>`<label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);font-size:14.5px;font-weight:700;cursor:pointer"><input type="radio" name="report-reason" value="${esc(r)}" style="width:18px;height:18px;accent-color:var(--btn-a)">${esc(r)}</label>`).join('');
   document.getElementById('report-details').value='';
   document.getElementById('report-also-block').checked=false;
-  document.getElementById('report-modal').classList.add('open');
+  openOv('report-modal');
 }
-function closeReport(){document.getElementById('report-modal').classList.remove('open');_report=null;}
+function closeReport(){closeOv('report-modal');_report=null;}
 async function submitReport(){
   if(!_report||!sb||!me)return;
   const reason=document.querySelector('input[name="report-reason"]:checked')?.value;
@@ -2734,14 +2734,14 @@ function openBlock(userId,name){
   if(userId===(myProfileId||me.id))return toast("That's you!");
   _blockTarget=userId;
   document.getElementById('block-title').textContent=`Block ${name}?`;
-  document.getElementById('block-modal').classList.add('open');
+  openOv('block-modal');
 }
 async function confirmBlock(){
   if(!_blockTarget)return;
   const btn=document.getElementById('block-go');btn.disabled=true;
   const ok=await doBlock(_blockTarget);
   btn.disabled=false;
-  document.getElementById('block-modal').classList.remove('open');
+  closeOv('block-modal');
   if(ok)toast('🚫 Blocked');
 }
 async function doBlock(userId){
@@ -2750,9 +2750,9 @@ async function doBlock(userId){
   if(error&&error.code!=='23505'){toast('❌ '+error.message);return false;}
   iBlockedIds.add(userId);hiddenUserIds.add(userId);
   // close anything showing this person and refresh lists
-  if(activeChatDoerId===userId){document.getElementById('chat-modal').classList.remove('open');activeChatConvId=null;}
-  document.getElementById('op-modal').classList.remove('open');_opParentModal=null;
-  document.getElementById('modal').classList.remove('open');
+  if(activeChatDoerId===userId){closeOv('chat-modal');activeChatConvId=null;}
+  closeOv('op-modal');_opParentModal=null;
+  closeOv('modal');
   loadJobs();loadMessages();refreshUnreadCount();loadBlockedList();
   return true;
 }
@@ -2760,7 +2760,7 @@ async function unblockUser(userId){
   if(!sb||!me)return;
   const{error}=await sb.from('blocks').delete().eq('blocker_id',myProfileId||me.id).eq('blocked_id',userId);
   if(error)return toast('❌ '+error.message);
-  document.getElementById('op-modal').classList.remove('open');_opParentModal=null;
+  closeOv('op-modal');_opParentModal=null;
   await loadBlockedIds();
   loadJobs();loadMessages();loadBlockedList();
   toast('Unblocked');
@@ -3032,12 +3032,12 @@ function openAuthSheet(mode){
     h.textContent='Welcome back';
     p.textContent='Sign in to Yoodle — no passwords needed.';
   }
-  document.getElementById('ga-dim').classList.add('open');
-  document.getElementById('ga-sheet').classList.add('open');
+  openOv('ga-dim');
+  openOv('ga-sheet');
 }
 function closeAuthSheet(){
-  document.getElementById('ga-dim').classList.remove('open');
-  document.getElementById('ga-sheet').classList.remove('open');
+  closeOv('ga-dim');
+  closeOv('ga-sheet');
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAuthSheet();});
 function restoreGuestDraft(){
@@ -3123,12 +3123,12 @@ function resetEmailCode(){
 function openDeleteAccount(){
   const i=document.getElementById('del-inp');i.value='';
   document.getElementById('del-go').disabled=true;
-  document.getElementById('del-ov').classList.add('open');
+  openOv('del-ov');
   setTimeout(()=>i.focus(),60);
 }
-function openSettings(){document.getElementById('settings-sheet').classList.add('open');loadEmailPref();loadBlockedList();}
-function closeSettings(){document.getElementById('settings-sheet').classList.remove('open');}
-function closeDeleteAccount(){document.getElementById('del-ov').classList.remove('open');}
+function openSettings(){openOv('settings-sheet');loadEmailPref();loadBlockedList();}
+function closeSettings(){closeOv('settings-sheet');}
+function closeDeleteAccount(){closeOv('del-ov');}
 async function confirmDeleteAccount(){
   if(document.getElementById('del-inp').value.trim().toUpperCase()!=='DELETE')return;
   if(!sb||!me)return toast('Sign in first');
@@ -3516,7 +3516,7 @@ async function openJob(j){
       unclaimBtn.style.display='block';
     } else {
       btn.textContent='Message Poster';
-      btn.onclick=()=>{document.getElementById('modal').classList.remove('open');nav('messages');};
+      btn.onclick=()=>{closeOv('modal');nav('messages');};
     }
   } else if(j.status==='open'){
     if(isPoster){
@@ -3541,10 +3541,10 @@ async function openJob(j){
       }
     }
   }
-  document.getElementById('radius-sheet').classList.remove('open');
-  document.getElementById('modal').classList.add('open');
+  closeOv('radius-sheet');
+  openOv('modal');
 }
-function closeModal(e){if(e.target.id==='modal')document.getElementById('modal').classList.remove('open');}
+function closeModal(e){if(e.target.id==='modal')closeOv('modal');}
 
 async function shareJob(){
   if(!activeJob)return;
@@ -3565,7 +3565,7 @@ async function shareJob(){
 }
 
 async function jobAction(){
-  if(!sb||!me){toast('🎉 (demo) Action noted!');document.getElementById('modal').classList.remove('open');return;}
+  if(!sb||!me){toast('🎉 (demo) Action noted!');closeOv('modal');return;}
   const isPoster=activeJob.poster_id===me.id||activeJob.poster_id===myProfileId;
   if(activeJob.status==='claimed'&&isPoster){
     const btn=document.getElementById('m-action');
@@ -3573,12 +3573,12 @@ async function jobAction(){
     // re-fetch status to prevent double completion
     const{data:current}=await sb.from('tasks').select('status').eq('id',activeJob.id).single();
     if(current?.status==='completed'){
-      document.getElementById('modal').classList.remove('open');
+      closeOv('modal');
       toast('✅ Already completed!');loadMyJobs();loadJobs();return;
     }
     const{error}=await sb.from('tasks').update({status:'completed'}).eq('id',activeJob.id);
     if(error){btn.disabled=false;btn.textContent='Mark Complete';return toast('❌ '+error.message);}
-    document.getElementById('modal').classList.remove('open');
+    closeOv('modal');
     toast('✅ Job marked complete!');loadJobs();loadMyJobs();
     openRatingModal(activeJob.id,activeJob.doer_id,'How did the helper do?');
   } else if(activeJob.status==='open'&&isPoster){
@@ -3594,7 +3594,7 @@ async function jobAction(){
       }
     }
     await sb.from('applications').update({status:'rejected'}).eq('task_id',activeJob.id).eq('status','pending');
-    document.getElementById('modal').classList.remove('open');
+    closeOv('modal');
     toast('🗑️ Job cancelled');loadJobs();
   }
 }
@@ -3631,7 +3631,7 @@ async function applyForJob(taskId,posterId,jobTitle){
   });
   if(msgErr)console.warn('Message insert failed:',msgErr.message);
 
-  document.getElementById('modal').classList.remove('open');
+  closeOv('modal');
   document.getElementById('applied-job-title').textContent=jobTitle;
   document.getElementById('applied-chat-btn').dataset.taskId=taskId;
   document.getElementById('applied-chat-btn').dataset.posterId=posterId;
@@ -3639,7 +3639,7 @@ async function applyForJob(taskId,posterId,jobTitle){
   document.getElementById('applied-chat-btn').dataset.posterName=activeJob?.profiles?.name||'Poster';
   document.getElementById('applied-chat-btn').dataset.posterRating=activeJob?.profiles?.rating||'';
   document.getElementById('applied-withdraw-btn').dataset.taskId=taskId;
-  document.getElementById('applied-modal').classList.add('open');
+  openOv('applied-modal');
   toast('🙋 Interest expressed!');
   loadJobs();
 }
@@ -3652,7 +3652,7 @@ function openAppliedChat(){
   const posterName=btn.dataset.posterName||'Poster';
   const posterRating=btn.dataset.posterRating;
   const jobTitle=document.getElementById('applied-job-title').textContent;
-  document.getElementById('applied-modal').classList.remove('open');
+  closeOv('applied-modal');
   openChat(taskId,jobTitle,posterName,posterId,posterId,posterRating,convId);
 }
 
@@ -3672,7 +3672,7 @@ async function withdrawFromConfirm(){
     const name=(await getMyName())||'Someone';
     await closeConversation(conv.id,taskId,pid,taskData?.poster_id,`↩️ ${name} withdrew their interest.`);
   }
-  document.getElementById('applied-modal').classList.remove('open');
+  closeOv('applied-modal');
   toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();loadMessages();
 }
 
@@ -3692,14 +3692,14 @@ async function withdrawApplication(appId){
     const name=(await getMyName())||'Someone';
     await closeConversation(conv.id,taskId,pid,taskData?.poster_id,`↩️ ${name} withdrew their interest.`);
   }
-  document.getElementById('modal').classList.remove('open');
+  closeOv('modal');
   toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();loadMessages();
 }
 
 async function openApplicants(taskId,taskTitle){
-  document.getElementById('modal').classList.remove('open');
+  closeOv('modal');
   document.getElementById('applicants-job-title').textContent=taskTitle;
-  document.getElementById('applicants-modal').classList.add('open');
+  openOv('applicants-modal');
   const el=document.getElementById('applicants-list');
   el.innerHTML=spin();
   if(!sb)return;
@@ -3737,7 +3737,7 @@ async function openApplicants(taskId,taskTitle){
 }
 
 async function openChatWithApplicant(taskId,applicantName,applicantId){
-  document.getElementById('applicants-modal').classList.remove('open');
+  closeOv('applicants-modal');
   openChat(taskId,document.getElementById('applicants-job-title').textContent,applicantName,myProfileId||me.id,applicantId);
 }
 
@@ -3766,7 +3766,7 @@ async function assignApplicant(taskId,appId,applicantId,applicantName){
   if(winConv){
     await sb.from('messages').insert({conversation_id:winConv.id,task_id:taskId,sender_id:pid,receiver_id:applicantId,body:`🎉 Great news, ${applicantName}! You've been selected for this job. Let's coordinate the details.`});
   }
-  document.getElementById('applicants-modal').classList.remove('open');
+  closeOv('applicants-modal');
   toast(`✅ ${applicantName} assigned!`);
   loadJobs();loadMessages();loadMyJobs();
 }
@@ -3786,7 +3786,7 @@ async function unclaimJob(){
       await closeConversation(conv.id,activeJob.id,pid,doerId,`↩️ ${name} unclaimed this job. It's back to open.`);
     }
   }
-  document.getElementById('modal').classList.remove('open');
+  closeOv('modal');
   toast('↩️ Job unclaimed');loadJobs();loadMyJobs();
 }
 function selCat(el){document.querySelectorAll('.cat-opt').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');selCatVal=el.dataset.cat;}
@@ -3885,8 +3885,8 @@ function selectLocSuggestion(i){
   hideLocSuggestions();
 }
 
-function showLocSuggestions(){document.getElementById('loc-suggestions').classList.add('open');}
-function hideLocSuggestions(){document.getElementById('loc-suggestions').classList.remove('open');}
+function showLocSuggestions(){openOv('loc-suggestions');}
+function hideLocSuggestions(){closeOv('loc-suggestions');}
 
 async function postJob(){
   const title=document.getElementById('p-title').value.trim();const desc=document.getElementById('p-desc').value.trim();const budget=document.getElementById('p-budget').value;const loc=document.getElementById('p-loc').value.trim();
@@ -4170,12 +4170,12 @@ function openCancelConfirm(id,type){
     d.textContent='This will remove the job from the map and notify anyone who applied. This can\u2019t be undone.';
     b.textContent='Yes, cancel job';
   }
-  document.getElementById('cancel-confirm-modal').classList.add('open');
+  openOv('cancel-confirm-modal');
 }
 async function confirmCancelJob(){
   const id=document.getElementById('cancel-confirm-job-id').value;
   const type=document.getElementById('cancel-confirm-type').value;
-  document.getElementById('cancel-confirm-modal').classList.remove('open');
+  closeOv('cancel-confirm-modal');
   if(!id)return;
   if(type==='help_offer') await cancelHelpOffer(id);
   else if(type==='unclaim') await chatUnclaim(id);
@@ -4196,7 +4196,7 @@ function openEditModal(jobId,title,description,budget){
   document.getElementById('edit-title').value=title;
   document.getElementById('edit-desc').value=description;
   document.getElementById('edit-budget').value=budget;
-  document.getElementById('edit-modal').classList.add('open');
+  openOv('edit-modal');
 }
 
 async function saveEdit(){
@@ -4208,7 +4208,7 @@ async function saveEdit(){
   if(!desc)return toast('Description cannot be empty');
   const{error}=await sb.from('tasks').update({title,description:desc,price:budget?parseFloat(budget):0}).eq('id',jobId).eq('poster_id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
-  document.getElementById('edit-modal').classList.remove('open');
+  closeOv('edit-modal');
   toast('✅ Job updated!');loadMyJobs();loadJobs();
 }
 
@@ -4309,7 +4309,7 @@ async function loadMessages(){
 
 let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null, activeChatConvId=null;
 function closeChat(){
-  document.getElementById('chat-modal').classList.remove('open');
+  closeOv('chat-modal');
   activeChatConvId=null;
   const msgView=document.getElementById('app-messages');
   if(msgView?.classList.contains('active')){
@@ -4356,7 +4356,7 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   avEl.textContent=initial;
   const otherEl=document.getElementById('chat-other');
   otherEl.innerHTML=`${esc(otherName+ratingStr)}<span style="font-size:11.5px;opacity:.5;margin-left:4px">›</span>`;
-  document.getElementById('chat-modal').classList.add('open');
+  openOv('chat-modal');
 
   // if we don't have a convId yet, look it up
   if(!activeChatConvId&&sb&&me){
@@ -4548,7 +4548,7 @@ async function hideTeamThread(){
   if(!sb||!me||!activeChatConvId)return;
   const{error}=await sb.rpc('hide_team_thread',{p_conversation:activeChatConvId});
   if(error)return toast('❌ '+error.message);
-  document.getElementById('chat-modal').classList.remove('open');
+  closeOv('chat-modal');
   activeChatConvId=null;
   toast('Chat hidden');
   loadMessages();refreshUnreadCount();
@@ -4577,7 +4577,7 @@ async function cancelHelpOffer(taskId){
     const sysMsg=isPoster?`❌ ${name} cancelled this request.`:`🚫 ${name} declined this request.`;
     await closeConversation(convId,taskId,pid,receiverId,sysMsg);
   }
-  document.getElementById('chat-modal').classList.remove('open');
+  closeOv('chat-modal');
   activeChatConvId=null;
   const isPosterFinal=taskData.poster_id===pid;
   toast(isPosterFinal?'❌ Request cancelled':'🚫 Request declined');
@@ -4613,7 +4613,7 @@ async function chatUnclaim(taskId){
     const receiverId=isPoster?taskData.doer_id:taskData.poster_id;
     await closeConversation(convId,taskId,pid,receiverId,`↩️ ${name} unclaimed this job. It's back to open.`);
   }
-  document.getElementById('chat-modal').classList.remove('open');
+  closeOv('chat-modal');
   activeChatConvId=null;
   toast('↩️ Job unclaimed and returned to open');
   loadMessages();loadJobs();loadMyJobs();
@@ -4626,7 +4626,7 @@ async function chatComplete(taskId,doerId){
   const{data:taskData}=await sb.from('tasks').select('poster_id,doer_id,status').eq('id',taskId).single();
   if(!taskData){toast('❌ Could not load job');return;}
   if(taskData.status==='completed'){
-    document.getElementById('chat-modal').classList.remove('open');
+    closeOv('chat-modal');
     toast('✅ Already completed!');loadMyJobs();loadJobs();return;
   }
   const{error}=await sb.from('tasks').update({status:'completed'}).eq('id',taskId);
@@ -4643,7 +4643,7 @@ async function chatComplete(taskId,doerId){
   if(convId){
     await closeConversation(convId,taskId,taskData.poster_id,taskData.doer_id,`✅ Job marked complete by the poster. This conversation is now closed.`);
   }
-  document.getElementById('chat-modal').classList.remove('open');
+  closeOv('chat-modal');
   activeChatConvId=null;
   toast('✅ Job marked complete!');
   loadMessages();loadJobs();loadMyJobs();
@@ -4651,6 +4651,9 @@ async function chatComplete(taskId,doerId){
   openRatingModal(taskId,doerId,'How did the helper do?');
 }
 
+// Show / hide a popup, sheet or dropdown by id via its "open" class (Oct 2026). Missing element → no-op.
+function openOv(id){document.getElementById(id)?.classList.add('open');}
+function closeOv(id){document.getElementById(id)?.classList.remove('open');}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 function spin(){return'<div class="loading"><div class="spinner"></div></div>';}
 function emptyState(ico,t,d){return`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-t">${t}</div><div class="empty-d">${d}</div></div>`;}
@@ -4670,7 +4673,7 @@ async function loadEmailPref(){
   if(error||!data){card.style.display='none';return;} // column not added yet → hide
   document.getElementById('em-toggle').checked=!data.email_opt_out;
   card.style.display='block';
-  if(window._openEmailSettings){window._openEmailSettings=false;setTimeout(()=>{document.getElementById('settings-sheet').classList.add('open');card.style.borderColor='var(--purple)';},300);}
+  if(window._openEmailSettings){window._openEmailSettings=false;setTimeout(()=>{openOv('settings-sheet');card.style.borderColor='var(--purple)';},300);}
 }
 async function setEmailNotifications(on){
   if(!sb||!me)return;
@@ -5004,7 +5007,7 @@ function selectHPSuggestion(i){
   hpLocVague=hpIsVagueItem(item);hpLocVagueAck=false;
   const st=document.getElementById('hp-loc-status');
   st.textContent=`📍 ${city||area||display}`;st.className='loc-status verified';
-  document.getElementById('hp-loc-suggestions').classList.remove('open');
+  closeOv('hp-loc-suggestions');
 }
 
 // Helper-profile GPS button (9 Oct 2026): street-level reverse lookup, house number dropped,
@@ -5065,8 +5068,8 @@ function hpGpsConfirm(ok){
   }
 }
 
-function showHPSuggestions(){document.getElementById('hp-loc-suggestions').classList.add('open');}
-function hideHPSuggestions(){document.getElementById('hp-loc-suggestions').classList.remove('open');}
+function showHPSuggestions(){openOv('hp-loc-suggestions');}
+function hideHPSuggestions(){closeOv('hp-loc-suggestions');}
 
 async function saveHelperProfile(){
   if(!sb||!me)return toast('Not signed in');
@@ -5130,9 +5133,9 @@ function openLiveScreen(d){
   document.getElementById('live-rate').textContent=d.rateType==='free'||!d.rate?'🤝 Free':`💰 $${d.rate}${d.rateType==='hourly'?' / hour':d.rateType==='daily'?' / day':' flat'}`;
   document.getElementById('live-chips').innerHTML=(d.categories||[]).map(c=>`<span class="live-chip">${esc(c)}</span>`).join('');
   document.getElementById('live-share-btn').textContent=navigator.share?'Message friends':'Copy link';
-  document.getElementById('live-ov').classList.add('open');
+  openOv('live-ov');
 }
-function closeLiveScreen(){document.getElementById('live-ov').classList.remove('open');}
+function closeLiveScreen(){closeOv('live-ov');}
 async function shareMyHelperPage(d){
   const fromProfile=d===null;
   if(d===undefined||d instanceof Event)d=liveShareData;
@@ -5213,7 +5216,7 @@ function openRatingModal(taskId, ratedId, prompt){
   document.getElementById('rating-prompt').textContent=prompt;
   document.getElementById('rating-submit-btn').disabled=true;
   renderStars(0);
-  document.getElementById('rating-modal').classList.add('open');
+  openOv('rating-modal');
 }
 
 function setRating(n){
@@ -5334,7 +5337,7 @@ async function loadPendingRatings(){
 }
 
 async function openRatingsSheet(){
-  document.getElementById('ratings-sheet').classList.add('open');
+  openOv('ratings-sheet');
   const el=document.getElementById('ratings-sheet-list');
   el.innerHTML=spin();
   const pending=await loadPendingRatings();
@@ -5408,7 +5411,7 @@ async function submitRating(){
   if(res!=='ok'){
     btn.disabled=false;btn.textContent='Submit Rating';
     if(res==='dup'){
-      document.getElementById('rating-modal').classList.remove('open');
+      closeOv('rating-modal');
       toast('✅ Already rated!');
       loadMyJobs();
     } else {
@@ -5416,7 +5419,7 @@ async function submitRating(){
     }
     return;
   }
-  document.getElementById('rating-modal').classList.remove('open');
+  closeOv('rating-modal');
   toast('⭐ Rating submitted!');
   loadMyJobs();
 }
@@ -5488,11 +5491,11 @@ function openReferralModal(){
   document.getElementById('ref-earned').textContent=myRefCount*10;
   const link='yoodle.ca?ref='+myRefCode;
   document.getElementById('ref-link-url').textContent=link;
-  document.getElementById('ref-modal').classList.add('open');
+  openOv('ref-modal');
 }
 
 function closeReferralModal(){
-  document.getElementById('ref-modal').classList.remove('open');
+  closeOv('ref-modal');
 }
 
 function copyRefLink(){
