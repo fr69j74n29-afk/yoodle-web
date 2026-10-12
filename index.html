@@ -1791,9 +1791,9 @@ function updateRadiusCounts(){
     if(pid&&h.id===pid)return false;
     return haversineKm(userLat,userLng,h.last_lat,h.last_lng)<=RADIUS_KM;
   });
-  // helper/job lists within the radius (ysJobOk/ysHelperOk currently keep everyone)
-  sheetJobs=ysBaseJobs.filter(ysJobOk);
-  sheetHelpers=ysBaseHelpers.filter(ysHelperOk);
+  // helper/job lists within the radius (everyone in range is kept)
+  sheetJobs=ysBaseJobs.slice();
+  sheetHelpers=ysBaseHelpers.slice();
   const jobCount=sheetJobs.length;
   const helperCount=sheetHelpers.length;
   // corner card: "need help" (jobs) line restored 8 Oct 2026 — counts the same jobs the map pins
@@ -1849,8 +1849,6 @@ function ysEmoji(cat){const c=ysCats.find(x=>ysKey(x.name)===ysKey(cat));return 
 function ysLabel(cat){const c=ysCats.find(x=>ysKey(x.name)===ysKey(cat));return c?c.name:cat;}
 function ysAttr(k){return esc(k).replace(/'/g,"\\'");}
 // highlight only, no filtering: counts, list and pins keep everyone
-function ysJobOk(j){return true;}
-function ysHelperOk(h){return true;}
 function hsMatch(h){return !!hsCat&&ysHelperCats(h).includes(hsCat);}
 
 async function ysInit(){
@@ -2188,7 +2186,7 @@ function renderMapPins(){
   helperMarkers.forEach(m=>m.remove());helperMarkers=[];
 
   // ── JOB BUBBLES (tasks with show_on_map=true) ──
-  const publicJobs=(allJobs||[]).filter(j=>j.show_on_map&&j.lat&&j.lng&&j.status==='open'&&j.poster_id!==FEATURED_POSTER_ID&&ysJobOk(j));
+  const publicJobs=(allJobs||[]).filter(j=>j.show_on_map&&j.lat&&j.lng&&j.status==='open'&&j.poster_id!==FEATURED_POSTER_ID);
   // Stacks (Oct 2026): jobs on the same spot (~10 m, e.g. agency jobs at a city centre) → one bubble
   // with a count; tap opens #stack-modal listing them. Agency jobs use a blue bubble with 💼.
   const _jGroups={};
@@ -2219,7 +2217,7 @@ function renderMapPins(){
   if(publicJobs.some(j=>!isAgencyJob(j)))_jobGlowIntroDone=true; // later re-renders don't replay the 3 pulses
 
   // ── HELPER PINS (profiles with visible_on_map=true AND show_on_map=true) ──
-  const publicHelpers=(allHelpers||[]).filter(h=>h.show_on_map&&h.last_lat&&h.last_lng&&ysHelperOk(h));
+  const publicHelpers=(allHelpers||[]).filter(h=>h.show_on_map&&h.last_lat&&h.last_lng);
   // Fan-out (8 Oct 2026): helpers who entered only a city (e.g. "Toronto, Ontario") get the exact same
   // geocode and stack into one pile. Group identical spots (~10 m) and spread them on a sunflower spiral
   // in screen pixels around one shared (fuzzed) point — every pin visible + tappable at any zoom, and
@@ -2482,7 +2480,6 @@ async function loadJobs() {
 
 
 function mapFilterCat(el,cat){document.querySelectorAll('.map-cat').forEach(c=>c.classList.remove('active'));el.classList.add('active');mapCatFilter=cat;}
-function filterMapJobs(){}
 function listFilterCat(el,cat){document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');listCatFilter=cat;renderListGrid(allJobs);}
 
 function openRadiusSheet(){
@@ -4760,7 +4757,6 @@ function forkHelperCardNew(){
 }
 
 
-function updateHelperToggleUI(){}  // no-op — toggle removed
 
 function updateProfileHelperBlock(prof){
   const el=document.getElementById('helper-status-block');
@@ -4826,7 +4822,6 @@ function updateProfileHelperBlock(prof){
   }
 }
 
-function onHelperToggle(){}  // no-op — toggle removed
 
 // ── HELPER PROFILE SCREEN ──
 let hpLat=null,hpLng=null;
@@ -5209,8 +5204,6 @@ async function pauseHelper(){
 }
 
 // old functions kept as no-ops to avoid any stale references
-function saveHelperMode(){}
-function toggleHelperInput(){}
 
 function openRatingModal(taskId, ratedId, prompt){
   ratingTaskId=taskId;ratingRatedId=ratedId;selectedRating=0;
