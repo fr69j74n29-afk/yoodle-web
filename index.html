@@ -2233,18 +2233,16 @@ function renderMapPins(){
     const nMatch=hsCat?g.filter(h=>h!==myHelperPin&&hsMatch(h)).length:0;
     const label=hsCat&&nMatch?`${nMatch}/${g.length}`:String(g.length);
     const you=hasMe?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span>`:'';
-    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid ${hasMe?'#fff':'rgba(255,255,255,.6)'};box-shadow:${hasMe?'0 0 0 2px #2E7D52,':''}0 2px 8px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:${label.length>2?12:15}px;font-weight:900;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${label}<span style="position:absolute;top:-6px;right:-6px;font-size:12px;line-height:1">👥</span>${you}</div>`;
+    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid ${hasMe?'#fff':'rgba(255,255,255,.6)'};box-shadow:${hasMe?'0 0 0 2px #2E7D52,':''}0 2px 8px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:${label.length>2?12:15}px;font-weight:900;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${label}${you}</div>`;
     const marker=_htmlMarker(html,38,38,cLat,cLng,{z:hasMe?4:(nMatch?3:1),onClick:()=>openHelperStack(g)});
     if(hsCat){const d=marker.getElement().firstElementChild;if(d)d.classList.add(nMatch?'hs-pin-glow':'hs-pin-dim');}
     helperMarkers.push(marker);
   });
   publicHelpers.forEach(h=>{
-    const name=h.name||'Helper';
     if(_hStacked.has(h.id))return; // drawn inside a count bubble
-    const initial=name.charAt(0).toUpperCase();
     const[fLat,fLng]=h._fuzzy||(h._fuzzy=fuzzyCoords(h.last_lat,h.last_lng));
     const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
-      html:`<div style="width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif">${initial}</div>`,
+      html:`<div style="width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif"></div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
     const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:hsMatch(h)?3:1,onClick:()=>{logTap('helper',h.id,'pin');openOtherProfile(h.id);}});
@@ -2257,7 +2255,7 @@ function renderMapPins(){
   if(myHelperPin&&!_hStacked.has(myHelperPin.id)){
     const m=myHelperPin;
     const[fLat,fLng]=m._fuzzy||(m._fuzzy=fuzzyCoords(m.last_lat,m.last_lng));
-    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid #fff;box-shadow:0 0 0 2px #2E7D52,0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${esc((m.name||'Y').charAt(0).toUpperCase())}<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span></div>`;
+    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid #fff;box-shadow:0 0 0 2px #2E7D52,0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif"><span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span></div>`;
     const vague=hpIsVagueText(m.helper_address);
     helperMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:4,onClick:()=>{if(vague){hpFocusAreaNext=true;nav('helper');}else openOtherProfile(m.id);}}));
   }
