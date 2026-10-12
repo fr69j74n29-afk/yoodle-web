@@ -2346,27 +2346,30 @@ function isAgencyJob(j){return !!(j&&(j.type==='agency_job'||j.url));}
 function agencyPay(j){return j.price!=null?`$${j.price}/hr`:'See posting';}
 // Opens + Apply taps → public.agency_events via log_agency_event() (signed-out viewers counted by a random browser id). Never blocks the UI.
 function yAnonId(){try{let a=localStorage.getItem('yoodle_anon');if(!a){a=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2));localStorage.setItem('yoodle_anon',a);}return a;}catch(e){return null;}}
+// Fire-and-forget logging (Oct 2026): never blocks or breaks the UI. A failed call leaves a console warning
+// (prefix "[log]") so broken tracking is visible in DevTools instead of failing silently.
+function fireRpc(name,args){
+  try{if(!sb)return;sb.rpc(name,args).then(r=>{if(r&&r.error)console.warn('[log] '+name+': '+r.error.message);},e=>console.warn('[log] '+name+': '+(e&&e.message||e)));}catch(e){}
+}
 function logAgency(taskId,ev){
-  try{if(sb&&taskId)sb.rpc('log_agency_event',{p_task:taskId,p_event:ev,p_anon:me?null:yAnonId()}).then(()=>{},()=>{});}catch(e){}
+  if(taskId)fireRpc('log_agency_event',{p_task:taskId,p_event:ev,p_anon:me?null:yAnonId()});
 }
 function logTap(kind,id,src){
-  try{if(sb&&me&&id){const a={p_kind:kind,p_target:id,p_src:src};if(kind==='helper'&&hsCat)a.p_filter=hsCat;sb.rpc('log_tap',a).then(()=>{},()=>{});}}catch(e){}
+  if(me&&id){const a={p_kind:kind,p_target:id,p_src:src};if(kind==='helper'&&hsCat)a.p_filter=hsCat;fireRpc('log_tap',a);}
 }
 // Find-a-helper category picks → public.search_events via log_search() (server skips repeats within 10 min). Never blocks the UI.
 function logSearch(cat,n){
-  try{if(sb&&me&&cat)sb.rpc('log_search',{p_category:cat,p_helpers:n|0,p_radius:Math.round(RADIUS_KM)||0}).then(()=>{},()=>{});}catch(e){}
+  if(me&&cat)fireRpc('log_search',{p_category:cat,p_helpers:n|0,p_radius:Math.round(RADIUS_KM)||0});
 }
 
 // Active-member tracking → public.daily_active via log_active() (one row per person per Toronto day). At most once per 15 min per tab. Never blocks the UI.
 let _lastActivePing=0;
 function logActive(){
-  try{if(sb&&me){const n=Date.now();if(n-_lastActivePing<15*60*1000)return;_lastActivePing=n;sb.rpc('log_active').then(()=>{},()=>{});}}catch(e){}
+  if(sb&&me){const n=Date.now();if(n-_lastActivePing<15*60*1000)return;_lastActivePing=n;fireRpc('log_active');}
 }
 
 function logBizEvent(listingId,eventType){
-  if(!sb)return;
-  const viewerId=myProfileId||me?.id||null;
-  sb.rpc('log_business_event',{p_listing_id:listingId,p_event_type:eventType,p_viewer_id:viewerId}).then(()=>{});
+  fireRpc('log_business_event',{p_listing_id:listingId,p_event_type:eventType,p_viewer_id:myProfileId||me?.id||null});
 }
 
 let listRadiusKm=25;
@@ -5118,7 +5121,7 @@ function helperShareText(address,cats){
 let liveShareData=null;
 // Usage tracking → public.share_events (insert-own only; read via admin_share_stats). Never blocks sharing.
 function logShare(ev){
-  try{if(sb&&me)sb.from('share_events').insert({profile_id:myProfileId||me.id,event:ev}).then(()=>{},()=>{});}catch(e){}
+  try{if(sb&&me)sb.from('share_events').insert({profile_id:myProfileId||me.id,event:ev}).then(r=>{if(r&&r.error)console.warn('[log] share_events: '+r.error.message);},()=>{});}catch(e){}
 }
 function openLiveScreen(d){
   logShare('shown');
@@ -5430,7 +5433,7 @@ async function handleHelperLanding(){
   if(!d||!d.h||Date.now()-(d.ts||0)>7*24*60*60*1000)return;
   const mine=myProfileId||me.id;
   if(d.h===mine)return;
-  if(d.s==='share'||d.s==='fwd')sb.rpc('log_share_login',{p_helper:d.h,p_src:d.s}).then(()=>{},()=>{});
+  if(d.s==='share'||d.s==='fwd')fireRpc('log_share_login',{p_helper:d.h,p_src:d.s});
   if(iBlockedIds.has(d.h))return;
   setTimeout(()=>openOtherProfile(d.h,d.s==='pro'?'pro':undefined),900);
 }
@@ -5441,7 +5444,7 @@ function recordOnboardPath(){
   let d=null;
   try{d=JSON.parse(localStorage.getItem(ONBOARD_KEY)||'null');localStorage.removeItem(ONBOARD_KEY);}catch(e){}
   if(!d||!d.p||Date.now()-(d.ts||0)>24*60*60*1000)return;
-  sb.rpc('set_onboard_path',{p_path:d.p}).then(()=>{},()=>{});
+  fireRpc('set_onboard_path',{p_path:d.p});
 }
 
 async function processReferral(){
