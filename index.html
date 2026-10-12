@@ -2218,44 +2218,48 @@ function renderMapPins(){
 
   // ── HELPER PINS (profiles with visible_on_map=true AND show_on_map=true) ──
   const publicHelpers=(allHelpers||[]).filter(h=>h.show_on_map&&h.last_lat&&h.last_lng);
-  // Fan-out (8 Oct 2026): helpers who entered only a city (e.g. "Toronto, Ontario") get the exact same
-  // geocode and stack into one pile. Group identical spots (~10 m) and spread them on a sunflower spiral
-  // in screen pixels around one shared (fuzzed) point — every pin visible + tappable at any zoom, and
-  // the order is by id so pins don't reshuffle on reload.
+  // Stacks (12 Oct 2026, replaces the 8 Oct fan-out): helpers who entered only a city (e.g. "Toronto, Ontario")
+  // share one geocode. Group identical spots (~10 m) into one green count bubble; tap → #stack-modal list.
+  // Category search: bubble glows with "matches/total" if any member matches, else dims.
   const _hGroups={};
   [...publicHelpers,...(myHelperPin?[myHelperPin]:[])].forEach(h=>{const k=(+h.last_lat).toFixed(4)+','+(+h.last_lng).toFixed(4);(_hGroups[k]=_hGroups[k]||[]).push(h);});
-  const _hFan=new Map(); // helper id → {lat,lng,off:[dx,dy]}
+  const _hStacked=new Set(); // helper ids drawn inside a bubble
   Object.values(_hGroups).forEach(g=>{
     if(g.length<2)return;
     g.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+    g.forEach(h=>_hStacked.add(h.id));
     const[cLat,cLng]=g[0]._fuzzy||(g[0]._fuzzy=fuzzyCoords(g[0].last_lat,g[0].last_lng));
-    g.forEach((h,i)=>{
-      const r=27*Math.sqrt(i+0.5), t=i*2.39996; // 137.5° golden angle, ≥41px between pins (pins are 38px)
-      _hFan.set(h.id,{lat:cLat,lng:cLng,off:[Math.round(r*Math.cos(t)),Math.round(r*Math.sin(t))]});
-    });
+    const hasMe=!!myHelperPin&&g.some(h=>h.id===myHelperPin.id);
+    const nMatch=hsCat?g.filter(h=>h!==myHelperPin&&hsMatch(h)).length:0;
+    const label=hsCat&&nMatch?`${nMatch}/${g.length}`:String(g.length);
+    const you=hasMe?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span>`:'';
+    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid ${hasMe?'#fff':'rgba(255,255,255,.6)'};box-shadow:${hasMe?'0 0 0 2px #2E7D52,':''}0 2px 8px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:${label.length>2?12:15}px;font-weight:900;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${label}<span style="position:absolute;top:-6px;right:-6px;font-size:12px;line-height:1">👥</span>${you}</div>`;
+    const marker=_htmlMarker(html,38,38,cLat,cLng,{z:hasMe?4:(nMatch?3:1),onClick:()=>openHelperStack(g)});
+    if(hsCat){const d=marker.getElement().firstElementChild;if(d)d.classList.add(nMatch?'hs-pin-glow':'hs-pin-dim');}
+    helperMarkers.push(marker);
   });
   publicHelpers.forEach(h=>{
     const name=h.name||'Helper';
+    if(_hStacked.has(h.id))return; // drawn inside a count bubble
     const initial=name.charAt(0).toUpperCase();
-    const _fan=_hFan.get(h.id);
-    const[fLat,fLng]=_fan?[_fan.lat,_fan.lng]:(h._fuzzy||(h._fuzzy=fuzzyCoords(h.last_lat,h.last_lng)));
+    const[fLat,fLng]=h._fuzzy||(h._fuzzy=fuzzyCoords(h.last_lat,h.last_lng));
     const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
       html:`<div style="width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif">${initial}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
-    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:hsMatch(h)?3:1,offset:_fan?_fan.off:[0,0],onClick:()=>{logTap('helper',h.id,'pin');openOtherProfile(h.id);}});
+    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:hsMatch(h)?3:1,onClick:()=>{logTap('helper',h.id,'pin');openOtherProfile(h.id);}});
     // chosen category → matching helpers glow amber, others fade
     if(hsCat){const d=marker.getElement().firstElementChild;if(d)d.classList.add(hsMatch(h)?'hs-pin-glow':'hs-pin-dim');}
     helperMarkers.push(marker);
   });
-  // Own helper pin (9 Oct 2026): takes its slot in the fan-out, white ring + "You" tag, never dimmed by search.
+  // Own helper pin (9 Oct 2026): white ring + "You" tag, never dimmed by search. If stacked, the bubble carries the "You" tag instead.
   // Tap: city-only location → helper profile with the area field ready; otherwise my profile as neighbours see it.
-  if(myHelperPin){
-    const m=myHelperPin,_fan=_hFan.get(m.id);
-    const[fLat,fLng]=_fan?[_fan.lat,_fan.lng]:(m._fuzzy||(m._fuzzy=fuzzyCoords(m.last_lat,m.last_lng)));
+  if(myHelperPin&&!_hStacked.has(myHelperPin.id)){
+    const m=myHelperPin;
+    const[fLat,fLng]=m._fuzzy||(m._fuzzy=fuzzyCoords(m.last_lat,m.last_lng));
     const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid #fff;box-shadow:0 0 0 2px #2E7D52,0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${esc((m.name||'Y').charAt(0).toUpperCase())}<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span></div>`;
     const vague=hpIsVagueText(m.helper_address);
-    helperMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:4,offset:_fan?_fan.off:[0,0],onClick:()=>{if(vague){hpFocusAreaNext=true;nav('helper');}else openOtherProfile(m.id);}}));
+    helperMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:4,onClick:()=>{if(vague){hpFocusAreaNext=true;nav('helper');}else openOtherProfile(m.id);}}));
   }
 
   // ── PRO PINS (orange, trade emoji; ✓ = licence checked) ──
@@ -2340,6 +2344,20 @@ function openJobStack(g){
   const place=(g[0].address||'').split(',')[0].trim();
   document.getElementById('stack-title').textContent=`${g.length} jobs${place?' in '+place:' here'}`;
   document.getElementById('stack-list').innerHTML=g.map(j=>listCard(j,j.profiles)).join('');
+  openOv('stack-modal');
+}
+// Helper stack (12 Oct 2026): helpers sharing one spot (usually city-only addresses). Search matches first; own row on top.
+function openHelperStack(g){
+  const mine=myHelperPin&&g.find(h=>h.id===myHelperPin.id);
+  const others=g.filter(h=>h!==mine).sort((a,b)=>(hsMatch(b)?1:0)-(hsMatch(a)?1:0));
+  document.getElementById('stack-title').textContent=`${g.length} helpers in this area`;
+  const vague=mine&&hpIsVagueText(mine.helper_address);
+  const meRow=mine?`<div onclick="closeOv('stack-modal');${vague?"hpFocusAreaNext=true;nav('helper')":`openOtherProfile('${mine.id}')`}" style="background:rgba(92,138,106,.08);border-radius:var(--radius-sm);padding:12px 16px;border:1.5px solid #2E7D52;display:flex;align-items:center;gap:12px;cursor:pointer">
+      ${avatarCircle(mine.name||'You',mine.avatar_color,'28px','12px')}
+      <div style="flex:1;min-width:0;font-size:14px;font-weight:800">You're in this group${vague?'<div style="font-size:13px;font-weight:700;color:var(--muted)">Add your street so neighbours nearby can find you</div>':''}</div>
+      <div style="font-size:13.5px;color:var(--purple);font-weight:800;flex-shrink:0">${vague?'Add street ›':'View ›'}</div>
+    </div>`:'';
+  document.getElementById('stack-list').innerHTML=meRow+others.map(helperCard).join('');
   openOv('stack-modal');
 }
 function isAgencyJob(j){return !!(j&&(j.type==='agency_job'||j.url));}
@@ -2511,7 +2529,11 @@ function renderSheetContent(){
     el.innerHTML=`<div class="jobs-grid" style="padding-top:4px">${sheetJobs.map(j=>listCard(j,j.profiles)).join('')}</div>`;
   } else {
     if(!sheetHelpers.length){el.innerHTML=emptyState('💪','No helpers visible nearby','Helpers can enable visibility in their profile');return;}
-    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">${sheetHelpers.map(h=>{
+    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">${sheetHelpers.map(helperCard).join('')}</div>`;
+  }
+}
+// Helper list card (map sheet + helper stack sheet). Same markup as before 12 Oct 2026.
+function helperCard(h){
       const name=h.name||'Helper';
       const rating=h.rating?`★ ${h.rating}`:'New';
       const cats=(h.helper_categories||[]).slice(0,4).map(c=>`<span style="font-size:11.5px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:2px 8px;white-space:nowrap">${c}</span>`).join('');
@@ -2531,8 +2553,6 @@ function renderSheetContent(){
         </div>
         ${cats?`<div style="display:flex;flex-wrap:wrap;gap:4px">${cats}</div>`:''}
       </div>`;
-    }).join('')}</div>`;
-  }
 }
 
 let listTab='jobs';
