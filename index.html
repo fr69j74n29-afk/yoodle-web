@@ -1542,7 +1542,7 @@ async function submitContactHelper(){
 
   // get my name + helper's location for the task anchor
   const [{data:myProf},{data:helperProf0}]=await Promise.all([
-    sb.from('profiles').select('name').eq('id',pid).single(),
+    getMyName().then(name=>({data:name?{name}:null})),
     contactIsPro
       ?sb.from('pro_profiles').select('lat,lng,address').eq('profile_id',contactHelperId).maybeSingle()
       :sb.from('profiles').select('last_lat,last_lng,helper_address').eq('id',contactHelperId).single()
@@ -3133,7 +3133,7 @@ async function confirmDeleteAccount(){
   closeDeleteAccount();btn.textContent='Delete forever';
   oneSignalLogout();
   try{await sb.auth.signOut();}catch(e){}
-  me=null;myProfileId=null;showAuthScreen();
+  me=null;myProfileId=null;_myNameCache=null;showAuthScreen();
   toast('Your account has been deleted');
 }
 function oneSignalLogout(){
@@ -3583,8 +3583,7 @@ async function jobAction(){
     for(const app of (apps||[])){
       const{data:conv}=await sb.from('conversations').select('id').eq('task_id',activeJob.id).eq('applicant_id',app.applicant_id).eq('status','active').maybeSingle();
       if(conv){
-        await sb.from('messages').insert({conversation_id:conv.id,task_id:activeJob.id,sender_id:pid,receiver_id:app.applicant_id,body:'This job has been cancelled by the poster.'});
-        await sb.from('conversations').update({status:'archived'}).eq('id',conv.id);
+        await closeConversation(conv.id,activeJob.id,pid,app.applicant_id,'This job has been cancelled by the poster.');
       }
     }
     await sb.from('applications').update({status:'rejected'}).eq('task_id',activeJob.id).eq('status','pending');
@@ -3607,8 +3606,7 @@ async function applyForJob(taskId,posterId,jobTitle){
   if(error){btn.textContent="I'm Interested";btn.disabled=false;return toast('❌ '+error.message);}
 
   // get applicant name
-  const{data:myProf}=await sb.from('profiles').select('name').eq('id',pid).single();
-  const myName=myProf?.name||'Someone';
+  const myName=(await getMyName())||'Someone';
 
   // create conversation record — returns conversation_id
   const{data:convId,error:convErr}=await sb.rpc('create_conversation',{
@@ -3664,12 +3662,8 @@ async function withdrawFromConfirm(){
   const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',pid).eq('status','active').maybeSingle();
   if(conv){
     const{data:taskData}=await sb.from('tasks').select('poster_id').eq('id',taskId).single();
-    const{data:myProfile}=await sb.from('profiles').select('name').eq('id',pid).single();
-    const name=myProfile?.name||'Someone';
-    if(taskData){
-      await sendSystemMessage(conv.id,taskId,pid,taskData.poster_id,`↩️ ${name} withdrew their interest.`);
-    }
-    await sb.from('conversations').update({status:'archived'}).eq('id',conv.id);
+    const name=(await getMyName())||'Someone';
+    await closeConversation(conv.id,taskId,pid,taskData?.poster_id,`↩️ ${name} withdrew their interest.`);
   }
   document.getElementById('applied-modal').classList.remove('open');
   toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();loadMessages();
@@ -3688,12 +3682,8 @@ async function withdrawApplication(appId){
   const{data:conv}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('applicant_id',pid).eq('status','active').maybeSingle();
   if(conv){
     const{data:taskData}=await sb.from('tasks').select('poster_id').eq('id',taskId).single();
-    const{data:myProfile}=await sb.from('profiles').select('name').eq('id',pid).single();
-    const name=myProfile?.name||'Someone';
-    if(taskData){
-      await sendSystemMessage(conv.id,taskId,pid,taskData.poster_id,`↩️ ${name} withdrew their interest.`);
-    }
-    await sb.from('conversations').update({status:'archived'}).eq('id',conv.id);
+    const name=(await getMyName())||'Someone';
+    await closeConversation(conv.id,taskId,pid,taskData?.poster_id,`↩️ ${name} withdrew their interest.`);
   }
   document.getElementById('modal').classList.remove('open');
   toast('↩️ Interest withdrawn');loadJobs();loadMyJobs();loadMessages();
@@ -3777,8 +3767,7 @@ async function assignApplicant(taskId,appId,applicantId,applicantName){
 async function unclaimJob(){
   if(!sb||!me)return;
   const pid=myProfileId||me.id;
-  const{data:myProf}=await sb.from('profiles').select('name').eq('id',pid).single();
-  const name=myProf?.name||'Someone';
+  const name=(await getMyName())||'Someone';
   const doerId=activeJob.doer_id;
   const{error}=await sb.from('tasks').update({status:'open',doer_id:null}).eq('id',activeJob.id);
   if(error)return toast('❌ '+error.message);
@@ -3787,8 +3776,7 @@ async function unclaimJob(){
     // send notification via conversation then archive it
     const{data:conv}=await sb.from('conversations').select('id').eq('task_id',activeJob.id).eq('applicant_id',doerId).eq('status','active').maybeSingle();
     if(conv){
-      await sb.from('messages').insert({conversation_id:conv.id,task_id:activeJob.id,sender_id:pid,receiver_id:doerId,body:`↩️ ${name} has unclaimed this job. It is back to open.`});
-      await sb.from('conversations').update({status:'archived'}).eq('id',conv.id);
+      await closeConversation(conv.id,activeJob.id,pid,doerId,`↩️ ${name} unclaimed this job. It's back to open.`);
     }
   }
   document.getElementById('modal').classList.remove('open');
@@ -3803,7 +3791,7 @@ async function detectLocation(){
   btn.disabled=true;btn.textContent='Locating…';st.textContent='Getting your location…';st.className='loc-status loading';
   navigator.geolocation.getCurrentPosition(
     async pos=>{gpsLat=pos.coords.latitude;gpsLng=pos.coords.longitude;
-      try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${gpsLat}&lon=${gpsLng}&zoom=14&format=json`,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});const d=await r.json();const a=d.address||{};const nb=a.neighbourhood||a.suburb||a.quarter||a.village||a.town||a.city_district||'';const city=a.city||a.town||a.municipality||a.county||'';const prov=a.state_code||a.state||'';inp.value=[nb,city,prov].filter(Boolean).slice(0,2).join(', ')||city;locVerified=true;st.textContent='✅ GPS verified — neighbourhood only, no exact address stored';st.className='loc-status verified';}
+      try{const d=await geoFetch(`reverse?lat=${gpsLat}&lon=${gpsLng}&zoom=14&format=json`);const a=d.address||{};const nb=a.neighbourhood||a.suburb||a.quarter||a.village||a.town||a.city_district||'';const city=a.city||a.town||a.municipality||a.county||'';const prov=a.state_code||a.state||'';inp.value=[nb,city,prov].filter(Boolean).slice(0,2).join(', ')||city;locVerified=true;st.textContent='✅ GPS verified — neighbourhood only, no exact address stored';st.className='loc-status verified';}
       catch{inp.value='';locVerified=false;st.textContent='Could not detect location — type it below';st.className='loc-status manual';}
       btn.disabled=false;btn.innerHTML=ICO.nav+'GPS';},
     ()=>{locVerified=false;st.textContent='Location denied — type your address below';st.className='loc-status manual';btn.disabled=false;btn.innerHTML=ICO.nav+'GPS';},
@@ -3811,52 +3799,58 @@ async function detectLocation(){
   );
 }
 
-let locDebounceTimer=null;
-let locSuggestionsData=[];
+// ── SHARED ADDRESS LOOKUP (Oct 2026) ── used by the Post-a-Job form and the helper profile.
+// Each screen keeps its own rules (formatting, rounding, confirm step) in its own functions below.
+async function geoFetch(path){
+  const r=await fetch('https://nominatim.openstreetmap.org/'+path,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
+  return r.json();
+}
+// "road, area, city, prov" with blanks and repeats removed
+function addrDisplay(parts){const seen=new Set();return parts.filter(v=>{if(!v||seen.has(v))return false;seen.add(v);return true;}).join(', ');}
+// Debounced type-ahead: cfg = {sugId, statusId, pickFn (global fn name for onclick), format(item)->{main,sub}, noResults}
+function makeAddrSearch(cfg){
+  let timer=null,data=[];
+  const sug=()=>document.getElementById(cfg.sugId),st=()=>document.getElementById(cfg.statusId);
+  async function run(query){
+    try{
+      data=await geoFetch(`search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6&countrycodes=ca,us`);
+      if(!data.length){sug().classList.remove('open');st().textContent=cfg.noResults;st().className='loc-status manual';return;}
+      sug().innerHTML=data.map((item,i)=>{const f=cfg.format(item);
+        return`<div class="loc-suggestion" onclick="${cfg.pickFn}(${i})">
+        <div class="sug-main">${esc(f.main)}</div>
+        <div class="sug-sub">${esc(f.sub)}</div>
+      </div>`;}).join('');
+      sug().classList.add('open');st().textContent='';st().className='loc-status';
+    }catch(e){st().textContent='Could not search — check connection';st().className='loc-status manual';}
+  }
+  return{
+    input(val){clearTimeout(timer);if(val.length<3){sug().classList.remove('open');return false;}timer=setTimeout(()=>run(val),400);return true;},
+    item(i){return data[i];}
+  };
+}
+
+const jobAddr=makeAddrSearch({sugId:'loc-suggestions',statusId:'loc-status',pickFn:'selectLocSuggestion',
+  noResults:'No addresses found — try a different search',
+  format:item=>{const a=item.address||{};
+    const main=a.house_number?`${a.house_number} ${a.road||a.pedestrian||''}`:(a.road||a.pedestrian||a.footway||a.path||a.neighbourhood||a.suburb||item.display_name.split(',')[0]);
+    const sub=[a.suburb||a.neighbourhood,a.city||a.town||a.village||a.county,a.state||a.state_code,a.country_code?.toUpperCase()].filter(Boolean).join(', ');
+    return{main:main.trim()||item.display_name.split(',')[0],sub:sub||item.display_name};}});
 
 function onLocInput(val){
   locVerified=false;
-  clearTimeout(locDebounceTimer);
-  const sug=document.getElementById('loc-suggestions');
   const st=document.getElementById('loc-status');
-  if(val.length<3){sug.classList.remove('open');return;}
-  st.textContent='Searching…';st.className='loc-status loading';
-  locDebounceTimer=setTimeout(()=>fetchLocSuggestions(val),400);
-}
-
-async function fetchLocSuggestions(query){
-  const st=document.getElementById('loc-status');
-  const sug=document.getElementById('loc-suggestions');
-  try{
-    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6&countrycodes=ca,us`;
-    const r=await fetch(url,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
-    const data=await r.json();
-    locSuggestionsData=data;
-    if(!data.length){sug.classList.remove('open');st.textContent='No addresses found — try a different search';st.className='loc-status manual';return;}
-    sug.innerHTML=data.map((item,i)=>{
-      const a=item.address||{};
-      const main=a.house_number?`${a.house_number} ${a.road||a.pedestrian||''}`:(a.road||a.pedestrian||a.footway||a.path||a.neighbourhood||a.suburb||item.display_name.split(',')[0]);
-      const parts=[a.suburb||a.neighbourhood,a.city||a.town||a.village||a.county,a.state||a.state_code,a.country_code?.toUpperCase()].filter(Boolean);
-      const sub=parts.join(', ');
-      return`<div class="loc-suggestion" onclick="selectLocSuggestion(${i})">
-        <div class="sug-main">${esc(main.trim()||item.display_name.split(',')[0])}</div>
-        <div class="sug-sub">${esc(sub||item.display_name)}</div>
-      </div>`;
-    }).join('');
-    sug.classList.add('open');
-    st.textContent='';st.className='loc-status';
-  }catch(e){st.textContent='Could not search — check connection';st.className='loc-status manual';}
+  if(val.length>=3){st.textContent='Searching…';st.className='loc-status loading';}
+  jobAddr.input(val);
 }
 
 function selectLocSuggestion(i){
-  const item=locSuggestionsData[i];if(!item)return;
+  const item=jobAddr.item(i);if(!item)return;
   const a=item.address||{};
   const road=a.house_number?`${a.house_number} ${a.road||''}`.trim():(a.road||a.pedestrian||a.footway||a.path||'');
   const area=a.suburb||a.neighbourhood||a.city_district||'';
   const city=a.city||a.town||a.village||a.municipality||'';
   const prov=a.state_code||a.state||'';
-  const seen=new Set();
-  const display=[road,area,city,prov].filter(v=>{if(!v||seen.has(v))return false;seen.add(v);return true;}).join(', ');
+  const display=addrDisplay([road,area,city,prov]);
   const inp=document.getElementById('p-loc');
   inp.value=display||item.display_name.split(',').slice(0,3).join(',').trim();
   gpsLat=parseFloat(item.lat);gpsLng=parseFloat(item.lon);locVerified=false;
@@ -4498,6 +4492,25 @@ async function claimFromChat(taskId){
   loadMessages();loadJobs();
 }
 
+// Posts a last system message (when there's someone to send it to), THEN archives the thread (Oct 2026).
+// Order matters: the message must land before the conversation is archived.
+async function closeConversation(convId,taskId,fromId,toId,body){
+  if(!convId)return;
+  if(body&&toId)await sendSystemMessage(convId,taskId,fromId,toId,body);
+  await sb.from('conversations').update({status:'archived'}).eq('id',convId);
+}
+
+// My display name, fetched once per signed-in profile (Oct 2026) — saveBio() keeps it current
+let _myNameCache=null;
+async function getMyName(){
+  if(!sb||!me)return null;
+  const pid=myProfileId||me.id;
+  if(_myNameCache&&_myNameCache.pid===pid)return _myNameCache.name;
+  const{data}=await sb.from('profiles').select('name').eq('id',pid).maybeSingle();
+  const name=data?.name||null;
+  if(name)_myNameCache={pid,name};
+  return name;
+}
 async function sendSystemMessage(convId,taskId,senderId,receiverId,body){
   if(!convId)return;
   await sb.from('messages').insert({conversation_id:convId,task_id:taskId,sender_id:senderId,receiver_id:receiverId,body});
@@ -4519,8 +4532,7 @@ async function cancelHelpOffer(taskId){
   const pid=myProfileId||me.id;
   const{data:taskData}=await sb.from('tasks').select('poster_id,doer_id,title,type').eq('id',taskId).single();
   if(!taskData)return toast('❌ Could not load task');
-  const{data:myProfile}=await sb.from('profiles').select('name').eq('id',pid).single();
-  const name=myProfile?.name||'Someone';
+  const name=(await getMyName())||'Someone';
   const{error}=await sb.from('tasks').update({status:'cancelled'}).eq('id',taskId);
   if(error)return toast('❌ '+error.message);
   // archive conversation
@@ -4536,8 +4548,7 @@ async function cancelHelpOffer(taskId){
     const isPoster=taskData.poster_id===pid;
     const receiverId=isPoster?taskData.doer_id:taskData.poster_id;
     const sysMsg=isPoster?`❌ ${name} cancelled this request.`:`🚫 ${name} declined this request.`;
-    await sendSystemMessage(convId,taskId,pid,receiverId,sysMsg);
-    await sb.from('conversations').update({status:'archived'}).eq('id',convId);
+    await closeConversation(convId,taskId,pid,receiverId,sysMsg);
   }
   document.getElementById('chat-modal').classList.remove('open');
   activeChatConvId=null;
@@ -4551,8 +4562,7 @@ async function chatUnclaim(taskId){
   const pid=myProfileId||me.id;
   const{data:taskData}=await sb.from('tasks').select('poster_id,doer_id,title').eq('id',taskId).single();
   if(!taskData)return toast('❌ Could not load job');
-  const{data:myProfile}=await sb.from('profiles').select('name').eq('id',pid).single();
-  const name=myProfile?.name||me.email?.split('@')[0]||'Someone';
+  const name=(await getMyName())||me.email?.split('@')[0]||'Someone';
   const{error}=await sb.from('tasks').update({status:'open',doer_id:null}).eq('id',taskId);
   if(error)return toast('❌ '+error.message);
   const isPoster=taskData.poster_id===pid;
@@ -4574,8 +4584,7 @@ async function chatUnclaim(taskId){
   }
   if(convId){
     const receiverId=isPoster?taskData.doer_id:taskData.poster_id;
-    await sendSystemMessage(convId,taskId,pid,receiverId,`↩️ ${name} unclaimed this job. It has been returned to open.`);
-    await sb.from('conversations').update({status:'archived'}).eq('id',convId);
+    await closeConversation(convId,taskId,pid,receiverId,`↩️ ${name} unclaimed this job. It's back to open.`);
   }
   document.getElementById('chat-modal').classList.remove('open');
   activeChatConvId=null;
@@ -4605,8 +4614,7 @@ async function chatComplete(taskId,doerId){
     convId=conv?.id||null;
   }
   if(convId){
-    await sendSystemMessage(convId,taskId,taskData.poster_id,taskData.doer_id,`✅ Job marked complete by the poster. This conversation is now closed.`);
-    await sb.from('conversations').update({status:'archived'}).eq('id',convId);
+    await closeConversation(convId,taskId,taskData.poster_id,taskData.doer_id,`✅ Job marked complete by the poster. This conversation is now closed.`);
   }
   document.getElementById('chat-modal').classList.remove('open');
   activeChatConvId=null;
@@ -4652,6 +4660,7 @@ async function saveBio(){
   const{error}=await sb.from('profiles').update({bio,name}).eq('id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
   document.getElementById('pnm').textContent=name;
+  _myNameCache={pid:myProfileId||me.id,name};
   toast('✅ Profile saved!');
 }
 
@@ -4793,7 +4802,7 @@ function updateProfileHelperBlock(prof){
 function onHelperToggle(){}  // no-op — toggle removed
 
 // ── HELPER PROFILE SCREEN ──
-let hpLat=null,hpLng=null,hpLocSuggestionsData=[],hpLocDebounceTimer=null;
+let hpLat=null,hpLng=null;
 // Vague-location soft ask (8 Oct 2026): city/province/country-only locations all land on one point
 // (e.g. 7 helpers on Toronto City Hall). On save we ask once for a neighbourhood/street/postal code;
 // "Skip" saves as-is. Nobody is blocked.
@@ -4945,51 +4954,31 @@ function onHPRateInput(){
   }
 }
 
+const hpAddr=makeAddrSearch({sugId:'hp-loc-suggestions',statusId:'hp-loc-status',pickFn:'selectHPSuggestion',
+  noResults:'No addresses found — try different search',
+  format:item=>{const a=item.address||{};
+    const main=a.house_number?`${a.house_number} ${a.road||''}`.trim():(a.road||a.neighbourhood||a.suburb||item.display_name.split(',')[0]);
+    return{main:main.trim(),sub:[a.suburb||a.neighbourhood,a.city||a.town||a.village,a.state_code||a.state].filter(Boolean).join(', ')};}});
+
 function onHPLocInput(val){
   hpLat=null;hpLng=null;
   if(hpGpsPending){hpGpsPending=null;document.getElementById('hp-gps-confirm').style.display='none';}
-  clearTimeout(hpLocDebounceTimer);
-  const sug=document.getElementById('hp-loc-suggestions');
-  if(val.length<3){sug.classList.remove('open');return;}
-  hpLocDebounceTimer=setTimeout(()=>fetchHPLocSuggestions(val),400);
-}
-
-async function fetchHPLocSuggestions(query){
-  const sug=document.getElementById('hp-loc-suggestions');
-  const st=document.getElementById('hp-loc-status');
-  try{
-    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6&countrycodes=ca,us`;
-    const r=await fetch(url,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
-    const data=await r.json();
-    hpLocSuggestionsData=data;
-    if(!data.length){sug.classList.remove('open');st.textContent='No addresses found — try different search';st.className='loc-status manual';return;}
-    sug.innerHTML=data.map((item,i)=>{
-      const a=item.address||{};
-      const main=a.house_number?`${a.house_number} ${a.road||''}`.trim():(a.road||a.neighbourhood||a.suburb||item.display_name.split(',')[0]);
-      const parts=[a.suburb||a.neighbourhood,a.city||a.town||a.village,a.state_code||a.state].filter(Boolean);
-      return`<div class="loc-suggestion" onclick="selectHPSuggestion(${i})">
-        <div class="sug-main">${esc(main.trim())}</div>
-        <div class="sug-sub">${esc(parts.join(', '))}</div>
-      </div>`;
-    }).join('');
-    sug.classList.add('open');st.textContent='';st.className='loc-status';
-  }catch(e){st.textContent='Could not search — check connection';st.className='loc-status manual';}
+  hpAddr.input(val);
 }
 
 function selectHPSuggestion(i){
-  const item=hpLocSuggestionsData[i];if(!item)return;
+  const item=hpAddr.item(i);if(!item)return;
   const a=item.address||{};
   const road=a.house_number?`${a.house_number} ${a.road||''}`.trim():(a.road||'');
   const area=a.suburb||a.neighbourhood||a.city_district||'';
   const city=a.city||a.town||a.village||a.municipality||'';
   const prov=a.state_code||a.state||'';
-  const seen=new Set();
-  const display=[road,area,city,prov].filter(v=>{if(!v||seen.has(v))return false;seen.add(v);return true;}).join(', ');
+  const display=addrDisplay([road,area,city,prov]);
   document.getElementById('hp-loc').value=display||item.display_name.split(',').slice(0,3).join(',').trim();
   hpLat=parseFloat(item.lat);hpLng=parseFloat(item.lon);
   hpLocVague=hpIsVagueItem(item);hpLocVagueAck=false;
   const st=document.getElementById('hp-loc-status');
-  st.textContent=`📍 ${esc(city||area||display)}`;st.className='loc-status verified';
+  st.textContent=`📍 ${city||area||display}`;st.className='loc-status verified';
   document.getElementById('hp-loc-suggestions').classList.remove('open');
 }
 
@@ -5005,14 +4994,12 @@ async function hpDetectLocation(){
     async pos=>{
       const lat=+pos.coords.latitude.toFixed(3),lng=+pos.coords.longitude.toFixed(3);
       try{
-        const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=17&addressdetails=1&format=json`,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
-        const d=await r.json();const a=d.address||{};
+        const d=await geoFetch(`reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=17&addressdetails=1&format=json`);const a=d.address||{};
         const road=a.road||a.pedestrian||'';
         const area=a.neighbourhood||a.suburb||a.quarter||a.city_district||'';
         const city=a.city||a.town||a.village||a.municipality||'';
         const prov=a.state_code||a.state||'';
-        const seen=new Set();
-        const display=[road,area,city,prov].filter(v=>{if(!v||seen.has(v))return false;seen.add(v);return true;}).join(', ');
+        const display=addrDisplay([road,area,city,prov]);
         if(!display)throw new Error('no address');
         // Safety check (9 Oct 2026): GPS can be off (laptops, weak signal) — hold the result until the helper confirms it
         inp.value=display;hpLat=null;hpLng=null;
@@ -5347,21 +5334,27 @@ function setSheetRating(idx,score,taskId,ratedId){
   if(btn){btn.disabled=false;btn.style.opacity='1';}
 }
 
+// Shared by the rating popup and the pending-ratings sheet (Oct 2026).
+// Returns 'ok', 'dup' (already rated — unique violation 23505) or an error message.
+async function saveRating(taskId,ratedId,score){
+  const pid=myProfileId||me.id;
+  const{error}=await sb.from('ratings').insert({task_id:taskId,rater_id:pid,rated_id:ratedId,score});
+  if(error)return error.code==='23505'?'dup':(error.message||'Could not save rating');
+  await sb.rpc('update_profile_rating',{profile_id:ratedId});
+  return 'ok';
+}
+
 async function submitSheetRating(idx,taskId,ratedId){
   const score=sheetRatings[idx];
   if(!score||!sb||!me)return;
-  const pid=myProfileId||me.id;
   const btn=document.getElementById(`submit-${idx}`);
   if(btn){btn.disabled=true;btn.textContent='Saving…';}
-  const{error}=await sb.from('ratings').insert({task_id:taskId,rater_id:pid,rated_id:ratedId,score});
-  if(error){
+  const res=await saveRating(taskId,ratedId,score);
+  if(res!=='ok'){
     if(btn){btn.disabled=false;btn.textContent='Submit Rating';}
-    if(error.code==='23505'){toast('✅ Already rated!');}
-    else{toast('❌ '+error.message);}
+    toast(res==='dup'?'✅ Already rated!':'❌ '+res);
     return;
   }
-  // update aggregate rating
-  await sb.rpc('update_profile_rating',{profile_id:ratedId});
   // remove item from sheet
   const item=document.getElementById(`rating-item-${idx}`);
   if(item)item.remove();
@@ -5377,23 +5370,17 @@ async function submitRating(){
   if(!selectedRating||!ratingTaskId||!ratingRatedId||!sb)return;
   const btn=document.getElementById('rating-submit-btn');
   btn.disabled=true;btn.textContent='Saving…';
-  const pid=myProfileId||me.id;
-  const{error}=await sb.from('ratings').insert({task_id:ratingTaskId,rater_id:pid,rated_id:ratingRatedId,score:selectedRating});
-  if(error){
+  const res=await saveRating(ratingTaskId,ratingRatedId,selectedRating);
+  if(res!=='ok'){
     btn.disabled=false;btn.textContent='Submit Rating';
-    if(error.code==='23505'){
+    if(res==='dup'){
       document.getElementById('rating-modal').classList.remove('open');
       toast('✅ Already rated!');
       loadMyJobs();
     } else {
-      toast('❌ '+error.message);
+      toast('❌ '+res);
     }
     return;
-  }
-  // update aggregate rating on profile
-  const{data:allRatings}=await sb.from('ratings').select('score').eq('rated_id',ratingRatedId);
-  if(allRatings?.length){
-    await sb.rpc('update_profile_rating',{profile_id:ratingRatedId});
   }
   document.getElementById('rating-modal').classList.remove('open');
   toast('⭐ Rating submitted!');
