@@ -1727,6 +1727,9 @@ async function adminCancelJob(taskId, title) {
 }
 
 // ── SUSPENDED ACCOUNTS (admin-only RPC; suspended_users has RLS with no policies) ──
+// Suspended accounts: last 48 h by default, "Show all" toggles the full list (older ones stay reachable for Unsuspend)
+var suspShowAll = false;
+function toggleSuspAll() { suspShowAll = !suspShowAll; loadSuspended(); }
 async function loadSuspended() {
   const el = document.getElementById('suspended-list');
   const cnt = document.getElementById('susp-count');
@@ -1738,12 +1741,19 @@ async function loadSuspended() {
     el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load suspended accounts: ${esc(error.message)}</div>`;
     return;
   }
-  if (cnt) cnt.textContent = '(' + (data ? data.length : 0) + ')';
-  if (!data || !data.length) {
-    el.innerHTML = '<div style="padding:14px 0;color:var(--muted);font-size:13px">No suspended accounts.</div>';
+  const all = data || [];
+  const cutoff = Date.now() - 48 * 3600 * 1000;
+  const recent = all.filter(u => u.suspended_at && new Date(u.suspended_at).getTime() >= cutoff);
+  const rows = suspShowAll ? all : recent;
+  if (cnt) cnt.textContent = '(' + recent.length + ' in last 48 h · ' + all.length + ' total)';
+  const toggle = all.length > recent.length || suspShowAll
+    ? `<div style="padding:10px 0 4px;${rows.length ? 'border-top:1px solid var(--border);' : ''}"><a href="#" onclick="toggleSuspAll();return false" style="font-size:13px;font-weight:700;color:var(--teal)">${suspShowAll ? 'Show last 48 h only' : 'Show all ' + all.length + ' suspended accounts'}</a></div>`
+    : '';
+  if (!rows.length) {
+    el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">${all.length ? 'No suspensions in the last 48 hours.' : 'No suspended accounts.'}</div>` + toggle;
     return;
   }
-  el.innerHTML = data.map((u, i) => {
+  el.innerHTML = rows.map((u, i) => {
     const date = u.suspended_at ? new Date(u.suspended_at).toLocaleString('en-CA', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
     const ago = u.suspended_at ? timeAgo(u.suspended_at) : '';
     return `<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 0;${i ? 'border-top:1px solid var(--border);' : ''}">
@@ -1753,7 +1763,7 @@ async function loadSuspended() {
       </div>
       <button class="btn-out" style="margin:0;white-space:nowrap" onclick="suspendUser('${u.user_id}',false)">Unsuspend</button>
     </div>`;
-  }).join('');
+  }).join('') + toggle;
 }
 
 // ── YOODLE PROS (pro.yoodle.ca, 10 Oct 2026) ──
