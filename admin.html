@@ -1744,11 +1744,12 @@ async function loadSuspended() {
     return;
   }
   el.innerHTML = data.map((u, i) => {
-    const date = u.suspended_at ? new Date(u.suspended_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+    const date = u.suspended_at ? new Date(u.suspended_at).toLocaleString('en-CA', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
+    const ago = u.suspended_at ? timeAgo(u.suspended_at) : '';
     return `<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 0;${i ? 'border-top:1px solid var(--border);' : ''}">
       <div style="min-width:0">
         <div style="font-size:14px;font-weight:700;color:var(--text);word-break:break-all">${esc(u.name || '—')} · ${esc(u.email || '—')}</div>
-        <div style="font-size:12.5px;color:var(--muted);margin-top:2px">${esc(u.reason || 'No reason given')} · <span title="${escAttr(timeAgo(u.suspended_at))}">${esc(date)}</span></div>
+        <div style="font-size:12.5px;color:var(--muted);margin-top:2px">${esc(u.reason || 'No reason given')} · ${esc(date)}${ago ? ' · ' + esc(ago) : ''}</div>
       </div>
       <button class="btn-out" style="margin:0;white-space:nowrap" onclick="suspendUser('${u.user_id}',false)">Unsuspend</button>
     </div>`;
