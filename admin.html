@@ -995,7 +995,7 @@ body::before {
     <div class="dash-user">
       <div class="dash-avatar" id="dash-avatar">?</div>
       <span class="dash-name" id="dash-name"></span>
-      <button class="btn-refresh" id="refresh-btn" onclick="loadStats();loadRecentUsers();loadOnboardStats();loadShareStats();loadTapStats();loadAgencyStats();loadSearchStats();loadReports();loadSuspended();loadPros()">↻ Refresh</button>
+      <button class="btn-refresh" id="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
     </div>
   </div>
 
@@ -1236,6 +1236,36 @@ function populateUser(user) {
 }
 
 // ── LOAD STATS ──
+// One shared admin_list_suspended() call per refresh (was 4 separate calls: stats, suspended list,
+// recent activity, live conversations). Pass force=true after a change or on ↻ Refresh.
+var _suspCache = null;  // var (not let): no TDZ error if an earlier script block fails
+function getSuspended(force) {
+  if (force || !_suspCache) {
+    _suspCache = sb.rpc('admin_list_suspended').then(r => { if (r.error) _suspCache = null; return r; });
+  }
+  return _suspCache;
+}
+
+// Full dashboard load — used on start-up and by ↻ Refresh (each section loads once).
+function refreshAll() {
+  getSuspended(true);
+  loadStats();
+  loadRegions();
+  loadRecentUsers();
+  loadOnboardStats();
+  loadShareStats();
+  loadTapStats();
+  loadAgencyStats();
+  loadSearchStats();
+  loadReports();
+  loadSuspended();
+  loadPros();
+  loadRecentActivity();
+  loadAmbassadors();
+}
+
+// Stat cards (users, helpers, open jobs, live conversations, growth chart). Regions, Recent Activity and
+// Ambassadors are no longer reloaded from here, so an admin action only refreshes what it changes.
 async function loadStats() {
   const btn = document.getElementById('refresh-btn');
   btn.classList.add('spinning');
@@ -1264,7 +1294,7 @@ async function loadStats() {
         .select('created_at')
         .gte('created_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: true }),
-      sb.rpc('admin_list_suspended')
+      getSuspended()
     ]);
 
     // Registered users = active accounts (total − suspended); detail line shows both
@@ -1302,12 +1332,6 @@ async function loadStats() {
     // Growth chart
     renderGrowthChart(recentProfiles || []);
 
-    // Members & helpers by country / province
-    loadRegions();
-
-    // Reload activity section
-    loadRecentActivity();
-    loadAmbassadors();
 
   } catch (err) {
     console.error('Stats error:', err);
@@ -1699,10 +1723,11 @@ async function suspendUser(userId, suspend) {
   const { error } = await sb.rpc('admin_suspend_user', { p_user_id: userId, p_suspend: suspend, p_reason: suspend ? ok.reason : null });
   if (error) return alert('Error: ' + error.message);
   adminToast(suspend ? 'Account suspended' : 'Account unsuspended');
+  getSuspended(true);
   loadReports();
   loadSuspended();
   loadRecentActivity();
-  loadStats();   // refreshes Registered Users (net of suspended) + Live conversations
+  loadStats();   // stat cards (users net of suspended, helpers, open jobs) + Live conversations
 }
 // Suspend / Unsuspend button for activity cards (admin accounts can't be suspended — the RPC refuses)
 function suspendBtn(userId, suspendedIds) {
@@ -1735,7 +1760,7 @@ async function loadSuspended() {
   const cnt = document.getElementById('susp-count');
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
-  const { data, error } = await sb.rpc('admin_list_suspended');
+  const { data, error } = await getSuspended();
   if (error) {
     if (cnt) cnt.textContent = '';
     el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load suspended accounts: ${esc(error.message)}</div>`;
@@ -1873,7 +1898,7 @@ async function loadConvOverview() {
   const rowsEl = document.getElementById('conv-rows');
   const [{ data, error }, { data: suspRows }] = await Promise.all([
     sb.rpc('admin_conversation_overview'),
-    sb.rpc('admin_list_suspended')
+    getSuspended()
   ]);
   const suspendedIds = new Set((suspRows || []).map(x => x.user_id));
   if (error) {
@@ -2060,7 +2085,7 @@ async function loadRecentActivity() {
     recentHelpers = helpers2 || [];
 
     // Suspended ids (admin-only RPC) so cards show Unsuspend instead of Suspend
-    const { data: suspRows } = await sb.rpc('admin_list_suspended');
+    const { data: suspRows } = await getSuspended();
     const suspendedIds = new Set((suspRows || []).map(r => r.user_id));
 
     // Fetch poster profiles for jobs
@@ -2319,20 +2344,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
       show('screen-dashboard');
       // protected (admin) ids first, so no list renders a Suspend button for an admin account.
       // Chained, not awaited — Supabase advises against awaiting calls inside onAuthStateChange.
-      loadProtectedIds().finally(() => {
-        loadStats();
-        loadRecentUsers();
-        loadOnboardStats();
-        loadShareStats();
-        loadTapStats();
-        loadAgencyStats();
-        loadSearchStats();
-        loadReports();
-        loadSuspended();
-        loadPros();
-        loadRecentActivity();
-        loadAmbassadors();
-      });
+      loadProtectedIds().finally(refreshAll);
     } catch (err) {
       console.error('Auth handler error:', err);
       dashboardReady = false;
