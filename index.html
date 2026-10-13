@@ -397,9 +397,8 @@ body.theme-sage-dark .theme-btn .ic-moon{display:none}
 /* ── MY JOBS ── */
 #app-myjobs{overflow:hidden}
 .myjobs-inner{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 20px calc(var(--sab) + 20px);-webkit-overflow-scrolling:touch}
-.tab-row{display:flex;gap:6px;margin-bottom:20px;background:var(--surface);border-radius:var(--radius-sm);padding:4px}
-.tab-btn{flex:1;padding:10px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .15s}
-.tab-btn.active{background:var(--surface2);color:var(--text)}
+.act-h{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:10px 2px 0}
+.act-h:first-child{margin-top:0}
 
 /* ── PROFILE ── */
 #app-profile{overflow:hidden}
@@ -889,11 +888,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
   <!-- MY JOBS -->
   <div class="app-view" id="app-myjobs">
     <div class="myjobs-inner">
-      <div class="section-h" style="margin-bottom:16px">My Jobs</div>
-      <div class="tab-row">
-        <button class="tab-btn active" onclick="switchTab(this,'posted')">I need help</button>
-        <button class="tab-btn" onclick="switchTab(this,'helping')">I'm helping</button>
-      </div>
+      <div class="section-h" style="margin-bottom:4px">Activity</div>
       <div class="jobs-grid" id="my-grid"><div class="loading"><div class="spinner"></div></div></div>
     </div>
   </div>
@@ -1925,7 +1920,7 @@ function ysSetPostCat(k){
   ysRenderPostCats();
 }
 
-let sb, me, myProfileId, activeJob, mapCatFilter='all', listCatFilter='all', myTab='posted';
+let sb, me, myProfileId, activeJob, mapCatFilter='all', listCatFilter='all';
 let ratingTaskId=null, ratingRatedId=null, selectedRating=0;
 let map, userMarker, radiusCircle, jobMarkers=[], allJobs=[], myAppliedTaskIds=new Set();
 let userLat=null, userLng=null;
@@ -3997,117 +3992,100 @@ function resetPost(){
 }
 
 async function loadMyJobs(){
+  // Activity: one list — jobs I posted + jobs I'm helping with (tabs removed 13 Oct 2026)
   const g=document.getElementById('my-grid');g.innerHTML=spin();
   if(!sb||!me){g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
   const pid=myProfileId||me.id;
-  let q;
-  if(myTab==='posted'){
-    q=sb.from('tasks').select('*').eq('poster_id',pid).in('status',['open','claimed']).neq('type','admin_note').order('created_at',{ascending:false});
-  } else {
-    // fetch applications by this user with task details
-    q=sb.from('applications').select('id,status,created_at,tasks!inner(*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color))').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','claimed']).order('created_at',{ascending:false});
-  }
-  const{data,error}=await q;
-  if(error){g.innerHTML=emptyState('😕','Error',error.message);return;}
+  const[postedRes,appRes,hoRes]=await Promise.all([
+    sb.from('tasks').select('*').eq('poster_id',pid).in('status',['open','claimed']).neq('type','admin_note').order('created_at',{ascending:false}),
+    // applications by this user with task details
+    sb.from('applications').select('id,status,created_at,tasks!inner(*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color))').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','claimed']).order('created_at',{ascending:false}),
+    // help_offer tasks where I'm the doer
+    sb.from('tasks').select('*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color)').eq('doer_id',pid).eq('type','help_offer').in('status',['claimed']).order('created_at',{ascending:false})
+  ]);
+  const err=postedRes.error||appRes.error;
+  if(err){g.innerHTML=emptyState('😕','Error',err.message);return;}
+  if(hoRes.error)console.warn('help_offer query error:',hoRes.error.message);
+  const posted=postedRes.data||[], apps=appRes.data||[], helpOfferTasks=hoRes.data||[];
 
-  // for helping tab, also fetch help_offer tasks where I'm the doer
-  let helpOfferTasks=[];
-  if(myTab==='helping'){
-    const{data:hoData,error:hoErr}=await sb.from('tasks').select('*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color)').eq('doer_id',pid).eq('type','help_offer').in('status',['claimed']).order('created_at',{ascending:false});
-    if(hoErr)console.warn('help_offer query error:',hoErr.message);
-    helpOfferTasks=hoData||[];
-  }
+  if(!posted.length&&!apps.length&&!helpOfferTasks.length){g.innerHTML=emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.');return;}
 
-  if(!data?.length&&!helpOfferTasks.length){g.innerHTML=emptyState(myTab==='posted'?'📋':'🤝',myTab==='posted'?'No jobs posted yet':'Not helping anyone yet',myTab==='posted'?'Post your first job!':'Browse the map to find something.');return;}
-
-  // for posted tab, fetch doer names, applicant counts, and rated task IDs
+  // posted jobs: doer names and applicant counts
   let doerNames={};
   let applicantCounts={};
-  let ratedTaskIds=new Set();
-  if(myTab==='posted'){
-    const claimedJobs=data.filter(j=>j.status==='claimed'&&j.doer_id);
-    if(claimedJobs.length){
-      const doerIds=[...new Set(claimedJobs.map(j=>j.doer_id))];
-      const{data:doerData}=await sb.from('profiles').select('id,name').in('id',doerIds);
-      (doerData||[]).forEach(p=>doerNames[p.id]=p.name);
-    }
-    const openJobs=data.filter(j=>j.status==='open');
-    if(openJobs.length){
-      const openIds=openJobs.map(j=>j.id);
-      const{data:appData}=await sb.from('applications').select('task_id').eq('status','pending').in('task_id',openIds);
-      (appData||[]).forEach(a=>{applicantCounts[a.task_id]=(applicantCounts[a.task_id]||0)+1;});
-    }
-  }
+  const claimedJobs=posted.filter(j=>j.status==='claimed'&&j.doer_id);
+  const openJobs=posted.filter(j=>j.status==='open');
+  await Promise.all([
+    claimedJobs.length?sb.from('profiles').select('id,name').in('id',[...new Set(claimedJobs.map(j=>j.doer_id))]).then(({data:doerData})=>{(doerData||[]).forEach(p=>doerNames[p.id]=p.name);}):null,
+    openJobs.length?sb.from('applications').select('task_id').eq('status','pending').in('task_id',openJobs.map(j=>j.id)).then(({data:appData})=>{(appData||[]).forEach(a=>{applicantCounts[a.task_id]=(applicantCounts[a.task_id]||0)+1;});}):null
+  ]);
 
   const now=new Date();
 
-  // for helping tab, render application rows
-  if(myTab==='helping'){
-    const appCards=(data||[]).map(app=>{
-      const j=app.tasks;
-      if(!j)return'';
-      const cat=(j.category||'other').toLowerCase();
-      const color=CAT_COLOR[cat]||'#3D6B50';
-      let appBadge,actionBtn='',appMenu='';
-      if(app.status==='pending'){
-        appBadge=`<span style="color:var(--yellow);font-size:13.5px;font-weight:800">Pending</span>`;
-        appMenu=`<div class="card-menu-wrap">
-          <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-app-${app.id}')" aria-label="More options">⋮</button>
-          <div class="card-menu-drop" id="cm-app-${app.id}">
-            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${app.id}','withdraw')">Withdraw Interest</button>
-          </div>
-        </div>`;
-      } else if(app.status==='assigned'){
-        appBadge=`<span style="color:var(--teal);font-size:13.5px;font-weight:800">Assigned</span>`;
-        appMenu=`<div class="card-menu-wrap">
-          <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-app-${app.id}')" aria-label="More options">⋮</button>
-          <div class="card-menu-drop" id="cm-app-${app.id}">
-            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','unclaim')">Unclaim</button>
-          </div>
-        </div>`;
-        actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
-        </div>`;
-      }
-      return `<div class="job-card" style="--jc:${color};cursor:default;overflow:visible">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          ${appBadge||''}
-          ${appMenu}
-        </div>
-        <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
-        <div class="jc-desc">${esc(j.description||'')}</div>
-        ${actionBtn}
-      </div>`;
-    }).join('');
-
-    // render help_offer tasks (direct contacts where I'm the helper)
-    const hoCards=helpOfferTasks.map(j=>{
-      const color=CAT_COLOR['other']||'#3D6B50';
-      const posterName=j.profiles?.name||'Neighbour';
-      return `<div class="job-card" style="--jc:${color};cursor:default;overflow:visible">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <span style="color:var(--teal);font-size:13.5px;font-weight:800">Help Request</span>
-          <div class="card-menu-wrap">
-            <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-ho-${j.id}')" aria-label="More options">⋮</button>
-            <div class="card-menu-drop" id="cm-ho-${j.id}">
-              <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','help_offer')">Decline</button>
-            </div>
-          </div>
-        </div>
-        <div class="jc-top"><div class="jc-title">${esc(j.title)}</div></div>
-        <div class="jc-desc">${esc(j.description||'')}</div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+  // jobs I'm helping with
+  const appCards=apps.map(app=>{
+    const j=app.tasks;
+    if(!j)return'';
+    const cat=(j.category||'other').toLowerCase();
+    const color=CAT_COLOR[cat]||'#3D6B50';
+    let appBadge,actionBtn='',appMenu='';
+    if(app.status==='pending'){
+      appBadge=`<span style="color:var(--yellow);font-size:13.5px;font-weight:800">Pending</span>`;
+      appMenu=`<div class="card-menu-wrap">
+        <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-app-${app.id}')" aria-label="More options">⋮</button>
+        <div class="card-menu-drop" id="cm-app-${app.id}">
+          <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${app.id}','withdraw')">Withdraw Interest</button>
         </div>
       </div>`;
-    }).join('');
+    } else if(app.status==='assigned'){
+      appBadge=`<span style="color:var(--teal);font-size:13.5px;font-weight:800">Assigned</span>`;
+      appMenu=`<div class="card-menu-wrap">
+        <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-app-${app.id}')" aria-label="More options">⋮</button>
+        <div class="card-menu-drop" id="cm-app-${app.id}">
+          <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','unclaim')">Unclaim</button>
+        </div>
+      </div>`;
+      actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+      </div>`;
+    }
+    return `<div class="job-card" style="--jc:${color};cursor:default;overflow:visible">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        ${appBadge||''}
+        ${appMenu}
+      </div>
+      <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
+      <div class="jc-desc">${esc(j.description||'')}</div>
+      ${actionBtn}
+    </div>`;
+  }).join('');
 
-    g.innerHTML=appCards+hoCards;
-    return;
-  }
+  // render help_offer tasks (direct contacts where I'm the helper)
+  const hoCards=helpOfferTasks.map(j=>{
+    const color=CAT_COLOR['other']||'#3D6B50';
+    const posterName=j.profiles?.name||'Neighbour';
+    return `<div class="job-card" style="--jc:${color};cursor:default;overflow:visible">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="color:var(--teal);font-size:13.5px;font-weight:800">Help Request</span>
+        <div class="card-menu-wrap">
+          <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-ho-${j.id}')" aria-label="More options">⋮</button>
+          <div class="card-menu-drop" id="cm-ho-${j.id}">
+            <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}','help_offer')">Decline</button>
+          </div>
+        </div>
+      </div>
+      <div class="jc-top"><div class="jc-title">${esc(j.title)}</div></div>
+      <div class="jc-desc">${esc(j.description||'')}</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+      </div>
+    </div>`;
+  }).join('');
 
-  const data2=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
-  g.innerHTML=data2.map(j=>{
+
+  // jobs I posted
+  const data2=posted.map(j=>({...j,category:(j.category||'other').toLowerCase()}));
+  const postedCards=data2.map(j=>{
     const color=CAT_COLOR[j.category]||'#3D6B50';
     const daysLeft=j.expires_at?Math.ceil((new Date(j.expires_at)-now)/(1000*60*60*24)):null;
 
@@ -4169,6 +4147,11 @@ async function loadMyJobs(){
       ${actionBtn}
     </div>`;
   }).join('');
+
+  const helpingCards=appCards+hoCards;
+  g.innerHTML=(postedCards?`<div class="act-h">Jobs you posted</div>`+postedCards:'')
+    +(helpingCards?`<div class="act-h">Jobs you're helping with</div>`+helpingCards:'')
+    ||emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.');
 }
 
 async function renewJob(jobId){
@@ -4291,7 +4274,6 @@ async function saveEdit(){
   toast('✅ Job updated!');loadMyJobs();loadJobs();
 }
 
-function switchTab(btn,tab){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');myTab=tab;loadMyJobs();}
 
 async function loadProfile(){
   if(!me){document.getElementById('pnm').textContent='Demo User';return;}
