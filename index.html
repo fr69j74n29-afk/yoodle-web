@@ -1758,7 +1758,14 @@ function initMap() {
     }
     updateCircleOverlay();
     clearTimeout(_moveEndTimer);
-    _moveEndTimer=setTimeout(()=>{if(me)loadJobs();},600);
+    _moveEndTimer=setTimeout(()=>{
+      if(!me)return;
+      // 12 Oct 2026: skip tiny pans (tap-to-centre, a nudge) — same ring size and the centre moved less than
+      // 5% of the radius (max 250 m) since the last load, so the loaded jobs/helpers still cover the ring.
+      const L=_lastJobsLoad;
+      if(L&&L.r===RADIUS_KM&&haversineKm(L.lat,L.lng,userLat,userLng)<Math.min(0.25,RADIUS_KM*0.05))return;
+      loadJobs();
+    },600);
   });
 
   setTimeout(()=>{
@@ -2171,6 +2178,7 @@ let allBizListings=[], bizMarkers=[];
 const PRO_PIN='#EA6A12';
 const PRO_TRADE_FALLBACK={plumber:{emoji:'🚰',label:'Plumber'},hvac:{emoji:'❄️',label:'HVAC'},electrician:{emoji:'⚡',label:'Electrician'}};
 let PRO_TRADES=null, allPros=[], proMarkers=[];
+var _lastJobsLoad=null; // {lat,lng,r}: map centre + ring radius of the last loadJobs() (small-pan skip, 12 Oct 2026)
 function proTrade(k){return (PRO_TRADES&&PRO_TRADES[k])||PRO_TRADE_FALLBACK[k]||{emoji:'🔧',label:k};}
 function proTradesText(arr){return (arr||[]).map(k=>{const t=proTrade(k);return t.emoji+' '+t.label;}).join(' · ');}
 
@@ -2401,24 +2409,24 @@ function setListRadius(el,km){
 }
 
 // Pro listings (pro.yoodle.ca, 10 Oct 2026): pending + approved are readable by everyone (RLS); show only live ones.
-async function loadPros(pid){
+// 12 Oct 2026: fetched in parallel with helpers/jobs inside loadJobs(), and in ONE request — the owner's name comes
+// embedded via the pro_profiles.profile_id → profiles FK (was 3 requests in a row: trades, pros, names).
+// Trades list is cached after the first successful load.
+function fetchPros(){
+  return Promise.all([
+    PRO_TRADES?null:sb.from('pro_trades').select('key,label,emoji'),
+    sb.from('pro_profiles')
+      .select('profile_id,trades,business_name,status,licence_verified_at,lat,lng,address,visible,expires_at,profiles(name,is_tester)')
+      .eq('visible',true).gt('expires_at',new Date().toISOString()).not('lat','is',null)
+  ]).catch(e=>{console.warn('pros',e);return[null,null];});
+}
+function applyPros(res,pid){
   try{
-    if(!PRO_TRADES){
-      const{data:tr}=await sb.from('pro_trades').select('key,label,emoji');
-      PRO_TRADES={};(tr||[]).forEach(t=>PRO_TRADES[t.key]={emoji:t.emoji||'🔧',label:t.label});
-    }
-    const{data:pros}=await sb.from('pro_profiles')
-      .select('profile_id,trades,business_name,status,licence_verified_at,lat,lng,address,visible,expires_at')
-      .eq('visible',true).gt('expires_at',new Date().toISOString()).not('lat','is',null);
-    const live=(pros||[]).filter(p=>p.status!=='suspended'&&!hiddenUserIds.has(p.profile_id));
-    const ids=live.map(p=>p.profile_id);
-    let names={};
-    if(ids.length){
-      const{data:ps}=await sb.from('profiles').select('id,name,is_tester').in('id',ids);
-      (ps||[]).forEach(p=>names[p.id]=p);
-    }
-    allPros=live.filter(p=>names[p.profile_id]&&(!names[p.profile_id].is_tester||myIsTester))
-      .map(p=>({...p,name:names[p.profile_id].name,mine:p.profile_id===pid}));
+    const[tr,pr]=res||[];
+    if(tr&&tr.data){PRO_TRADES={};tr.data.forEach(t=>PRO_TRADES[t.key]={emoji:t.emoji||'🔧',label:t.label});}
+    allPros=((pr&&pr.data)||[])
+      .filter(p=>p.status!=='suspended'&&!hiddenUserIds.has(p.profile_id)&&p.profiles&&(!p.profiles.is_tester||myIsTester))
+      .map(({profiles,...p})=>({...p,name:profiles.name,mine:p.profile_id===pid}));
   }catch(e){console.warn('pros',e);allPros=[];}
 }
 
@@ -2443,7 +2451,8 @@ async function loadJobs() {
 
   // Helpers, business listings and jobs are independent — fetch in parallel (one round trip instead of three)
   const _hasLoc=!!(userLat&&userLng);
-  const[{data:helpers},{data:bizData},_jobsRes,_meRes]=await Promise.all([
+  if(_hasLoc)_lastJobsLoad={lat:userLat,lng:userLng,r:RADIUS_KM}; // for the small-pan skip in moveend
+  const[{data:helpers},{data:bizData},_jobsRes,_meRes,_prosRes]=await Promise.all([
     // helpers for map — nearby only, closest first (get_helpers_near, 12 Oct 2026). Was every visible helper
     // nationwide, which would silently cap at the API's 1,000-row limit. 3× the ring radius covers the whole
     // viewport; same columns as before; self excluded server-side (own pin comes from _meRes below).
@@ -2469,7 +2478,9 @@ async function loadJobs() {
       exclude_user_id:pid||null
     }):Promise.resolve(null),
     // own helper row — the helpers query above excludes me (own pin, 9 Oct 2026)
-    pid?sb.from('profiles').select('id,name,last_lat,last_lng,show_on_map,visible_on_map,helper_address,is_tester').eq('id',pid).maybeSingle():Promise.resolve({data:null})
+    pid?sb.from('profiles').select('id,name,last_lat,last_lng,show_on_map,visible_on_map,helper_address,is_tester').eq('id',pid).maybeSingle():Promise.resolve({data:null}),
+    // Pro listings + trades (12 Oct 2026: same round trip, was 3 sequential requests after this batch)
+    fetchPros()
   ]);
   const _mp=_meRes?.data;
   myIsTester=!!_mp?.is_tester; // test accounts (profiles.is_tester) are only shown to other test accounts
@@ -2477,7 +2488,7 @@ async function loadJobs() {
   // own pin: same rule as other helpers' pins — active listing (not paused) with a location
   myHelperPin=(_mp&&_mp.visible_on_map&&_mp.show_on_map&&_mp.last_lat&&_mp.last_lng)?_mp:null;
   allBizListings=bizData||[];
-  await loadPros(pid);
+  applyPros(_prosRes,pid); // after myIsTester is known
 
   // if no user location, show prompt
   if(!_hasLoc){
