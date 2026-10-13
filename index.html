@@ -2444,11 +2444,16 @@ async function loadJobs() {
   // Helpers, business listings and jobs are independent — fetch in parallel (one round trip instead of three)
   const _hasLoc=!!(userLat&&userLng);
   const[{data:helpers},{data:bizData},_jobsRes,_meRes]=await Promise.all([
-    // helpers for map (separate, no radius restriction)
-    sb.from('profiles')
-      .select('id,name,rating,last_lat,last_lng,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,show_on_map,is_tester')
-      .eq('visible_on_map', true)
-      .neq('id', pid||'00000000-0000-0000-0000-000000000000'),
+    // helpers for map — nearby only, closest first (get_helpers_near, 12 Oct 2026). Was every visible helper
+    // nationwide, which would silently cap at the API's 1,000-row limit. 3× the ring radius covers the whole
+    // viewport; same columns as before; self excluded server-side (own pin comes from _meRes below).
+    sb.rpc('get_helpers_near',{
+      user_lat:userLat||43.6532,
+      user_lng:userLng||-79.3832,
+      radius_km:Math.max(30,RADIUS_KM*3),
+      lim:300,
+      exclude_user_id:pid||null
+    }),
     // business listings for map
     sb.rpc('get_business_listings',{
       user_lat:userLat||43.6532,
