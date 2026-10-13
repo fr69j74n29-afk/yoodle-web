@@ -1687,12 +1687,12 @@ async function suspendUser(userId, suspend) {
   const name = await _profileName(userId);
   const ok = await adminConfirm(suspend ? {
     title: 'Suspend this account?', target: '👤 ' + esc(name),
-    body: 'Their <b>open and claimed jobs are cancelled</b>, their helper listing is hidden, and they can no longer post or message. Unsuspending later does <b>not</b> restore cancelled jobs.',
+    body: 'Their <b>open and claimed jobs are cancelled</b>, their helper and Pro listings are hidden, jobs they hold as a helper are released, and they can no longer post or message. Unsuspending later restores their own jobs and listings.',
     reason: 'required', reasonLabel: 'Reason',
     word: 'SUSPEND', button: 'Suspend account'
   } : {
     title: 'Unsuspend this account?', target: '👤 ' + esc(name),
-    body: 'They can post and message again. Cancelled jobs and their helper listing are <b>not</b> restored automatically.',
+    body: 'They can post and message again. Their own jobs and their helper / Pro listings are <b>restored</b> (expired jobs stay closed). Jobs they held as a helper are <b>not</b> given back. Accounts suspended before 12 Oct 2026 have nothing to restore.',
     word: 'UNSUSPEND', button: 'Unsuspend account', danger: false
   });
   if (!ok) return;
