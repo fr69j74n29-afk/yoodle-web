@@ -12,6 +12,7 @@ Yoodle is a passion project. It is free to use for both job posters and job seek
 - [How It Works](https://yoodle.ca/how-it-works.html): Step-by-step explanation of how to post a job and find local help, and how to browse and apply for local odd jobs to earn money. Covers both sides of the marketplace.
 - [FAQ](https://yoodle.ca/faq.html): Frequently asked questions covering what Yoodle is, how payments work, safety and trust, what kinds of jobs can be posted, how small businesses can use the platform, and how it compares to alternatives like TaskRabbit or Kijiji.
 - [Privacy Policy](https://yoodle.ca/privacy.html): Full privacy policy including data collected, location privacy practices, data retention, and user rights.
+- [News](https://yoodle.ca/news): New features, partnerships, safety updates and scam-prevention tips from Yoodle.
 
 ## What Yoodle Does
 
