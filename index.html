@@ -2671,14 +2671,17 @@ async function loadBlockedIds(){
   if(!sb||!me)return;
   try{
     const pid=myProfileId||me.id;
-    const[{data:ids,error:e1},{data:mine,error:e2}]=await Promise.all([
+    const[r1,r2]=await Promise.all([
       sb.rpc('my_blocked_ids'),
       sb.from('blocks').select('blocked_id').eq('blocker_id',pid)
     ]);
-    if(!e1)hiddenUserIds=new Set((ids||[]).map(r=>typeof r==='string'?r:(r?.my_blocked_ids||r?.id)).filter(Boolean));
-    if(!e2)iBlockedIds=new Set((mine||[]).map(r=>r.blocked_id));
-    iBlockedIds.forEach(id=>hiddenUserIds.add(id));
+    applyBlocked(r1,r2);
   }catch(e){console.warn('blocked ids',e);}
+}
+function applyBlocked({data:ids,error:e1},{data:mine,error:e2}){
+  if(!e1)hiddenUserIds=new Set((ids||[]).map(r=>typeof r==='string'?r:(r?.my_blocked_ids||r?.id)).filter(Boolean));
+  if(!e2)iBlockedIds=new Set((mine||[]).map(r=>r.blocked_id));
+  iBlockedIds.forEach(id=>hiddenUserIds.add(id));
 }
 
 // Demo account (App Store reviewer): map stays on Toronto, GPS never moves it
@@ -2687,10 +2690,15 @@ const DEMO_CENTER={lat:43.6532,lng:-79.3832};
 async function checkDemoAccount(){
   isDemoAccount=false;
   if(!sb||!me)return;
+  let isDemo=false;
   try{
     const{data,error}=await sb.from('profiles').select('is_demo').eq('id',myProfileId||me.id).maybeSingle();
-    if(!error&&data?.is_demo===true)isDemoAccount=true;
+    isDemo=!error&&data?.is_demo===true;
   }catch(e){}
+  applyDemo(isDemo);
+}
+function applyDemo(isDemo){
+  isDemoAccount=!!isDemo;
   if(!isDemoAccount)return;
   // Treat downtown Toronto as "your location": distances, green ring, GPS dot
   gpsLat=DEMO_CENTER.lat;gpsLng=DEMO_CENTER.lng;locationSource='gps';
@@ -2711,9 +2719,43 @@ async function checkAccountGates(){
       sb.rpc('am_i_suspended'),
       sb.from('profiles').select('terms_accepted_at').eq('id',myProfileId||me.id).maybeSingle()
     ]);
-    if(susp===true){document.getElementById('suspended-gate').style.display='flex';return true;}
-    if(!tpErr&&tp&&!tp.terms_accepted_at)document.getElementById('terms-gate').style.display='flex';
+    return applyGates(susp,tp,tpErr);
   }catch(e){console.warn('gates',e);}
+  return false;
+}
+// true = suspended (suspended screen shown, caller must stop); Terms prompt shown if not yet accepted
+function applyGates(susp,tp,tpErr){
+  if(susp===true){document.getElementById('suspended-gate').style.display='flex';return true;}
+  if(!tpErr&&tp&&!tp.terms_accepted_at)document.getElementById('terms-gate').style.display='flex';
+  return false;
+}
+
+// Start-up checks in ONE round trip (12 Oct 2026). Were 4 sequential steps in showApp(): profile id →
+// suspended + Terms → is_demo → blocked ids. Same decisions, same order of effect: a suspended account
+// still stops before the map loads. Falls back to the old step-by-step checks if the batch throws.
+async function startupChecks(){
+  if(!sb||!me)return false;
+  let r=null;
+  try{
+    r=await Promise.all([
+      sb.from('profiles').select('id,terms_accepted_at,is_demo').eq('id',me.id).maybeSingle(),
+      sb.rpc('am_i_suspended'),
+      sb.rpc('my_blocked_ids'),
+      sb.from('blocks').select('blocked_id').eq('blocker_id',me.id)
+    ]);
+  }catch(e){console.warn('startup checks',e);}
+  if(!r){
+    const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;
+    if(await checkAccountGates())return true;
+    await checkDemoAccount();
+    await loadBlockedIds();
+    return false;
+  }
+  const[{data:prof,error:profErr},{data:susp},blk1,blk2]=r;
+  myProfileId=prof?.id||me.id;
+  if(applyGates(susp,prof,profErr))return true;
+  applyDemo(!profErr&&prof?.is_demo===true);
+  try{applyBlocked(blk1,blk2);}catch(e){console.warn('blocked ids',e);}
   return false;
 }
 async function acceptTerms(){
@@ -3210,10 +3252,7 @@ async function showApp(){
     setTimeout(()=>{_mapResize();_mapSetView(_lat,_lng,_hasSavedZoom?_z:map.getZoom());updateCircleOverlay();},600);
   }
   setAvatar();
-  if(sb&&me){const{data}=await sb.from('profiles').select('id').eq('id',me.id).maybeSingle();myProfileId=data?.id||me.id;}
-  if(await checkAccountGates())return; // suspended — stop here
-  await checkDemoAccount();
-  await loadBlockedIds();
+  if(await startupChecks())return; // suspended — stop here (profile, gates, demo, blocks in one round trip)
   loadJobs();
   ysInit(); // Find a helper counts + Post a Job category picker
   closeAuthSheet();
