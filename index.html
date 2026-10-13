@@ -2452,14 +2452,17 @@ async function loadJobs() {
   // Helpers, business listings and jobs are independent — fetch in parallel (one round trip instead of three)
   const _hasLoc=!!(userLat&&userLng);
   if(_hasLoc)_lastJobsLoad={lat:userLat,lng:userLng,r:RADIUS_KM}; // for the small-pan skip in moveend
+  // What the map loads (12 Oct 2026): jobs AND helpers within 3× the ring radius (min 30 km) so pins fill the
+  // whole screen. Counts and lists still use only the ring (updateRadiusCounts → sheetJobs / sheetHelpers).
+  const mapLoadKm=Math.max(30,RADIUS_KM*3);
   const[{data:helpers},{data:bizData},_jobsRes,_meRes,_prosRes]=await Promise.all([
     // helpers for map — nearby only, closest first (get_helpers_near, 12 Oct 2026). Was every visible helper
-    // nationwide, which would silently cap at the API's 1,000-row limit. 3× the ring radius covers the whole
-    // viewport; same columns as before; self excluded server-side (own pin comes from _meRes below).
+    // nationwide, which would silently cap at the API's 1,000-row limit. Same columns as before; self excluded
+    // server-side (own pin comes from _meRes below).
     sb.rpc('get_helpers_near',{
       user_lat:userLat||43.6532,
       user_lng:userLng||-79.3832,
-      radius_km:Math.max(30,RADIUS_KM*3),
+      radius_km:mapLoadKm,
       lim:300,
       exclude_user_id:pid||null
     }),
@@ -2473,7 +2476,7 @@ async function loadJobs() {
     _hasLoc?sb.rpc('get_open_jobs_near',{
       user_lat:userLat,
       user_lng:userLng,
-      radius_km:RADIUS_KM,
+      radius_km:mapLoadKm, // was RADIUS_KM (ring only) — pins now fill the screen like helpers
       lim:120,
       exclude_user_id:pid||null
     }):Promise.resolve(null),
