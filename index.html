@@ -641,6 +641,14 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .ys-pcats button{padding:8px 13px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .15s}
 .ys-pcats button.on{border-color:var(--purple);background:rgba(92,138,106,.10);color:var(--purple)}
 .tc-armed{box-shadow:0 0 0 3px rgba(234,179,8,.6)!important}
+/* Direct-contact safety tip in chat (14 Oct 2026) */
+.safety-tip{--tip-bg:#FFF6E6;--tip-bd:#F2D49B;--tip-tx:#7A5410;background:var(--tip-bg);border:1.5px solid var(--tip-bd);color:var(--tip-tx);border-radius:16px;padding:12px 14px;margin-bottom:14px;font-size:13.5px;font-weight:700;line-height:1.45}
+body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0CF8A}
+.safety-tip b{font-weight:900;display:block;margin-bottom:4px;font-size:14px}
+.safety-tip ul{margin:6px 0 8px;padding-left:18px}
+.safety-tip .st-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}
+.safety-tip .st-rep{background:none;border:none;padding:4px 0;color:inherit;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;text-decoration:underline;cursor:pointer}
+.safety-tip .st-got{background:transparent;border:1.5px solid var(--tip-bd);color:var(--tip-tx);border-radius:100px;padding:5px 12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:12.5px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -4369,6 +4377,19 @@ async function loadMessages(){
 }
 
 let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null, activeChatConvId=null;
+// Direct-contact safety tip (14 Oct 2026): helper side of a help_offer chat
+let activeChatSafetyTip=false;
+function _tipSeen(cid){try{return (JSON.parse(localStorage.getItem('yoodle_tip_seen')||'[]')||[]).includes(cid);}catch(e){return false;}}
+function dismissSafetyTip(){
+  if(!activeChatConvId)return;
+  try{let a=JSON.parse(localStorage.getItem('yoodle_tip_seen')||'[]')||[];if(!a.includes(activeChatConvId))a.push(activeChatConvId);localStorage.setItem('yoodle_tip_seen',JSON.stringify(a.slice(-200)));}catch(e){}
+  loadChatMessages(true);
+}
+function safetyTipHtml(){
+  if(!activeChatSafetyTip)return'';
+  if(_tipSeen(activeChatConvId))return`<div style="text-align:center;margin:0 0 14px"><span style="font-size:12.5px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">🛡️ Ask for job details before sharing contact info</span></div>`;
+  return`<div class="safety-tip"><b>🛡️ ${esc(activeChatOtherName)} contacted you directly</b>Before sharing your phone, email or address, ask about the job:<ul><li>What needs doing</li><li>Where and when</li><li>What it pays</li></ul>Keep chatting here until it feels right.<div class="st-foot"><button class="st-rep" onclick="reportFromChat()">Report</button><button class="st-got" onclick="dismissSafetyTip()">Got it</button></div></div>`;
+}
 function closeChat(){
   closeOv('chat-modal');
   activeChatConvId=null;
@@ -4408,7 +4429,7 @@ async function openChatFromNotification(taskId,convId){
 }
 
 async function openChat(taskId,title,otherName,posterId,otherId,otherRating,convId){
-  activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;activeChatConvId=convId||null;activeChatOtherName=otherName||'this person';
+  activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;activeChatConvId=convId||null;activeChatOtherName=otherName||'this person';activeChatSafetyTip=false;
   document.getElementById('chat-title').textContent=title;
   const ratingStr=otherRating?` · ★ ${otherRating}`:'';
   // Set avatar initial immediately with default color
@@ -4456,6 +4477,7 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   const isPoster=task.poster_id===pid;
   const isDoer=task.doer_id===pid;
   const isHO=isHelperContact(task);
+  if(isHO&&isDoer&&task.status==='claimed'&&activeChatTaskId===taskId){activeChatSafetyTip=true;loadChatMessages(true);}
 
   const withdrawBtn=`<button onclick="tapConfirm(this,'Tap again to withdraw',()=>chatUnclaim('${taskId}'))" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Withdraw</button>`;
   const cancelHOLabel=isPoster?'Cancel':'Decline';
@@ -4487,10 +4509,10 @@ async function loadChatMessages(quiet){
     .select('id,body,sender_id,created_at')
     .eq('conversation_id',activeChatConvId)
     .order('created_at',{ascending:true});
-  if(error){el.innerHTML=emptyState('💬','Start the conversation','Send a message below');return;}
-  if(!data?.length){el.innerHTML=emptyState('💬','Start the conversation','Send a message below');return;}
+  if(error){el.innerHTML=safetyTipHtml()+emptyState('💬','Start the conversation','Send a message below');return;}
+  if(!data?.length){el.innerHTML=safetyTipHtml()+emptyState('💬','Start the conversation','Send a message below');return;}
 
-  el.innerHTML=data.map(m=>{
+  el.innerHTML=safetyTipHtml()+data.map(m=>{
     const isMe=m.sender_id===pid||m.sender_id===me.id;
     const isSys=m.body?.startsWith('✅')||m.body?.startsWith('↩️')||m.body?.startsWith('🎉')||m.body?.startsWith('Thanks for');
     if(isSys&&!isMe)return`<div style="text-align:center;margin:10px 0"><span style="font-size:13.5px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">${linkify(esc(m.body||''))}</span></div>`;
