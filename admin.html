@@ -1085,6 +1085,10 @@ body::before {
     <div class="section-title">YOODLE PROS — LICENCE CHECKS <span id="pros-count" style="opacity:.8"></span></div>
     <div id="pros-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
 
+    <!-- ID VERIFICATION (Stripe Identity, 15 Oct 2026) — admin_identity_list() -->
+    <div class="section-title">ID VERIFICATION <span id="idv-count" style="opacity:.8"></span></div>
+    <div id="idv-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
+
     <!-- NEWEST USERS -->
     <div class="section-title">NEWEST USERS — LAST 5</div>
     <div id="recent-users" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
@@ -1260,6 +1264,7 @@ function refreshAll() {
   loadReports();
   loadSuspended();
   loadPros();
+  loadIdvList();
   loadRecentActivity();
   loadAmbassadors();
 }
@@ -1868,6 +1873,51 @@ async function setProStatus(id, status) {
 }
 
 // ── NEWEST USERS (admin-only RPC, reads auth.users) ──
+// ── ID VERIFICATION (Stripe Identity, 15 Oct 2026) ──
+// One row per member who started. Sandbox (test) rows are tagged TEST. Amounts in cents.
+async function loadIdvList() {
+  const el = document.getElementById('idv-list');
+  const cnt = document.getElementById('idv-count');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_identity_list');
+  if (error) {
+    el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load ID verifications: ${esc(error.message)}</div>`;
+    return;
+  }
+  const rows = data || [];
+  const live = rows.filter(r => r.livemode);
+  const verified = live.filter(r => r.status === 'verified').length;
+  const revenue = live.reduce((a, r) => a + Number(r.total_paid_cents || 0), 0);
+  if (cnt) cnt.textContent = rows.length ? `· ${verified} verified · $${(revenue / 100).toFixed(2)} collected (live, incl. HST)` : '';
+  if (!rows.length) {
+    el.innerHTML = '<div style="padding:14px 0;color:var(--muted);font-size:13px">No ID verifications yet.</div>';
+    return;
+  }
+  const colour = { verified: '#1F8E5A', processing: '#2563EB', pending: '#2563EB', requires_input: '#D97706', canceled: '#DC5046', none: 'var(--muted)' };
+  const label = { verified: 'Verified', processing: 'Checking', pending: 'Started', requires_input: 'Failed — can retry', canceled: 'Cancelled', none: 'Paid, not started' };
+  const fmt = t => t ? new Date(t).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '';
+  el.innerHTML = rows.map((r, i) => {
+    const st = r.status || 'none';
+    const when = st === 'verified' ? fmt(r.verified_at) : (r.paid_at ? 'paid ' + fmt(r.paid_at) : '');
+    const extra = [
+      r.attempts_used ? `${r.attempts_used}/3 tries` : '',
+      r.last_error_code && st !== 'verified' ? r.last_error_code : '',
+      r.payments ? `${r.payments}× · $${(Number(r.total_paid_cents || 0) / 100).toFixed(2)}` : ''
+    ].filter(Boolean).join(' · ');
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;${i ? 'border-top:1px solid var(--border);' : ''}">
+      <div style="min-width:0">
+        <div style="font-size:14px;font-weight:700;color:var(--text);word-break:break-word">${esc(r.name || '—')}${r.livemode ? '' : ' <span style="font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:0 4px">TEST</span>'}</div>
+        ${extra ? `<div style="font-family:var(--mono);font-size:11px;color:var(--muted)">${esc(extra)}</div>` : ''}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:12.5px;font-weight:800;color:${colour[st] || 'var(--muted)'}">${esc(label[st] || st)}</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">${esc(when)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 async function loadRecentUsers() {
   const el = document.getElementById('recent-users');
   if (!el) return;

@@ -50,6 +50,7 @@ hr{border:none;border-top:1px solid var(--border);margin:40px 0}
   <li><strong>Ratings, reports and blocks</strong> — ratings you give and receive, reports you submit, and users you block.</li>
   <li><strong>Notification data</strong> — if you allow push notifications, a device identifier from our push provider that lets us send notifications to your device.</li>
   <li><strong>Referral information</strong> — your referral code, points, and who joined using your code.</li>
+  <li><strong>ID verification (optional)</strong> — if you choose to get ID verified, the result of the check and your payment record. Your ID and selfie go to Stripe, not to us. See section 3A.</li>
   <li><strong>Technical data</strong> — standard logs kept by our service providers, such as IP address, browser or device type, and timestamps.</li>
 </ul>
 
@@ -75,6 +76,16 @@ hr{border:none;border-top:1px solid var(--border);margin:40px 0}
 <p>The address and coordinates you save with a job or helper profile are stored in our database so we can show you to nearby neighbours.</p>
 <p><strong>Yoodle Pros (pro.yoodle.ca):</strong> if you create a Pro profile, the <strong>business address</strong> you enter is shown <strong>in full</strong> on your Pro profile and at its exact spot on the map, together with your name, business name, trades, description and travel area, as set out in the <a href="https://pro.yoodle.ca/terms.html">Yoodle Pro Terms</a>. Licence and insurance details you give us are not shown publicly; we only show whether a licence has been verified. You can delete your Pro profile at any time without deleting your Yoodle account.</p>
 
+<h2 id="id-verification">3A. ID Verification (optional)</h2>
+<p>Helpers in Ontario can choose to get ID verified for a fee. The check is done by <strong>Stripe</strong> (Stripe Identity), our payments partner:</p>
+<ul>
+  <li><strong>What Stripe collects</strong> — a photo of your government-issued photo ID (driver's licence, passport or provincial ID card) and a live selfie. Stripe compares your face in the selfie with the photo on your ID, which uses biometric data. Stripe also receives your email address and your payment and billing details.</li>
+  <li><strong>What Yoodle receives and keeps</strong> — only the result: whether you were verified, the date, how many tries you used, the reason a try didn't succeed (for example "selfie didn't match"), and a record of your payment (amount, tax, province). <strong>We never receive or store your ID images, your selfie or your ID number.</strong></li>
+  <li><strong>What other users see</strong> — a "✓ ID verified" badge on your profile, map pin, helper listing and chats. They do not see any details from your ID.</li>
+  <li><strong>Your consent</strong> — we ask for your consent before every check. Getting verified is optional, and you can use Yoodle without it.</li>
+  <li><strong>Stripe's own policy</strong> — Stripe handles your ID, selfie and payment under its own <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Privacy Policy</a> and keeps them for the periods it describes. You can ask us to ask Stripe to delete your verification data (section 11).</li>
+</ul>
+
 <h2>4. Sharing Your Information</h2>
 <p>We do not sell your personal information and we do not share it with advertisers. We share information only as follows:</p>
 <ul>
@@ -90,6 +101,7 @@ hr{border:none;border-top:1px solid var(--border);margin:40px 0}
       <li>OpenStreetMap's Nominatim service — address search (the text you type in the address box is sent to look it up)</li>
       <li>Google — sign-in, if you choose "Continue with Google", and web fonts</li>
       <li>Apple — push notification delivery in the iPhone app</li>
+      <li>Stripe — payments and ID verification, if you choose to get ID verified (section 3A)</li>
     </ul>
   </li>
   <li><strong>If required by law</strong> — in response to valid legal process, or to protect someone's safety.</li>
@@ -98,7 +110,7 @@ hr{border:none;border-top:1px solid var(--border);margin:40px 0}
 
 <h2>5. Data Retention and Deletion</h2>
 <p>We keep your information while your account is active. You can delete your account at any time in the app: go to <strong>Profile → Settings → Delete my account</strong>. This immediately and permanently removes your profile, jobs, helper listing, messages, applications, ratings, points and referrals. Jobs you were helping with go back to their poster as open.</p>
-<p>Copies may remain in our providers' backups for a limited time until they are overwritten. Report records may be kept where needed for safety or legal reasons. You can also ask us to delete your data by emailing us (section 11).</p>
+<p>Deleting your account also removes your ID verification result. Payment records are kept, without the link to your account, for as long as tax law requires. Copies may remain in our providers' backups for a limited time until they are overwritten. Report records may be kept where needed for safety or legal reasons. You can also ask us to delete your data by emailing us (section 11).</p>
 
 <h2>6. Security</h2>
 <p>We use encrypted connections (HTTPS), secure sign-in, and database access rules that limit who can read your data. No system is 100% secure, and we cannot guarantee absolute security.</p>

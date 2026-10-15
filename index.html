@@ -51,6 +51,7 @@
   --btn-a:#5C8A6A;--btn-b:#3D6B50;--btn-lime:#2E7D52; /* filled buttons with white text */
   --sat:env(safe-area-inset-top,0px);
   --sab:env(safe-area-inset-bottom,0px);
+  --idv:#2563EB;--idv-soft:rgba(37,99,235,.07);--idv-line:rgba(37,99,235,.28); /* ID verification accent (15 Oct 2026) */
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{height:100%;overscroll-behavior:none}
@@ -68,6 +69,7 @@ body{
 body.theme-sage-dark{
   --purple:#4CC38A;--lime:#8DE0A8;--pink:#2F9E68;
   --btn-a:#178A52;--btn-b:#0F6B3C;--btn-lime:#15803D;
+  --idv:#60A5FA;--idv-soft:rgba(96,165,250,.10);--idv-line:rgba(96,165,250,.35);
   --teal:#3AC0CF;--orange:#FF8A3D;--yellow:#F0CF5A;
   --bg:#050706;--surface:#0D120F;--surface2:#141A16;
   --border:#232C25;--text:#F0EFEA;--muted:#93A596;--text2:#C9CFC9;
@@ -526,6 +528,13 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-scroll>*{flex-shrink:0} /* long helper bios: don't squeeze (and clip) the stats/bio cards — let the sheet scroll */
 .op-hero{display:flex;align-items:center;gap:14px}
 .op-av{width:32px;height:32px;border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
+/* ID verification badge (15 Oct 2026) */
+.idv-chip{display:inline-flex;align-items:center;gap:3px;margin-left:5px;background:var(--idv-soft);color:var(--idv);border:1px solid var(--idv-line);font-family:'Nunito',sans-serif;font-size:11.5px;font-weight:800;line-height:1.5;padding:0 8px;border-radius:100px;white-space:nowrap;vertical-align:middle}
+#p-idv .idv-chip{margin-left:0}
+.idv-tick{position:absolute;right:-5px;bottom:-5px;width:17px;height:17px;border-radius:50%;background:#2563EB;border:2px solid #fff;color:#fff;font:900 9px/1 'Nunito',sans-serif;display:flex;align-items:center;justify-content:center}
+.idv-li{display:flex;gap:10px;font-size:14px;font-weight:700;color:var(--text2);line-height:1.45;margin-bottom:9px}
+.idv-li>span:first-child{flex-shrink:0;width:20px;text-align:center}
+#idv-go:disabled{opacity:.45;cursor:default}
 .op-name{font-size:20px;font-weight:800;line-height:1.2;word-break:break-word;overflow-wrap:break-word}
 .op-active{font-size:12.5px;font-weight:700;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px}
 .op-active .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);opacity:.6;flex:none}
@@ -850,6 +859,8 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 
       <!-- Find me work card (dynamic state) -->
       <div id="fork-helper-card" style="width:100%;max-width:400px"></div>
+      <!-- Get ID verified card (Ontario helpers, not yet verified) -->
+      <div id="fork-idv-card" style="width:100%;max-width:400px"></div>
     </div>
   </div>
 
@@ -905,6 +916,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <div class="profile-av" id="pav" style="margin:0;flex-shrink:0">?</div>
         <div style="flex:1;min-width:0">
           <div class="profile-nm" id="pnm" style="margin-bottom:2px">—</div>
+          <div id="p-idv" style="display:none;margin:1px 0 3px"></div>
           <div id="pem" style="font-size:13.5px;color:var(--muted)">—</div>
           <div id="p-rating" style="font-size:13.5px;font-weight:800;color:var(--yellow)"></div>
         </div>
@@ -914,6 +926,8 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 
       <!-- Helper status block (populated by loadProfile) -->
       <div id="helper-status-block" style="margin-bottom:12px"></div>
+      <!-- ID verification card (populated by renderIdvBlock, 15 Oct 2026) -->
+      <div id="idv-block" style="margin-bottom:12px"></div>
 
 	<div style="margin-bottom:8px">
         <label class="form-lbl">Display Name</label>
@@ -1399,6 +1413,27 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
     <div style="font-size:14px;color:var(--muted);margin-bottom:22px;line-height:1.5">They won't be able to message you, and you won't see each other's jobs, helper listing or conversations. They aren't notified. You can unblock anytime in Profile.</div>
     <button id="block-go" onclick="confirmBlock()" style="width:100%;padding:16px;border-radius:var(--radius);background:#DC5046;border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer">Block</button>
     <button onclick="closeOv('block-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<!-- ID VERIFICATION CONSENT (Stripe Identity, 15 Oct 2026) -->
+<div class="modal-ov" id="idv-modal" onclick="if(event.target.id==='idv-modal')closeOv('idv-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="margin-bottom:6px">Get ID verified</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.55;margin-bottom:16px;font-weight:700">Stripe, our payments partner, checks your photo ID and a live selfie. Yoodle never sees or stores your ID or selfie.</div>
+    <div class="idv-li"><span>🪪</span>Driver's licence, passport or provincial ID card</div>
+    <div class="idv-li"><span>🤳</span>A selfie taken with your phone's camera, matched to your ID photo</div>
+    <div class="idv-li"><span>✅</span><div>Posters see a <span class="idv-chip" style="margin-left:0">✓ ID verified</span> badge on your profile, map pin and chats</div></div>
+    <div class="idv-li"><span>🔁</span>Up to 3 tries included if a photo doesn't work</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:var(--radius-sm);padding:11px 14px;margin:14px 0;font-size:14px;font-weight:800"><span>$2.99 + HST (13%)</span><span>$3.38</span></div>
+    <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;font-weight:700;color:var(--text2);line-height:1.5;margin-bottom:14px;cursor:pointer">
+      <input type="checkbox" id="idv-consent" onchange="document.getElementById('idv-go').disabled=!this.checked" style="width:19px;height:19px;flex-shrink:0;margin-top:1px;accent-color:var(--idv)">
+      <span>I'm 18 or older and agree that Stripe may process my ID and a selfie, including biometric data from my face, to verify my identity. <a href="https://yoodle.ca/privacy#id-verification" target="_blank" rel="noopener" style="color:var(--idv)">Privacy</a> · <a href="https://yoodle.ca/terms#id-verification" target="_blank" rel="noopener" style="color:var(--idv)">Terms</a></span>
+    </label>
+    <button id="idv-go" disabled onclick="startIdvPayment()" style="width:100%;padding:16px;border-radius:var(--radius);background:var(--idv);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer">Continue to payment</button>
+    <button onclick="closeOv('idv-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:6px">Not now</button>
+    <div style="font-size:12px;color:var(--muted);text-align:center;font-weight:700;line-height:1.5">Next: Stripe's secure payment page, then Stripe's ID check. Ontario helpers only for now.</div>
   </div>
 </div>
 
@@ -1933,6 +1968,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const _notifConvId = _notifParams.get('conv_id');
   const _refCode = _notifParams.get('ref');
   const _openEmail = _notifParams.get('open')==='email-settings';
+  // Back from Stripe (ID verification): ?idv=paid|cancel|done — handled in handleIdvReturn() once signed in
+  const _idvRet = _notifParams.get('idv');
+  if(_idvRet==='paid'||_idvRet==='cancel'||_idvRet==='done') window._idvReturn = _idvRet;
   if(_openEmail) window._openEmailSettings = true;
   // Helper page "Contact on Yoodle" deep link: ?helper={id}[&s=share|fwd] — kept in localStorage
   // so it survives sign-in (Google OAuth reloads the page). Handled in handleHelperLanding().
@@ -1952,7 +1990,7 @@ window.addEventListener('DOMContentLoaded', () => {
       try{localStorage.setItem('yoodle_chat_land', JSON.stringify({t:_notifTaskId, c:(_notifConvId&&/^[0-9a-f-]{36}$/i.test(_notifConvId))?_notifConvId:null, ts:Date.now()}));}catch(e){}
     }
   }
-  if(_notifTaskId || _refCode || _openEmail || _landHelper){
+  if(_notifTaskId || _refCode || _openEmail || _landHelper || window._idvReturn){
     window.history.replaceState({}, '', '/');
   }
   if(window.navigator.standalone===true||window.matchMedia('(display-mode:standalone)').matches){
@@ -1982,6 +2020,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  loadVerifiedIds(); // ID verified badges (public list, signed in or not)
   // Start-up once per signed-in user (Oct 2026). Supabase also fires auth events on token refresh
   // (~hourly) and tab focus, and getSession + INITIAL_SESSION both fire on load — each used to rerun
   // the whole showApp() (≈24 API calls + map recentre). Now repeats only update the session user.
@@ -2234,7 +2273,7 @@ function renderMapPins(){
     if(_hStacked.has(h.id))return; // drawn inside a count bubble
     const[fLat,fLng]=h._fuzzy||(h._fuzzy=fuzzyCoords(h.last_lat,h.last_lng));
     const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
-      html:`<div style="width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif"></div>`,
+      html:`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif">${isIdVerified(h.id)?'<span class="idv-tick">✓</span>':''}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
     const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:hsMatch(h)?3:1,onClick:()=>{logTap('helper',h.id,'pin');openOtherProfile(h.id);}});
@@ -2247,7 +2286,7 @@ function renderMapPins(){
   if(myHelperPin&&!_hStacked.has(myHelperPin.id)){
     const m=myHelperPin;
     const[fLat,fLng]=m._fuzzy||(m._fuzzy=fuzzyCoords(m.last_lat,m.last_lng));
-    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid #fff;box-shadow:0 0 0 2px #2E7D52,0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif"><span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span></div>`;
+    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid #fff;box-shadow:0 0 0 2px #2E7D52,0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${isIdVerified(m.id)?'<span class="idv-tick">✓</span>':''}<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span></div>`;
     const vague=hpIsVagueText(m.helper_address);
     helperMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:4,onClick:()=>{if(vague){hpFocusAreaNext=true;nav('helper');}else openOtherProfile(m.id);}}));
   }
@@ -2544,7 +2583,7 @@ function helperCard(h){
         <div style="display:flex;align-items:center;gap:12px">
           ${avatarCircle(name,h.avatar_color,'28px','12px')}
           <div style="min-width:0;flex:1">
-            <div style="font-size:15px;font-weight:800">${esc(name)}</div>
+            <div style="font-size:15px;font-weight:800">${esc(name)}${idvChip(h.id,true)}</div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:13.5px;color:var(--yellow);font-weight:800">${rating}</span>
               <span style="font-size:13.5px;color:var(--lime);font-weight:800">${rateLabel}</span>
@@ -2613,7 +2652,7 @@ function renderListTabContent(){
         <div style="display:flex;align-items:center;gap:12px">
           ${avatarCircle(name,h.avatar_color,'28px','12px')}
           <div style="min-width:0;flex:1">
-            <div style="font-size:15px;font-weight:800">${esc(name)}</div>
+            <div style="font-size:15px;font-weight:800">${esc(name)}${idvChip(h.id,true)}</div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:13.5px;color:var(--yellow);font-weight:800">${rating}</span>
               <span style="font-size:13.5px;color:var(--lime);font-weight:800">${rateLabel}</span>
@@ -2927,7 +2966,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
     <div class="op-hero">
       <div class="op-av">${esc(initial)}</div>
       <div style="min-width:0">
-        <div class="op-name">${esc(prof.name||'Yoodler')}</div>
+        <div class="op-name">${esc(prof.name||'Yoodler')}${idvChip(userId)}</div>
         ${lastActiveHtml}
         ${(me&&userId!==(myProfileId||me.id))?`<div class="op-mod-links">
           <button onclick="openReport('${userId}',window._opName,null,null)">Report</button>
@@ -3034,7 +3073,7 @@ function nav(view) {
     updateCircleOverlay();updateRadiusCounts();updateNotifNudge();
   },100);}
   if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
-  if(view==='post')updateForkHelperCard();
+  if(view==='post'){updateForkHelperCard();updateForkIdvCard();}
   if(view==='postjob')resetPost();
   if(view==='messages'){loadMessages().then(()=>refreshUnreadCount());}
   if(view==='profile')loadProfile();
@@ -3257,6 +3296,7 @@ async function showApp(){
   registerOneSignal();
   processReferral();
   handleHelperLanding();
+  if(window._idvReturn)handleIdvReturn();
   recordOnboardPath();
   logActive();
   loadPoints();
@@ -4281,6 +4321,7 @@ if(!url){
 }
 // populate helper status block
 updateProfileHelperBlock(prof);
+renderIdvBlock(prof); // ID verification card + own badge (15 Oct 2026)
 loadEmailPref();
 loadBlockedList();
 document.getElementById('p-rating').textContent=prof?.rating?`★ ${prof.rating}`:'';
@@ -4318,7 +4359,7 @@ async function loadMessages(){
       ${avatarCircle(otherName,null,'28px','12px')}
       <div class="conv-body">
         <div class="conv-top">
-          <span class="conv-name">${esc(otherName)}${unreadBadge}</span>
+          <span class="conv-name">${esc(otherName)}${idvChip(t.other_id,true)}${unreadBadge}</span>
           <span class="conv-time" style="${isUnread?'color:var(--pink);font-weight:800':''}">${msgTime}</span>
         </div>
         <div class="conv-title" style="display:flex;align-items:center;gap:4px">${esc(t.title)}${statusTag}</div>
@@ -4389,7 +4430,7 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   const initial=((otherName||'?')[0]).toUpperCase();
   avEl.textContent=initial;
   const otherEl=document.getElementById('chat-other');
-  otherEl.innerHTML=`${esc(otherName+ratingStr)}<span style="font-size:11.5px;opacity:.5;margin-left:4px">›</span>`;
+  otherEl.innerHTML=`${esc(otherName)}${idvChip(otherId,true)}${esc(ratingStr)}<span style="font-size:11.5px;opacity:.5;margin-left:4px">›</span>`;
   openOv('chat-modal');
 
   // if we don't have a convId yet, look it up
@@ -4687,6 +4728,208 @@ async function chatComplete(taskId,doerId){
 }
 
 // Show / hide a popup, sheet or dropdown by id via its "open" class (Oct 2026). Missing element → no-op.
+// ── ID VERIFICATION (Stripe Identity, 15 Oct 2026) ──
+// Ontario helpers pay $2.99 + HST, then Stripe checks a photo ID + live selfie. Backend: Edge Functions
+// identity-checkout → identity-start → identity-webhook (writes identity_verifications). Members can only READ their own row.
+// Badge (Option A, 14 Oct 2026): "an ID-checked person owns this account" — not tied to the display name.
+let verifiedIds=new Set();
+async function loadVerifiedIds(){
+  if(!sb)return;
+  try{
+    const{data,error}=await sb.rpc('get_verified_ids');
+    if(error)return;
+    const s=new Set((data||[]).map(x=>typeof x==='string'?x:(x&&(x.get_verified_ids||x.id))).filter(Boolean));
+    const changed=s.size!==verifiedIds.size||[...s].some(id=>!verifiedIds.has(id));
+    verifiedIds=s;
+    if(!changed)return;
+    try{if(map&&(allHelpers||[]).length)renderMapPins();}catch(e){}
+    try{if(document.getElementById('app-list')?.classList.contains('active'))renderListTabContent();}catch(e){}
+  }catch(e){}
+}
+function isIdVerified(id){return !!id&&verifiedIds.has(id);}
+function idvChip(id,short){return isIdVerified(id)?`<span class="idv-chip" title="ID checked by Stripe">✓ ${short?'ID':'ID verified'}</span>`:'';}
+function idvIsOntario(a){return /(^|,)\s*(ontario|on)\s*(,\s*canada)?\s*$/i.test(String(a||'').trim());}
+// Stripe Identity last_error.code → plain words
+const IDV_ERR={
+  document_expired:'Your ID has expired.',
+  document_type_not_supported:"That type of ID isn't accepted — use a driver's licence, passport or provincial ID card.",
+  document_unverified_other:"Stripe couldn't verify that ID.",
+  selfie_face_mismatch:"The selfie didn't match the photo on your ID.",
+  selfie_document_missing_photo:'The ID has no photo of you.',
+  selfie_manipulated:"The selfie couldn't be used.",
+  selfie_unverified_other:"Stripe couldn't verify the selfie.",
+  under_supported_age:'You need to be 18 or older.',
+  consent_declined:'The check was stopped before it finished.',
+  abandoned:"The check wasn't finished.",
+  camera_not_supported:"Your camera isn't supported — try another phone.",
+  device_not_supported:"Your device isn't supported — try another phone.",
+  country_not_supported:"ID from that country isn't supported."
+};
+const IDV_CALL_ERR={
+  not_signed_in:'Please sign in again',
+  no_helper_profile:'Set up your helper profile first',
+  ontario_only:'ID verification is for Ontario helpers for now',
+  already_verified:"You're already ID verified ✓",
+  not_paid:"Payment hasn't arrived yet — try again in a moment",
+  no_attempts_left:'No tries left — get verified again for 3 more',
+  processing:'Stripe is still checking your last try',
+  server:'Something went wrong — please try again',
+  network:'No connection — please try again'
+};
+let _idvRow=null;
+async function loadIdvRow(){
+  const pid=myProfileId||me?.id;
+  if(!sb||!pid)return null;
+  const{data}=await sb.from('identity_verifications').select('status,paid_at,attempts_used,max_attempts,last_error_code,verified_at').eq('profile_id',pid).maybeSingle();
+  _idvRow=data||null;
+  return _idvRow;
+}
+// none (no helper profile) | verified | other_prov | processing | paid | retry | new | used_up
+function idvState(prof,row){
+  if(row?.status==='verified')return 'verified';
+  const hasHelper=!!(prof?.helper_address||(prof?.helper_categories||[]).length);
+  if(!hasHelper)return 'none';
+  if(!idvIsOntario(prof?.helper_address))return 'other_prov';
+  if(row?.status==='processing')return 'processing';
+  if(row?.paid_at&&row.attempts_used<row.max_attempts)return row.status==='requires_input'?'retry':'paid';
+  if(row?.paid_at&&row.attempts_used>=row.max_attempts)return 'used_up';
+  return 'new';
+}
+function _idvLeft(row){const n=Math.max(0,(row?.max_attempts||3)-(row?.attempts_used||0));return `${n} ${n===1?'try':'tries'} left`;}
+function _idvBox(icon,title,sub,btnHtml){
+  return `<div style="border-radius:var(--radius);border:1.5px solid var(--idv-line);background:var(--idv-soft);padding:16px">
+    <div style="display:flex;align-items:flex-start;gap:12px">
+      <div style="width:42px;height:42px;border-radius:12px;background:var(--idv);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:800;color:var(--text)">${title}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--muted);line-height:1.5;margin-top:2px">${sub}</div>
+      </div>
+    </div>${btnHtml||''}</div>`;
+}
+function _idvBtn(label,fn,ghost){
+  return `<button onclick="${fn}" style="width:100%;margin-top:12px;padding:11px;border-radius:var(--radius-sm);border:${ghost?'1.5px solid var(--border)':'none'};background:${ghost?'var(--surface)':'var(--idv)'};color:${ghost?'var(--text)':'#fff'};font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">${label}</button>`;
+}
+let _idvProf=null;
+async function renderIdvBlock(prof){
+  if(prof)_idvProf=prof;
+  const el=document.getElementById('idv-block');
+  const badgeEl=document.getElementById('p-idv');
+  if(!el)return;
+  const row=await loadIdvRow();
+  const st=idvState(_idvProf,row);
+  if(badgeEl){
+    badgeEl.innerHTML=st==='verified'?'<span class="idv-chip" title="ID checked by Stripe">✓ ID verified</span>':'';
+    badgeEl.style.display=st==='verified'?'block':'none';
+  }
+  if(st==='none'){el.innerHTML='';return;}
+  if(st==='verified'){
+    const d=row?.verified_at?new Date(row.verified_at).toLocaleDateString('en-CA',{month:'short',year:'numeric'}):'';
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:var(--radius);border:1.5px solid var(--idv-line);background:var(--idv-soft)"><span class="idv-chip" style="margin-left:0">✓ ID verified</span><span style="font-size:13px;font-weight:700;color:var(--muted)">Checked by Stripe${d?' · '+esc(d):''}</span></div>`;
+    return;
+  }
+  if(st==='other_prov'){el.innerHTML=_idvBox('🛡️','ID verification',"Coming soon to your province — it's available to Ontario helpers for now.");return;}
+  if(st==='processing'){el.innerHTML=_idvBox('⏳','Checking your ID…','Stripe is checking your ID and selfie — usually a few minutes.',_idvBtn('Refresh','refreshIdv()',true));return;}
+  if(st==='paid'){el.innerHTML=_idvBox('🛡️','Continue your ID check',`You've paid — the ID and selfie check is next. ${_idvLeft(row)}.`,_idvBtn('Continue verification','startIdvCheck()'));return;}
+  if(st==='retry'){el.innerHTML=_idvBox('⚠️',"Your ID check didn't go through",`${esc(IDV_ERR[row?.last_error_code]||"Stripe couldn't finish the check.")} ${_idvLeft(row)} — no extra charge.`,_idvBtn('Try again','startIdvCheck()'));return;}
+  const sub=(st==='used_up'?"Your 3 tries are used up. ":'')+'Posters see a <span class="idv-chip" style="margin-left:0">✓ ID verified</span> badge on your profile, map pin and chats. Checked by Stripe — takes about 2 minutes.';
+  el.innerHTML=_idvBox('🛡️','Get ID verified',sub,_idvBtn('Get verified · $3.38','openIdvConsent()'));
+}
+// + screen card: only for Ontario helpers who aren't verified yet
+async function updateForkIdvCard(){
+  const el=document.getElementById('fork-idv-card');
+  if(!el)return;
+  if(!sb||!me){el.innerHTML='';return;}
+  const[{data:prof},row]=await Promise.all([
+    sb.from('profiles').select('helper_address,helper_categories').eq('id',myProfileId||me.id).maybeSingle(),
+    loadIdvRow()
+  ]);
+  if(prof)_idvProf=prof;
+  const st=idvState(prof,row);
+  const cfg={
+    new:['Get ID verified','Show posters a ✓ badge · $2.99 + HST','openIdvConsent()',true],
+    used_up:['Get ID verified','Show posters a ✓ badge · $2.99 + HST','openIdvConsent()',false],
+    paid:['Continue your ID check',"You've paid — the ID + selfie check is next",'startIdvCheck()',false],
+    retry:['Try your ID check again',`${_idvLeft(row)} · no extra charge`,'startIdvCheck()',false],
+    processing:['Checking your ID…','Usually a few minutes',"nav('profile')",false]
+  }[st];
+  if(!cfg){el.innerHTML='';return;}
+  const[title,sub,fn,isNew]=cfg;
+  el.innerHTML=`<button onclick="${fn}" style="position:relative;width:100%;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;margin-top:16px;border-radius:16px;border:1.5px solid var(--idv-line);background:var(--idv-soft);cursor:pointer;text-align:left;font-family:'Nunito',sans-serif">
+    ${isNew?`<span style="position:absolute;top:-9px;right:14px;background:var(--idv);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.5px;padding:2px 8px;border-radius:100px">NEW</span>`:''}
+    <div style="width:52px;height:52px;border-radius:14px;background:var(--idv);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:24px">${st==='processing'?'⏳':'🛡️'}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">${title}</div>
+      <div style="font-size:14px;font-weight:700;color:var(--muted)">${sub}</div>
+    </div>
+    <span style="font-size:20px;color:var(--idv);font-weight:800;flex-shrink:0">›</span>
+  </button>`;
+}
+async function refreshIdv(){
+  const pid=myProfileId||me?.id;
+  if(!sb||!pid)return;
+  const{data:prof}=await sb.from('profiles').select('helper_address,helper_categories').eq('id',pid).maybeSingle();
+  await renderIdvBlock(prof);
+  if(document.getElementById('app-post')?.classList.contains('active'))updateForkIdvCard();
+}
+function openIdvConsent(){
+  if(!me){toast('Sign in first');return;}
+  const c=document.getElementById('idv-consent');if(c)c.checked=false;
+  const g=document.getElementById('idv-go');if(g){g.disabled=true;g.textContent='Continue to payment';}
+  openOv('idv-modal');
+}
+async function _idvCall(fn){
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session)return{error:'not_signed_in'};
+    const r=await fetch(SUPABASE_URL+'/functions/v1/'+fn,{method:'POST',
+      headers:{'Authorization':'Bearer '+session.access_token,'apikey':SUPABASE_ANON,'Content-Type':'application/json'},body:'{}'});
+    let b={};try{b=await r.json();}catch(e){}
+    return b||{};
+  }catch(e){return{error:'network'};}
+}
+async function startIdvPayment(){
+  const g=document.getElementById('idv-go');
+  if(!document.getElementById('idv-consent')?.checked)return;
+  g.disabled=true;g.textContent='Opening Stripe…';
+  const b=await _idvCall('identity-checkout');
+  if(b.url){window.location.href=b.url;return;}   // Stripe Checkout → back to ?idv=paid|cancel
+  if(b.already_paid){closeOv('idv-modal');return startIdvCheck();}
+  g.disabled=false;g.textContent='Continue to payment';
+  if(b.error==='already_verified'){closeOv('idv-modal');toast('✅ '+IDV_CALL_ERR.already_verified);refreshIdv();return;}
+  toast('❌ '+(IDV_CALL_ERR[b.error]||IDV_CALL_ERR.server));
+}
+let _idvStarting=false;
+async function startIdvCheck(){
+  if(_idvStarting)return;
+  _idvStarting=true;toast('Opening Stripe…');
+  const b=await _idvCall('identity-start');
+  _idvStarting=false;
+  if(b.url){window.location.href=b.url;return;}   // Stripe Identity → back to ?idv=done (link is single-use, never stored)
+  toast('❌ '+(IDV_CALL_ERR[b.error]||IDV_CALL_ERR.server));
+  refreshIdv();
+}
+const _idvSleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function handleIdvReturn(){
+  const r=window._idvReturn;window._idvReturn=null;
+  if(!r)return;
+  if(r==='cancel'){toast('Payment cancelled — nothing was charged');return;}
+  nav('profile');
+  if(r==='paid'){
+    // the webhook can land a few seconds after Stripe sends you back
+    for(let i=0;i<8;i++){const row=await loadIdvRow();if(row?.paid_at||row?.status==='verified')break;await _idvSleep(2000);}
+    await refreshIdv();
+    if(_idvRow?.paid_at&&_idvRow.status!=='verified'){toast('✅ Payment received — starting your ID check');setTimeout(startIdvCheck,1200);}
+    else toast('Payment is processing — tap Continue in a moment');
+    return;
+  }
+  // r==='done': back from Stripe Identity
+  toast('Thanks! Stripe is checking your ID…');
+  for(let i=0;i<10;i++){await _idvSleep(2500);const row=await loadIdvRow();if(row&&row.status!=='pending'&&row.status!=='processing')break;}
+  await refreshIdv();
+  await loadVerifiedIds();
+  if(_idvRow?.status==='verified')toast("✅ You're ID verified!");
+}
+
 function openOv(id){document.getElementById(id)?.classList.add('open');}
 function closeOv(id){document.getElementById(id)?.classList.remove('open');}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
