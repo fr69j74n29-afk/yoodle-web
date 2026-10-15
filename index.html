@@ -543,6 +543,14 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-mod-links{display:flex;align-items:center;gap:6px;margin-top:3px;font-size:12.5px;color:var(--muted)}
 .op-mod-links button{background:none;border:none;padding:2px 0;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;color:#DC5046;text-decoration:underline;cursor:pointer}
 .op-mod-links .op-mod-unblock{color:var(--muted)}
+.op-stats{background:var(--surface2);border-radius:var(--radius-sm);border:1.5px solid var(--border);overflow:hidden}
+.op-stats-row{display:grid;grid-template-columns:1fr 1fr}
+.op-stat{padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.op-stat:first-child{border-right:1px solid var(--border)}
+.op-stat-role{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.op-stat-line{font-size:14px;font-weight:700;display:flex;align-items:baseline;gap:5px}
+.op-stat-num{color:var(--purple);font-size:17px;font-weight:800}
+.op-stat-rating{font-size:14px;font-weight:800;color:var(--yellow);margin-top:4px}
 .op-bio{background:var(--surface2);border-radius:var(--radius-sm);border:1.5px solid var(--border);padding:14px 16px;word-break:break-word;overflow-wrap:break-word}
 .op-bio-lbl{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
 .op-bio-text{font-size:14px;font-weight:600;color:var(--text2);line-height:1.7;word-break:break-word;overflow-wrap:break-word}
@@ -2886,8 +2894,12 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
   window._opShare=null;
   modal.classList.add('open');
 
-  const [profRes,lastActiveRes,proRes]=await Promise.all([
+  const [profRes,posterRatingRes,helperRatingRes,posterStatsRes,helperStatsRes,lastActiveRes,proRes]=await Promise.all([
     sb.from('profiles').select('id,name,bio,rating,task_count,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,visible_on_map,helper_address').eq('id',userId).maybeSingle(),
+    sb.rpc('get_poster_rating',{user_id:userId}),
+    sb.rpc('get_helper_rating',{user_id:userId}),
+    sb.from('tasks').select('id,status').eq('poster_id',userId),
+    sb.from('applications').select('id,status').eq('applicant_id',userId),
     sb.rpc('get_last_active',{p_user:userId}),
     sb.from('pro_profiles').select('trades,business_name,bio,address,service_radius_km,licence_verified_at,status,visible,expires_at').eq('profile_id',userId).maybeSingle()
   ]);
@@ -2898,6 +2910,22 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
   const _laTxt={today:'Active today',week:'Active this week',month:'Active this month',older:'Last active over a month ago'}[_la]||'';
   const lastActiveHtml=(_laTxt&&userId!==(myProfileId||me?.id))?`<div class="op-active${_la==='today'?' on':''}"><span class="dot"></span>${_laTxt}</div>`:'';
   if(!prof){content.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;font-weight:700">👤 Profile not found.</div>';return;}
+
+  const allPosted=posterStatsRes.data||[];
+  const postedCount=allPosted.length;
+  const postedDone=allPosted.filter(t=>t.status==='completed').length;
+  const appliedCount=(helperStatsRes.data||[]).length;
+  const{data:doerDone}=await sb.from('tasks').select('id').eq('doer_id',userId).eq('status','completed');
+  const helperDone=(doerDone||[]).length;
+
+  const pRating=posterRatingRes.data;
+  const hRating=helperRatingRes.data;
+  const pAvg=Array.isArray(pRating)&&pRating[0]?.round?pRating[0].round:null;
+  const pCount=Array.isArray(pRating)&&pRating[0]?.count?pRating[0].count:0;
+  const hAvg=Array.isArray(hRating)&&hRating[0]?.round?hRating[0].round:null;
+  const hCount=Array.isArray(hRating)&&hRating[0]?.count?hRating[0].count:0;
+  const pRatingStr=pAvg?`★ ${pAvg} <span style="color:var(--muted);font-size:12.5px;font-weight:700">(${pCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
+  const hRatingStr=hAvg?`★ ${hAvg} <span style="color:var(--muted);font-size:12.5px;font-weight:700">(${hCount})</span>`:`<span style="color:var(--muted)">★ No ratings yet</span>`;
 
     const initial=((prof.name||'?')[0]).toUpperCase();
     window._opName=prof.name||'this person';
@@ -2939,7 +2967,6 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
       <div class="op-av">${esc(initial)}</div>
       <div style="min-width:0">
         <div class="op-name">${esc(prof.name||'Yoodler')}${idvChip(userId)}</div>
-        <div style="font-size:14px;font-weight:800;margin-top:3px;color:${prof.rating?'var(--yellow)':'var(--muted)'}">${prof.rating?`★ ${prof.rating}`:'New'}</div><!-- one blended rating, profiles.rating (15 Oct 2026) -->
         ${lastActiveHtml}
         ${(me&&userId!==(myProfileId||me.id))?`<div class="op-mod-links">
           <button onclick="openReport('${userId}',window._opName,null,null)">Report</button>
@@ -2951,6 +2978,29 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
       </div>
     </div>
     ${_proLive?`<button onclick="openOtherProfile('${userId}','pro')" style="width:100%;margin-top:12px;padding:12px 14px;border-radius:var(--radius);background:transparent;border:1.5px solid ${PRO_PIN};color:${PRO_PIN};font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;text-align:left">🔧 Also a Yoodle Pro — ${esc(proTradesText(_pro.trades))} ›</button>`:''}
+    ${prof.visible_on_map?`<div class="op-stats">
+      <div class="op-stats-row" style="grid-template-columns:1fr">
+        <div class="op-stat" style="border-right:none">
+          <div class="op-stat-role">Helper rating</div>
+          <div class="op-stat-rating">${hRatingStr}</div>
+        </div>
+      </div>
+    </div>`:`<div class="op-stats">
+      <div class="op-stats-row">
+        <div class="op-stat">
+          <div class="op-stat-role">As Poster</div>
+          <div class="op-stat-line"><span class="op-stat-num">${postedCount}</span> posted</div>
+          <div class="op-stat-line"><span class="op-stat-num">${postedDone}</span> completed</div>
+          <div class="op-stat-rating">${pRatingStr}</div>
+        </div>
+        <div class="op-stat">
+          <div class="op-stat-role">As Helper</div>
+          <div class="op-stat-line"><span class="op-stat-num">${appliedCount}</span> applied</div>
+          <div class="op-stat-line"><span class="op-stat-num">${helperDone}</span> completed</div>
+          <div class="op-stat-rating">${hRatingStr}</div>
+        </div>
+      </div>
+    </div>`}<!-- helpers (visible_on_map): rating only, no poster/helper counts (8 Oct 2026) -->
     ${(prof.bio||!prof.visible_on_map)?`<div class="op-bio">
       <div class="op-bio-lbl">About</div>
       ${prof.bio?`<div class="op-bio-text">${esc(prof.bio)}</div>`:`<div class="op-bio-empty">No bio yet.</div>`}
