@@ -851,7 +851,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 
       <!-- Find me work card (dynamic state) -->
       <div id="fork-helper-card" style="width:100%;max-width:400px"></div>
-      <!-- Get ID verified card (Ontario helpers, not yet verified) -->
+      <!-- Get ID verified card (any signed-in member not yet verified) -->
       <div id="fork-idv-card" style="width:100%;max-width:400px"></div>
     </div>
   </div>
@@ -1416,16 +1416,16 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
     <div style="font-size:14px;color:var(--muted);line-height:1.55;margin-bottom:16px;font-weight:700">Stripe, our payments partner, checks your photo ID and a live selfie. Yoodle never sees or stores your ID or selfie.</div>
     <div class="idv-li"><span>🪪</span>Driver's licence, passport or provincial ID card</div>
     <div class="idv-li"><span>🤳</span>A selfie taken with your phone's camera, matched to your ID photo</div>
-    <div class="idv-li"><span>✅</span><div>Posters see a <span class="idv-chip" style="margin-left:0">✓ ID verified</span> badge on your profile, map pin and chats</div></div>
+    <div class="idv-li"><span>✅</span><div>Neighbours see a <span class="idv-chip" style="margin-left:0">✓ ID verified</span> badge on your profile and in chats</div></div>
     <div class="idv-li"><span>🔁</span>Up to 3 tries included if a photo doesn't work</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:var(--radius-sm);padding:11px 14px;margin:14px 0;font-size:14px;font-weight:800"><span>$2.99 + HST (13%)</span><span>$3.38</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:var(--radius-sm);padding:11px 14px;margin:14px 0;font-size:14px;font-weight:800"><span>$2.99 + tax</span><span style="font-weight:700;color:var(--muted)">tax added at checkout</span></div>
     <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;font-weight:700;color:var(--text2);line-height:1.5;margin-bottom:14px;cursor:pointer">
       <input type="checkbox" id="idv-consent" onchange="document.getElementById('idv-go').disabled=!this.checked" style="width:19px;height:19px;flex-shrink:0;margin-top:1px;accent-color:var(--idv)">
       <span>I'm 18 or older and agree that Stripe may process my ID and a selfie, including biometric data from my face, to verify my identity. <a href="https://yoodle.ca/privacy#id-verification" target="_blank" rel="noopener" style="color:var(--idv)">Privacy</a> · <a href="https://yoodle.ca/terms#id-verification" target="_blank" rel="noopener" style="color:var(--idv)">Terms</a></span>
     </label>
     <button id="idv-go" disabled onclick="startIdvPayment()" style="width:100%;padding:16px;border-radius:var(--radius);background:var(--idv);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer">Continue to payment</button>
     <button onclick="closeOv('idv-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:6px">Not now</button>
-    <div style="font-size:12px;color:var(--muted);text-align:center;font-weight:700;line-height:1.5">Non-refundable · 3 tries included. Next: Stripe's secure payment page, then Stripe's ID check. Ontario helpers only for now.</div>
+    <div style="font-size:12px;color:var(--muted);text-align:center;font-weight:700;line-height:1.5">Non-refundable · 3 tries included. Next: Stripe's secure payment page, then Stripe's ID check.</div>
   </div>
 </div>
 
@@ -4271,7 +4271,7 @@ if(!url){
 }
 // populate helper status block
 updateProfileHelperBlock(prof);
-renderIdvBlock(prof); // ID verification card + own badge (15 Oct 2026)
+renderIdvBlock(); // ID verification card + own badge (15 Oct 2026)
 loadEmailPref();
 loadBlockedList();
 document.getElementById('p-rating').textContent=prof?.rating?`★ ${prof.rating}`:'';
@@ -4679,7 +4679,7 @@ async function chatComplete(taskId,doerId){
 
 // Show / hide a popup, sheet or dropdown by id via its "open" class (Oct 2026). Missing element → no-op.
 // ── ID VERIFICATION (Stripe Identity, 15 Oct 2026) ──
-// Ontario helpers pay $2.99 + HST, then Stripe checks a photo ID + live selfie. Backend: Edge Functions
+// Any signed-in member pays $2.99 + tax (Stripe Tax picks GST/HST from the billing address), then Stripe checks a photo ID + live selfie. Backend: Edge Functions
 // identity-checkout → identity-start → identity-webhook (writes identity_verifications). Members can only READ their own row.
 // Badge (Option A, 14 Oct 2026): "an ID-checked person owns this account" — not tied to the display name.
 let verifiedIds=new Set();
@@ -4698,7 +4698,6 @@ async function loadVerifiedIds(){
 }
 function isIdVerified(id){return !!id&&verifiedIds.has(id);}
 function idvChip(id,short){return isIdVerified(id)?`<span class="idv-chip" title="ID checked by Stripe">✓ ${short?'ID':'ID verified'}</span>`:'';}
-function idvIsOntario(a){return /(^|,)\s*(ontario|on)\s*(,\s*canada)?\s*$/i.test(String(a||'').trim());}
 // Stripe Identity last_error.code → plain words
 const IDV_ERR={
   document_expired:'Your ID has expired.',
@@ -4717,8 +4716,6 @@ const IDV_ERR={
 };
 const IDV_CALL_ERR={
   not_signed_in:'Please sign in again',
-  no_helper_profile:'Set up your helper profile first',
-  ontario_only:'ID verification is for Ontario helpers for now',
   already_verified:"You're already ID verified ✓",
   not_paid:"Payment hasn't arrived yet — try again in a moment",
   no_attempts_left:'No tries left — get verified again for 3 more',
@@ -4734,12 +4731,9 @@ async function loadIdvRow(){
   _idvRow=data||null;
   return _idvRow;
 }
-// none (no helper profile) | verified | other_prov | processing | paid | retry | new | used_up
-function idvState(prof,row){
+// verified | processing | paid | retry | new | used_up  (open to every member since 15 Oct 2026)
+function idvState(row){
   if(row?.status==='verified')return 'verified';
-  const hasHelper=!!(prof?.helper_address||(prof?.helper_categories||[]).length);
-  if(!hasHelper)return 'none';
-  if(!idvIsOntario(prof?.helper_address))return 'other_prov';
   if(row?.status==='processing')return 'processing';
   if(row?.paid_at&&row.attempts_used<row.max_attempts)return row.status==='requires_input'?'retry':'paid';
   if(row?.paid_at&&row.attempts_used>=row.max_attempts)return 'used_up';
@@ -4759,45 +4753,37 @@ function _idvBox(icon,title,sub,btnHtml){
 function _idvBtn(label,fn,ghost){
   return `<button onclick="${fn}" style="width:100%;margin-top:12px;padding:11px;border-radius:var(--radius-sm);border:${ghost?'1.5px solid var(--border)':'none'};background:${ghost?'var(--surface)':'var(--idv)'};color:${ghost?'var(--text)':'#fff'};font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">${label}</button>`;
 }
-let _idvProf=null;
-async function renderIdvBlock(prof){
-  if(prof)_idvProf=prof;
+async function renderIdvBlock(){
   const el=document.getElementById('idv-block');
   const badgeEl=document.getElementById('p-idv');
   if(!el)return;
   const row=await loadIdvRow();
-  const st=idvState(_idvProf,row);
+  const st=idvState(row);
   if(badgeEl){
     badgeEl.innerHTML=st==='verified'?'<span class="idv-chip" title="ID checked by Stripe">✓ ID verified</span>':'';
     badgeEl.style.display=st==='verified'?'block':'none';
   }
-  if(st==='none'){el.innerHTML='';return;}
   if(st==='verified'){
     const d=row?.verified_at?new Date(row.verified_at).toLocaleDateString('en-CA',{month:'short',year:'numeric'}):'';
     el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:var(--radius);border:1.5px solid var(--idv-line);background:var(--idv-soft)"><span class="idv-chip" style="margin-left:0">✓ ID verified</span><span style="font-size:13px;font-weight:700;color:var(--muted)">Checked by Stripe${d?' · '+esc(d):''}</span></div>`;
     return;
   }
-  if(st==='other_prov'){el.innerHTML=_idvBox('🛡️','ID verification',"Coming soon to your province — it's available to Ontario helpers for now.");return;}
   if(st==='processing'){el.innerHTML=_idvBox('⏳','Checking your ID…','Stripe is checking your ID and selfie — usually a few minutes.',_idvBtn('Refresh','refreshIdv()',true));return;}
   if(st==='paid'){el.innerHTML=_idvBox('🛡️','Continue your ID check',`You've paid — the ID and selfie check is next. ${_idvLeft(row)}.`,_idvBtn('Continue verification','startIdvCheck()'));return;}
   if(st==='retry'){el.innerHTML=_idvBox('⚠️',"Your ID check didn't go through",`${esc(IDV_ERR[row?.last_error_code]||"Stripe couldn't finish the check.")} ${_idvLeft(row)} — no extra charge.`,_idvBtn('Try again','startIdvCheck()'));return;}
-  const sub=(st==='used_up'?"Your 3 tries are used up. ":'')+'Posters see a <span class="idv-chip" style="margin-left:0">✓ ID verified</span> badge on your profile, map pin and chats. Checked by Stripe — takes about 2 minutes.';
-  el.innerHTML=_idvBox('🛡️','Get ID verified',sub,_idvBtn('Get verified · $2.99 + HST','openIdvConsent()'));
+  const sub=(st==='used_up'?"Your 3 tries are used up. ":'')+'Neighbours see a <span class="idv-chip" style="margin-left:0">✓ ID verified</span> badge on your profile and in chats. Checked by Stripe — takes about 2 minutes.';
+  el.innerHTML=_idvBox('🛡️','Get ID verified',sub,_idvBtn('Get verified · $2.99 + tax','openIdvConsent()'));
 }
-// + screen card: only for Ontario helpers who aren't verified yet
+// + screen card: every signed-in member who isn't verified yet
 async function updateForkIdvCard(){
   const el=document.getElementById('fork-idv-card');
   if(!el)return;
   if(!sb||!me){el.innerHTML='';return;}
-  const[{data:prof},row]=await Promise.all([
-    sb.from('profiles').select('helper_address,helper_categories').eq('id',myProfileId||me.id).maybeSingle(),
-    loadIdvRow()
-  ]);
-  if(prof)_idvProf=prof;
-  const st=idvState(prof,row);
+  const row=await loadIdvRow();
+  const st=idvState(row);
   const cfg={
-    new:['Get ID verified','Show posters a ✓ badge · $2.99 + HST','openIdvConsent()',true],
-    used_up:['Get ID verified','Show posters a ✓ badge · $2.99 + HST','openIdvConsent()',false],
+    new:['Get ID verified','Show neighbours a ✓ badge · $2.99 + tax','openIdvConsent()',true],
+    used_up:['Get ID verified','Show neighbours a ✓ badge · $2.99 + tax','openIdvConsent()',false],
     paid:['Continue your ID check',"You've paid — the ID + selfie check is next",'startIdvCheck()',false],
     retry:['Try your ID check again',`${_idvLeft(row)} · no extra charge`,'startIdvCheck()',false],
     processing:['Checking your ID…','Usually a few minutes',"nav('profile')",false]
@@ -4817,8 +4803,7 @@ async function updateForkIdvCard(){
 async function refreshIdv(){
   const pid=myProfileId||me?.id;
   if(!sb||!pid)return;
-  const{data:prof}=await sb.from('profiles').select('helper_address,helper_categories').eq('id',pid).maybeSingle();
-  await renderIdvBlock(prof);
+  await renderIdvBlock();
   if(document.getElementById('app-post')?.classList.contains('active'))updateForkIdvCard();
 }
 function openIdvConsent(){
