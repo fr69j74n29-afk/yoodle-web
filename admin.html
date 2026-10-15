@@ -1041,8 +1041,8 @@ body::before {
 
     <!-- CONVERSATION DETAILS (live only) -->
     <div class="breakdown-card" style="margin-bottom:32px">
-      <h3>Live conversations</h3>
-      <div id="conv-rows"></div>
+      <h3 class="lazy-h" style="cursor:pointer;user-select:none;margin-bottom:0" onclick="toggleConvList()">Live conversations <span class="lazy-hint" id="conv-hint" style="float:right;font-family:var(--mono);font-size:10px;letter-spacing:1px;opacity:.7">▸ TAP TO SHOW</span></h3>
+      <div id="conv-rows" style="display:none;margin-top:12px"></div>
     </div>
 
     <!-- MEMBERS & HELPERS BY REGION -->
@@ -1971,6 +1971,14 @@ async function loadRecentUsers() {
 
 // ── CONVERSATIONS (admin-only RPC; RLS would otherwise limit to the admin's own chats) ──
 // Live = conversation active and job open (not expired) or claimed — i.e. visible in users' Messages.
+// Live conversations list: collapsed by default (15 Oct 2026). Same RPC as the Live Conversations count, so no extra call.
+function toggleConvList() {
+  const el = document.getElementById('conv-rows'), hint = document.getElementById('conv-hint');
+  if (!el) return;
+  const open = el.style.display === 'none';
+  el.style.display = open ? '' : 'none';
+  if (hint) hint.textContent = open ? '▾ HIDE' : '▸ TAP TO SHOW';
+}
 async function loadConvOverview() {
   const rowsEl = document.getElementById('conv-rows');
   const [{ data, error }, { data: suspRows }] = await Promise.all([
