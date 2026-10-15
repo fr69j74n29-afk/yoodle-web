@@ -1039,6 +1039,23 @@ body::before {
       </div>
     </div>
 
+    <!-- NEW ACCOUNTS CHART -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <h3>New Accounts — Last 14 Days</h3>
+          <p>SIGNUPS PER DAY · profiles.created_at</p>
+        </div>
+        <div class="chart-total">
+          <div class="chart-total-num" id="chart-total">—</div>
+          <div class="chart-total-label">Total New</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="growth-chart"></canvas>
+      </div>
+    </div>
+
     <!-- CONVERSATION DETAILS (live only) -->
     <div class="breakdown-card" style="margin-bottom:32px">
       <h3 class="lazy-h" style="cursor:pointer;user-select:none;margin-bottom:0" onclick="toggleConvList()">Live conversations <span class="lazy-hint" id="conv-hint" style="float:right;font-family:var(--mono);font-size:10px;letter-spacing:1px;opacity:.7">▸ TAP TO SHOW</span></h3>
@@ -1060,42 +1077,27 @@ body::before {
     </div>
     </div>
 
-    <!-- NEW ACCOUNTS CHART -->
-    <div class="chart-card">
-      <div class="chart-card-header">
-        <div>
-          <h3>New Accounts — Last 14 Days</h3>
-          <p>SIGNUPS PER DAY · profiles.created_at</p>
-        </div>
-        <div class="chart-total">
-          <div class="chart-total-num" id="chart-total">—</div>
-          <div class="chart-total-label">Total New</div>
-        </div>
-      </div>
-      <div class="chart-wrap">
-        <canvas id="growth-chart"></canvas>
-      </div>
-    </div>
-
     <!-- REPORTS (moderation — review within 24 h) -->
-    <div class="section-title">REPORTS — REVIEW WITHIN 24 HOURS</div>
+    <div class="section-title lazy-h" onclick="toggleLazy('reports')">REPORTS — REVIEW WITHIN 24 HOURS <span class="lazy-hint" id="lazy-hint-reports">▸ TAP TO LOAD</span></div>
+    <div id="lazy-reports" style="display:none">
     <div class="activity-tabs">
       <button class="activity-tab active" onclick="switchReportTab(this,'open')">🚩 Open <span id="rep-open-count" style="opacity:.8"></span></button>
       <button class="activity-tab" onclick="switchReportTab(this,'all')">📋 All</button>
     </div>
     <div id="reports-list" class="activity-panel" style="margin-bottom:28px"></div>
+    </div>
 
     <!-- YOODLE PROS (pro.yoodle.ca) — approve / licence checks (10 Oct 2026) -->
-    <div class="section-title">YOODLE PROS — LICENCE CHECKS <span id="pros-count" style="opacity:.8"></span></div>
-    <div id="pros-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
+    <div class="section-title lazy-h" onclick="toggleLazy('pros')">YOODLE PROS — LICENCE CHECKS <span id="pros-count" style="opacity:.8"></span> <span class="lazy-hint" id="lazy-hint-pros">▸ TAP TO LOAD</span></div>
+    <div id="lazy-pros" style="display:none"><div id="pros-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
     <!-- ID VERIFICATION (Stripe Identity, 15 Oct 2026) — admin_identity_list() -->
-    <div class="section-title">ID VERIFICATION <span id="idv-count" style="opacity:.8"></span></div>
-    <div id="idv-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
+    <div class="section-title lazy-h" onclick="toggleLazy('idv')">ID VERIFICATION <span id="idv-count" style="opacity:.8"></span> <span class="lazy-hint" id="lazy-hint-idv">▸ TAP TO LOAD</span></div>
+    <div id="lazy-idv" style="display:none"><div id="idv-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
     <!-- NEWEST USERS -->
-    <div class="section-title">NEWEST USERS — LAST 5</div>
-    <div id="recent-users" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
+    <div class="section-title lazy-h" onclick="toggleLazy('users')">NEWEST USERS — LAST 5 <span class="lazy-hint" id="lazy-hint-users">▸ TAP TO LOAD</span></div>
+    <div id="lazy-users" style="display:none"><div id="recent-users" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
     <!-- HOW NEW MEMBERS JOINED (profiles.onboard_path) -->
     <div class="section-title lazy-h" onclick="toggleLazy('onboard')">HOW NEW MEMBERS JOINED — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-onboard">▸ TAP TO LOAD</span></div>
@@ -1118,8 +1120,8 @@ body::before {
     <div id="lazy-search" style="display:none"><div id="search-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
     <!-- RECENT ACTIVITY -->
-    <div class="section-title">RECENT ACTIVITY — LAST 48 HOURS</div>
-
+    <div class="section-title lazy-h" onclick="toggleLazy('activity')">RECENT ACTIVITY — LAST 48 HOURS <span class="lazy-hint" id="lazy-hint-activity">▸ TAP TO LOAD</span></div>
+    <div id="lazy-activity" style="display:none">
     <div class="activity-tabs">
       <button class="activity-tab active" onclick="switchActivityTab(this,'jobs')">📋 Jobs <span id="activity-jobs-count" style="opacity:.8"></span></button>
       <button class="activity-tab" onclick="switchActivityTab(this,'helpers')">🙋 Helpers <span id="activity-helpers-count" style="opacity:.8"></span></button>
@@ -1127,9 +1129,12 @@ body::before {
 
     <div id="activity-jobs" class="activity-panel"></div>
     <div id="activity-helpers" class="activity-panel" style="display:none"></div>
+    <div style="margin-bottom:28px"></div>
+    </div>
 
     <!-- AMBASSADOR APPLICATIONS -->
-    <div class="section-title">AMBASSADOR APPLICATIONS</div>
+    <div class="section-title lazy-h" onclick="toggleLazy('amb')">AMBASSADOR APPLICATIONS <span class="lazy-hint" id="lazy-hint-amb">▸ TAP TO LOAD</span></div>
+    <div id="lazy-amb" style="display:none">
     <div class="activity-tabs">
       <button class="activity-tab active" onclick="switchAmbTab(this,'pending')">🕐 Pending <span id="amb-pending-count" style="opacity:.8"></span></button>
       <button class="activity-tab" onclick="switchAmbTab(this,'all')">📋 All <span id="amb-all-count" style="opacity:.8"></span></button>
@@ -1137,10 +1142,11 @@ body::before {
     <div id="amb-pending" class="activity-panel"></div>
     <div id="amb-all" class="activity-panel" style="display:none"></div>
     <div style="margin-bottom:28px"></div>
+    </div>
 
     <!-- SUSPENDED ACCOUNTS (admin-only RPC admin_list_suspended) -->
-    <div class="section-title">SUSPENDED ACCOUNTS <span id="susp-count" style="opacity:.8"></span></div>
-    <div id="suspended-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div>
+    <div class="section-title lazy-h" onclick="toggleLazy('susp')">SUSPENDED ACCOUNTS <span id="susp-count" style="opacity:.8"></span> <span class="lazy-hint" id="lazy-hint-susp">▸ TAP TO LOAD</span></div>
+    <div id="lazy-susp" style="display:none"><div id="suspended-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
     <div class="dash-footer">
       <div class="last-updated" id="last-updated">—</div>
@@ -1258,20 +1264,19 @@ function getSuspended(force) {
 function refreshAll() {
   getSuspended(true);
   loadStats();
-  loadRecentUsers();
-  loadReports();
-  loadSuspended();
-  loadPros();
-  loadIdvList();
-  loadRecentActivity();
-  loadAmbassadors();
-  Object.keys(_lazyOpen).forEach(k => LAZY[k]());   // tap-to-load sections that are open reload too
+  Object.keys(_lazyOpen).forEach(k => LAZY[k]());   // only sections that are open reload   // tap-to-load sections that are open reload too
 }
 
 // ── TAP-TO-LOAD SECTIONS (15 Oct 2026) ──
 // Regions (+ admin-geo.js ≈140 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
-const LAZY = { regions: loadRegions, onboard: loadOnboardStats, share: loadShareStats, tap: loadTapStats, agency: loadAgencyStats, search: loadSearchStats };
+const LAZY = { regions: loadRegions, onboard: loadOnboardStats, share: loadShareStats, tap: loadTapStats, agency: loadAgencyStats, search: loadSearchStats,
+  reports: loadReports, pros: loadPros, idv: loadIdvList, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended };
+// After an admin action: reload a section only if it's open; a closed one reloads fresh the next time it's opened.
+function lazyReload(k) {
+  if (_lazyOpen[k]) return LAZY[k]();
+  const box = document.getElementById('lazy-' + k); if (box) delete box.dataset.loaded;
+}
 const _lazyOpen = {};
 function toggleLazy(k) {
   const box = document.getElementById('lazy-' + k), hint = document.getElementById('lazy-hint-' + k);
@@ -1756,9 +1761,9 @@ async function suspendUser(userId, suspend) {
   if (error) return alert('Error: ' + error.message);
   adminToast(suspend ? 'Account suspended' : 'Account unsuspended');
   getSuspended(true);
-  loadReports();
-  loadSuspended();
-  loadRecentActivity();
+  lazyReload('reports');
+  lazyReload('susp');
+  lazyReload('activity');
   loadStats();   // stat cards (users net of suspended, helpers, open jobs) + Live conversations
 }
 // Suspend / Unsuspend button for activity cards (admin accounts can't be suspended — the RPC refuses)
@@ -1779,7 +1784,7 @@ async function adminCancelJob(taskId, title) {
   const { error } = await sb.rpc('admin_remove_task', { p_task_id: taskId });
   if (error) return alert('Error: ' + error.message);
   adminToast('Job cancelled');
-  loadRecentActivity();
+  lazyReload('activity');
   loadStats();
 }
 
