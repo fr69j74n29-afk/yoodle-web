@@ -2398,6 +2398,9 @@ async function sendAdminMsg() {
 // dashboardReady prevents the loading screen from flashing on every event
 // once the dashboard is already showing.
 let dashboardReady = false;
+// dashboardStarting (15 Oct 2026): INITIAL_SESSION and SIGNED_IN can both arrive while checkAdmin() is still
+// running — without this flag both passed the dashboardReady check and the whole dashboard loaded twice (42 calls instead of 21).
+let dashboardStarting = false;
 
 show('screen-loading');
 
@@ -2405,7 +2408,8 @@ sb.auth.onAuthStateChange(async (_event, session) => {
   if (_event === 'TOKEN_REFRESHED' || _event === 'USER_UPDATED') return;
 
   if (session) {
-    if (dashboardReady) return; // already showing dashboard — do nothing
+    if (dashboardReady || dashboardStarting) return; // already showing / already starting — do nothing
+    dashboardStarting = true;
     show('screen-loading');
     try {
       const isAdmin = await checkAdmin(session.user);
@@ -2426,6 +2430,8 @@ sb.auth.onAuthStateChange(async (_event, session) => {
       console.error('Auth handler error:', err);
       dashboardReady = false;
       show('screen-auth');
+    } finally {
+      dashboardStarting = false;
     }
   } else {
     dashboardReady = false;
