@@ -1312,8 +1312,7 @@ async function loadStats() {
     const detailEl = document.getElementById('stat-users-detail');
     detailEl.textContent = (suspendedCount === null
       ? 'Total profiles created'
-      : `${totalUsers} ttl · ${suspendedCount} susp`) + (idvCount === null ? '' : ` · ${idvCount} ID-vrf`);
-    detailEl.title = 'ttl = all profiles · susp = suspended · ID-vrf = ID verified by Stripe (live checks only)';
+      : `${totalUsers} ttl · ${suspendedCount} susp`) + (idvCount === null ? '' : ` · ${idvCount} ID`);
 
     loadLiveNow();
 
