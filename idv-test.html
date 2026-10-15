@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Yoodle — ID verification test (sandbox)</title>
+<!-- TEMPORARY TEST PAGE (14 Oct 2026). Not linked from anywhere. DELETE BEFORE GOING LIVE.
+     Tests the Stripe Identity backend (identity-checkout → identity-start → identity-webhook) in the Stripe sandbox.
+     Uses the same Supabase session as yoodle.ca (same origin, same default storage key), so sign in on yoodle.ca first. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3"></script>
+<style>
+  :root{--bg:#f7f7fb;--card:#fff;--ink:#1f2333;--mute:#6b7085;--line:#e3e4ee;--accent:#7c3aed;--ok:#16a34a;--warn:#d97706;--bad:#dc2626}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  main{max-width:560px;margin:0 auto;padding:20px 16px 48px}
+  .banner{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:16px}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:var(--mute);font-size:13px;margin:0 0 16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .card h2{font-size:14px;margin:0 0 10px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td{padding:5px 0;border-bottom:1px solid var(--line);vertical-align:top}
+  td:first-child{color:var(--mute);width:42%}
+  tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;background:#eef;color:var(--ink)}
+  .pill.ok{background:#dcfce7;color:var(--ok)} .pill.warn{background:#fef3c7;color:var(--warn)} .pill.bad{background:#fee2e2;color:var(--bad)}
+  .btns{display:flex;flex-direction:column;gap:8px}
+  button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:11px 14px;cursor:pointer;background:var(--accent);color:#fff;text-align:left}
+  button.sec{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  button:disabled{opacity:.5;cursor:default}
+  .hint{font-size:12px;color:var(--mute);margin:2px 0 0}
+  pre{background:#0f1222;color:#d6d9ff;border-radius:10px;padding:10px;font-size:12px;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto;margin:0}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <div class="banner"><b>Test page — Stripe sandbox only.</b> No real money moves. Use card <b>4242 4242 4242 4242</b>, any future date, any CVC, any postal code. Delete this page before going live.</div>
+  <h1>ID verification test</h1>
+  <p class="sub">Pay → verify → check the result. After Stripe sends you back to yoodle.ca, return to this page and tap <b>Refresh status</b>.</p>
+
+  <div class="card">
+    <h2>Account</h2>
+    <div id="who">Loading…</div>
+  </div>
+
+  <div class="card">
+    <h2>Verification status</h2>
+    <table id="status"><tr><td>—</td><td></td></tr></table>
+  </div>
+
+  <div class="card">
+    <h2>Steps</h2>
+    <div class="btns">
+      <div><button id="b-pay" onclick="pay()">1 · Pay $2.99 + HST (test card)</button>
+        <p class="hint">Opens Stripe Checkout. If you've already paid and have attempts left, it skips straight to step 2.</p></div>
+      <div><button id="b-start" onclick="startCheck()">2 · Start ID + selfie check</button>
+        <p class="hint">Opens Stripe's verification. In the sandbox you can pick a test outcome (verified / failed).</p></div>
+      <div><button class="sec" onclick="refresh()">↻ Refresh status</button>
+        <p class="hint">The webhook usually updates within a few seconds.</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Log</h2>
+    <pre id="log">—</pre>
+  </div>
+</main>
+
+<script>
+const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
+const FN = SUPABASE_URL + '/functions/v1/';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);   // same options as index.html → shares its session
+let session = null;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function log(label, obj) {
+  const line = '[' + new Date().toLocaleTimeString() + '] ' + label + (obj !== undefined ? ' ' + JSON.stringify(obj) : '');
+  const el = $('log'); el.textContent = (el.textContent === '—' ? '' : el.textContent + '\n') + line;
+  el.scrollTop = el.scrollHeight;
+}
+const fmt = (t) => t ? new Date(t).toLocaleString() : '—';
+const pill = (s) => {
+  const cls = s === 'verified' ? 'ok' : (s === 'requires_input' || s === 'canceled') ? 'bad' : (s === 'pending' || s === 'processing') ? 'warn' : '';
+  return '<span class="pill ' + cls + '">' + esc(s || 'none') + '</span>';
+};
+
+async function call(fn) {
+  if (!session) { log('Not signed in'); return null; }
+  const r = await fetch(FN + fn, { method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + session.access_token, 'apikey': SUPABASE_ANON, 'Content-Type': 'application/json' },
+    body: '{}' });
+  let body = null; try { body = await r.json(); } catch (_) {}
+  // never log the Stripe URL itself (single-use links)
+  log(fn + ' → ' + r.status, body && body.url ? { url: '(Stripe link received)' } : body);
+  return { status: r.status, body };
+}
+
+async function pay() {
+  $('b-pay').disabled = true;
+  try {
+    const res = await call('identity-checkout');
+    if (res?.body?.url) { location.href = res.body.url; return; }
+    if (res?.body?.already_paid) { log('Already paid — go to step 2'); }
+    await refresh();
+  } finally { $('b-pay').disabled = false; }
+}
+
+async function startCheck() {
+  $('b-start').disabled = true;
+  try {
+    const res = await call('identity-start');
+    if (res?.body?.url) { location.href = res.body.url; return; }
+    await refresh();
+  } finally { $('b-start').disabled = false; }
+}
+
+async function refresh() {
+  if (!session) return;
+  const uid = session.user.id;
+  const [{ data: prof }, { data: row, error }, { data: ids }] = await Promise.all([
+    sb.from('profiles').select('name,helper_address').eq('id', uid).maybeSingle(),
+    sb.from('identity_verifications')
+      .select('status,paid_at,attempts_used,max_attempts,last_error_code,verified_at,updated_at')
+      .eq('profile_id', uid).maybeSingle(),
+    sb.rpc('get_verified_ids'),
+  ]);
+  if (error) log('status read error', error.message);
+  const ontario = /(^|,)\s*(ontario|on)\s*(,\s*canada)?\s*$/i.test(String(prof?.helper_address ?? '').trim());
+  const badge = Array.isArray(ids) && ids.some(x => (x?.id ?? x?.profile_id ?? x) === uid);
+  $('who').innerHTML = '<table>'
+    + '<tr><td>Signed in as</td><td>' + esc(prof?.name) + '<br><span class="hint">' + esc(session.user.email) + '</span></td></tr>'
+    + '<tr><td>Helper address</td><td>' + esc(prof?.helper_address || '— (needs a helper profile)') + '</td></tr>'
+    + '<tr><td>Eligible (Ontario)</td><td>' + (ontario ? '<span class="pill ok">yes</span>' : '<span class="pill bad">no</span>') + '</td></tr>'
+    + '</table>';
+  $('status').innerHTML =
+      '<tr><td>Status</td><td>' + pill(row?.status) + '</td></tr>'
+    + '<tr><td>Paid credit</td><td>' + (row?.paid_at ? 'yes — ' + fmt(row.paid_at) : 'no') + '</td></tr>'
+    + '<tr><td>Attempts used</td><td>' + (row ? row.attempts_used + ' of ' + row.max_attempts : '—') + '</td></tr>'
+    + '<tr><td>Last error</td><td>' + esc(row?.last_error_code || '—') + '</td></tr>'
+    + '<tr><td>Verified at</td><td>' + fmt(row?.verified_at) + '</td></tr>'
+    + '<tr><td>Badge (get_verified_ids)</td><td>' + (badge ? '<span class="pill ok">✓ ID verified</span>' : 'not shown') + '</td></tr>'
+    + '<tr><td>Last update</td><td>' + fmt(row?.updated_at) + '</td></tr>';
+  log('status', row ? { status: row.status, paid: !!row.paid_at, attempts: row.attempts_used + '/' + row.max_attempts, error: row.last_error_code, badge } : { status: 'no row yet' });
+}
+
+(async () => {
+  const { data } = await sb.auth.getSession();
+  session = data.session;
+  if (!session) {
+    $('who').innerHTML = 'Not signed in. <a href="/">Sign in on yoodle.ca</a>, then come back to <b>yoodle.ca/idv-test.html</b>.';
+    $('b-pay').disabled = $('b-start').disabled = true;
+    return;
+  }
+  sb.auth.onAuthStateChange((_e, s) => { if (s) session = s; });
+  await refresh();
+})();
+</script>
+</body>
+</html>
