@@ -1290,7 +1290,8 @@ async function loadStats() {
       { data: helpers },
       { data: taskStatuses },
       { data: recentProfiles },
-      { data: suspRows, error: suspErr }
+      { data: suspRows, error: suspErr },
+      { data: idvRows, error: idvErr }
     ] = await Promise.all([
       sb.from('profiles').select('*', { count: 'exact', head: true }),
       sb.from('profiles').select('id, visible_on_map, show_on_map').eq('visible_on_map', true),
@@ -1299,16 +1300,20 @@ async function loadStats() {
         .select('created_at')
         .gte('created_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: true }),
-      getSuspended()
+      getSuspended(),
+      sb.rpc('admin_identity_list')   // ID verified count (live Stripe checks only), 15 Oct 2026
     ]);
 
     // Registered users = active accounts (total − suspended); detail line shows both
     const totalUsers = userCount ?? 0;
     const suspendedCount = suspErr ? null : (suspRows || []).length;
     animateNumber('stat-users', suspendedCount === null ? totalUsers : totalUsers - suspendedCount);
-    document.getElementById('stat-users-detail').textContent = suspendedCount === null
+    const idvCount = idvErr ? null : (idvRows || []).filter(r => r.status === 'verified' && r.livemode).length;
+    const detailEl = document.getElementById('stat-users-detail');
+    detailEl.textContent = (suspendedCount === null
       ? 'Total profiles created'
-      : `${totalUsers} total · ${suspendedCount} suspended`;
+      : `${totalUsers} ttl · ${suspendedCount} susp`) + (idvCount === null ? '' : ` · ${idvCount} ID-vrf`);
+    detailEl.title = 'ttl = all profiles · susp = suspended · ID-vrf = ID verified by Stripe (live checks only)';
 
     loadLiveNow();
 
