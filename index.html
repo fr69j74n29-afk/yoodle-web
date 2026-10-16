@@ -4771,8 +4771,8 @@ async function renderIdvBlock(){
     return;
   }
   if(st==='processing'){el.innerHTML=_idvBox('⏳','Checking your ID…','Stripe is checking your ID and selfie — usually a few minutes.',_idvBtn('Refresh','refreshIdv()',true));return;}
-  if(st==='paid'){el.innerHTML=_idvBox('🛡️','Continue your ID check',`You've paid — the ID and selfie check is next. ${_idvLeft(row)}.`,_idvBtn('Continue verification','startIdvCheck()'));return;}
-  if(st==='retry'){el.innerHTML=_idvBox('⚠️',"Your ID check didn't go through",`${esc(IDV_ERR[row?.last_error_code]||"Stripe couldn't finish the check.")} ${_idvLeft(row)} — no extra charge.`,_idvBtn('Try again','startIdvCheck()'));return;}
+  if(st==='paid'){el.innerHTML=_idvBox('🛡️','Continue your ID check',`You've paid — the ID and selfie check is next. ${_idvLeft(row)}.`,_idvBtn('Continue verification',"startIdvCheck('profile')"));return;}
+  if(st==='retry'){el.innerHTML=_idvBox('⚠️',"Your ID check didn't go through",`${esc(IDV_ERR[row?.last_error_code]||"Stripe couldn't finish the check.")} ${_idvLeft(row)} — no extra charge.`,_idvBtn('Try again',"startIdvCheck('profile')"));return;}
   const sub=(st==='used_up'?"Your 3 tries are used up. ":'')+'Neighbours see a <span class="idv-chip" style="margin-left:0">✓ ID verified</span> badge on your profile and in chats. Checked by Stripe — takes about 2 minutes.';
   el.innerHTML=_idvBox('🛡️','Get ID verified',sub,_idvBtn('Get verified · $2.99 + tax',"openIdvConsent('profile')"));
 }
@@ -4786,8 +4786,8 @@ async function updateForkIdvCard(){
   const cfg={
     new:['Get ID verified','Show neighbours a ✓ badge · $2.99 + tax',"openIdvConsent('plus')",true],
     used_up:['Get ID verified','Show neighbours a ✓ badge · $2.99 + tax',"openIdvConsent('plus')",false],
-    paid:['Continue your ID check',"You've paid — the ID + selfie check is next",'startIdvCheck()',false],
-    retry:['Try your ID check again',`${_idvLeft(row)} · no extra charge`,'startIdvCheck()',false],
+    paid:['Continue your ID check',"You've paid — the ID + selfie check is next","startIdvCheck('plus')",false],
+    retry:['Try your ID check again',`${_idvLeft(row)} · no extra charge`,"startIdvCheck('plus')",false],
     processing:['Checking your ID…','Usually a few minutes',"nav('profile')",false]
   }[st];
   if(!cfg){el.innerHTML='';return;}
@@ -4808,9 +4808,11 @@ async function refreshIdv(){
   await renderIdvBlock();
   if(document.getElementById('app-post')?.classList.contains('active'))updateForkIdvCard();
 }
-// Tap tracking (16 Oct 2026): open (from + or Profile) → pay (Continue to payment) → cancel (back from Stripe). Admin: admin_idv_taps().
+// Tap tracking (16 Oct 2026): open (from + or Profile) → pay (Continue to payment) → start (Continue verification / Try again / auto after paying) → cancel (back from Stripe). Admin: admin_idv_taps().
+// Returns a promise that never rejects; before a redirect to Stripe we wait for it (max 1.5 s) so the tap isn't dropped.
 let _idvSrc=null;
-function logIdvTap(step){try{if(sb&&me)sb.rpc('log_idv_tap',{p_step:step,p_source:_idvSrc}).then(()=>{},()=>{});}catch(e){}}
+function logIdvTap(step,src){try{if(sb&&me)return sb.rpc('log_idv_tap',{p_step:step,p_source:src===undefined?_idvSrc:src}).then(()=>{},()=>{});}catch(e){}return Promise.resolve();}
+const _idvLogged=p=>Promise.race([p,new Promise(r=>setTimeout(r,1500))]);
 function openIdvConsent(src){
   if(!me){toast('Sign in first');return;}
   _idvSrc=src==='plus'||src==='profile'?src:null;
@@ -4832,22 +4834,23 @@ async function _idvCall(fn){
 async function startIdvPayment(){
   const g=document.getElementById('idv-go');
   if(!document.getElementById('idv-consent')?.checked)return;
-  logIdvTap('pay');
+  const logged=logIdvTap('pay');   // runs alongside the checkout call
   g.disabled=true;g.textContent='Opening Stripe…';
   const b=await _idvCall('identity-checkout');
-  if(b.url){window.location.href=b.url;return;}   // Stripe Checkout → back to ?idv=paid|cancel
-  if(b.already_paid){closeOv('idv-modal');return startIdvCheck();}
+  if(b.url){await _idvLogged(logged);window.location.href=b.url;return;}   // Stripe Checkout → back to ?idv=paid|cancel
+  if(b.already_paid){closeOv('idv-modal');return startIdvCheck(_idvSrc);}
   g.disabled=false;g.textContent='Continue to payment';
   if(b.error==='already_verified'){closeOv('idv-modal');toast('✅ '+IDV_CALL_ERR.already_verified);refreshIdv();return;}
   toast('❌ '+(IDV_CALL_ERR[b.error]||IDV_CALL_ERR.server));
 }
 let _idvStarting=false;
-async function startIdvCheck(){
+async function startIdvCheck(src){
   if(_idvStarting)return;
   _idvStarting=true;toast('Opening Stripe…');
+  const logged=logIdvTap('start',src==='plus'||src==='profile'?src:null);   // src: 'plus' | 'profile' | none (auto-start after paying)
   const b=await _idvCall('identity-start');
   _idvStarting=false;
-  if(b.url){window.location.href=b.url;return;}   // Stripe Identity → back to ?idv=done (link is single-use, never stored)
+  if(b.url){await _idvLogged(logged);window.location.href=b.url;return;}   // Stripe Identity → back to ?idv=done (link is single-use, never stored)
   toast('❌ '+(IDV_CALL_ERR[b.error]||IDV_CALL_ERR.server));
   refreshIdv();
 }
@@ -4861,7 +4864,7 @@ async function handleIdvReturn(){
     // the webhook can land a few seconds after Stripe sends you back
     for(let i=0;i<8;i++){const row=await loadIdvRow();if(row?.paid_at||row?.status==='verified')break;await _idvSleep(2000);}
     await refreshIdv();
-    if(_idvRow?.paid_at&&_idvRow.status!=='verified'){toast('✅ Payment received — starting your ID check');setTimeout(startIdvCheck,1200);}
+    if(_idvRow?.paid_at&&_idvRow.status!=='verified'){toast('✅ Payment received — starting your ID check');setTimeout(()=>startIdvCheck(),1200);}
     else toast('Payment is processing — tap Continue in a moment');
     return;
   }

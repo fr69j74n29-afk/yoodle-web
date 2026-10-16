@@ -1954,7 +1954,7 @@ async function loadIdvList() {
 }
 
 // Who tapped ID verification (16 Oct 2026) — admin_idv_taps(): one row per member, newest tap first.
-// Steps: Opened = tapped Get verified (from + or Profile) · To payment = ticked consent + Continue to payment · Cancelled = came back from Stripe Checkout without paying.
+// Steps: Opened = tapped Get verified (from + or Profile) · To payment = ticked consent + Continue to payment · ID check = tapped Continue verification / Try again (or auto-start after paying) · Cancelled = came back from Stripe Checkout without paying.
 function renderIdvTaps(taps, err) {
   const head = `<div style="font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--muted);padding:16px 0 4px;border-top:1px solid var(--border);margin-top:4px">TAPPED GET VERIFIED · ${taps.length}</div>`;
   if (err) return head + `<div style="padding:8px 0 14px;color:var(--muted);font-size:13px">Could not load taps: ${esc(err.message)}</div>`;
@@ -1963,9 +1963,9 @@ function renderIdvTaps(taps, err) {
   const stLabel = { verified: ['Verified', '#1F8E5A'], processing: ['Checking', '#2563EB'], pending: ['Started check', '#2563EB'], requires_input: ['Failed — can retry', '#D97706'], canceled: ['Cancelled check', '#DC5046'] };
   return head + taps.map((t, i) => {
     const [lbl, col] = t.idv_status ? (stLabel[t.idv_status] || [t.idv_status, 'var(--muted)'])
-      : t.pays ? ['Went to payment', '#D97706'] : ['Opened only', 'var(--muted)'];
+      : t.starts ? ['Opened ID check', '#2563EB'] : t.pays ? ['Went to payment', '#D97706'] : ['Opened only', 'var(--muted)'];
     const where = [t.from_plus ? `+ ×${t.from_plus}` : '', t.from_profile ? `Profile ×${t.from_profile}` : ''].filter(Boolean).join(' · ');
-    const extra = [`opened ${t.opens}×`, t.pays ? `to payment ${t.pays}×` : '', t.cancels ? `cancelled ${t.cancels}×` : '', where].filter(Boolean).join(' · ');
+    const extra = [`opened ${t.opens}×`, t.pays ? `to payment ${t.pays}×` : '', t.starts ? `ID check ${t.starts}×` : '', t.cancels ? `cancelled ${t.cancels}×` : '', where].filter(Boolean).join(' · ');
     return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;${i ? 'border-top:1px solid var(--border);' : ''}">
       <div style="min-width:0">
         <div style="font-size:14px;font-weight:700;color:var(--text);word-break:break-word">${esc(t.name || '—')}${t.is_tester ? ' <span style="font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:0 4px">TEST</span>' : ''}</div>
