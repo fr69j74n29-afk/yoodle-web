@@ -2420,7 +2420,8 @@ function setListRadius(el,km){
   loadJobs();
 }
 
-// Pro listings (pro.yoodle.ca, 10 Oct 2026): pending + approved are readable by everyone (RLS); show only live ones.
+// Pro listings (pro.yoodle.ca, 10 Oct 2026): show only live ones. 16 Oct 2026: RLS returns only APPROVED pros
+// (plus your own, any status) — pending pros stay off the yoodle.ca map until Roman approves them in admin.
 // 12 Oct 2026: fetched in parallel with helpers/jobs inside loadJobs(), and in ONE request — the owner's name comes
 // embedded via the pro_profiles.profile_id → profiles FK (was 3 requests in a row: trades, pros, names).
 // Trades list is cached after the first successful load.
@@ -4772,7 +4773,7 @@ async function renderIdvBlock(){
   if(st==='paid'){el.innerHTML=_idvBox('🛡️','Continue your ID check',`You've paid — the ID and selfie check is next. ${_idvLeft(row)}.`,_idvBtn('Continue verification','startIdvCheck()'));return;}
   if(st==='retry'){el.innerHTML=_idvBox('⚠️',"Your ID check didn't go through",`${esc(IDV_ERR[row?.last_error_code]||"Stripe couldn't finish the check.")} ${_idvLeft(row)} — no extra charge.`,_idvBtn('Try again','startIdvCheck()'));return;}
   const sub=(st==='used_up'?"Your 3 tries are used up. ":'')+'Neighbours see a <span class="idv-chip" style="margin-left:0">✓ ID verified</span> badge on your profile and in chats. Checked by Stripe — takes about 2 minutes.';
-  el.innerHTML=_idvBox('🛡️','Get ID verified',sub,_idvBtn('Get verified · $2.99 + tax','openIdvConsent()'));
+  el.innerHTML=_idvBox('🛡️','Get ID verified',sub,_idvBtn('Get verified · $2.99 + tax',"openIdvConsent('profile')"));
 }
 // + screen card: every signed-in member who isn't verified yet
 async function updateForkIdvCard(){
@@ -4782,8 +4783,8 @@ async function updateForkIdvCard(){
   const row=await loadIdvRow();
   const st=idvState(row);
   const cfg={
-    new:['Get ID verified','Show neighbours a ✓ badge · $2.99 + tax','openIdvConsent()',true],
-    used_up:['Get ID verified','Show neighbours a ✓ badge · $2.99 + tax','openIdvConsent()',false],
+    new:['Get ID verified','Show neighbours a ✓ badge · $2.99 + tax',"openIdvConsent('plus')",true],
+    used_up:['Get ID verified','Show neighbours a ✓ badge · $2.99 + tax',"openIdvConsent('plus')",false],
     paid:['Continue your ID check',"You've paid — the ID + selfie check is next",'startIdvCheck()',false],
     retry:['Try your ID check again',`${_idvLeft(row)} · no extra charge`,'startIdvCheck()',false],
     processing:['Checking your ID…','Usually a few minutes',"nav('profile')",false]
@@ -4806,8 +4807,13 @@ async function refreshIdv(){
   await renderIdvBlock();
   if(document.getElementById('app-post')?.classList.contains('active'))updateForkIdvCard();
 }
-function openIdvConsent(){
+// Tap tracking (16 Oct 2026): open (from + or Profile) → pay (Continue to payment) → cancel (back from Stripe). Admin: admin_idv_taps().
+let _idvSrc=null;
+function logIdvTap(step){try{if(sb&&me)sb.rpc('log_idv_tap',{p_step:step,p_source:_idvSrc}).then(()=>{},()=>{});}catch(e){}}
+function openIdvConsent(src){
   if(!me){toast('Sign in first');return;}
+  _idvSrc=src==='plus'||src==='profile'?src:null;
+  logIdvTap('open');
   const c=document.getElementById('idv-consent');if(c)c.checked=false;
   const g=document.getElementById('idv-go');if(g){g.disabled=true;g.textContent='Continue to payment';}
   openOv('idv-modal');
@@ -4825,6 +4831,7 @@ async function _idvCall(fn){
 async function startIdvPayment(){
   const g=document.getElementById('idv-go');
   if(!document.getElementById('idv-consent')?.checked)return;
+  logIdvTap('pay');
   g.disabled=true;g.textContent='Opening Stripe…';
   const b=await _idvCall('identity-checkout');
   if(b.url){window.location.href=b.url;return;}   // Stripe Checkout → back to ?idv=paid|cancel
@@ -4847,7 +4854,7 @@ const _idvSleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function handleIdvReturn(){
   const r=window._idvReturn;window._idvReturn=null;
   if(!r)return;
-  if(r==='cancel'){toast('Payment cancelled — nothing was charged');return;}
+  if(r==='cancel'){_idvSrc=null;logIdvTap('cancel');toast('Payment cancelled — nothing was charged');return;}
   nav('profile');
   if(r==='paid'){
     // the webhook can land a few seconds after Stripe sends you back

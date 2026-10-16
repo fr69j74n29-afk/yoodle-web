@@ -1912,7 +1912,9 @@ async function loadIdvList() {
   const cnt = document.getElementById('idv-count');
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
-  const { data, error } = await sb.rpc('admin_identity_list');
+  const [{ data, error }, tapsRes] = await Promise.all([sb.rpc('admin_identity_list'), sb.rpc('admin_idv_taps')]);
+  const taps = (tapsRes && !tapsRes.error && tapsRes.data) || [];
+  const tapsHtml = renderIdvTaps(taps, tapsRes && tapsRes.error);
   if (error) {
     el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load ID verifications: ${esc(error.message)}</div>`;
     return;
@@ -1921,9 +1923,10 @@ async function loadIdvList() {
   const live = rows.filter(r => r.livemode);
   const verified = live.filter(r => r.status === 'verified').length;
   const revenue = live.reduce((a, r) => a + Number(r.total_paid_cents || 0), 0);
-  if (cnt) cnt.textContent = rows.length ? `· ${verified} verified · $${(revenue / 100).toFixed(2)} collected (live, incl. HST)` : '';
+  const tapped = taps.filter(t => !t.is_tester).length;
+  if (cnt) cnt.textContent = (rows.length || tapped) ? `· ${tapped} tapped · ${verified} verified · $${(revenue / 100).toFixed(2)} collected (live, incl. HST)` : '';
   if (!rows.length) {
-    el.innerHTML = '<div style="padding:14px 0;color:var(--muted);font-size:13px">No ID verifications yet.</div>';
+    el.innerHTML = '<div style="padding:14px 0;color:var(--muted);font-size:13px">No ID verifications yet.</div>' + tapsHtml;
     return;
   }
   const colour = { verified: '#1F8E5A', processing: '#2563EB', pending: '#2563EB', requires_input: '#D97706', canceled: '#DC5046', none: 'var(--muted)' };
@@ -1945,6 +1948,32 @@ async function loadIdvList() {
       <div style="text-align:right;flex-shrink:0">
         <div style="font-size:12.5px;font-weight:800;color:${colour[st] || 'var(--muted)'}">${esc(label[st] || st)}</div>
         <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">${esc(when)}</div>
+      </div>
+    </div>`;
+  }).join('') + tapsHtml;
+}
+
+// Who tapped ID verification (16 Oct 2026) — admin_idv_taps(): one row per member, newest tap first.
+// Steps: Opened = tapped Get verified (from + or Profile) · To payment = ticked consent + Continue to payment · Cancelled = came back from Stripe Checkout without paying.
+function renderIdvTaps(taps, err) {
+  const head = `<div style="font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--muted);padding:16px 0 4px;border-top:1px solid var(--border);margin-top:4px">TAPPED GET VERIFIED · ${taps.length}</div>`;
+  if (err) return head + `<div style="padding:8px 0 14px;color:var(--muted);font-size:13px">Could not load taps: ${esc(err.message)}</div>`;
+  if (!taps.length) return head + '<div style="padding:8px 0 14px;color:var(--muted);font-size:13px">No taps yet.</div>';
+  const fmt = t => t ? new Date(t).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+  const stLabel = { verified: ['Verified', '#1F8E5A'], processing: ['Checking', '#2563EB'], pending: ['Started check', '#2563EB'], requires_input: ['Failed — can retry', '#D97706'], canceled: ['Cancelled check', '#DC5046'] };
+  return head + taps.map((t, i) => {
+    const [lbl, col] = t.idv_status ? (stLabel[t.idv_status] || [t.idv_status, 'var(--muted)'])
+      : t.pays ? ['Went to payment', '#D97706'] : ['Opened only', 'var(--muted)'];
+    const where = [t.from_plus ? `+ ×${t.from_plus}` : '', t.from_profile ? `Profile ×${t.from_profile}` : ''].filter(Boolean).join(' · ');
+    const extra = [`opened ${t.opens}×`, t.pays ? `to payment ${t.pays}×` : '', t.cancels ? `cancelled ${t.cancels}×` : '', where].filter(Boolean).join(' · ');
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;${i ? 'border-top:1px solid var(--border);' : ''}">
+      <div style="min-width:0">
+        <div style="font-size:14px;font-weight:700;color:var(--text);word-break:break-word">${esc(t.name || '—')}${t.is_tester ? ' <span style="font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:0 4px">TEST</span>' : ''}</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">${esc(extra)}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:12.5px;font-weight:800;color:${col}">${esc(lbl)}</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">${esc(fmt(t.last_at))}</div>
       </div>
     </div>`;
   }).join('');
