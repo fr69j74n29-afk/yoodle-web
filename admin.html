@@ -5,7 +5,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Yoodle · Internal Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -1936,7 +1936,7 @@ async function loadIdvList() {
     const st = r.status || 'none';
     const when = st === 'verified' ? fmt(r.verified_at) : (r.paid_at ? 'paid ' + fmt(r.paid_at) : '');
     const extra = [
-      r.attempts_used ? `${r.attempts_used}/3 tries` : '',
+      r.attempts_used ? `${r.attempts_used} ${r.attempts_used === 1 ? 'try' : 'tries'}` : '',
       r.last_error_code && st !== 'verified' ? r.last_error_code : '',
       r.payments ? `${r.payments}× · $${(Number(r.total_paid_cents || 0) / 100).toFixed(2)}` : ''
     ].filter(Boolean).join(' · ');

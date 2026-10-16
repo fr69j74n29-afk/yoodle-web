@@ -34,7 +34,7 @@
   "keywords": "odd jobs, local help, neighbourhood tasks, hire local, community work, earn money local"
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"/>
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 <link rel="manifest" href="/manifest.json">
@@ -1417,7 +1417,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
     <div class="idv-li"><span>🪪</span>Driver's licence, passport or provincial ID card</div>
     <div class="idv-li"><span>🤳</span>A selfie taken with your phone's camera, matched to your ID photo</div>
     <div class="idv-li"><span>✅</span><div>Neighbours see a <span class="idv-chip" style="margin-left:0">✓ ID verified</span> badge on your profile and in chats</div></div>
-    <div class="idv-li"><span>🔁</span>Up to 3 tries included if a photo doesn't work</div>
     <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:var(--radius-sm);padding:11px 14px;margin:14px 0;font-size:14px;font-weight:800"><span>$2.99 + tax</span><span style="font-weight:700;color:var(--muted)">tax added at checkout</span></div>
     <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;font-weight:700;color:var(--text2);line-height:1.5;margin-bottom:14px;cursor:pointer">
       <input type="checkbox" id="idv-consent" onchange="document.getElementById('idv-go').disabled=!this.checked" style="width:19px;height:19px;flex-shrink:0;margin-top:1px;accent-color:var(--idv)">
@@ -1425,7 +1424,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
     </label>
     <button id="idv-go" disabled onclick="startIdvPayment()" style="width:100%;padding:16px;border-radius:var(--radius);background:var(--idv);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer">Continue to payment</button>
     <button onclick="closeOv('idv-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:6px">Not now</button>
-    <div style="font-size:12px;color:var(--muted);text-align:center;font-weight:700;line-height:1.5">Non-refundable · 3 tries included. Next: Stripe's secure payment page, then Stripe's ID check.</div>
+    <div style="font-size:12px;color:var(--muted);text-align:center;font-weight:700;line-height:1.5">Non-refundable. Next: Stripe's secure payment page, then Stripe's ID check.</div>
   </div>
 </div>
 
@@ -4720,7 +4719,7 @@ const IDV_CALL_ERR={
   not_signed_in:'Please sign in again',
   already_verified:"You're already ID verified ✓",
   not_paid:"Payment hasn't arrived yet — try again in a moment",
-  no_attempts_left:'No tries left — get verified again for 3 more',
+  no_attempts_left:'Please tap Get verified to start again',
   processing:'Stripe is still checking your last try',
   server:'Something went wrong — please try again',
   network:'No connection — please try again'
@@ -4733,15 +4732,13 @@ async function loadIdvRow(){
   _idvRow=data||null;
   return _idvRow;
 }
-// verified | processing | paid | retry | new | used_up  (open to every member since 15 Oct 2026)
+// verified | processing | paid | retry | new  (open to every member since 15 Oct 2026; no try limit since 16 Oct 2026)
 function idvState(row){
   if(row?.status==='verified')return 'verified';
   if(row?.status==='processing')return 'processing';
-  if(row?.paid_at&&row.attempts_used<row.max_attempts)return row.status==='requires_input'?'retry':'paid';
-  if(row?.paid_at&&row.attempts_used>=row.max_attempts)return 'used_up';
+  if(row?.paid_at)return row.status==='requires_input'?'retry':'paid';
   return 'new';
 }
-function _idvLeft(row){const n=Math.max(0,(row?.max_attempts||3)-(row?.attempts_used||0));return `${n} ${n===1?'try':'tries'} left`;}
 function _idvBox(icon,title,sub,btnHtml){
   return `<div style="border-radius:var(--radius);border:1.5px solid var(--idv-line);background:var(--idv-soft);padding:16px">
     <div style="display:flex;align-items:flex-start;gap:12px">
@@ -4771,9 +4768,9 @@ async function renderIdvBlock(){
     return;
   }
   if(st==='processing'){el.innerHTML=_idvBox('⏳','Checking your ID…','Stripe is checking your ID and selfie — usually a few minutes.',_idvBtn('Refresh','refreshIdv()',true));return;}
-  if(st==='paid'){el.innerHTML=_idvBox('🛡️','Continue your ID check',`You've paid — the ID and selfie check is next. ${_idvLeft(row)}.`,_idvBtn('Continue verification',"startIdvCheck('profile')"));return;}
-  if(st==='retry'){el.innerHTML=_idvBox('⚠️',"Your ID check didn't go through",`${esc(IDV_ERR[row?.last_error_code]||"Stripe couldn't finish the check.")} ${_idvLeft(row)} — no extra charge.`,_idvBtn('Try again',"startIdvCheck('profile')"));return;}
-  const sub=(st==='used_up'?"Your 3 tries are used up. ":'')+'Neighbours see a <span class="idv-chip" style="margin-left:0">✓ ID verified</span> badge on your profile and in chats. Checked by Stripe — takes about 2 minutes.';
+  if(st==='paid'){el.innerHTML=_idvBox('🛡️','Continue your ID check',"You've paid — the ID and selfie check is next.",_idvBtn('Continue verification',"startIdvCheck('profile')"));return;}
+  if(st==='retry'){el.innerHTML=_idvBox('⚠️',"Your ID check didn't go through",`${esc(IDV_ERR[row?.last_error_code]||"Stripe couldn't finish the check.")} Try again — no extra charge.`,_idvBtn('Try again',"startIdvCheck('profile')"));return;}
+  const sub='Neighbours see a <span class="idv-chip" style="margin-left:0">✓ ID verified</span> badge on your profile and in chats. Checked by Stripe — takes about 2 minutes.';
   el.innerHTML=_idvBox('🛡️','Get ID verified',sub,_idvBtn('Get verified · $2.99 + tax',"openIdvConsent('profile')"));
 }
 // + screen card: every signed-in member who isn't verified yet
@@ -4785,9 +4782,8 @@ async function updateForkIdvCard(){
   const st=idvState(row);
   const cfg={
     new:['Get ID verified','Show neighbours a ✓ badge · $2.99 + tax',"openIdvConsent('plus')",true],
-    used_up:['Get ID verified','Show neighbours a ✓ badge · $2.99 + tax',"openIdvConsent('plus')",false],
     paid:['Continue your ID check',"You've paid — the ID + selfie check is next","startIdvCheck('plus')",false],
-    retry:['Try your ID check again',`${_idvLeft(row)} · no extra charge`,"startIdvCheck('plus')",false],
+    retry:['Try your ID check again','No extra charge',"startIdvCheck('plus')",false],
     processing:['Checking your ID…','Usually a few minutes',"nav('profile')",false]
   }[st];
   if(!cfg){el.innerHTML='';return;}
