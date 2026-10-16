@@ -1936,7 +1936,7 @@ async function loadIdvList() {
     const st = r.status || 'none';
     const when = st === 'verified' ? fmt(r.verified_at) : (r.paid_at ? 'paid ' + fmt(r.paid_at) : '');
     const extra = [
-      r.attempts_used ? `${r.attempts_used} ${r.attempts_used === 1 ? 'try' : 'tries'}` : '',
+      r.attempts_used ? `${r.attempts_used}/3 tries` : '',
       r.last_error_code && st !== 'verified' ? r.last_error_code : '',
       r.payments ? `${r.payments}× · $${(Number(r.total_paid_cents || 0) / 100).toFixed(2)}` : ''
     ].filter(Boolean).join(' · ');
