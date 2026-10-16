@@ -1559,7 +1559,7 @@ async function submitContactHelper(){
   const [{data:myProf},{data:helperProf0}]=await Promise.all([
     getMyName().then(name=>({data:name?{name}:null})),
     contactIsPro
-      ?sb.from('pro_profiles').select('lat,lng,address').eq('profile_id',contactHelperId).maybeSingle()
+      ?sb.rpc('get_public_pros',{p_profile:contactHelperId}).maybeSingle()
       :sb.from('profiles').select('last_lat,last_lng,helper_address').eq('id',contactHelperId).single()
   ]);
   const helperProf=contactIsPro&&helperProf0?{last_lat:helperProf0.lat,last_lng:helperProf0.lng,helper_address:helperProf0.address}:helperProf0;
@@ -2422,15 +2422,16 @@ function setListRadius(el,km){
 
 // Pro listings (pro.yoodle.ca, 10 Oct 2026): show only live ones. 16 Oct 2026: RLS returns only APPROVED pros
 // (plus your own, any status) — pending pros stay off the yoodle.ca map until Roman approves them in admin.
+// 16 Oct 2026 (later): yoodle.ca reads pros ONLY via get_public_pros() (security definer: approved, visible,
+// unexpired, located; tester pros only for testers) — no admin/owner exception, so nobody sees pending pros here.
+// The pro still sees their own pending pin on pro.yoodle.ca (table RLS: approved OR own OR admin).
 // 12 Oct 2026: fetched in parallel with helpers/jobs inside loadJobs(), and in ONE request — the owner's name comes
 // embedded via the pro_profiles.profile_id → profiles FK (was 3 requests in a row: trades, pros, names).
 // Trades list is cached after the first successful load.
 function fetchPros(){
   return Promise.all([
     PRO_TRADES?null:sb.from('pro_trades').select('key,label,emoji'),
-    sb.from('pro_profiles')
-      .select('profile_id,trades,business_name,status,licence_verified_at,lat,lng,address,visible,expires_at,profiles(name,is_tester)')
-      .eq('visible',true).gt('expires_at',new Date().toISOString()).not('lat','is',null)
+    sb.rpc('get_public_pros')   // 16 Oct 2026: approved + visible + unexpired only, filtered in the database
   ]).catch(e=>{console.warn('pros',e);return[null,null];});
 }
 function applyPros(res,pid){
@@ -2438,8 +2439,8 @@ function applyPros(res,pid){
     const[tr,pr]=res||[];
     if(tr&&tr.data){PRO_TRADES={};tr.data.forEach(t=>PRO_TRADES[t.key]={emoji:t.emoji||'🔧',label:t.label});}
     allPros=((pr&&pr.data)||[])
-      .filter(p=>p.status!=='suspended'&&!hiddenUserIds.has(p.profile_id)&&p.profiles&&(!p.profiles.is_tester||myIsTester))
-      .map(({profiles,...p})=>({...p,name:profiles.name,mine:p.profile_id===pid}));
+      .filter(p=>p.status==='approved'&&!hiddenUserIds.has(p.profile_id)&&(!p.is_tester||myIsTester))
+      .map(({is_tester,...p})=>({...p,mine:p.profile_id===pid}));
   }catch(e){console.warn('pros',e);allPros=[];}
 }
 
@@ -2890,7 +2891,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
   const [profRes,lastActiveRes,proRes]=await Promise.all([
     sb.from('profiles').select('id,name,bio,rating,task_count,avatar_color,helper_categories,helper_bio,helper_rate,helper_rate_type,visible_on_map,helper_address').eq('id',userId).maybeSingle(),
     sb.rpc('get_last_active',{p_user:userId}),
-    sb.from('pro_profiles').select('trades,business_name,bio,address,service_radius_km,licence_verified_at,status,visible,expires_at').eq('profile_id',userId).maybeSingle()
+    sb.rpc('get_public_pros',{p_profile:userId}).maybeSingle()   // approved pros only (database-enforced)
   ]);
 
   const prof=profRes.data;
@@ -2910,7 +2911,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
 
   // Pro listing block (pro.yoodle.ca, 10 Oct 2026) — shown when the person has a live Pro listing
   const _pro=proRes&&!proRes.error?proRes.data:null;
-  const _proLive=_pro&&_pro.visible&&_pro.status!=='suspended'&&_pro.expires_at&&new Date(_pro.expires_at)>new Date();
+  const _proLive=_pro&&_pro.visible&&_pro.status==='approved'&&_pro.expires_at&&new Date(_pro.expires_at)>new Date();
   const proHtml=_proLive?(()=>{
     const isMe=userId===(myProfileId||me?.id);
     const area=String(_pro.address||'').trim(); // full business address (public per Yoodle Pro Terms)
