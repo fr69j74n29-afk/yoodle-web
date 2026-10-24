@@ -531,6 +531,16 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 /* ID verification badge */
 .idv-chip{display:inline-flex;align-items:center;gap:3px;margin-left:5px;background:var(--idv-soft);color:var(--idv);border:1px solid var(--idv-line);font-family:'Nunito',sans-serif;font-size:11.5px;font-weight:800;line-height:1.5;padding:0 8px;border-radius:100px;white-space:nowrap;vertical-align:middle}
 #p-idv .idv-chip{margin-left:0}
+.rtw-bolt{position:absolute;right:-5px;top:-5px;width:17px;height:17px;border-radius:50%;background:#F5B82E;border:2px solid #fff;color:#1a1200;font:900 9px/1 'Nunito',sans-serif;display:flex;align-items:center;justify-content:center;z-index:1}
+.rtw-in{font-size:19px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.rtw-chip{display:inline-flex;align-items:center;gap:3px;margin-left:5px;background:rgba(245,184,46,.14);color:#B7860B;border:1px solid rgba(245,184,46,.45);font-family:'Nunito',sans-serif;font-size:11.5px;font-weight:800;line-height:1.5;padding:0 8px;border-radius:100px;white-space:nowrap;vertical-align:middle}
+body.theme-sage-dark .rtw-chip{color:#F5B82E}
+.rtw-card{border-radius:var(--radius);border:1.5px solid rgba(245,184,46,.35);background:rgba(245,184,46,.05);padding:16px}
+.rtw-seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.rtw-seg button{border:1.5px solid var(--border);border-radius:12px;padding:10px;background:var(--surface);color:var(--muted);font:800 14px 'Nunito',sans-serif;cursor:pointer}
+.rtw-seg button small{display:block;font-weight:700;font-size:11.5px;margin-top:2px}
+.rtw-seg button.on{border-color:#F5B82E;color:#B7860B;background:rgba(245,184,46,.10)}
+body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 .idv-tick{position:absolute;right:-5px;bottom:-5px;width:17px;height:17px;border-radius:50%;background:#2563EB;border:2px solid #fff;color:#fff;font:900 9px/1 'Nunito',sans-serif;display:flex;align-items:center;justify-content:center}
 .idv-li{display:flex;gap:10px;font-size:14px;font-weight:700;color:var(--text2);line-height:1.45;margin-bottom:9px}
 .idv-li>span:first-child{flex-shrink:0;width:20px;text-align:center}
@@ -918,6 +928,8 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 
       <!-- Helper status block (populated by loadProfile) -->
       <div id="helper-status-block" style="margin-bottom:12px"></div>
+      <!-- Ready to work card (General Labour helpers; populated by renderRtwBlock) -->
+      <div id="rtw-block" style="margin-bottom:12px;display:none"></div>
       <!-- ID verification card (populated by renderIdvBlock) -->
       <div id="idv-block" style="margin-bottom:12px"></div>
 
@@ -1409,6 +1421,22 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 </div>
 
 <!-- ID VERIFICATION CONSENT (Stripe Identity) -->
+<div class="modal-ov" id="rtw-modal" onclick="if(event.target.id==='rtw-modal')closeOv('rtw-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="margin-bottom:10px">⚡ <span id="rtw-title">Ready to work tomorrow</span></div>
+    <div id="rtw-why"></div>
+    <div id="rtw-idv" style="display:none;border:1.5px solid #F5B82E;border-radius:12px;padding:12px;background:rgba(245,184,46,.06);margin-bottom:12px">
+      <div style="font-size:14.5px;font-weight:800;color:var(--text);margin-bottom:3px"><span style="color:var(--idv)">✓</span> Verified helpers get hired first</div>
+      <div style="font-size:13.5px;font-weight:700;color:var(--muted);line-height:1.45">Get the blue ✓ on your pin and profile. $2.99 + tax, one time. Recommended, not required.</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="closeOv('rtw-modal');openIdvConsent('profile')" style="flex:1;padding:10px;border-radius:10px;border:0;background:#F5B82E;color:#1a1200;font:800 14px 'Nunito',sans-serif;cursor:pointer">Verify ID</button>
+        <button onclick="rtwIdvLater()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font:800 14px 'Nunito',sans-serif;cursor:pointer">Maybe later</button>
+      </div>
+    </div>
+    <button id="rtw-go" class="btn-primary" style="width:100%">Turn on for tomorrow</button>
+  </div>
+</div>
 <div class="modal-ov" id="idv-modal" onclick="if(event.target.id==='idv-modal')closeOv('idv-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -1421,7 +1449,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
     <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:var(--radius-sm);padding:11px 14px;margin:14px 0;font-size:14px;font-weight:800"><span>$2.99 + tax</span><span style="font-weight:700;color:var(--muted)">tax added at checkout</span></div>
     <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;font-weight:700;color:var(--text2);line-height:1.5;margin-bottom:14px;cursor:pointer">
       <input type="checkbox" id="idv-consent" onchange="document.getElementById('idv-go').disabled=!this.checked" style="width:19px;height:19px;flex-shrink:0;margin-top:1px;accent-color:var(--idv)">
-      <span>I'm 18 or older and agree that Stripe may process my ID and a selfie, including biometric data from my face, to verify my identity. <a href="https://yoodle.ca/privacy#id-verification" target="_blank" rel="noopener" style="color:var(--idv)">Privacy</a> · <a href="https://yoodle.ca/terms#id-verification" target="_blank" rel="noopener" style="color:var(--idv)">Terms</a></span>
+      <span>I'm 18 or older and agree that Stripe may process my ID and a selfie, including biometric data from my face, to verify my identity, and that Stripe shares the first and last name on my ID with Yoodle (kept private). <a href="https://yoodle.ca/privacy#id-verification" target="_blank" rel="noopener" style="color:var(--idv)">Privacy</a> · <a href="https://yoodle.ca/terms#id-verification" target="_blank" rel="noopener" style="color:var(--idv)">Terms</a></span>
     </label>
     <button id="idv-go" disabled onclick="startIdvPayment()" style="width:100%;padding:16px;border-radius:var(--radius);background:var(--idv);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer">Continue to payment</button>
     <button onclick="closeOv('idv-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:6px">Not now</button>
@@ -1960,6 +1988,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const _idvRet = _notifParams.get('idv');
   if(_idvRet==='paid'||_idvRet==='cancel'||_idvRet==='done') window._idvReturn = _idvRet;
   if(_openEmail) window._openEmailSettings = true;
+  // Evening push "Ready to work tomorrow?": ?ready=today|tomorrow — handled in handleReadyLanding() once signed in
+  const _readyLand = _notifParams.get('ready');
+  if(_readyLand==='today'||_readyLand==='tomorrow') window._readyLand = _readyLand;
   // Helper page "Contact on Yoodle" deep link: ?helper={id}[&s=share|fwd] — kept in localStorage
   // so it survives sign-in (Google OAuth reloads the page). Handled in handleHelperLanding().
   const _landHelper = _notifParams.get('helper');
@@ -1978,7 +2009,7 @@ window.addEventListener('DOMContentLoaded', () => {
       try{localStorage.setItem('yoodle_chat_land', JSON.stringify({t:_notifTaskId, c:(_notifConvId&&/^[0-9a-f-]{36}$/i.test(_notifConvId))?_notifConvId:null, ts:Date.now()}));}catch(e){}
     }
   }
-  if(_notifTaskId || _refCode || _openEmail || _landHelper || window._idvReturn || window._renewToken){
+  if(_notifTaskId || _refCode || _openEmail || _landHelper || window._idvReturn || window._renewToken || window._readyLand){
     window.history.replaceState({}, '', '/');
   }
   if(window.navigator.standalone===true||window.matchMedia('(display-mode:standalone)').matches){
@@ -2262,7 +2293,7 @@ function renderMapPins(){
     const nMatch=hsCat?g.filter(h=>h!==myHelperPin&&hsMatch(h)).length:0;
     const label=hsCat&&nMatch?`${nMatch}/${g.length}`:String(g.length);
     const you=hasMe?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span>`:'';
-    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid ${hasMe?'#fff':'rgba(255,255,255,.6)'};box-shadow:${hasMe?'0 0 0 2px #2E7D52,':''}0 2px 8px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:${label.length>2?12:15}px;font-weight:900;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${label}${you}</div>`;
+    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid ${hasMe?'#fff':'rgba(255,255,255,.6)'};box-shadow:${hasMe?'0 0 0 2px #2E7D52,':''}0 2px 8px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:${label.length>2?12:15}px;font-weight:900;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${label}${you}${g.some(h=>readyOf(h.id))?'<span class="rtw-bolt" title="Ready to work">⚡</span>':''}</div>`;
     const marker=_htmlMarker(html,38,38,cLat,cLng,{z:hasMe?4:(nMatch?3:1),onClick:()=>openHelperStack(g)});
     if(hsCat){const d=marker.getElement().firstElementChild;if(d)d.classList.add(nMatch?'hs-pin-glow':'hs-pin-dim');}
     helperMarkers.push(marker);
@@ -2271,7 +2302,7 @@ function renderMapPins(){
     if(_hStacked.has(h.id))return; // drawn inside a count bubble
     const[fLat,fLng]=h._fuzzy||(h._fuzzy=fuzzyCoords(h.last_lat,h.last_lng));
     const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
-      html:`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif">${isIdVerified(h.id)?'<span class="idv-tick">✓</span>':''}</div>`,
+      html:`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif">${isIdVerified(h.id)?'<span class="idv-tick">✓</span>':''}${rtwBolt(h.id)}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
     const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:hsMatch(h)?3:1,onClick:()=>{logTap('helper',h.id,'pin');openOtherProfile(h.id);}});
@@ -2284,7 +2315,7 @@ function renderMapPins(){
   if(myHelperPin&&!_hStacked.has(myHelperPin.id)){
     const m=myHelperPin;
     const[fLat,fLng]=m._fuzzy||(m._fuzzy=fuzzyCoords(m.last_lat,m.last_lng));
-    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid #fff;box-shadow:0 0 0 2px #2E7D52,0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${isIdVerified(m.id)?'<span class="idv-tick">✓</span>':''}<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span></div>`;
+    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid #fff;box-shadow:0 0 0 2px #2E7D52,0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${isIdVerified(m.id)?'<span class="idv-tick">✓</span>':''}${rtwBolt(m.id)}<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span></div>`;
     const vague=hpIsVagueText(m.helper_address);
     helperMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:4,onClick:()=>{if(vague){hpFocusAreaNext=true;nav('helper');}else openOtherProfile(m.id);}}));
   }
@@ -2579,7 +2610,7 @@ function helperCard(h){
         <div style="display:flex;align-items:center;gap:12px">
           ${avatarCircle(name,h.avatar_color,'28px','12px')}
           <div style="min-width:0;flex:1">
-            <div style="font-size:15px;font-weight:800">${esc(name)}${idvChip(h.id,true)}</div>
+            <div style="font-size:15px;font-weight:800">${esc(name)}${idvChip(h.id,true)}${rtwChip(h.id)}</div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:13.5px;color:var(--yellow);font-weight:800">${rating}</span>
               <span style="font-size:13.5px;color:var(--lime);font-weight:800">${rateLabel}</span>
@@ -2648,7 +2679,7 @@ function renderListTabContent(){
         <div style="display:flex;align-items:center;gap:12px">
           ${avatarCircle(name,h.avatar_color,'28px','12px')}
           <div style="min-width:0;flex:1">
-            <div style="font-size:15px;font-weight:800">${esc(name)}${idvChip(h.id,true)}</div>
+            <div style="font-size:15px;font-weight:800">${esc(name)}${idvChip(h.id,true)}${rtwChip(h.id)}</div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:13.5px;color:var(--yellow);font-weight:800">${rating}</span>
               <span style="font-size:13.5px;color:var(--lime);font-weight:800">${rateLabel}</span>
@@ -2961,7 +2992,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
     <div class="op-hero">
       <div class="op-av">${esc(initial)}</div>
       <div style="min-width:0">
-        <div class="op-name">${esc(prof.name||'Yoodler')}${idvChip(userId)}</div>
+        <div class="op-name">${esc(prof.name||'Yoodler')}${idvChip(userId)}${rtwChip(userId)}</div>
         <div style="font-size:14px;font-weight:800;margin-top:3px;color:${prof.rating?'var(--yellow)':'var(--muted)'}">${prof.rating?`★ ${prof.rating}`:'New'}</div><!-- one blended rating, profiles.rating -->
         ${lastActiveHtml}
         ${(me&&userId!==(myProfileId||me.id))?`<div class="op-mod-links">
@@ -3271,6 +3302,8 @@ async function showApp(){
   processReferral();
   handleHelperLanding();
   if(window._idvReturn)handleIdvReturn();
+  loadReadyIds(); // ⚡ Ready to work bolts (signed-in only)
+  if(window._readyLand)handleReadyLanding();
   recordOnboardPath();
   logActive();
   loadPoints();
@@ -4325,6 +4358,7 @@ if(!url){
 }
 // populate helper status block
 updateProfileHelperBlock(prof);
+renderRtwBlock(prof); // Ready to work card
 renderIdvBlock(); // ID verification card + own badge
 loadEmailPref();
 loadBlockedList();
@@ -4752,6 +4786,101 @@ async function loadVerifiedIds(){
 }
 function isIdVerified(id){return !!id&&verifiedIds.has(id);}
 function idvChip(id,short){return isIdVerified(id)?`<span class="idv-chip" title="ID checked by Stripe">✓ ${short?'ID':'ID verified'}</span>`:'';}
+
+// ── READY TO WORK (General Labour helpers, Today / Tomorrow) ──
+// Backend: ready_to_work table + get_ready_ids() / get_my_ready_to_work() / set_ready_to_work(); kill switch feature_flags.ready_to_work.
+// Server decides who is eligible and who shows; this code only mirrors it. Any RPC error = feature hidden (safe rollback).
+let readyIds=new Map(); // profile id → {today,tomorrow}
+let _rtwStatus=null;
+async function loadReadyIds(){
+  if(!sb||!me)return;
+  try{
+    const{data,error}=await sb.rpc('get_ready_ids');
+    if(error)return;
+    const m=new Map((data||[]).map(r=>[r.profile_id,{today:!!r.today,tomorrow:!!r.tomorrow}]));
+    const changed=m.size!==readyIds.size||[...m].some(([k,v])=>{const o=readyIds.get(k);return !o||o.today!==v.today||o.tomorrow!==v.tomorrow;});
+    readyIds=m;
+    if(!changed)return;
+    try{if(map&&(allHelpers||[]).length)renderMapPins();}catch(e){}
+  }catch(e){}
+}
+function readyOf(id){const r=id&&readyIds.get(id);return r?(r.today?'today':(r.tomorrow?'tomorrow':null)):null;}
+function rtwBolt(id){return readyOf(id)?'<span class="rtw-in" title="Ready to work">⚡</span>':'';} // bolt INSIDE single/own helper pins (blue ID ✓ stays bottom-right)
+function rtwChip(id,short){const r=readyOf(id);if(!r)return '';const both=readyIds.get(id);const lbl=short?'⚡':(both.today&&both.tomorrow?'⚡ Ready today & tomorrow':r==='today'?'⚡ Ready today':'⚡ Ready tomorrow');return `<span class="rtw-chip" title="Ready to work">${lbl}</span>`;}
+const RTW_WHY={
+  not_labour:{t:'Add General Labour to your helper profile to use this.',b:'Edit helper profile',f:()=>nav('helper')},
+  helper_off:{t:'Your helper profile needs to be active and on the map.',b:'Open helper profile',f:()=>nav('helper')},
+  no_push:{t:'Turn on notifications — we send one reminder each evening so you stay listed.',b:'Turn on notifications',f:()=>requestNotifPermission()},
+  too_new:{t:'Available once your account is 7 days old.',b:null},
+  suspended:{t:'Not available for this account.',b:null},
+  paused:{t:'Ready to work is paused right now.',b:null}
+};
+async function renderRtwBlock(prof){
+  const el=document.getElementById('rtw-block');if(!el)return;
+  const isLabour=(prof?.helper_categories||[]).includes('General Labour');
+  if(!isLabour||!prof?.visible_on_map){el.style.display='none';return;}
+  let st=null;
+  try{const{data,error}=await sb.rpc('get_my_ready_to_work');if(!error)st=data;}catch(e){}
+  if(!st||!st.enabled){el.style.display='none';return;}
+  _rtwStatus=st;
+  const tmr=st.tomorrow_date?new Date(st.tomorrow_date+'T12:00:00').toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'}):'';
+  const line=st.today&&st.tomorrow?'Showing on the map today and tomorrow':st.today?'Showing on the map today':st.tomorrow?'Showing on the map for tomorrow':'Not showing — pick a day';
+  el.innerHTML=`<div class="rtw-card">
+    <div style="display:flex;align-items:center;gap:10px"><span class="rtw-bolt" style="position:static;width:24px;height:24px;font-size:13px;border:0">⚡</span>
+      <div style="font-size:15px;font-weight:800;color:var(--text)">Ready to work</div></div>
+    <div style="font-size:13.5px;font-weight:700;color:var(--muted);margin-top:4px;line-height:1.45">Show contractors and neighbours you can take a general labour job.</div>
+    <div class="rtw-seg">
+      <button class="${st.today?'on':''}" onclick="rtwTap('today')">Today${st.today?' ✓':''}<small>until 11:59 pm</small></button>
+      <button class="${st.tomorrow?'on':''}" onclick="rtwTap('tomorrow')">Tomorrow${st.tomorrow?' ✓':''}<small>${esc(tmr)}</small></button>
+    </div>
+    <div style="margin-top:10px;font-size:13px;font-weight:800;color:${st.today||st.tomorrow?'var(--lime)':'var(--muted)'}">● ${line}</div>
+  </div>`;
+  el.style.display='block';
+}
+function _rtwPushOk(){return window.Notification?.permission==='granted';}
+function _rtwIdvSkipped(){try{return Date.now()-(+localStorage.getItem('yoodle_rtw_idv_skip')||0)<7*864e5;}catch(e){return false;}}
+async function rtwTap(day){
+  const st=_rtwStatus;if(!st)return;
+  if(st[day]){return rtwSet(day,false);} // turning off: no questions
+  let why=st.eligible!=='ok'?st.eligible:(!_rtwPushOk()?'no_push':null);
+  const myId=myProfileId||me?.id;
+  if(!why&&(isIdVerified(myId)||_rtwIdvSkipped()))return rtwSet(day,true);
+  rtwSheet(day,why);
+}
+function rtwSheet(day,why){
+  const w=why&&RTW_WHY[why];
+  document.getElementById('rtw-title').textContent=day==='today'?'Ready to work today':'Ready to work tomorrow';
+  document.getElementById('rtw-why').innerHTML=w?`<div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:12px">${w.t}</div>`:'';
+  document.getElementById('rtw-idv').style.display=(!w&&!isIdVerified(myProfileId||me?.id))?'block':'none';
+  const go=document.getElementById('rtw-go');
+  if(w){go.textContent=w.b||'OK';go.onclick=()=>{closeOv('rtw-modal');if(w.f)w.f();};}
+  else{go.textContent=day==='today'?'Turn on for today':'Turn on for tomorrow';go.onclick=()=>{closeOv('rtw-modal');rtwSet(day,true);};}
+  window._rtwDay=day;
+  openOv('rtw-modal');
+}
+function rtwIdvLater(){try{localStorage.setItem('yoodle_rtw_idv_skip',String(Date.now()));}catch(e){}closeOv('rtw-modal');rtwSet(window._rtwDay||'tomorrow',true);}
+async function rtwSet(day,on){
+  try{
+    const{data,error}=await sb.rpc('set_ready_to_work',{p_day:day,p_on:on});
+    if(error){toast('Could not update — try again');return;}
+    if(data&&data.ok===false){const w=RTW_WHY[data.reason];if(w)rtwSheet(day,data.reason);else toast('Could not update — try again');return;}
+    toast(on?(day==='today'?'⚡ You\'re showing as ready today':'⚡ You\'re showing as ready tomorrow'):'Turned off');
+    _rtwStatus=data;
+  }catch(e){toast('Could not update — try again');return;}
+  try{const{data:prof}=await sb.from('profiles').select('helper_categories,visible_on_map').eq('id',myProfileId||me.id).maybeSingle();renderRtwBlock(prof);}catch(e){}
+  loadReadyIds();
+}
+// Evening push "Ready to work tomorrow?" → ?ready=tomorrow → one tap = on (if eligible), else the Profile card explains why
+async function handleReadyLanding(){
+  const d=window._readyLand;window._readyLand=null;
+  if(d!=='today'&&d!=='tomorrow')return;
+  nav('profile');
+  try{
+    const{data,error}=await sb.rpc('set_ready_to_work',{p_day:d,p_on:true});
+    if(!error&&data&&data.ok)toast(d==='today'?'⚡ You\'re showing as ready today':'⚡ You\'re showing as ready tomorrow');
+  }catch(e){}
+  loadReadyIds();
+}
 // Stripe Identity last_error.code → plain words
 const IDV_ERR={
   document_expired:'Your ID has expired.',
