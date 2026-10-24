@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- yoodle v001 — map: MapLibre GL JS + OpenFreeMap (ported from test2.html, 28 Sept 2026) -->
+<!-- yoodle v001 — map: MapLibre GL JS + OpenFreeMap -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -51,7 +51,7 @@
   --btn-a:#5C8A6A;--btn-b:#3D6B50;--btn-lime:#2E7D52; /* filled buttons with white text */
   --sat:env(safe-area-inset-top,0px);
   --sab:env(safe-area-inset-bottom,0px);
-  --idv:#2563EB;--idv-soft:rgba(37,99,235,.07);--idv-line:rgba(37,99,235,.28); /* ID verification accent (15 Oct 2026) */
+  --idv:#2563EB;--idv-soft:rgba(37,99,235,.07);--idv-line:rgba(37,99,235,.28); /* ID verification accent */
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{height:100%;overscroll-behavior:none}
@@ -65,7 +65,7 @@ body{
 
 
 /* ── THEMES ── */
-/* Sage Dark+ (Sept 2026): sage base, brighter accents; Classic theme retired */
+/* Sage Dark+: sage base, brighter accents */
 body.theme-sage-dark{
   --purple:#4CC38A;--lime:#8DE0A8;--pink:#2F9E68;
   --btn-a:#178A52;--btn-b:#0F6B3C;--btn-lime:#15803D;
@@ -528,7 +528,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .op-scroll>*{flex-shrink:0} /* long helper bios: don't squeeze (and clip) the stats/bio cards — let the sheet scroll */
 .op-hero{display:flex;align-items:center;gap:14px}
 .op-av{width:32px;height:32px;border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
-/* ID verification badge (15 Oct 2026) */
+/* ID verification badge */
 .idv-chip{display:inline-flex;align-items:center;gap:3px;margin-left:5px;background:var(--idv-soft);color:var(--idv);border:1px solid var(--idv-line);font-family:'Nunito',sans-serif;font-size:11.5px;font-weight:800;line-height:1.5;padding:0 8px;border-radius:100px;white-space:nowrap;vertical-align:middle}
 #p-idv .idv-chip{margin-left:0}
 .idv-tick{position:absolute;right:-5px;bottom:-5px;width:17px;height:17px;border-radius:50%;background:#2563EB;border:2px solid #fff;color:#fff;font:900 9px/1 'Nunito',sans-serif;display:flex;align-items:center;justify-content:center}
@@ -595,7 +595,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .ds-title{font-size:14px;font-weight:800;margin-bottom:5px;color:var(--text)}
 .ds-desc{font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.55}
 .ds-div{width:1px;background:var(--border);align-self:stretch;flex-shrink:0}
-/* ── FIND A HELPER (7 Oct 2026) ── */
+/* ── FIND A HELPER ── */
 .hs-btn{display:flex;align-items:center;gap:6px;height:38px;padding:0 13px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;max-width:210px;transition:transform .15s}
 .hs-btn:active{transform:scale(.96)}
 .hs-btn svg{width:16px;height:16px;flex-shrink:0;color:var(--purple)}
@@ -624,7 +624,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 @keyframes hsGlow{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.75),0 0 12px 3px rgba(245,158,11,.55)}50%{box-shadow:0 0 0 9px rgba(245,158,11,0),0 0 20px 7px rgba(245,158,11,.75)}}
 .hs-pin-dim{opacity:.3}
 @media (prefers-reduced-motion:reduce){.hs-pin-glow{animation:none;box-shadow:0 0 14px 5px rgba(245,158,11,.7)}}
-/* neighbour (non-agency) job pins glow red (11 Oct 2026): steady halo is inline; new jobs (<48h) pulse,
+/* neighbour (non-agency) job pins glow red: steady halo is inline; new jobs (<48h) pulse,
    others pulse 3x on the first map render then settle. Agency pins don't glow. */
 .job-glow-new{animation:jobGlow 1.6s ease-in-out infinite}
 .job-glow-intro{animation:jobGlow 1.6s ease-in-out 3}
@@ -638,7 +638,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .ys-pcats button{padding:8px 13px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .15s}
 .ys-pcats button.on{border-color:var(--purple);background:rgba(92,138,106,.10);color:var(--purple)}
 .tc-armed{box-shadow:0 0 0 3px rgba(234,179,8,.6)!important}
-/* Direct-contact safety tip in chat (14 Oct 2026) */
+/* Direct-contact safety tip in chat */
 .safety-tip{--tip-bg:#FFF6E6;--tip-bd:#F2D49B;--tip-tx:#7A5410;background:var(--tip-bg);border:1.5px solid var(--tip-bd);color:var(--tip-tx);border-radius:16px;padding:12px 14px;margin-bottom:14px;font-size:13.5px;font-weight:700;line-height:1.45}
 body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0CF8A}
 .safety-tip b{font-weight:900;display:block;margin-bottom:4px;font-size:14px}
@@ -918,7 +918,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 
       <!-- Helper status block (populated by loadProfile) -->
       <div id="helper-status-block" style="margin-bottom:12px"></div>
-      <!-- ID verification card (populated by renderIdvBlock, 15 Oct 2026) -->
+      <!-- ID verification card (populated by renderIdvBlock) -->
       <div id="idv-block" style="margin-bottom:12px"></div>
 
 	<div style="margin-bottom:8px">
@@ -1260,7 +1260,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   </div>
 </div>
 
-<!-- SETTINGS SHEET (moved from Profile, 5 Oct 2026) -->
+<!-- SETTINGS SHEET -->
 <div class="modal-ov" id="settings-sheet" onclick="if(event.target.id==='settings-sheet')closeSettings()">
   <div class="modal-sheet" style="max-height:90dvh">
     <div class="modal-handle"></div>
@@ -1408,7 +1408,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   </div>
 </div>
 
-<!-- ID VERIFICATION CONSENT (Stripe Identity, 15 Oct 2026) -->
+<!-- ID VERIFICATION CONSENT (Stripe Identity) -->
 <div class="modal-ov" id="idv-modal" onclick="if(event.target.id==='idv-modal')closeOv('idv-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -1533,7 +1533,7 @@ function isHelperContact(task){
 
 let contactHelperId=null;
 let contactHelperName='';
-let contactIsPro=false; // 10 Oct 2026: contacting a Yoodle Pro → anchor the request at the pro listing
+let contactIsPro=false; // contacting a Yoodle Pro → anchor the request at the pro listing
 
 function openContactModal(helperId, helperName, isPro){
   if(!sb||!me)return toast('Sign in to contact helpers');
@@ -1611,7 +1611,7 @@ function normalizeCategory(cat) {
   if (['moving'].includes(cat)) return 'moving';
   return cat || 'other';
 }
-let RADIUS_KM=10; // default search radius (24 Oct 2026: 25 → 10 km); user can still zoom out to 25
+let RADIUS_KM=10; // default search radius; user can zoom out to 25
 let sheetTab='jobs';
 let sheetJobs=[],sheetHelpers=[];
 
@@ -1762,7 +1762,7 @@ function initMap() {
     clearTimeout(_moveEndTimer);
     _moveEndTimer=setTimeout(()=>{
       if(!me)return;
-      // 12 Oct 2026: skip tiny pans (tap-to-centre, a nudge) — same ring size and the centre moved less than
+  // Skip tiny pans (tap-to-centre, a nudge): same ring size and the centre moved less than
       // 5% of the radius (max 250 m) since the last load, so the loaded jobs/helpers still cover the ring.
       const L=_lastJobsLoad;
       if(L&&L.r===RADIUS_KM&&haversineKm(L.lat,L.lng,userLat,userLng)<Math.min(0.25,RADIUS_KM*0.05))return;
@@ -1805,9 +1805,8 @@ function updateRadiusCounts(){
   sheetHelpers=ysBaseHelpers.slice();
   const jobCount=sheetJobs.length;
   const helperCount=sheetHelpers.length;
-  // corner card: "need help" (jobs) line restored 8 Oct 2026 — counts the same jobs the map pins
-  // (show_on_map, open, not the featured poster); hidden at 0. Helpers line always shown.
-  // 11 Oct 2026: split — red "need help" = neighbour jobs only, blue "agency jobs" = isAgencyJob(); each hidden at 0.
+  // Corner card counts the same jobs the map pins (show_on_map, open, not the featured poster).
+  // Red "need help" = neighbour jobs, blue "agency jobs" = isAgencyJob(); each row hidden at 0. Helpers line always shown.
   const pinnedJobs=sheetJobs.filter(j=>j.show_on_map&&j.status==='open'&&j.poster_id!==FEATURED_POSTER_ID);
   const pinnedAgencyCount=pinnedJobs.filter(isAgencyJob).length;
   const pinnedJobCount=pinnedJobs.length-pinnedAgencyCount;
@@ -1836,7 +1835,7 @@ function updateRadiusCounts(){
   ysRender();
 }
 
-// ══ FIND A HELPER (7 Oct 2026) ══
+// ══ FIND A HELPER ══
 // "Find a helper" button (top bar) → popup of categories with helper counts → pick one:
 // popup closes and matching helper pins glow amber; other helper pins fade. Job pins unchanged.
 // Client-side only (no Supabase changes). Categories come from the helper_categories table,
@@ -1889,7 +1888,7 @@ function hsRenderGrid(){
 }
 function _hsInList(){return document.getElementById('app-list')?.classList.contains('active');}
 function hsOpen(){
-  // from the list, stay in the list (8 Oct 2026); from anywhere else, go to the map as before
+  // from the list, stay in the list; from anywhere else, go to the map
   if(!document.getElementById('app-map').classList.contains('active')&&!_hsInList())nav('map');
   hsRenderGrid();openOv('hs-ov');
 }
@@ -1954,7 +1953,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const _notifConvId = _notifParams.get('conv_id');
   const _refCode = _notifParams.get('ref');
   const _openEmail = _notifParams.get('open')==='email-settings';
-  // Email/push "Keep my job up" / "Keep me listed" one-tap renew link: ?renew={token} (24 Oct 2026). Handled after sb is created.
+  // Email/push "Keep my job up" / "Keep me listed" one-tap renew link: ?renew={token}. Handled after sb is created.
   const _renewTok = _notifParams.get('renew');
   if(_renewTok && /^[0-9a-f-]{36}$/i.test(_renewTok)) window._renewToken = _renewTok;
   // Back from Stripe (ID verification): ?idv=paid|cancel|done — handled in handleIdvReturn() once signed in
@@ -1974,7 +1973,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if(_notifTaskId){
     window._pendingNotifTaskId = _notifTaskId;
     window._pendingNotifConvId = _notifConvId;
-    // Email "Reply" links (9 Oct 2026): keep through sign-in — Google OAuth reloads the page
+    // Email "Reply" links: keep through sign-in — Google OAuth reloads the page
     if(/^[0-9a-f-]{36}$/i.test(_notifTaskId)){
       try{localStorage.setItem('yoodle_chat_land', JSON.stringify({t:_notifTaskId, c:(_notifConvId&&/^[0-9a-f-]{36}$/i.test(_notifConvId))?_notifConvId:null, ts:Date.now()}));}catch(e){}
     }
@@ -2011,9 +2010,9 @@ window.addEventListener('DOMContentLoaded', () => {
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   if(window._renewToken)handleRenewLink(window._renewToken);
   loadVerifiedIds(); // ID verified badges (public list, signed in or not)
-  // Start-up once per signed-in user (Oct 2026). Supabase also fires auth events on token refresh
-  // (~hourly) and tab focus, and getSession + INITIAL_SESSION both fire on load — each used to rerun
-  // the whole showApp() (≈24 API calls + map recentre). Now repeats only update the session user.
+  // Start-up once per signed-in user. Supabase also fires auth events on token refresh (~hourly) and tab focus,
+  // and getSession + INITIAL_SESSION both fire on load — repeats only update the session user
+  // (showApp() is ≈24 API calls + a map recentre).
   sb.auth.getSession().then(({data:{session}})=>{ if(session)_startApp(session); });
   sb.auth.onAuthStateChange((_e,session)=>{
     if(session)_startApp(session);
@@ -2191,17 +2190,17 @@ function updateCircleOverlay() {
 function fuzzyCoords(lat,lng){return[lat+(Math.random()-.5)*.0014,lng+(Math.random()-.5)*.0018];}
 
 let helperMarkers=[];
-let myHelperPin=null,hpFocusAreaNext=false,myIsTester=false; // own helper pin (9 Oct 2026): drawn for the helper themself; tap may open the area field
+let myHelperPin=null,hpFocusAreaNext=false,myIsTester=false; // own helper pin: drawn for the helper themself; tap may open the area field
 let allBizListings=[], bizMarkers=[];
-// ── YOODLE PROS (10 Oct 2026): pro listings from pro.yoodle.ca — orange pins, separate from helper pins ──
+// ── YOODLE PROS: pro listings from pro.yoodle.ca — orange pins, separate from helper pins ──
 const PRO_PIN='#EA6A12';
 const PRO_TRADE_FALLBACK={plumber:{emoji:'🚰',label:'Plumber'},hvac:{emoji:'❄️',label:'HVAC'},electrician:{emoji:'⚡',label:'Electrician'}};
 let PRO_TRADES=null, allPros=[], proMarkers=[];
-var _lastJobsLoad=null; // {lat,lng,r}: map centre + ring radius of the last loadJobs() (small-pan skip, 12 Oct 2026)
+var _lastJobsLoad=null; // {lat,lng,r}: map centre + ring radius of the last loadJobs() (small-pan skip)
 function proTrade(k){return (PRO_TRADES&&PRO_TRADES[k])||PRO_TRADE_FALLBACK[k]||{emoji:'🔧',label:k};}
 function proTradesText(arr){return (arr||[]).map(k=>{const t=proTrade(k);return t.emoji+' '+t.label;}).join(' · ');}
 
-// Job glow (11 Oct 2026): non-agency job pins only
+// Job glow: non-agency job pins only
 const JOB_GLOW_SHADOW='0 0 0 3px rgba(239,68,68,.25),0 0 14px 4px rgba(239,68,68,.55)';
 let _jobGlowIntroDone=false;
 function jobIsNew(j){const t=Date.parse(j&&j.created_at);return !isNaN(t)&&Date.now()-t<48*3600e3;}
@@ -2214,8 +2213,8 @@ function renderMapPins(){
 
   // ── JOB BUBBLES (tasks with show_on_map=true) ──
   const publicJobs=(allJobs||[]).filter(j=>j.show_on_map&&j.lat&&j.lng&&j.status==='open'&&j.poster_id!==FEATURED_POSTER_ID);
-  // Stacks (Oct 2026): jobs on the same spot (~10 m, e.g. agency jobs at a city centre) → one bubble
-  // with a count; tap opens #stack-modal listing them. Agency jobs use a plain blue bubble (no emoji, 24 Oct 2026).
+  // Stacks: jobs on the same spot (~10 m, e.g. agency jobs at a city centre) → one bubble
+  // with a count; tap opens #stack-modal listing them. Agency jobs use a plain blue bubble.
   const _jGroups={};
   publicJobs.forEach(j=>{const k=(+j.lat).toFixed(4)+','+(+j.lng).toFixed(4);(_jGroups[k]=_jGroups[k]||[]).push(j);});
   Object.values(_jGroups).filter(g=>g.length>1).forEach(g=>{
@@ -2241,14 +2240,14 @@ function renderMapPins(){
     const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:2,onClick:()=>{logTap('job',job.id,'pin');openJob(job);}});
     jobMarkers.push(marker);
   });
-  // Find-a-helper filter on (12 Oct 2026): fade all job pins (neighbour + agency, single + stacks) and stop their pulse,
+  // Find-a-helper filter on: fade all job pins (neighbour + agency, single + stacks) and stop their pulse,
   // so the matching helpers stand out. Cleared when the filter is removed (hsPick → renderMapPins).
   if(hsCat)jobMarkers.forEach(m=>{const d=m.getElement().firstElementChild;if(d){d.classList.remove('job-glow-new','job-glow-intro');d.classList.add('hs-pin-dim');}});
   if(publicJobs.some(j=>!isAgencyJob(j)))_jobGlowIntroDone=true; // later re-renders don't replay the 3 pulses
 
   // ── HELPER PINS (profiles with visible_on_map=true AND show_on_map=true) ──
   const publicHelpers=(allHelpers||[]).filter(h=>h.show_on_map&&h.last_lat&&h.last_lng);
-  // Stacks (12 Oct 2026, replaces the 8 Oct fan-out): helpers who entered only a city (e.g. "Toronto, Ontario")
+  // Stacks: helpers who entered only a city (e.g. "Toronto, Ontario")
   // share one geocode. Group identical spots (~10 m) into one green count bubble; tap → #stack-modal list.
   // Category search: bubble glows with "matches/total" if any member matches, else dims.
   const _hGroups={};
@@ -2280,7 +2279,7 @@ function renderMapPins(){
     if(hsCat){const d=marker.getElement().firstElementChild;if(d)d.classList.add(hsMatch(h)?'hs-pin-glow':'hs-pin-dim');}
     helperMarkers.push(marker);
   });
-  // Own helper pin (9 Oct 2026): white ring + "You" tag, never dimmed by search. If stacked, the bubble carries the "You" tag instead.
+  // Own helper pin: white ring + "You" tag, never dimmed by search. If stacked, the bubble carries the "You" tag instead.
   // Tap: city-only location → helper profile with the area field ready; otherwise my profile as neighbours see it.
   if(myHelperPin&&!_hStacked.has(myHelperPin.id)){
     const m=myHelperPin;
@@ -2365,7 +2364,7 @@ function openBizListing(biz){
 
 // Tap tracking → public.tap_events via log_tap() (server skips self-taps and repeats within 10 min). Never blocks the UI.
 // p_filter = Find-a-helper category active when a helper is tapped (only sent when one is on).
-// Agency jobs (Oct 2026): tasks.type='agency_job' with tasks.url = the agency's apply link.
+// Agency jobs: tasks.type='agency_job' with tasks.url = the agency's apply link.
 // get_open_jobs_near doesn't return type, so a job with a url is treated as an agency job.
 const AGENCY_PIN='#2563EB'; // agency job bubbles (blue) — regular jobs stay red #EF4444
 function openJobStack(g){
@@ -2374,7 +2373,7 @@ function openJobStack(g){
   document.getElementById('stack-list').innerHTML=g.map(j=>listCard(j,j.profiles)).join('');
   openOv('stack-modal');
 }
-// Helper stack (12 Oct 2026): helpers sharing one spot (usually city-only addresses). Search matches first; own row on top.
+// Helper stack: helpers sharing one spot (usually city-only addresses). Search matches first; own row on top.
 function openHelperStack(g){
   const mine=myHelperPin&&g.find(h=>h.id===myHelperPin.id);
   const others=g.filter(h=>h!==mine).sort((a,b)=>(hsMatch(b)?1:0)-(hsMatch(a)?1:0));
@@ -2392,7 +2391,7 @@ function isAgencyJob(j){return !!(j&&(j.type==='agency_job'||j.url));}
 function agencyPay(j){return j.price!=null?`$${j.price}/hr`:'See posting';}
 // Opens + Apply taps → public.agency_events via log_agency_event() (signed-out viewers counted by a random browser id). Never blocks the UI.
 function yAnonId(){try{let a=localStorage.getItem('yoodle_anon');if(!a){a=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2));localStorage.setItem('yoodle_anon',a);}return a;}catch(e){return null;}}
-// Fire-and-forget logging (Oct 2026): never blocks or breaks the UI. A failed call leaves a console warning
+// Fire-and-forget logging: never blocks or breaks the UI. A failed call leaves a console warning
 // (prefix "[log]") so broken tracking is visible in DevTools instead of failing silently.
 function fireRpc(name,args){
   try{if(!sb)return;sb.rpc(name,args).then(r=>{if(r&&r.error)console.warn('[log] '+name+': '+r.error.message);},e=>console.warn('[log] '+name+': '+(e&&e.message||e)));}catch(e){}
@@ -2427,18 +2426,15 @@ function setListRadius(el,km){
   loadJobs();
 }
 
-// Pro listings (pro.yoodle.ca, 10 Oct 2026): show only live ones. 16 Oct 2026: RLS returns only APPROVED pros
-// (plus your own, any status) — pending pros stay off the yoodle.ca map until Roman approves them in admin.
-// 16 Oct 2026 (later): yoodle.ca reads pros ONLY via get_public_pros() (security definer: approved, visible,
+// Pro listings (pro.yoodle.ca): yoodle.ca reads pros ONLY via get_public_pros() (security definer: approved, visible,
 // unexpired, located; tester pros only for testers) — no admin/owner exception, so nobody sees pending pros here.
 // The pro still sees their own pending pin on pro.yoodle.ca (table RLS: approved OR own OR admin).
-// 12 Oct 2026: fetched in parallel with helpers/jobs inside loadJobs(), and in ONE request — the owner's name comes
-// embedded via the pro_profiles.profile_id → profiles FK (was 3 requests in a row: trades, pros, names).
-// Trades list is cached after the first successful load.
+// Fetched in parallel with helpers/jobs inside loadJobs(), in ONE request — the owner's name comes
+// embedded via the pro_profiles.profile_id → profiles FK. Trades list is cached after the first successful load.
 function fetchPros(){
   return Promise.all([
     PRO_TRADES?null:sb.from('pro_trades').select('key,label,emoji'),
-    sb.rpc('get_public_pros')   // 16 Oct 2026: approved + visible + unexpired only, filtered in the database
+    sb.rpc('get_public_pros')   // approved + visible + unexpired only, filtered in the database
   ]).catch(e=>{console.warn('pros',e);return[null,null];});
 }
 function applyPros(res,pid){
@@ -2473,13 +2469,12 @@ async function loadJobs() {
   // Helpers, business listings and jobs are independent — fetch in parallel (one round trip instead of three)
   const _hasLoc=!!(userLat&&userLng);
   if(_hasLoc)_lastJobsLoad={lat:userLat,lng:userLng,r:RADIUS_KM}; // for the small-pan skip in moveend
-  // What the map loads (12 Oct 2026): jobs AND helpers within 3× the ring radius (min 30 km) so pins fill the
+  // What the map loads: jobs AND helpers within 3× the ring radius (min 30 km) so pins fill the
   // whole screen. Counts and lists still use only the ring (updateRadiusCounts → sheetJobs / sheetHelpers).
   const mapLoadKm=Math.max(30,RADIUS_KM*3);
   const[{data:helpers},{data:bizData},_jobsRes,_meRes,_prosRes]=await Promise.all([
-    // helpers for map — nearby only, closest first (get_helpers_near, 12 Oct 2026). Was every visible helper
-    // nationwide, which would silently cap at the API's 1,000-row limit. Same columns as before; self excluded
-    // server-side (own pin comes from _meRes below).
+    // helpers for map — nearby only, closest first (get_helpers_near), so the API's 1,000-row cap can't drop
+    // nearby helpers. Self excluded server-side (own pin comes from _meRes below).
     sb.rpc('get_helpers_near',{
       user_lat:userLat||43.6532,
       user_lng:userLng||-79.3832,
@@ -2501,9 +2496,9 @@ async function loadJobs() {
       lim:120,
       exclude_user_id:pid||null
     }):Promise.resolve(null),
-    // own helper row — the helpers query above excludes me (own pin, 9 Oct 2026)
+    // own helper row — the helpers query above excludes me (own pin)
     pid?sb.from('profiles').select('id,name,last_lat,last_lng,show_on_map,visible_on_map,helper_address,is_tester').eq('id',pid).maybeSingle():Promise.resolve({data:null}),
-    // Pro listings + trades (12 Oct 2026: same round trip, was 3 sequential requests after this batch)
+    // Pro listings + trades (same round trip)
     fetchPros()
   ]);
   const _mp=_meRes?.data;
@@ -2573,7 +2568,7 @@ function renderSheetContent(){
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">${sheetHelpers.map(helperCard).join('')}</div>`;
   }
 }
-// Helper list card (map sheet + helper stack sheet). Same markup as before 12 Oct 2026.
+// Helper list card (map sheet + helper stack sheet).
 function helperCard(h){
       const name=h.name||'Helper';
       const rating=h.rating?`★ ${h.rating}`:'New';
@@ -2622,7 +2617,7 @@ function renderListTabContent(){
   // update counts
   const jc=document.getElementById('list-jobs-count');
   const hc=document.getElementById('list-helpers-count');
-  // Find-a-helper filter applies to the Helpers tab too (8 Oct 2026)
+  // Find-a-helper filter applies to the Helpers tab too
   const listHelpers=hsCat?sheetHelpers.filter(hsMatch):sheetHelpers;
   if(jc)jc.textContent=sheetJobs.length;
   if(hc)hc.textContent=listHelpers.length;
@@ -2640,7 +2635,7 @@ function renderListTabContent(){
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px">${listHelpers.map(h=>{
       const name=h.name||'Helper';
       const rating=h.rating?`★ ${h.rating}`:'New';
-      // Find-a-helper on: matching category first + amber, so it's never cut off by the 4-tag limit (8 Oct 2026)
+      // Find-a-helper on: matching category first + amber, so it's never cut off by the 4-tag limit
       const _hc=(h.helper_categories||[]).slice();
       if(hsCat){const mi=_hc.findIndex(c=>ysKey(c)===hsCat);if(mi>0)_hc.unshift(_hc.splice(mi,1)[0]);}
       const cats=_hc.slice(0,4).map(c=>hsCat&&ysKey(c)===hsCat
@@ -2754,9 +2749,8 @@ function applyGates(susp,tp,tpErr){
   return false;
 }
 
-// Start-up checks in ONE round trip (12 Oct 2026). Were 4 sequential steps in showApp(): profile id →
-// suspended + Terms → is_demo → blocked ids. Same decisions, same order of effect: a suspended account
-// still stops before the map loads. Falls back to the old step-by-step checks if the batch throws.
+// Start-up checks in ONE round trip: profile id, suspended + Terms, is_demo, blocked ids.
+// A suspended account still stops before the map loads. Falls back to step-by-step checks if the batch throws.
 async function startupChecks(){
   if(!sb||!me)return false;
   let r=null;
@@ -2780,7 +2774,7 @@ async function startupChecks(){
   if(applyGates(susp,prof,profErr))return true;
   applyDemo(!profErr&&prof?.is_demo===true);
   try{applyBlocked(blk1,blk2);}catch(e){console.warn('blocked ids',e);}
-  // 24 Oct 2026: no GPS → open the map at the user's saved helper location (not Toronto) if it's > 50 km away.
+  // No GPS → open the map at the user's saved helper location (not Toronto) if it's > 50 km away.
   // 700 ms = after showApp()'s 150/600 ms first-load setView, so it isn't overridden.
   if(!profErr&&prof?.helper_lat!=null&&prof?.helper_lng!=null){
     const _hl=+prof.helper_lat,_hg=+prof.helper_lng;
@@ -2788,7 +2782,7 @@ async function startupChecks(){
   }
   return false;
 }
-// 24 Oct 2026: move the map to the user's own location when GPS isn't on.
+// Move the map to the user's own location when GPS isn't on.
 // Without this, users outside the GTA stayed on the Toronto default and saw Toronto jobs as "nearby".
 // minKm: only move if the map centre is further than this from home. moveend saves the view + runs loadJobs().
 // Returns true if the map moved.
@@ -2900,7 +2894,7 @@ async function loadBlockedList(){
   </div>`).join('');
 }
 
-async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pro pin / pro share link, 10 Oct 2026)
+async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pro pin / pro share link)
   if(hiddenUserIds.has(userId)&&!iBlockedIds.has(userId)){toast('This profile is not available');return;}
   // Remember whichever modal is currently open so we can restore it on close
   _opParentModal=document.querySelector('.modal-ov.open')||null;
@@ -2922,7 +2916,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
   ]);
 
   const prof=profRes.data;
-  // Last active (9 Oct 2026): coarse bucket only — today / week / month / older; blank if unknown or RPC missing
+  // Last active: coarse bucket only — today / week / month / older; blank if unknown or RPC missing
   const _la=lastActiveRes&&!lastActiveRes.error?lastActiveRes.data:null;
   const _laTxt={today:'Active today',week:'Active this week',month:'Active this month',older:'Last active over a month ago'}[_la]||'';
   const lastActiveHtml=(_laTxt&&userId!==(myProfileId||me?.id))?`<div class="op-active${_la==='today'?' on':''}"><span class="dot"></span>${_laTxt}</div>`:'';
@@ -2936,7 +2930,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
       if(opShareBtn)opShareBtn.style.display='flex';
     }
 
-  // Pro listing block (pro.yoodle.ca, 10 Oct 2026) — shown when the person has a live Pro listing
+  // Pro listing block (pro.yoodle.ca) — shown when the person has a live Pro listing
   const _pro=proRes&&!proRes.error?proRes.data:null;
   const _proLive=_pro&&_pro.visible&&_pro.status==='approved'&&_pro.expires_at&&new Date(_pro.expires_at)>new Date();
   const proHtml=_proLive?(()=>{
@@ -2955,7 +2949,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
     </div>`;
   })():'';
   const proMode=mode==='pro'&&_proLive;
-  // Share (header button) on the Pro card — also on your own Pro card so pros can promote themselves (10 Oct 2026).
+  // Share (header button) on the Pro card — also on your own Pro card so pros can promote themselves.
   // No public /pros page yet, so the link opens the Pro card in the app: yoodle.ca/?helper={id}&s=pro
   if(proMode&&!iBlockedIds.has(userId)){
     const _sa=_pro.address?helperShareArea(_pro.address):'';   // same rule as helper shares: neighbourhood, never the street
@@ -2968,7 +2962,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
       <div class="op-av">${esc(initial)}</div>
       <div style="min-width:0">
         <div class="op-name">${esc(prof.name||'Yoodler')}${idvChip(userId)}</div>
-        <div style="font-size:14px;font-weight:800;margin-top:3px;color:${prof.rating?'var(--yellow)':'var(--muted)'}">${prof.rating?`★ ${prof.rating}`:'New'}</div><!-- one blended rating, profiles.rating (15 Oct 2026) -->
+        <div style="font-size:14px;font-weight:800;margin-top:3px;color:${prof.rating?'var(--yellow)':'var(--muted)'}">${prof.rating?`★ ${prof.rating}`:'New'}</div><!-- one blended rating, profiles.rating -->
         ${lastActiveHtml}
         ${(me&&userId!==(myProfileId||me.id))?`<div class="op-mod-links">
           <button onclick="openReport('${userId}',window._opName,null,null)">Report</button>
@@ -2999,7 +2993,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
       </div>`;
     })():''}
 `;
-  // Pro card (10 Oct 2026): keep only the name/last-active/report-block header + the Pro block —
+  // Pro card: keep only the name/last-active/report-block header + the Pro block —
   // no poster/helper stats, About or helper listing (those belong to the person's yoodle.ca profile).
   if(proMode){
     const hero=content.querySelector('.op-hero');
@@ -3249,7 +3243,7 @@ async function showApp(){
       // First load (no saved zoom) — show the default radius (RADIUS_KM, 10 km)
       const z2=_hasSavedZoom?_z:kmToZoom(RADIUS_KM,_lat);
       _mapSetView(_lat,_lng,z2);
-      if(_syncRadiusToMap())loadJobs(); // saved view: no zoomend fires, so match RADIUS_KM to the ring (24 Oct 2026)
+      if(_syncRadiusToMap())loadJobs(); // saved view: no zoomend fires, so match RADIUS_KM to the ring
       updateCircleOverlay();
     },150);
     setTimeout(()=>{_mapResize();_mapSetView(_lat,_lng,_hasSavedZoom?_z:map.getZoom());updateCircleOverlay();},600);
@@ -3285,7 +3279,7 @@ async function showApp(){
     let cid=window._pendingNotifConvId||null;
     window._pendingNotifTaskId=null;
     window._pendingNotifConvId=null;
-    // Deep link saved before sign-in (yoodle_chat_land, 9 Oct 2026) — used once, 7-day limit
+    // Deep link saved before sign-in (yoodle_chat_land) — used once, 7-day limit
     try{
       const d=JSON.parse(localStorage.getItem('yoodle_chat_land')||'null');
       localStorage.removeItem('yoodle_chat_land');
@@ -3388,7 +3382,7 @@ function _onVisibility(){
   if(document.visibilityState!=='visible'){_hiddenAt=Date.now();return;}
   if(document.visibilityState==='visible'){
     const _away=_hiddenAt?Date.now()-_hiddenAt:0;_hiddenAt=0;
-    // Back after 10+ min away: re-check suspension/terms (Oct 2026). Jobs/helpers already refresh on tab return.
+    // Back after 10+ min away: re-check suspension/terms. Jobs/helpers already refresh on tab return.
     if(me&&sb&&_away>10*60*1000)checkAccountGates();
     // Away >30s (iOS may leave a dead socket looking "joined") or not joined → reconnect
     if(me&&sb&&(_away>30000||realtimeChannel?.state!=='joined'))subscribeToMessages();
@@ -3554,7 +3548,7 @@ async function openJob(j){
     window._mPosterName=pname;
     const prating=prof?.rating?`<span style="color:var(--yellow);font-size:14px;font-weight:800">★ ${prof.rating}</span>`:`<span style="color:var(--muted);font-size:13.5px;font-weight:700">New</span>`;
     document.getElementById('m-poster').innerHTML=`
-      <div style="flex-shrink:0">${avatarCircle(pname,prof?.avatar_color,'32px','13px')}</div><!-- not clickable (8 Oct 2026): name + rating only -->
+      <div style="flex-shrink:0">${avatarCircle(pname,prof?.avatar_color,'32px','13px')}</div><!-- not clickable: name + rating only -->
       <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
         <div style="font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pname)}</div>
         <div style="display:flex;align-items:center;gap:5px">${prating}</div>
@@ -3874,7 +3868,7 @@ function selCat(el){document.querySelectorAll('.cat-opt').forEach(c=>c.classList
 async function detectLocation(){
   const inp=document.getElementById('p-loc');const st=document.getElementById('loc-status');
   if(isDemoAccount){demoLocationNote();gpsLat=DEMO_CENTER.lat;gpsLng=DEMO_CENTER.lng;inp.value='Downtown Toronto, ON';locVerified=false;st.textContent='📍 Demo account — job placed in downtown Toronto';st.className='loc-status manual';return;}
-  // Same street-level GPS check as the helper profile (Oct 2026): hold the result until the poster confirms it
+  // Same street-level GPS check as the helper profile: hold the result until the poster confirms it
   gpsStreetLookup('gps-btn','loc-status',p=>{
     inp.value=p.display;gpsLat=null;gpsLng=null;locVerified=false;
     jobGpsPending=p;
@@ -3903,7 +3897,7 @@ function jobGpsConfirm(ok){
   }
 }
 
-// ── SHARED ADDRESS LOOKUP (Oct 2026) ── used by the Post-a-Job form and the helper profile.
+// ── SHARED ADDRESS LOOKUP ── used by the Post-a-Job form and the helper profile.
 // Each screen keeps its own rules (formatting, rounding, confirm step) in its own functions below.
 async function geoFetch(path){
   const r=await fetch('https://nominatim.openstreetmap.org/'+path,{headers:{'Accept-Language':'en','User-Agent':'Yoodle-App'}});
@@ -3998,7 +3992,7 @@ function resetPost(){
 }
 
 async function loadMyJobs(){
-  // Activity: one list — jobs I posted + jobs I'm helping with (tabs removed 13 Oct 2026)
+// Activity: one list — jobs I posted + jobs I'm helping with
   const g=document.getElementById('my-grid');g.innerHTML=spin();
   if(!sb||!me){g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
   const pid=myProfileId||me.id;
@@ -4168,7 +4162,7 @@ async function renewJob(jobId){
   toast('🔄 Job renewed for 14 days!');loadMyJobs();loadJobs();
 }
 
-// One-tap renew from the expiry reminder email / expired push (24 Oct 2026).
+// One-tap renew from the expiry reminder email / expired push.
 // renew_by_token() checks the token in the database, so it works whether or not the user is signed in.
 async function handleRenewLink(token){
   window._renewToken=null;
@@ -4331,7 +4325,7 @@ if(!url){
 }
 // populate helper status block
 updateProfileHelperBlock(prof);
-renderIdvBlock(); // ID verification card + own badge (15 Oct 2026)
+renderIdvBlock(); // ID verification card + own badge
 loadEmailPref();
 loadBlockedList();
 document.getElementById('p-rating').textContent=prof?.rating?`★ ${prof.rating}`:'';
@@ -4380,7 +4374,7 @@ async function loadMessages(){
 }
 
 let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null, activeChatConvId=null;
-// Direct-contact safety tip (14 Oct 2026): helper side of a help_offer chat
+// Direct-contact safety tip: helper side of a help_offer chat
 let activeChatSafetyTip=false;
 function _tipSeen(cid){try{return (JSON.parse(localStorage.getItem('yoodle_tip_seen')||'[]')||[]).includes(cid);}catch(e){return false;}}
 function dismissSafetyTip(){
@@ -4408,7 +4402,7 @@ async function openChatFromNotification(taskId,convId){
   if(!me||!sb)return;
   const pid=myProfileId||me.id;
   if(!convId){
-    // ?task_id= with no conv_id (job links, nudge emails — 9 Oct 2026): my active chat on that job, else the job sheet
+    // ?task_id= with no conv_id (job links, nudge emails): my active chat on that job, else the job sheet
     const{data:mine}=await sb.from('conversations').select('id').eq('task_id',taskId).eq('status','active')
       .or(`poster_id.eq.${pid},applicant_id.eq.${pid}`).order('created_at',{ascending:false}).limit(1);
     if(mine&&mine[0]){convId=mine[0].id;}
@@ -4468,7 +4462,7 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   const pid=myProfileId||me.id;
   const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id,type').eq('id',taskId).single();
   if(!task)return;
-  // "Yoodle team" thread (9 Oct 2026): no job buttons; the member can hide it
+  // "Yoodle team" thread: no job buttons; the member can hide it
   if(task.type==='admin_note'){
     if(task.doer_id===pid&&task.status==='claimed'){
       actionsEl.innerHTML=`<button onclick="hideTeamThread()" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid var(--border);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Hide this chat</button>`;
@@ -4605,7 +4599,7 @@ async function claimFromChat(taskId){
   loadMessages();loadJobs();
 }
 
-// Posts a last system message (when there's someone to send it to), THEN archives the thread (Oct 2026).
+// Posts a last system message (when there's someone to send it to), THEN archives the thread.
 // Order matters: the message must land before the conversation is archived.
 async function closeConversation(convId,taskId,fromId,toId,body){
   if(!convId)return;
@@ -4613,7 +4607,7 @@ async function closeConversation(convId,taskId,fromId,toId,body){
   await sb.from('conversations').update({status:'archived'}).eq('id',convId);
 }
 
-// My display name, fetched once per signed-in profile (Oct 2026) — saveBio() keeps it current
+// My display name, fetched once per signed-in profile — saveBio() keeps it current
 let _myNameCache=null;
 async function getMyName(){
   if(!sb||!me)return null;
@@ -4629,7 +4623,7 @@ async function sendSystemMessage(convId,taskId,senderId,receiverId,body){
   await sb.from('messages').insert({conversation_id:convId,task_id:taskId,sender_id:senderId,receiver_id:receiverId,body});
 }
 
-// Member hides a "Yoodle team" chat (9 Oct 2026) — closes the thread; a later team message opens a new one
+// Member hides a "Yoodle team" chat — closes the thread; a later team message opens a new one
 async function hideTeamThread(){
   if(!sb||!me||!activeChatConvId)return;
   const{error}=await sb.rpc('hide_team_thread',{p_conversation:activeChatConvId});
@@ -4737,11 +4731,11 @@ async function chatComplete(taskId,doerId){
   openRatingModal(taskId,doerId,'How did the helper do?');
 }
 
-// Show / hide a popup, sheet or dropdown by id via its "open" class (Oct 2026). Missing element → no-op.
-// ── ID VERIFICATION (Stripe Identity, 15 Oct 2026) ──
+// Show / hide a popup, sheet or dropdown by id via its "open" class. Missing element → no-op.
+// ── ID VERIFICATION (Stripe Identity) ──
 // Any signed-in member pays $2.99 + tax (Stripe Tax picks GST/HST from the billing address), then Stripe checks a photo ID + live selfie. Backend: Edge Functions
 // identity-checkout → identity-start → identity-webhook (writes identity_verifications). Members can only READ their own row.
-// Badge (Option A, 14 Oct 2026): "an ID-checked person owns this account" — not tied to the display name.
+// Badge (Option A): "an ID-checked person owns this account" — not tied to the display name.
 let verifiedIds=new Set();
 async function loadVerifiedIds(){
   if(!sb)return;
@@ -4791,7 +4785,7 @@ async function loadIdvRow(){
   _idvRow=data||null;
   return _idvRow;
 }
-// verified | processing | paid | retry | new | used_up  (open to every member since 15 Oct 2026)
+// verified | processing | paid | retry | new | used_up  (open to every member)
 function idvState(row){
   if(row?.status==='verified')return 'verified';
   if(row?.status==='processing')return 'processing';
@@ -4866,7 +4860,7 @@ async function refreshIdv(){
   await renderIdvBlock();
   if(document.getElementById('app-post')?.classList.contains('active'))updateForkIdvCard();
 }
-// Tap tracking (16 Oct 2026): open (from + or Profile) → pay (Continue to payment) → start (Continue verification / Try again / auto after paying) → cancel (back from Stripe). Admin: admin_idv_taps().
+// Tap tracking: open (from + or Profile) → pay (Continue to payment) → start (Continue verification / Try again / auto after paying) → cancel (back from Stripe). Admin: admin_idv_taps().
 // Returns a promise that never rejects; before a redirect to Stripe we wait for it (max 1.5 s) so the tap isn't dropped.
 let _idvSrc=null;
 function logIdvTap(step,src){try{if(sb&&me)return sb.rpc('log_idv_tap',{p_step:step,p_source:src===undefined?_idvSrc:src}).then(()=>{},()=>{});}catch(e){}return Promise.resolve();}
@@ -5113,7 +5107,7 @@ function updateProfileHelperBlock(prof){
 
 // ── HELPER PROFILE SCREEN ──
 let hpLat=null,hpLng=null;
-// Vague-location soft ask (8 Oct 2026): city/province/country-only locations all land on one point
+// Vague-location soft ask: city/province/country-only locations all land on one point
 // (e.g. 7 helpers on Toronto City Hall). On save we ask once for a neighbourhood/street/postal code;
 // "Skip" saves as-is. Nobody is blocked.
 let hpLocVague=false,hpLocVagueAck=false;
@@ -5130,12 +5124,12 @@ function hpIsVagueText(addr){ // saved profiles: "Toronto, Ontario" / "Ontario" 
 function hpAskArea(){
   if(document.getElementById('hp-area-ask'))return;
   const city=(String(document.getElementById('hp-loc').value||'').split(',')[0]||'').trim()||'your city';
-  // 9 Oct 2026: count other helpers already pinned on this exact spot (~10 m, same key as the map fan-out).
+  // Count other helpers already pinned on this exact spot (~10 m, same key as the map stacks).
   // allHelpers already excludes the current user and blocked users.
   const _hpKey=(a,b)=>(+a).toFixed(4)+','+(+b).toFixed(4);
   const _hpK=_hpKey(hpLat,hpLng);
   const hpSameSpot=(allHelpers||[]).filter(h=>h.show_on_map&&h.last_lat&&h.last_lng&&_hpKey(h.last_lat,h.last_lng)===_hpK).length;
-  // Readability (9 Oct 2026): warning + bold count as the headline when others share the spot; body in full text colour.
+  // Readability: warning + bold count as the headline when others share the spot; body in full text colour.
   const hpAskIcon=hpSameSpot>0?'⚠️':'📍';
   const hpAskTitle=hpSameSpot>0
     ?`${hpSameSpot} other helper${hpSameSpot===1?' is':'s are'} pinned to this exact spot`
@@ -5161,14 +5155,14 @@ function hpAskArea(){
   w.querySelector('#hpa-skip').addEventListener('click',()=>{close();hpLocVagueAck=true;saveHelperProfile();});
   w.querySelector('#hpa-add').addEventListener('click',()=>{close();hpStartAddArea(city);});
 }
-// "Add area": clear the location field and focus it (soft-ask card + own-pin tap, 9 Oct 2026)
+// "Add area": clear the location field and focus it (soft-ask card + own-pin tap)
 function hpStartAddArea(city){
   {
     const inp=document.getElementById('hp-loc');
     inp.value='';inp.placeholder=`Street name in ${city}`;
     hpLat=null;hpLng=null;hpLocVague=false;
     const st=document.getElementById('hp-loc-status');st.textContent='Type your street name and pick it from the suggestions, or tap GPS';st.className='loc-status';
-    // Focus first, then jump (no smooth scroll): focusing during a smooth scroll left the iPhone caret floating above the box (9 Oct 2026)
+    // Focus first, then jump (no smooth scroll): focusing during a smooth scroll left the iPhone caret floating above the box
     try{inp.focus({preventScroll:true});}catch(e){inp.focus();}
     try{inp.scrollIntoView({block:'center'});}catch(e){}
   }
@@ -5220,7 +5214,7 @@ async function openHelperScreen(){
     const cat=cats?.find(c=>c.name===name);
     if(cat) applyHPCategoryStyle(cat.id,true);
   });
-  // own-pin tap with a city-only location → go straight to adding the neighbourhood (9 Oct 2026)
+  // own-pin tap with a city-only location → go straight to adding the neighbourhood
   if(hpFocusAreaNext){hpFocusAreaNext=false;if(hpLocVague)hpStartAddArea((String(prof?.helper_address||'').split(',')[0]||'').trim()||'your city');}
 }
 
@@ -5292,12 +5286,12 @@ function selectHPSuggestion(i){
   closeOv('hp-loc-suggestions');
 }
 
-// Helper-profile GPS button (9 Oct 2026): street-level reverse lookup, house number dropped,
+// Helper-profile GPS button: street-level reverse lookup, house number dropped,
 // coordinates rounded to 3 decimals (~100 m) so the saved point isn't the helper's front door.
 async function hpDetectLocation(){
   const inp=document.getElementById('hp-loc');const st=document.getElementById('hp-loc-status');
   if(isDemoAccount){demoLocationNote();inp.value='Downtown Toronto, ON';hpLat=DEMO_CENTER.lat;hpLng=DEMO_CENTER.lng;hpLocVague=false;hpLocVagueAck=false;st.textContent='📍 Demo account — downtown Toronto';st.className='loc-status manual';return;}
-  // Safety check (9 Oct 2026): GPS can be off (laptops, weak signal) — hold the result until the helper confirms it
+  // Safety check: GPS can be off (laptops, weak signal) — hold the result until the helper confirms it
   gpsStreetLookup('hp-gps-btn','hp-loc-status',p=>{
     inp.value=p.display;hpLat=null;hpLng=null;
     hpGpsPending=p;
@@ -5307,7 +5301,7 @@ async function hpDetectLocation(){
   });
 }
 
-// Street-level GPS lookup shared by the helper profile and Post a Job (Oct 2026).
+// Street-level GPS lookup shared by the helper profile and Post a Job.
 // House number dropped from the text. onFound({lat,lng,exactLat,exactLng,display,vague,city}) shows the screen's confirm box:
 // lat/lng are rounded to 3 decimals (~100 m, used by helpers); exactLat/exactLng are the raw GPS position (used by jobs).
 function gpsStreetLookup(btnId,statusId,onFound){
@@ -5383,7 +5377,7 @@ async function saveHelperProfile(){
   }).eq('id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
   toast('✅ Helper profile saved!');
-  // 24 Oct 2026: no GPS → show jobs around the helper's address, not the Toronto default
+  // No GPS → show jobs around the helper's address, not the Toronto default
   if(!_centerOnHome(hpLat,hpLng,1))loadJobs();
   const returnTo=helperEnteredFromFork?'browse':'profile';
   helperEnteredFromFork=false;
@@ -5449,7 +5443,7 @@ async function shareOtherHelperPage(){
   if(!d)return;
   let url,text;
   if(d.pro){
-    // Pro card share (10 Oct 2026): opens the profile in the app (no public /pros page yet)
+    // Pro card share: opens the profile in the app (no public /pros page yet)
     url=`https://yoodle.ca/?helper=${d.id}&s=pro`;
     const trades=(d.pro.trades||[]).map(k=>proTrade(k).label).join(', ')||'home services';
     text=`Check out this local pro on Yoodle: ${d.pro.business?d.pro.business+' — ':''}${trades}${d.pro.area?` around ${d.pro.area}`:''}${d.pro.verified?' (verified licence)':''}. Contact free:`;
@@ -5654,7 +5648,7 @@ function setSheetRating(idx,score,taskId,ratedId){
   if(btn){btn.disabled=false;btn.style.opacity='1';}
 }
 
-// Shared by the rating popup and the pending-ratings sheet (Oct 2026).
+// Shared by the rating popup and the pending-ratings sheet.
 // Returns 'ok', 'dup' (already rated — unique violation 23505) or an error message.
 async function saveRating(taskId,ratedId,score){
   const pid=myProfileId||me.id;
