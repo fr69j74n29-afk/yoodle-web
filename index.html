@@ -3493,7 +3493,7 @@ function haversineKm(lat1,lng1,lat2,lng2){
 const FEATURED_POSTER_ID='c89896db-b2ab-4c4c-88fa-650823e63303';
 
 function listCard(j,profile){
-  const color=CAT_COLOR[j.category]||'#3D6B50';
+  const color=isAgencyJob(j)?AGENCY_PIN:'#EF4444'; // same colours as the map pins: red neighbour job, blue agency job
   const name=profile?.name||'Someone';
   const rating=profile?.rating?`★ ${profile.rating}`:'New';
   // show real distance only when GPS is known — map centre is not the user's position
@@ -3510,7 +3510,7 @@ function listCard(j,profile){
     <div class="lc-desc">${esc(j.description||'')}</div>
     <div class="lc-foot">
       <div class="lc-poster">
-        <div class="lc-av">${avatarCircle(name,profile?.avatar_color,'20px','9px',false)}</div>
+        <div class="lc-av">${avatarCircle(name,profile?.avatar_color,'20px','9px',false,color)}</div>
         <span class="lc-name">${esc(name)}</span>
         <span style="color:var(--yellow);font-size:12.5px;font-weight:800;flex-shrink:0">${rating}</span>
       </div>
@@ -4937,9 +4937,9 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 function linkify(s){return s.replace(/(https?:\/\/[^\s<&]+(?:&amp;[^\s<&]+)*|www\.[^\s<&]+(?:&amp;[^\s<&]+)*)/gi,function(url){const href=url.startsWith('www.')?'https://'+url:url;return'<a href="'+href+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;word-break:break-all">'+url+'</a>';});}
 // Avatar standard: black fill, white border, white initial — everywhere except map pins.
 // Signature unchanged for call-site compatibility; color/border params are intentionally ignored.
-function avatarCircle(name,color,size='36px',fontSize='14px',border=true){
+function avatarCircle(name,color,size='36px',fontSize='14px',border=true,bg='#5C8A6A'){
   const initial=((name||'?')[0]).toUpperCase();
-  return`<div style="width:${size};height:${size};border-radius:50%;background:#5C8A6A;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${fontSize};color:#fff;flex-shrink:0;font-family:'Nunito',sans-serif">${esc(initial)}</div>`;
+  return`<div style="width:${size};height:${size};border-radius:50%;background:${bg};border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${fontSize};color:#fff;flex-shrink:0;font-family:'Nunito',sans-serif">${esc(initial)}</div>`;
 }
 function timeAgo(d){const m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
 async function loadEmailPref(){
