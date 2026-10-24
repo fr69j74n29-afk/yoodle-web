@@ -1611,7 +1611,7 @@ function normalizeCategory(cat) {
   if (['moving'].includes(cat)) return 'moving';
   return cat || 'other';
 }
-let RADIUS_KM=25;
+let RADIUS_KM=10; // default search radius (24 Oct 2026: 25 → 10 km); user can still zoom out to 25
 let sheetTab='jobs';
 let sheetJobs=[],sheetHelpers=[];
 
@@ -2755,7 +2755,7 @@ async function startupChecks(){
   let r=null;
   try{
     r=await Promise.all([
-      sb.from('profiles').select('id,terms_accepted_at,is_demo').eq('id',me.id).maybeSingle(),
+      sb.from('profiles').select('id,terms_accepted_at,is_demo,helper_lat,helper_lng').eq('id',me.id).maybeSingle(),
       sb.rpc('am_i_suspended'),
       sb.rpc('my_blocked_ids'),
       sb.from('blocks').select('blocked_id').eq('blocker_id',me.id)
@@ -2773,7 +2773,27 @@ async function startupChecks(){
   if(applyGates(susp,prof,profErr))return true;
   applyDemo(!profErr&&prof?.is_demo===true);
   try{applyBlocked(blk1,blk2);}catch(e){console.warn('blocked ids',e);}
+  // 24 Oct 2026: no GPS → open the map at the user's saved helper location (not Toronto) if it's > 50 km away.
+  // 700 ms = after showApp()'s 150/600 ms first-load setView, so it isn't overridden.
+  if(!profErr&&prof?.helper_lat!=null&&prof?.helper_lng!=null){
+    const _hl=+prof.helper_lat,_hg=+prof.helper_lng;
+    setTimeout(()=>_centerOnHome(_hl,_hg,50),700);
+  }
   return false;
+}
+// 24 Oct 2026: move the map to the user's own location when GPS isn't on.
+// Without this, users outside the GTA stayed on the Toronto default and saw Toronto jobs as "nearby".
+// minKm: only move if the map centre is further than this from home. moveend saves the view + runs loadJobs().
+// Returns true if the map moved.
+function _centerOnHome(lat,lng,minKm){
+  if(!map||isDemoAccount||locationSource==='gps')return false;
+  if(!isFinite(lat)||!isFinite(lng))return false;
+  if(haversineKm(userLat,userLng,lat,lng)<=minKm)return false;
+  // Map hidden (e.g. saving from the helper screen) → width 0, kmToZoom can't measure; keep the current zoom.
+  const z=getPixelRadius()>50?kmToZoom(RADIUS_KM,lat):map.getZoom();
+  userLat=lat; userLng=lng; // nav() restores the view from userLat/userLng when the map is shown again
+  _mapSetView(lat,lng,z);
+  return true;
 }
 async function acceptTerms(){
   if(!sb||!me)return;
@@ -3219,8 +3239,8 @@ async function showApp(){
     const _lat=userLat, _lng=userLng, _z=map.getZoom();
     setTimeout(()=>{
       _mapResize();
-      // First load (no saved zoom) — zoom out to show 25 km radius
-      const z2=_hasSavedZoom?_z:kmToZoom(25,_lat);
+      // First load (no saved zoom) — show the default radius (RADIUS_KM, 10 km)
+      const z2=_hasSavedZoom?_z:kmToZoom(RADIUS_KM,_lat);
       _mapSetView(_lat,_lng,z2);
       updateCircleOverlay();
     },150);
@@ -5325,7 +5345,8 @@ async function saveHelperProfile(){
   }).eq('id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
   toast('✅ Helper profile saved!');
-  loadJobs();
+  // 24 Oct 2026: no GPS → show jobs around the helper's address, not the Toronto default
+  if(!_centerOnHome(hpLat,hpLng,1))loadJobs();
   const returnTo=helperEnteredFromFork?'browse':'profile';
   helperEnteredFromFork=false;
   nav(returnTo);
