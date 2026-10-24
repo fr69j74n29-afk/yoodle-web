@@ -2128,6 +2128,16 @@ function getPixelRadius() {
   return Math.min(el.clientWidth,el.clientHeight)*0.44;
 }
 
+// 24 Oct 2026: set RADIUS_KM from the ring actually on screen (same rounding/clamp as zoomend).
+// Returns true if it changed. Skipped while the map is hidden (no size to measure).
+function _syncRadiusToMap(){
+  if(!map||getPixelRadius()<50)return false;
+  const r=Math.min(25,Math.max(1,Math.round(getCircleKm())));
+  if(r===RADIUS_KM)return false;
+  RADIUS_KM=r;
+  updateZoomLimits();
+  return true;
+}
 // Reverse-project fixed pixel radius → km at current zoom + latitude
 function getCircleKm() {
   if(!map)return RADIUS_KM;
@@ -3246,6 +3256,9 @@ async function showApp(){
       // First load (no saved zoom) — show the default radius (RADIUS_KM, 10 km)
       const z2=_hasSavedZoom?_z:kmToZoom(RADIUS_KM,_lat);
       _mapSetView(_lat,_lng,z2);
+      // 24 Oct 2026: a saved view keeps its zoom, but RADIUS_KM was only recalculated on zoomend, so a user
+      // reopening at the 25 km ring was counted (and labelled) at the 10 km default. Sync it to the ring on screen.
+      if(_syncRadiusToMap())loadJobs();
       updateCircleOverlay();
     },150);
     setTimeout(()=>{_mapResize();_mapSetView(_lat,_lng,_hasSavedZoom?_z:map.getZoom());updateCircleOverlay();},600);
