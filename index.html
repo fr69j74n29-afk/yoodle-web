@@ -1960,6 +1960,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const _notifConvId = _notifParams.get('conv_id');
   const _refCode = _notifParams.get('ref');
   const _openEmail = _notifParams.get('open')==='email-settings';
+  // Email/push "Keep my job up" / "Keep me listed" one-tap renew link: ?renew={token} (24 Oct 2026). Handled after sb is created.
+  const _renewTok = _notifParams.get('renew');
+  if(_renewTok && /^[0-9a-f-]{36}$/i.test(_renewTok)) window._renewToken = _renewTok;
   // Back from Stripe (ID verification): ?idv=paid|cancel|done — handled in handleIdvReturn() once signed in
   const _idvRet = _notifParams.get('idv');
   if(_idvRet==='paid'||_idvRet==='cancel'||_idvRet==='done') window._idvReturn = _idvRet;
@@ -1982,7 +1985,7 @@ window.addEventListener('DOMContentLoaded', () => {
       try{localStorage.setItem('yoodle_chat_land', JSON.stringify({t:_notifTaskId, c:(_notifConvId&&/^[0-9a-f-]{36}$/i.test(_notifConvId))?_notifConvId:null, ts:Date.now()}));}catch(e){}
     }
   }
-  if(_notifTaskId || _refCode || _openEmail || _landHelper || window._idvReturn){
+  if(_notifTaskId || _refCode || _openEmail || _landHelper || window._idvReturn || window._renewToken){
     window.history.replaceState({}, '', '/');
   }
   if(window.navigator.standalone===true||window.matchMedia('(display-mode:standalone)').matches){
@@ -2012,6 +2015,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  if(window._renewToken)handleRenewLink(window._renewToken);
   loadVerifiedIds(); // ID verified badges (public list, signed in or not)
   // Start-up once per signed-in user (Oct 2026). Supabase also fires auth events on token refresh
   // (~hourly) and tab focus, and getSession + INITIAL_SESSION both fire on load — each used to rerun
@@ -4158,6 +4162,36 @@ async function renewJob(jobId){
   const{error}=await sb.from('tasks').update({expires_at:expiresAt,status:'open'}).eq('id',jobId).eq('poster_id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
   toast('🔄 Job renewed for 14 days!');loadMyJobs();loadJobs();
+}
+
+// One-tap renew from the expiry reminder email / expired push (24 Oct 2026).
+// renew_by_token() checks the token in the database, so it works whether or not the user is signed in.
+async function handleRenewLink(token){
+  window._renewToken=null;
+  try{
+    const{data,error}=await sb.rpc('renew_by_token',{p_token:token});
+    if(error||!data)throw error||new Error('no result');
+    if(data.ok){
+      const until=new Date(data.expires_at).toLocaleDateString('en-CA',{month:'short',day:'numeric'});
+      showRenewNote(data.kind==='job'
+        ?`✅ "${data.title}" is back up for neighbours until ${until}.`
+        :`✅ You're listed as a helper until ${until}.`);
+      if(me){loadJobs();if(typeof loadMyJobs==='function')loadMyJobs();}
+    }else if(data.reason==='closed'){
+      showRenewNote('This job is already closed, so it can\'t be renewed. You can post a new one any time.');
+    }else{
+      showRenewNote('This renew link has expired. Sign in and renew from My Jobs or your Helper Profile.');
+    }
+  }catch(e){
+    console.warn('renew link',e);
+    showRenewNote('❌ Could not renew right now — please try the link again in a minute.');
+  }
+}
+function showRenewNote(msg){
+  // longer than toast() (2.8 s) so it can be read after opening from an email
+  const t=document.getElementById('toast');if(!t)return;
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(window._renewNoteT);window._renewNoteT=setTimeout(()=>t.classList.remove('show'),6000);
 }
 
 async function removeJob(jobId){
