@@ -1748,13 +1748,7 @@ function initMap() {
 
   let _moveEndTimer=null;
   map.on('move',updateCircleOverlay);
-  map.on('zoomend',()=>{
-    // Reverse-project fixed pixel circle to km, round to 1km integer, clamp 1–25
-    const raw=getCircleKm();
-    RADIUS_KM=Math.min(25,Math.max(1,Math.round(raw)));
-    updateZoomLimits();
-    updateCircleOverlay();
-  });
+  map.on('zoomend',()=>{_syncRadiusToMap();updateCircleOverlay();});
   map.on('moveend',()=>{
     const c=map.getCenter();
     userLat=c.lat; userLng=c.lng;
@@ -2128,15 +2122,14 @@ function getPixelRadius() {
   return Math.min(el.clientWidth,el.clientHeight)*0.44;
 }
 
-// 24 Oct 2026: set RADIUS_KM from the ring actually on screen (same rounding/clamp as zoomend).
-// Returns true if it changed. Skipped while the map is hidden (no size to measure).
+// Ring on screen → RADIUS_KM (1 km steps, 1–25). Used on every zoomend and at login; true if it changed.
 function _syncRadiusToMap(){
-  if(!map||getPixelRadius()<50)return false;
+  if(!map||getPixelRadius()<50)return false; // map hidden — nothing to measure
   const r=Math.min(25,Math.max(1,Math.round(getCircleKm())));
-  if(r===RADIUS_KM)return false;
+  const changed=r!==RADIUS_KM;
   RADIUS_KM=r;
   updateZoomLimits();
-  return true;
+  return changed;
 }
 // Reverse-project fixed pixel radius → km at current zoom + latitude
 function getCircleKm() {
@@ -3256,9 +3249,7 @@ async function showApp(){
       // First load (no saved zoom) — show the default radius (RADIUS_KM, 10 km)
       const z2=_hasSavedZoom?_z:kmToZoom(RADIUS_KM,_lat);
       _mapSetView(_lat,_lng,z2);
-      // 24 Oct 2026: a saved view keeps its zoom, but RADIUS_KM was only recalculated on zoomend, so a user
-      // reopening at the 25 km ring was counted (and labelled) at the 10 km default. Sync it to the ring on screen.
-      if(_syncRadiusToMap())loadJobs();
+      if(_syncRadiusToMap())loadJobs(); // saved view: no zoomend fires, so match RADIUS_KM to the ring (24 Oct 2026)
       updateCircleOverlay();
     },150);
     setTimeout(()=>{_mapResize();_mapSetView(_lat,_lng,_hasSavedZoom?_z:map.getZoom());updateCircleOverlay();},600);
