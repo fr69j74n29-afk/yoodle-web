@@ -532,6 +532,9 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .idv-chip{display:inline-flex;align-items:center;gap:3px;margin-left:5px;background:var(--idv-soft);color:var(--idv);border:1px solid var(--idv-line);font-family:'Nunito',sans-serif;font-size:11.5px;font-weight:800;line-height:1.5;padding:0 8px;border-radius:100px;white-space:nowrap;vertical-align:middle}
 #p-idv .idv-chip{margin-left:0}
 .rtw-bolt{position:absolute;right:-5px;top:-5px;width:17px;height:17px;border-radius:50%;background:#F5B82E;border:2px solid #fff;color:#1a1200;font:900 9px/1 'Nunito',sans-serif;display:flex;align-items:center;justify-content:center;z-index:1}
+.rtw-pulse::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:2.5px solid #F5B82E;pointer-events:none;animation:rtwPing 2s ease-out infinite}
+@keyframes rtwPing{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.9);opacity:0}}
+@media (prefers-reduced-motion:reduce){.rtw-pulse::after{animation:none;opacity:.8}}
 .rtw-in{font-size:19px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
 .rtw-chip{display:inline-flex;align-items:center;gap:3px;margin-left:5px;background:rgba(245,184,46,.14);color:#B7860B;border:1px solid rgba(245,184,46,.45);font-family:'Nunito',sans-serif;font-size:11.5px;font-weight:800;line-height:1.5;padding:0 8px;border-radius:100px;white-space:nowrap;vertical-align:middle}
 body.theme-sage-dark .rtw-chip{color:#F5B82E}
@@ -2293,7 +2296,7 @@ function renderMapPins(){
     const nMatch=hsCat?g.filter(h=>h!==myHelperPin&&hsMatch(h)).length:0;
     const label=hsCat&&nMatch?`${nMatch}/${g.length}`:String(g.length);
     const you=hasMe?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span>`:'';
-    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid ${hasMe?'#fff':'rgba(255,255,255,.6)'};box-shadow:${hasMe?'0 0 0 2px #2E7D52,':''}0 2px 8px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:${label.length>2?12:15}px;font-weight:900;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${label}${you}${g.some(h=>readyOf(h.id))?'<span class="rtw-bolt" title="Ready to work">⚡</span>':''}</div>`;
+    const html=`<div class="${g.some(h=>readyOf(h.id))?'rtw-pulse':''}" style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid ${hasMe?'#fff':'rgba(255,255,255,.6)'};box-shadow:${hasMe?'0 0 0 2px #2E7D52,':''}0 2px 8px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:${label.length>2?12:15}px;font-weight:900;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${label}${you}${g.some(h=>readyOf(h.id))?'<span class="rtw-bolt" title="Ready to work">⚡</span>':''}</div>`;
     const marker=_htmlMarker(html,38,38,cLat,cLng,{z:hasMe?4:(nMatch?3:1),onClick:()=>openHelperStack(g)});
     if(hsCat){const d=marker.getElement().firstElementChild;if(d)d.classList.add(nMatch?'hs-pin-glow':'hs-pin-dim');}
     helperMarkers.push(marker);
@@ -2302,7 +2305,7 @@ function renderMapPins(){
     if(_hStacked.has(h.id))return; // drawn inside a count bubble
     const[fLat,fLng]=h._fuzzy||(h._fuzzy=fuzzyCoords(h.last_lat,h.last_lng));
     const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
-      html:`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif">${isIdVerified(h.id)?'<span class="idv-tick">✓</span>':''}${rtwBolt(h.id)}</div>`,
+      html:`<div class="${rtwPulse(h.id)}" style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif">${isIdVerified(h.id)?'<span class="idv-tick">✓</span>':''}${rtwBolt(h.id)}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
     const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:hsMatch(h)?3:1,onClick:()=>{logTap('helper',h.id,'pin');openOtherProfile(h.id);}});
@@ -2315,7 +2318,7 @@ function renderMapPins(){
   if(myHelperPin&&!_hStacked.has(myHelperPin.id)){
     const m=myHelperPin;
     const[fLat,fLng]=m._fuzzy||(m._fuzzy=fuzzyCoords(m.last_lat,m.last_lng));
-    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid #fff;box-shadow:0 0 0 2px #2E7D52,0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${isIdVerified(m.id)?'<span class="idv-tick">✓</span>':''}${rtwBolt(m.id)}<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span></div>`;
+    const html=`<div class="${rtwPulse(m.id)}" style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid #fff;box-shadow:0 0 0 2px #2E7D52,0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${isIdVerified(m.id)?'<span class="idv-tick">✓</span>':''}${rtwBolt(m.id)}<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span></div>`;
     const vague=hpIsVagueText(m.helper_address);
     helperMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:4,onClick:()=>{if(vague){hpFocusAreaNext=true;nav('helper');}else openOtherProfile(m.id);}}));
   }
@@ -4805,6 +4808,7 @@ async function loadReadyIds(){
   }catch(e){}
 }
 function readyOf(id){const r=id&&readyIds.get(id);return r?(r.today?'today':(r.tomorrow?'tomorrow':null)):null;}
+function rtwPulse(id){return readyOf(id)?'rtw-pulse':'';} // ⚡ ready today or tomorrow = same pulsing gold ring (Roman, 24 Oct: keep it simple)
 function rtwBolt(id){return readyOf(id)?'<span class="rtw-in" title="Ready to work">⚡</span>':'';} // bolt INSIDE single/own helper pins (blue ID ✓ stays bottom-right)
 function rtwChip(id,short){const r=readyOf(id);if(!r)return '';const both=readyIds.get(id);const lbl=short?'⚡':(both.today&&both.tomorrow?'⚡ Ready today & tomorrow':r==='today'?'⚡ Ready today':'⚡ Ready tomorrow');return `<span class="rtw-chip" title="Ready to work">${lbl}</span>`;}
 const RTW_WHY={
