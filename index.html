@@ -41,11 +41,17 @@
 <!-- Libraries load with defer: they download while the page paints and run (in order) before DOMContentLoaded,
      where all supabase / maplibregl use starts. Don't use either at the top level of the inline script. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"/>
+<!-- MapLibre CSS loads without blocking the first paint (preload → stylesheet; its 2nd load = applied). #map stays hidden until it
+     has applied (html.ml-css), so pins/controls never show unstyled. 3 s fallback in the DOMContentLoaded handler. -->
+<script>function _mlCssReady(){document.documentElement.classList.add('ml-css');try{if(map)map.resize();}catch(e){}}</script>
+<link rel="preload" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" as="style" onload="this.onload=_mlCssReady;this.rel='stylesheet'" onerror="_mlCssReady()">
+<noscript><link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"></noscript>
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js" defer></script>
 <link rel="manifest" href="/manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!-- Fonts CSS without blocking the first paint (display=swap: fallback font first, then Nunito / Fredoka One) -->
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"></noscript>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <style>
 :root{
@@ -309,6 +315,7 @@ body.theme-sage-dark .theme-btn .ic-moon{display:none}
 /* ── MAP VIEW ── */
 #app-map{position:relative}
 #map{flex:1;width:100%;background:#E8E8E0;z-index:1;min-height:0}
+html:not(.ml-css) #map>*{visibility:hidden} /* until maplibre-gl.css has applied */
 .maplibregl-map{background:#E8E8E0;font-family:'Nunito',sans-serif}
 .maplibregl-ctrl-attrib{font-size:10.5px}
 .map-locate-btn{position:absolute;bottom:20px;right:16px;z-index:10;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:all;transition:all .2s;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.1)}
@@ -2027,6 +2034,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if(tip)tip.style.display='block';
   }
   initMap();
+  setTimeout(_mlCssReady,3000); // fallback: show the map even if maplibre-gl.css is slow / blocked
   if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
   }
 
