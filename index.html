@@ -1438,6 +1438,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       </div>
     </div>
     <button id="rtw-go" class="btn-primary" style="width:100%">Turn on for tomorrow</button>
+    <div id="rtw-later" onclick="closeOv('rtw-modal')" style="display:none;text-align:center;color:var(--muted);font-weight:800;font-size:15px;padding:12px 0 2px;cursor:pointer">Not now</div>
   </div>
 </div>
 <div class="modal-ov" id="idv-modal" onclick="if(event.target.id==='idv-modal')closeOv('idv-modal')">
@@ -4852,6 +4853,8 @@ async function rtwTap(day){
   rtwSheet(day,why);
 }
 function rtwSheet(day,why){
+  if(why==='no_push')return rtwPushSheet(day);
+  const _l=document.getElementById('rtw-later');if(_l)_l.style.display='none';
   const w=why&&RTW_WHY[why];
   document.getElementById('rtw-title').textContent=day==='today'?'Ready to work today':'Ready to work tomorrow';
   document.getElementById('rtw-why').innerHTML=w?`<div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:12px">${w.t}</div>`:'';
@@ -4861,6 +4864,87 @@ function rtwSheet(day,why){
   else{go.textContent=day==='today'?'Turn on for today':'Turn on for tomorrow';go.onclick=()=>{closeOv('rtw-modal');rtwSet(day,true);};}
   window._rtwDay=day;
   openOv('rtw-modal');
+}
+// ── Ready to work: notifications not ready (25 Oct 2026) — no dead ends ──
+// ios = iPhone Safari tab (needs Home Screen) · blocked = denied · ask = never asked · granted = allowed but the server
+// hasn't got the phone's push id yet · unsupported = browser has no notifications
+function _rtwPushState(){
+  if(isIos()&&!isInStandaloneMode())return 'ios';
+  if(!('Notification' in window))return 'unsupported';
+  const p=Notification.permission;
+  return p==='denied'?'blocked':p==='granted'?'granted':'ask';
+}
+const RTW_PUSH={
+  ask:{warn:'🔔 Turn on notifications to use this',p:'We send one reminder each evening so you stay listed.',btn:'Turn on notifications',act:'ask',later:true},
+  blocked:{warn:'🔕 Notifications are blocked for yoodle.ca',p:'We send one reminder each evening so you stay listed. To allow them:',
+    steps:['Tap the <b>🔒 lock</b> (or <b>ⓘ</b>) next to <b>yoodle.ca</b> in the address bar','Tap <b>Permissions</b> or <b>Site settings</b>','Set <b>Notifications</b> to <b>Allow</b>'],
+    btn:"I've allowed them — turn on",act:'recheck',later:true},
+  ios:{warn:'📲 On iPhone, add Yoodle to your Home Screen first',p:'iPhone only sends notifications to apps on the Home Screen. It takes 10 seconds:',
+    steps:['Tap <b>Share</b> at the bottom of Safari','Tap <b>Add to Home Screen</b> → <b>Add</b>','Open <b>Yoodle</b> from your Home Screen and tap <b>Ready to work</b> again'],btn:'Got it',act:'close'},
+  unsupported:{warn:"🔕 This browser can't show notifications",p:'Open yoodle.ca in Chrome or Safari to use Ready to work.',btn:'Got it',act:'close'}
+};
+function rtwPushSheet(day,note){
+  const st=_rtwPushState();
+  if(st==='granted'){closeOv('rtw-modal');return _rtwEnableAfterPush(day);} // allowed — just finish the set-up
+  const c=RTW_PUSH[st];
+  document.getElementById('rtw-title').textContent=day==='today'?'Ready to work today':'Ready to work tomorrow';
+  document.getElementById('rtw-why').innerHTML=
+    `<div style="background:rgba(245,184,46,.12);border:1px solid rgba(245,184,46,.4);color:var(--text);border-radius:12px;padding:10px 12px;font-weight:800;font-size:14.5px;margin-bottom:10px">${c.warn}</div>`
+    +`<div style="font-size:14px;font-weight:700;color:var(--muted);line-height:1.5;margin-bottom:8px">${c.p}</div>`
+    +(c.steps?`<ol style="margin:0 0 12px 20px;font-size:14px;font-weight:700;color:var(--text);line-height:1.6">${c.steps.map(x=>`<li>${x}</li>`).join('')}</ol>`:'')
+    +(note?`<div style="font-size:13.5px;font-weight:800;color:#D97706;margin-bottom:10px">${note}</div>`:'');
+  document.getElementById('rtw-idv').style.display='none';
+  const l=document.getElementById('rtw-later');if(l)l.style.display=c.later?'block':'none';
+  const go=document.getElementById('rtw-go');go.disabled=false;go.textContent=c.btn;
+  go.onclick=()=>{
+    if(c.act==='close')return closeOv('rtw-modal');
+    if(c.act==='recheck'){
+      if(_rtwPushState()==='granted'){closeOv('rtw-modal');_rtwEnableAfterPush(day);}
+      else rtwPushSheet(day,'Still blocked — follow the steps above, then tap again.');
+      return;
+    }
+    _rtwAskPush(day); // 'ask' — must run straight from the tap so the browser shows its prompt
+  };
+  window._rtwDay=day;
+  openOv('rtw-modal');
+}
+function _rtwAskPush(day){
+  const go=document.getElementById('rtw-go');go.disabled=true;go.textContent='Waiting for your answer…';
+  let done=false;
+  const finish=p=>{
+    if(done)return;done=true;go.disabled=false;
+    try{updateNotifNudge();}catch(e){}
+    if(p==='granted'){closeOv('rtw-modal');_rtwEnableAfterPush(day);}
+    else if(p==='denied')rtwPushSheet(day);              // they said Block → show how to undo it
+    else rtwPushSheet(day,'No answer yet — tap again to see the question.');
+  };
+  try{
+    if(window.OneSignalDeferred){window.OneSignalDeferred.push(async os=>{try{await os.Notifications.requestPermission();}catch(e){}finish(Notification.permission);});}
+    else Notification.requestPermission().then(finish,()=>finish(Notification.permission));
+  }catch(e){finish(Notification.permission);}
+  // the prompt can be dismissed without the promise settling — check again after 20 s
+  setTimeout(()=>finish(Notification.permission),20000);
+}
+// Allowed → make sure OneSignal saved this phone (profiles.onesignal_id), then turn the day on. The id can take a few
+// seconds to reach the server, so try up to 4 times.
+async function _rtwEnableAfterPush(day){
+  toast('🔔 Notifications on — setting you up…');
+  try{if(window.OneSignalDeferred)window.OneSignalDeferred.push(async os=>{try{await os.User.PushSubscription.optIn();}catch(e){}});}catch(e){}
+  for(let i=0;i<4;i++){
+    await new Promise(r=>setTimeout(r,i?2500:1200));
+    try{registerOneSignal();}catch(e){}
+    let res=null;try{res=await sb.rpc('set_ready_to_work',{p_day:day,p_on:true});}catch(e){}
+    const data=res&&res.data;
+    if(data&&data.ok){
+      toast(day==='today'?'⚡ You\'re showing as ready today':'⚡ You\'re showing as ready tomorrow');
+      _rtwStatus=data;
+      try{const{data:prof}=await sb.from('profiles').select('helper_categories,visible_on_map').eq('id',myProfileId||me.id).maybeSingle();renderRtwBlock(prof);}catch(e){}
+      loadReadyIds();return true;
+    }
+    if(data&&data.ok===false&&data.reason!=='no_push'){rtwSheet(day,data.reason);return false;}
+  }
+  toast("Almost there — tap Tomorrow again in a minute");
+  return false;
 }
 function rtwIdvLater(){try{localStorage.setItem('yoodle_rtw_idv_skip',String(Date.now()));}catch(e){}closeOv('rtw-modal');rtwSet(window._rtwDay||'tomorrow',true);}
 async function rtwSet(day,on){
