@@ -4842,7 +4842,7 @@ async function renderRtwBlock(prof){
   </div>`;
   el.style.display='block';
 }
-function _rtwPushOk(){return window.Notification?.permission==='granted';}
+function _rtwPushOk(){return !(isIos()&&!isInStandaloneMode())&&window.Notification?.permission==='granted';} // iPhone Safari tab can't get pushes even if a permission value exists
 function _rtwIdvSkipped(){try{return Date.now()-(+localStorage.getItem('yoodle_rtw_idv_skip')||0)<7*864e5;}catch(e){return false;}}
 async function rtwTap(day){
   const st=_rtwStatus;if(!st)return;
