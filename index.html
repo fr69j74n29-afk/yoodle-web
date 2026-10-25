@@ -931,7 +931,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 
       <!-- Helper status block (populated by loadProfile) -->
       <div id="helper-status-block" style="margin-bottom:12px"></div>
-      <!-- Ready to work card (General Labour helpers; populated by renderRtwBlock) -->
+      <!-- Ready to work card (helpers with a Ready-to-work skill — list kept in SQL table ready_to_work_categories; populated by renderRtwBlock) -->
       <div id="rtw-block" style="margin-bottom:12px;display:none"></div>
       <!-- ID verification card (populated by renderIdvBlock) -->
       <div id="idv-block" style="margin-bottom:12px"></div>
@@ -4790,7 +4790,7 @@ async function loadVerifiedIds(){
 function isIdVerified(id){return !!id&&verifiedIds.has(id);}
 function idvChip(id,short){return isIdVerified(id)?`<span class="idv-chip" title="ID checked by Stripe">✓ ${short?'ID':'ID verified'}</span>`:'';}
 
-// ── READY TO WORK (General Labour helpers, Today / Tomorrow) ──
+// ── READY TO WORK (Today / Tomorrow) ── which skills qualify is decided in SQL (table ready_to_work_categories), never here
 // Backend: ready_to_work table + get_ready_ids() / get_my_ready_to_work() / set_ready_to_work(); kill switch feature_flags.ready_to_work.
 // Server decides who is eligible and who shows; this code only mirrors it. Any RPC error = feature hidden (safe rollback).
 let readyIds=new Map(); // profile id → {today,tomorrow}
@@ -4812,7 +4812,7 @@ function rtwPulse(id){return readyOf(id)?'rtw-pulse':'';} // ⚡ ready today or 
 function rtwBolt(id){return readyOf(id)?'<span class="rtw-in" title="Ready to work">⚡</span>':'';} // bolt INSIDE single/own helper pins (blue ID ✓ stays bottom-right)
 function rtwChip(id,short){const r=readyOf(id);if(!r)return '';const both=readyIds.get(id);const lbl=short?'⚡':(both.today&&both.tomorrow?'⚡ Ready today & tomorrow':r==='today'?'⚡ Ready today':'⚡ Ready tomorrow');return `<span class="rtw-chip" title="Ready to work">${lbl}</span>`;}
 const RTW_WHY={
-  not_labour:{t:'Add General Labour to your helper profile to use this.',b:'Edit helper profile',f:()=>nav('helper')},
+  not_labour:{t:'Add a matching skill to your helper profile to use this.',b:'Edit helper profile',f:()=>nav('helper')},
   helper_off:{t:'Your helper profile needs to be active and on the map.',b:'Open helper profile',f:()=>nav('helper')},
   no_push:{t:'Turn on notifications — we send one reminder each evening so you stay listed.',b:'Turn on notifications',f:()=>requestNotifPermission()},
   too_new:{t:'Available once your account is 7 days old.',b:null},
@@ -4821,18 +4821,18 @@ const RTW_WHY={
 };
 async function renderRtwBlock(prof){
   const el=document.getElementById('rtw-block');if(!el)return;
-  const isLabour=(prof?.helper_categories||[]).includes('General Labour');
-  if(!isLabour||!prof?.visible_on_map){el.style.display='none';return;}
+  if(!prof?.visible_on_map){el.style.display='none';return;}
   let st=null;
   try{const{data,error}=await sb.rpc('get_my_ready_to_work');if(!error)st=data;}catch(e){}
-  if(!st||!st.enabled){el.style.display='none';return;}
+  // server decides: no qualifying skill (not_labour) → no card
+  if(!st||!st.enabled||st.eligible==='not_labour'){el.style.display='none';return;}
   _rtwStatus=st;
   const tmr=st.tomorrow_date?new Date(st.tomorrow_date+'T12:00:00').toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'}):'';
   const line=st.today&&st.tomorrow?'Showing on the map today and tomorrow':st.today?'Showing on the map today':st.tomorrow?'Showing on the map for tomorrow':'Not showing — pick a day';
   el.innerHTML=`<div class="rtw-card">
     <div style="display:flex;align-items:center;gap:10px"><span class="rtw-bolt" style="position:static;width:24px;height:24px;font-size:13px;border:0">⚡</span>
       <div style="font-size:15px;font-weight:800;color:var(--text)">Ready to work</div></div>
-    <div style="font-size:13.5px;font-weight:700;color:var(--muted);margin-top:4px;line-height:1.45">Show contractors and neighbours you can take a general labour job.</div>
+    <div style="font-size:13.5px;font-weight:700;color:var(--muted);margin-top:4px;line-height:1.45">Show contractors and neighbours you're available to work.</div>
     <div class="rtw-seg">
       <button class="${st.today?'on':''}" onclick="rtwTap('today')">Today${st.today?' ✓':''}<small>until 11:59 pm</small></button>
       <button class="${st.tomorrow?'on':''}" onclick="rtwTap('tomorrow')">Tomorrow${st.tomorrow?' ✓':''}<small>${esc(tmr)}</small></button>
