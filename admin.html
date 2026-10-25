@@ -1095,6 +1095,10 @@ body::before {
     <div class="section-title lazy-h" onclick="toggleLazy('idv')">ID VERIFICATION <span id="idv-count" style="opacity:.8"></span> <span class="lazy-hint" id="lazy-hint-idv">▸ TAP TO LOAD</span></div>
     <div id="lazy-idv" style="display:none"><div id="idv-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
+    <!-- READY TO WORK (25 Oct 2026) — admin_rtw_categories(); which skills qualify is set in SQL table ready_to_work_categories -->
+    <div class="section-title lazy-h" onclick="toggleLazy('rtw')">READY TO WORK — SKILLS <span id="rtw-count" style="opacity:.8"></span> <span class="lazy-hint" id="lazy-hint-rtw">▸ TAP TO LOAD</span></div>
+    <div id="lazy-rtw" style="display:none"><div id="rtw-cats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
+
     <!-- NEWEST USERS -->
     <div class="section-title lazy-h" onclick="toggleLazy('users')">NEWEST USERS — LAST 5 <span class="lazy-hint" id="lazy-hint-users">▸ TAP TO LOAD</span></div>
     <div id="lazy-users" style="display:none"><div id="recent-users" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
@@ -1271,7 +1275,7 @@ function refreshAll() {
 // Regions (+ admin-geo.js ≈140 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
 const LAZY = { regions: loadRegions, onboard: loadOnboardStats, share: loadShareStats, tap: loadTapStats, agency: loadAgencyStats, search: loadSearchStats,
-  reports: loadReports, pros: loadPros, idv: loadIdvList, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended };
+  reports: loadReports, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended };
 // After an admin action: reload a section only if it's open; a closed one reloads fresh the next time it's opened.
 function lazyReload(k) {
   if (_lazyOpen[k]) return LAZY[k]();
@@ -1905,6 +1909,27 @@ async function setProStatus(id, status) {
 }
 
 // ── NEWEST USERS (admin-only RPC, reads auth.users) ──
+// ── READY TO WORK skills (25 Oct 2026) ── read-only; change the list in SQL:
+//   insert into ready_to_work_categories(category) values ('…');  /  delete from ready_to_work_categories where category='…';
+async function loadRtwCats() {
+  const el = document.getElementById('rtw-cats'), cnt = document.getElementById('rtw-count');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_rtw_categories');
+  if (error) { el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`; return; }
+  const rows = data || [], on = rows.filter(r => r.ready_on);
+  const sum = k => on.reduce((a, r) => a + (r[k] || 0), 0);
+  if (cnt) cnt.textContent = `· ${on.length} skill${on.length === 1 ? '' : 's'} on · ${sum('ready_today')} ready today · ${sum('ready_tomorrow')} tomorrow`;
+  const head = `<div style="display:flex;gap:8px;padding:10px 0 6px;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.4px"><span style="flex:1">SKILL</span><span style="width:62px;text-align:right">ON MAP</span><span style="width:62px;text-align:right">CAN USE</span><span style="width:52px;text-align:right">TODAY</span><span style="width:52px;text-align:right">TMRW</span></div>`;
+  el.innerHTML = head + rows.map(r => `<div style="display:flex;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--border);font-size:14px;${r.ready_on ? '' : 'opacity:.45'}">
+      <span style="flex:1;font-weight:700">${esc(r.emoji || '')} ${esc(r.category)} ${r.ready_on ? '<span style="margin-left:6px;font-size:11px;font-weight:800;color:#1a1200;background:#F5B82E;border-radius:100px;padding:1px 8px">⚡ ON</span>' : '<span style="margin-left:6px;font-size:11px;color:var(--muted)">off</span>'}</span>
+      <span style="width:62px;text-align:right">${r.helpers_on_map}</span>
+      <span style="width:62px;text-align:right">${r.ready_on ? r.can_turn_on : '–'}</span>
+      <span style="width:52px;text-align:right">${r.ready_on ? r.ready_today : '–'}</span>
+      <span style="width:52px;text-align:right">${r.ready_on ? r.ready_tomorrow : '–'}</span></div>`).join('')
+    + `<div style="padding:10px 0 4px;font-size:12px;color:var(--muted);line-height:1.5">ON MAP = helpers listing this skill. CAN USE = could turn on Ready to work now (notifications on, account 7+ days, not suspended). Change which skills are on in the Supabase SQL editor.</div>`;
+}
+
 // ── ID VERIFICATION (Stripe Identity, 15 Oct 2026) ──
 // One row per member who started. Sandbox (test) rows are tagged TEST. Amounts in cents.
 async function loadIdvList() {
