@@ -4,6 +4,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Open connections early: Supabase API, map tiles, font files (all fetched with CORS → crossorigin) -->
+<link rel="preconnect" href="https://pyzugtltkbpcxvokdmps.supabase.co" crossorigin>
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -34,9 +38,11 @@
   "keywords": "odd jobs, local help, neighbourhood tasks, hire local, community work, earn money local"
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<!-- Libraries load with defer: they download while the page paints and run (in order) before DOMContentLoaded,
+     where all supabase / maplibregl use starts. Don't use either at the top level of the inline script. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"/>
-<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js" defer></script>
 <link rel="manifest" href="/manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -3269,23 +3275,28 @@ function _startApp(session){
 async function showApp(){
   document.getElementById('view-auth').style.display='none';
   const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
-  // Container just became visible — Leaflet needs to recalc tile positions
+  // Container just became visible — Leaflet needs to recalc tile positions.
+  // The start-up loadJobs() below waits for this resize + radius sync, so it runs once with the right ring size.
+  let _viewReadyRes; const _viewReady=new Promise(r=>_viewReadyRes=r);
   if(map){
     const _hasSavedZoom=!!JSON.parse(localStorage.getItem('yoodle_map')||'null')?.zoom;
     const _lat=userLat, _lng=userLng, _z=map.getZoom();
     setTimeout(()=>{
+      try{
       _mapResize();
       // First load (no saved zoom) — show the default radius (RADIUS_KM, 10 km)
       const z2=_hasSavedZoom?_z:kmToZoom(RADIUS_KM,_lat);
       _mapSetView(_lat,_lng,z2);
-      if(_syncRadiusToMap())loadJobs(); // saved view: no zoomend fires, so match RADIUS_KM to the ring
+      _syncRadiusToMap(); // saved view: no zoomend fires, so match RADIUS_KM to the ring
       updateCircleOverlay();
+      }finally{_viewReadyRes();}
     },150);
     setTimeout(()=>{_mapResize();_mapSetView(_lat,_lng,_hasSavedZoom?_z:map.getZoom());updateCircleOverlay();},600);
-  }
+  }else _viewReadyRes();
   setAvatar();
   if(await startupChecks())return; // suspended — stop here (profile, gates, demo, blocks in one round trip)
-  loadJobs();
+  await Promise.race([_viewReady,new Promise(r=>setTimeout(r,1000))]); // map resized + ring synced (max 1 s)
+  loadJobs(); // the one start-up load (before: a 2nd load also ran from the resize timer)
   ysInit(); // Find a helper counts + Post a Job category picker
   closeAuthSheet();
   restoreGuestDraft();
