@@ -1349,14 +1349,13 @@ async function loadStats() {
 
     // Active helpers breakdown
     const allHelpers = helpers || [];
-    const mappedHelpers = allHelpers.filter(h => h.show_on_map === true);
     animateNumber('stat-helpers', allHelpers.length);
     // "List only" was removed from the app (8 Oct 2026) → show Ready to work (⚡ today) instead (25 Oct 2026)
     const _hd = document.getElementById('stat-helpers-detail');
-    _hd.textContent = `${mappedHelpers.length} mapped · … ready now`;
+    _hd.textContent = '⚡ … ready now';
     sb.rpc('get_ready_ids').then(({ data, error }) => {
-      _hd.textContent = `${mappedHelpers.length} mapped · ` + (error ? '⚡ ready now n/a' : `⚡ ${(data || []).filter(r => r.today).length} ready now`);
-    }, () => { _hd.textContent = `${mappedHelpers.length} mapped`; });
+      _hd.textContent = error ? '⚡ ready now n/a' : `⚡ ${(data || []).filter(r => r.today).length} ready now`;
+    }, () => { _hd.textContent = '⚡ ready now n/a'; });
 
     // Open jobs (same rule as the old "Open" bar: status open, admin auto-reply poster excluded)
     // Split (Oct 2026): direct = posted by members; agency = synced partner listings (type 'agency_job')
