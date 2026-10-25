@@ -1011,7 +1011,7 @@ body::before {
     <!-- TOP STATS -->
     <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
       <div class="stat-card users">
-        <div class="stat-label"><span class="stat-icon">👤</span> Registered Users</div>
+        <div class="stat-label"><span class="stat-icon">👤</span> Users</div>
         <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
           <div class="stat-num loading-val" id="stat-users">—</div>
           <div class="stat-live" id="stat-users-live" title="Members active in the last 15 minutes (admin &amp; demo accounts excluded)"></div>
@@ -1019,9 +1019,9 @@ body::before {
         <div class="stat-sub" id="stat-users-detail">Active accounts (suspended excluded)</div>
       </div>
       <div class="stat-card helpers" style="--accent: linear-gradient(90deg, #A3E635, #FCD34D);">
-        <div class="stat-label"><span class="stat-icon">🙋</span> Active Helpers</div>
+        <div class="stat-label"><span class="stat-icon">🙋</span> Helpers</div>
         <div class="stat-num loading-val" id="stat-helpers">—</div>
-        <div class="stat-sub" id="stat-helpers-detail">Mapped · List-only</div>
+        <div class="stat-sub" id="stat-helpers-detail">Mapped · Ready now</div>
       </div>
     </div>
 
@@ -1033,9 +1033,9 @@ body::before {
         <div class="stat-sub" id="stat-open-jobs-detail">Direct · agency</div>
       </div>
       <div class="stat-card convs">
-        <div class="stat-label"><span class="stat-icon">💬</span> Live Conversations</div>
+        <div class="stat-label"><span class="stat-icon">💬</span> Conversations</div>
         <div class="stat-num loading-val" id="stat-conv-live">—</div>
-        <div class="stat-sub">Open or claimed jobs · visible in Messages</div>
+        <div class="stat-sub">Open or claimed jobs</div>
       </div>
     </div>
 
@@ -1350,10 +1350,13 @@ async function loadStats() {
     // Active helpers breakdown
     const allHelpers = helpers || [];
     const mappedHelpers = allHelpers.filter(h => h.show_on_map === true);
-    const listOnlyHelpers = allHelpers.length - mappedHelpers.length;
     animateNumber('stat-helpers', allHelpers.length);
-    document.getElementById('stat-helpers-detail').textContent =
-      `${mappedHelpers.length} mapped · ${listOnlyHelpers} list-only`;
+    // "List only" was removed from the app (8 Oct 2026) → show Ready to work (⚡ today) instead (25 Oct 2026)
+    const _hd = document.getElementById('stat-helpers-detail');
+    _hd.textContent = `${mappedHelpers.length} mapped · … ready now`;
+    sb.rpc('get_ready_ids').then(({ data, error }) => {
+      _hd.textContent = `${mappedHelpers.length} mapped · ` + (error ? '⚡ ready now n/a' : `⚡ ${(data || []).filter(r => r.today).length} ready now`);
+    }, () => { _hd.textContent = `${mappedHelpers.length} mapped`; });
 
     // Open jobs (same rule as the old "Open" bar: status open, admin auto-reply poster excluded)
     // Split (Oct 2026): direct = posted by members; agency = synced partner listings (type 'agency_job')
