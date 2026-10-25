@@ -1915,7 +1915,7 @@ async function loadRtwCats() {
   const el = document.getElementById('rtw-cats'), cnt = document.getElementById('rtw-count');
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
-  const { data, error } = await sb.rpc('admin_rtw_categories');
+  const [{ data, error }, hist] = await Promise.all([sb.rpc('admin_rtw_categories'), sb.rpc('admin_rtw_history', { p_days: 14 })]);
   if (error) { el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`; return; }
   const rows = data || [], on = rows.filter(r => r.ready_on);
   const sum = k => on.reduce((a, r) => a + (r[k] || 0), 0);
@@ -1927,7 +1927,19 @@ async function loadRtwCats() {
       <span style="width:62px;text-align:right">${r.ready_on ? r.can_turn_on : '–'}</span>
       <span style="width:52px;text-align:right">${r.ready_on ? r.ready_today : '–'}</span>
       <span style="width:52px;text-align:right">${r.ready_on ? r.ready_tomorrow : '–'}</span></div>`).join('')
+    + rtwHistHtml(hist)
     + `<div style="padding:10px 0 4px;font-size:12px;color:var(--muted);line-height:1.5">ON MAP = helpers listing this skill. CAN USE = could turn on Ready to work now (notifications on, account 7+ days, not suspended). Change which skills are on in the Supabase SQL editor.</div>`;
+}
+
+// Last 14 days (admin_rtw_history): ready at day end, ever on that day, turn-ons/offs, evening pushes, renewed within 6 h of the push. Testers excluded.
+function rtwHistHtml(hist) {
+  if (!hist || hist.error) return `<div style="padding:12px 0;color:var(--muted);font-size:13px">History not available${hist && hist.error ? ': ' + esc(hist.error.message) : ''}</div>`;
+  const rows = hist.data || [];
+  const fmt = d => new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+  const c = (v, w) => `<span style="width:${w}px;text-align:right">${v}</span>`;
+  return `<div style="margin-top:18px;padding:10px 0 6px;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.4px;display:flex;gap:8px"><span style="flex:1">LAST 14 DAYS</span>${c('READY', 50)}${c('ANY TIME', 62)}${c('ON', 36)}${c('OFF', 36)}${c('PUSH', 44)}${c('RENEW', 50)}</div>`
+    + rows.map(r => `<div style="display:flex;gap:8px;padding:7px 0;border-top:1px solid var(--border);font-size:13.5px"><span style="flex:1">${fmt(r.day)}</span>${c(r.ready_end, 50)}${c(r.ready_any, 62)}${c(r.turned_on, 36)}${c(r.turned_off, 36)}${c(r.pushes_sent, 44)}${c(r.renewed_after_push, 50)}</div>`).join('')
+    + `<div style="padding:8px 0 0;font-size:12px;color:var(--muted);line-height:1.5">READY = still on at 11:55 pm · ANY TIME = turned on for that day at any point · PUSH = 6:31 pm reminders sent · RENEW = turned on within 6 h of the reminder. History starts 25 Oct 2026.</div>`;
 }
 
 // ── ID VERIFICATION (Stripe Identity, 15 Oct 2026) ──
