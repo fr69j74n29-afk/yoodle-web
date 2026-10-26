@@ -2243,10 +2243,11 @@ let myHelperPin=null,hpFocusAreaNext=false,myIsTester=false; // own helper pin: 
 let allBizListings=[], bizMarkers=[];
 // ── YOODLE PROS: pro listings from pro.yoodle.ca — orange pins, separate from helper pins ──
 const PRO_PIN='#EA6A12';
-const PRO_TRADE_FALLBACK={plumber:{emoji:'🚰',label:'Plumber'},hvac:{emoji:'❄️',label:'HVAC'},electrician:{emoji:'⚡',label:'Electrician'}};
+const PRO_TRADE_FALLBACK={plumber:{emoji:'🚰',label:'Plumber',lic:true},hvac:{emoji:'❄️',label:'HVAC',lic:true},electrician:{emoji:'⚡',label:'Electrician',lic:true}};
 let PRO_TRADES=null, allPros=[], proMarkers=[];
 var _lastJobsLoad=null; // {lat,lng,r}: map centre + ring radius of the last loadJobs() (small-pan skip)
 function proTrade(k){return (PRO_TRADES&&PRO_TRADES[k])||PRO_TRADE_FALLBACK[k]||{emoji:'🔧',label:k};}
+function proNeedsLicence(arr){return (arr||[]).some(k=>!!proTrade(k).lic);} // pro_trades.licence_required (plumber, HVAC, electrician)
 function proTradesText(arr){return (arr||[]).map(k=>{const t=proTrade(k);return t.emoji+' '+t.label;}).join(' · ');}
 
 // Job glow: non-agency job pins only
@@ -2482,14 +2483,14 @@ function setListRadius(el,km){
 // embedded via the pro_profiles.profile_id → profiles FK. Trades list is cached after the first successful load.
 function fetchPros(){
   return Promise.all([
-    PRO_TRADES?null:sb.from('pro_trades').select('key,label,emoji'),
+    PRO_TRADES?null:sb.from('pro_trades').select('key,label,emoji,licence_required'),
     sb.rpc('get_public_pros')   // approved + visible + unexpired only, filtered in the database
   ]).catch(e=>{console.warn('pros',e);return[null,null];});
 }
 function applyPros(res,pid){
   try{
     const[tr,pr]=res||[];
-    if(tr&&tr.data){PRO_TRADES={};tr.data.forEach(t=>PRO_TRADES[t.key]={emoji:t.emoji||'🔧',label:t.label});}
+    if(tr&&tr.data){PRO_TRADES={};tr.data.forEach(t=>PRO_TRADES[t.key]={emoji:t.emoji||'🔧',label:t.label,lic:!!t.licence_required});}
     allPros=((pr&&pr.data)||[])
       .filter(p=>p.status==='approved'&&!hiddenUserIds.has(p.profile_id)&&(!p.is_tester||myIsTester))
       .map(({is_tester,...p})=>({...p,mine:p.profile_id===pid}));
@@ -2989,9 +2990,12 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
       <div class="op-bio-lbl" style="color:${PRO_PIN}">Yoodle Pro</div>
       ${_pro.business_name?`<div style="font-size:15px;font-weight:800;margin-bottom:6px">${esc(_pro.business_name)}</div>`:''}
       <div style="font-size:14px;font-weight:800;margin-bottom:8px">${esc(proTradesText(_pro.trades))}</div>
-      <div style="margin-bottom:10px">${_pro.licence_verified_at
+      <!-- licence pill: ✓ if verified; "not verified" only for trades that need a licence. ID pill always (Roman, 25 Oct 2026) -->
+      <div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px">${_pro.licence_verified_at
         ?'<span style="font-size:12.5px;font-weight:800;color:#1F8E5A;background:rgba(31,142,90,.1);border-radius:100px;padding:3px 10px">✓ Verified licence</span>'
-        :'<span style="font-size:12.5px;font-weight:800;color:var(--muted);background:rgba(127,127,127,.12);border-radius:100px;padding:3px 10px">Licence not verified</span>'}</div>
+        :proNeedsLicence(_pro.trades)?'<span style="font-size:12.5px;font-weight:800;color:var(--muted);background:rgba(127,127,127,.12);border-radius:100px;padding:3px 10px">Licence not verified</span>':''}${isIdVerified(userId)
+        ?'<span style="font-size:12.5px;font-weight:800;color:var(--idv);background:var(--idv-soft);border:1px solid var(--idv-line);border-radius:100px;padding:2px 10px">✓ ID verified</span>'
+        :'<span style="font-size:12.5px;font-weight:800;color:var(--muted);background:rgba(127,127,127,.12);border-radius:100px;padding:3px 10px">ID not verified</span>'}</div>
       ${_pro.bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(_pro.bio)}</div>`:''}
       <div style="font-size:13px;color:var(--muted)">📍 ${area?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(area)}" target="_blank" rel="noopener" style="color:inherit">${esc(area)}</a>`:'Address not set'}<br>Travels up to ${Number(_pro.service_radius_km)||25} km</div>
       ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Pro')}',true)" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:${PRO_PIN};border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Pro</button>`:''}
