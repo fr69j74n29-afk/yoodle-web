@@ -1980,8 +1980,8 @@ function hsPick(k){
 }
 
 // ══ FIND A PRO (Oct 2026) ══
-// "PRO" button (top bar) → popup of trades that have at least one approved pro (whole map, from allPros /
-// get_public_pros) → pick one: pros of that trade appear on the map (glowing orange) and in the List's Help tab
+// "PRO" button (top bar) → popup of trades that have at least one approved pro NEAR the map (allPros /
+// get_pros_near, same distance as helpers) → pick one: pros of that trade appear on the map (glowing orange) and in the List's Help tab
 // (regular helpers drop out of the list; on the map they fade). Pro pins are hidden until a trade is picked.
 // One filter at a time: picking a pro trade clears the helper category and vice versa.
 // Tracking: log_search('pro:<trade>') for picks, log_tap('pro', …) for pin/card taps (filter = trade).
@@ -1994,10 +1994,10 @@ function psRenderGrid(){
   const c=psCounts();
   const keys=Object.keys(c).sort((a,b)=>c[b]-c[a]||proTrade(a).label.localeCompare(proTrade(b).label));
   const n=(allPros||[]).length,sub=document.getElementById('ps-sub');
-  if(sub)sub.textContent=n?`${n} approved ${n===1?'pro':'pros'} on Yoodle`:'Yoodle Pros';
+  if(sub)sub.textContent=n?`${n} approved ${n===1?'pro':'pros'} near you`:'Yoodle Pros';
   el.innerHTML=keys.length?keys.map(k=>{const t=proTrade(k);
     return `<button class="hs-cat ps-cat${psTrade===k?' on':''}" onclick="psPick('${ysAttr(k)}')"><span class="e">${t.emoji}</span><span class="t">${esc(t.label)}</span><span class="n">${c[k]}</span></button>`;
-  }).join(''):'<div class="ps-empty">No pros on Yoodle yet — check back soon.</div>';
+  }).join(''):'<div class="ps-empty">No pros near you yet — check back soon.</div>';
 }
 function psOpen(){
   if(!document.getElementById('app-map').classList.contains('active')&&!_hsInList())nav('map');
@@ -2578,15 +2578,16 @@ function setListRadius(el,km){
   loadJobs();
 }
 
-// Pro listings (pro.yoodle.ca): yoodle.ca reads pros ONLY via get_public_pros() (security definer: approved, visible,
-// unexpired, located; tester pros only for testers) — no admin/owner exception, so nobody sees pending pros here.
+// Pro listings (pro.yoodle.ca): the map reads pros ONLY via get_pros_near() — nearby only, closest first, same
+// inputs as get_helpers_near (Oct 26). Single-pro lookups use get_public_pros(p_profile). Both security definer:
+// approved, visible, unexpired, located; tester pros only for testers — no admin/owner exception, so nobody sees pending pros here.
 // The pro still sees their own pending pin on pro.yoodle.ca (table RLS: approved OR own OR admin).
 // Fetched in parallel with helpers/jobs inside loadJobs(), in ONE request — the owner's name comes
 // embedded via the pro_profiles.profile_id → profiles FK. Trades list is cached after the first successful load.
-function fetchPros(){
+function fetchPros(lat,lng,km){
   return Promise.all([
     PRO_TRADES?null:sb.from('pro_trades').select('key,label,emoji,licence_required'),
-    sb.rpc('get_public_pros')   // approved + visible + unexpired only, filtered in the database
+    sb.rpc('get_pros_near',{user_lat:lat,user_lng:lng,radius_km:km,lim:300})   // nearby approved pros only, filtered in the database
   ]).catch(e=>{console.warn('pros',e);return[null,null];});
 }
 function applyPros(res,pid){
@@ -2650,7 +2651,7 @@ async function loadJobs() {
     // own helper row — the helpers query above excludes me (own pin)
     pid?sb.from('profiles').select('id,name,last_lat,last_lng,show_on_map,visible_on_map,helper_address,is_tester').eq('id',pid).maybeSingle():Promise.resolve({data:null}),
     // Pro listings + trades (same round trip)
-    fetchPros()
+    fetchPros(userLat||43.6532,userLng||-79.3832,mapLoadKm)
   ]);
   const _mp=_meRes?.data;
   myIsTester=!!_mp?.is_tester; // test accounts (profiles.is_tester) are only shown to other test accounts
