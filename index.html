@@ -625,7 +625,7 @@ body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 .hs-btn{display:flex;align-items:center;gap:6px;height:38px;padding:0 13px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;max-width:210px;transition:transform .15s}
 .hs-btn:active{transform:scale(.96)}
 .hs-btn svg{width:16px;height:16px;flex-shrink:0;color:var(--purple)}
-.hs-btn #hs-label{overflow:hidden;text-overflow:ellipsis}
+.hs-btn #hs-label,.hs-btn #ps-label{overflow:hidden;text-overflow:ellipsis}
 .hs-btn.on{background:#F59E0B;border-color:#F59E0B;color:#1E2620}
 .hs-btn.on svg{color:#1E2620}
 .hs-x{margin-left:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.14);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
@@ -650,6 +650,28 @@ body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 @keyframes hsGlow{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.75),0 0 12px 3px rgba(245,158,11,.55)}50%{box-shadow:0 0 0 9px rgba(245,158,11,0),0 0 20px 7px rgba(245,158,11,.75)}}
 .hs-pin-dim{opacity:.3}
 @media (prefers-reduced-motion:reduce){.hs-pin-glow{animation:none;box-shadow:0 0 14px 5px rgba(245,158,11,.7)}}
+/* ── FIND A PRO (Oct 2026) — colours copied from pro.yoodle.ca: --accent #EA6A12, --accent-d #C4560B, black top bar ── */
+.ps-btn{background:#000;border-color:#EA6A12;color:#EA6A12}
+.ps-btn svg{color:#EA6A12}
+.ps-btn #ps-label{font-weight:900;letter-spacing:.5px}
+.ps-btn.on{background:#EA6A12;border-color:#EA6A12;color:#fff}
+.ps-btn.on svg{color:#fff}
+.ps-pop .hs-grid{grid-template-columns:1fr}
+.ps-pop .hs-head b{color:#C4560B}
+body.theme-sage-dark .ps-pop .hs-head b{color:#EA6A12}
+.ps-cat .n{color:#C4560B;background:rgba(234,106,18,.12)}
+body.theme-sage-dark .ps-cat .n{color:#EA6A12}
+.ps-cat.on{border-color:#EA6A12;background:rgba(234,106,18,.10)}
+.ps-empty{grid-column:1/-1;font-size:13.5px;font-weight:700;color:var(--muted);padding:6px 2px}
+.ps-pin-glow{animation:psGlow 1.6s ease-in-out infinite}
+@keyframes psGlow{0%,100%{box-shadow:0 0 0 0 rgba(234,106,18,.75),0 0 12px 3px rgba(234,106,18,.55)}50%{box-shadow:0 0 0 9px rgba(234,106,18,0),0 0 20px 7px rgba(234,106,18,.75)}}
+@media (prefers-reduced-motion:reduce){.ps-pin-glow{animation:none;box-shadow:0 0 14px 5px rgba(234,106,18,.7)}}
+/* map legend (replaces the count card): static colours, no numbers */
+.map-legend{background:rgba(255,255,255,.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:16px;padding:10px 14px;display:flex;flex-direction:column;gap:6px;box-shadow:0 4px 16px rgba(0,0,0,.1)}
+body.theme-sage-dark .map-legend{background:rgba(20,26,22,.93)}
+.map-legend div{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:800;color:var(--muted);white-space:nowrap}
+.map-legend .ml-h{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:1px}
+.map-legend i{width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block}
 /* neighbour (non-agency) job pins glow red: steady halo is inline; new jobs (<48h) pulse,
    others pulse 3x on the first map render then settle. Agency pins don't glow. */
 .job-glow-new{animation:jobGlow 1.6s ease-in-out infinite}
@@ -660,6 +682,8 @@ body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 .top-right{min-width:0}
 .hs-btn{min-width:0;flex-shrink:1}
 @media (max-width:380px){.hs-btn{padding:0 10px;font-size:13.5px}}
+@media (max-width:350px){.top-right .hs-btn svg{display:none}.hs-btn{padding:0 9px}}
+.top-right .hs-btn,.top-right .theme-btn{flex-shrink:0}.top-right .hs-btn.on{flex-shrink:1}
 .ys-pcats{display:flex;flex-wrap:wrap;gap:8px}
 .ys-pcats button{padding:8px 13px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .15s}
 .ys-pcats button.on{border-color:var(--purple);background:rgba(92,138,106,.10);color:var(--purple)}
@@ -774,8 +798,13 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
     <div class="top-right">
       <button class="hs-btn" id="hs-btn" onclick="hsToggle()" aria-label="Find a helper by category">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <span id="hs-label">Find a helper</span>
+        <span id="hs-label">Helper</span>
         <span id="hs-x" class="hs-x" style="display:none" onclick="event.stopPropagation();hsPick(null)" aria-label="Clear">✕</span>
+      </button>
+      <button class="hs-btn ps-btn" id="ps-btn" onclick="psToggle()" aria-label="Find a pro by trade">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span id="ps-label">PRO</span>
+        <span id="ps-x" class="hs-x" style="display:none" onclick="event.stopPropagation();psPick(null)" aria-label="Clear">✕</span>
       </button>
       <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Switch light/dark mode" title="Switch light/dark mode">
         <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -790,6 +819,15 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <div class="hs-head"><b>Find a helper</b><button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>
       <div class="hs-sub" id="hs-sub">Helpers within — km</div>
       <div id="hs-grid" class="hs-grid"></div>
+    </div>
+  </div>
+
+  <!-- FIND A PRO popup -->
+  <div id="ps-ov" class="hs-ov" onclick="if(event.target===this)psClose()">
+    <div class="hs-pop ps-pop" role="dialog" aria-label="Find a pro">
+      <div class="hs-head"><b>Find a Pro</b><button class="hs-close" onclick="psClose()" aria-label="Close">✕</button></div>
+      <div class="hs-sub" id="ps-sub">Yoodle Pros</div>
+      <div id="ps-grid" class="hs-grid"></div>
     </div>
   </div>
 
@@ -809,30 +847,15 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <span style="font-size:14px;font-weight:800;color:#fff;font-family:'Nunito',sans-serif">List</span>
       </button>
       <!-- Corner count card — bottom left -->
-      <div id="map-counts" style="position:absolute;top:24px;left:16px;z-index:10;pointer-events:all;display:none">
-        <button onclick="openRadiusSheet()" style="background:rgba(255,255,255,.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:16px;padding:10px 14px;cursor:pointer;display:flex;flex-direction:column;gap:7px;min-width:148px;box-shadow:0 4px 16px rgba(0,0,0,.1)">
-          <div style="font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px" id="map-radius-corner">WITHIN — KM</div>
-          <div id="map-counts-loading" style="display:none;font-size:12.5px;font-weight:800;color:var(--muted);align-items:center;gap:6px">
-            <div class="spinner" style="width:12px;height:12px;border-width:2px"></div> Loading…
-          </div>
-          <div id="map-counts-data" style="display:flex;flex-direction:column;gap:6px">
-            <div id="map-jobs-row" style="display:none;align-items:center;gap:8px">
-              <span style="width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0;display:inline-block"></span>
-              <span style="font-size:15px;font-weight:800;color:var(--text)" id="map-jobs-count">0</span>
-              <span style="font-size:13.5px;font-weight:700;color:var(--muted)">need help</span>
-            </div>
-            <div id="map-agency-row" style="display:none;align-items:center;gap:8px">
-              <span style="width:10px;height:10px;border-radius:50%;background:#2563EB;flex-shrink:0;display:inline-block"></span>
-              <span style="font-size:15px;font-weight:800;color:var(--text)" id="map-agency-count">0</span>
-              <span style="font-size:13.5px;font-weight:700;color:var(--muted)">agency jobs</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="width:10px;height:10px;border-radius:50%;background:#5C8A6A;flex-shrink:0;display:inline-block"></span>
-              <span style="font-size:15px;font-weight:800;color:var(--text)" id="map-helpers-count">0</span>
-              <span style="font-size:13.5px;font-weight:700;color:var(--muted)">offering help</span>
-            </div>
-          </div>
-        </button>
+      <!-- Map legend — top left: static colours, who is who (replaced the count card, Oct 2026) -->
+      <div id="map-counts" style="position:absolute;top:24px;left:16px;z-index:10;pointer-events:none">
+        <div class="map-legend" aria-label="Map legend">
+          <div class="ml-h" id="map-radius-corner">WITHIN — KM</div>
+          <div><i style="background:#EF4444"></i>Need help</div>
+          <div><i style="background:#2563EB"></i>Agency jobs</div>
+          <div><i style="background:#5C8A6A"></i>Offering help</div>
+          <div><i style="background:#EA6A12"></i>Pros</div>
+        </div>
       </div>
 
 
@@ -1865,7 +1888,7 @@ function updateRadiusCounts(){
     document.getElementById('map-agency-count').textContent=pinnedAgencyCount;
     agencyRow.style.display=pinnedAgencyCount>0?'flex':'none';
   }
-  document.getElementById('map-helpers-count').textContent=helperCount;
+  const _mhc=document.getElementById('map-helpers-count');if(_mhc)_mhc.textContent=helperCount;
   document.getElementById('sheet-jobs-count').textContent=jobCount;
   document.getElementById('sheet-helpers-count').textContent=helperCount;
   // show corner card, hide loading
@@ -1935,12 +1958,13 @@ function _hsInList(){return document.getElementById('app-list')?.classList.conta
 function hsOpen(){
   // from the list, stay in the list; from anywhere else, go to the map
   if(!document.getElementById('app-map').classList.contains('active')&&!_hsInList())nav('map');
-  hsRenderGrid();openOv('hs-ov');
+  psClose();hsRenderGrid();openOv('hs-ov');
 }
 function hsClose(){closeOv('hs-ov');}
 function hsToggle(){document.getElementById('hs-ov').classList.contains('open')?hsClose():hsOpen();}
 function hsPick(k){
   hsCat=k||null;hsClose();
+  if(hsCat&&psTrade){psTrade=null;psSetBtn();} // one filter at a time: a helper pick clears the pro pick
   const btn=document.getElementById('hs-btn'),lbl=document.getElementById('hs-label'),x=document.getElementById('hs-x');
   if(hsCat){
     btn.classList.add('on');lbl.textContent=`${ysEmoji(hsCat)} ${ysLabel(hsCat)}`;x.style.display='inline-flex';
@@ -1950,10 +1974,85 @@ function hsPick(k){
     logSearch(hsCat,n);
     toast(n?`✨ ${n} ${ysLabel(hsCat)} ${n===1?'helper':'helpers'} nearby`:`No ${ysLabel(hsCat)} helpers within ${RADIUS_KM} km yet — try zooming out`);
   }else{
-    btn.classList.remove('on');lbl.textContent='Find a helper';x.style.display='none';
+    btn.classList.remove('on');lbl.textContent='Helper';x.style.display='none';
   }
   renderMapPins();
   renderListTabContent(); // list Helpers tab follows the Find-a-helper filter
+}
+
+// ══ FIND A PRO (Oct 2026) ══
+// "PRO" button (top bar) → popup of trades that have at least one approved pro (whole map, from allPros /
+// get_public_pros) → pick one: pros of that trade appear on the map (glowing orange) and in the List's Help tab
+// (regular helpers drop out of the list; on the map they fade). Pro pins are hidden until a trade is picked.
+// One filter at a time: picking a pro trade clears the helper category and vice versa.
+// Tracking: log_search('pro:<trade>') for picks, log_tap('pro', …) for pin/card taps (filter = trade).
+let psTrade=null;
+function psMatch(p){return !!psTrade&&(p.trades||[]).includes(psTrade);}
+function psList(){return (allPros||[]).filter(psMatch);}
+function psCounts(){const c={};(allPros||[]).forEach(p=>new Set(p.trades||[]).forEach(k=>{c[k]=(c[k]||0)+1;}));return c;}
+function psRenderGrid(){
+  const el=document.getElementById('ps-grid');if(!el)return;
+  const c=psCounts();
+  const keys=Object.keys(c).sort((a,b)=>c[b]-c[a]||proTrade(a).label.localeCompare(proTrade(b).label));
+  const n=(allPros||[]).length,sub=document.getElementById('ps-sub');
+  if(sub)sub.textContent=n?`${n} approved ${n===1?'pro':'pros'} on Yoodle`:'Yoodle Pros';
+  el.innerHTML=keys.length?keys.map(k=>{const t=proTrade(k);
+    return `<button class="hs-cat ps-cat${psTrade===k?' on':''}" onclick="psPick('${ysAttr(k)}')"><span class="e">${t.emoji}</span><span class="t">${esc(t.label)}</span><span class="n">${c[k]}</span></button>`;
+  }).join(''):'<div class="ps-empty">No pros on Yoodle yet — check back soon.</div>';
+}
+function psOpen(){
+  if(!document.getElementById('app-map').classList.contains('active')&&!_hsInList())nav('map');
+  hsClose();psRenderGrid();openOv('ps-ov');
+}
+function psClose(){closeOv('ps-ov');}
+function psToggle(){document.getElementById('ps-ov').classList.contains('open')?psClose():psOpen();}
+function psSetBtn(){
+  const btn=document.getElementById('ps-btn'),lbl=document.getElementById('ps-label'),x=document.getElementById('ps-x');if(!btn)return;
+  if(psTrade){const t=proTrade(psTrade);btn.classList.add('on');lbl.textContent=`${t.emoji} PRO`;btn.title=t.label;x.style.display='inline-flex';}
+  else{btn.classList.remove('on');lbl.textContent='PRO';btn.title='';x.style.display='none';}
+}
+function psPick(k){
+  psTrade=k||null;psClose();
+  if(psTrade&&hsCat)hsPick(null); // one filter at a time: a pro pick clears the helper category
+  psSetBtn();
+  if(psTrade){
+    const list=psList(),t=proTrade(psTrade);
+    if(_hsInList()){if(listTab!=='helpers')switchListTab('helpers');}
+    else{if(!document.getElementById('app-map').classList.contains('active'))nav('map');psFit(list);}
+    logSearch('pro:'+psTrade,list.length);
+    toast(list.length?`🔧 ${list.length} ${t.label} ${list.length===1?'pro':'pros'} on Yoodle`:`No ${t.label} pros on Yoodle yet`);
+  }
+  renderMapPins();
+  renderListTabContent();
+}
+// pros can be anywhere (whole map): if none of the picked trade is on screen, zoom out to show them
+function psFit(list){
+  try{
+    if(!map||!list.length)return;
+    const b=map.getBounds();
+    if(list.some(p=>b.contains([p.lng,p.lat])))return;
+    const c=map.getCenter(),bb=new maplibregl.LngLatBounds([c.lng,c.lat],[c.lng,c.lat]);
+    list.forEach(p=>bb.extend([p.lng,p.lat]));
+    map.fitBounds(bb,{padding:70,maxZoom:13,duration:800});
+  }catch(e){}
+}
+function proListCard(p){
+  const t=proTrade((p.trades||[])[0]);
+  const title=p.business_name||p.name||'Yoodle Pro';
+  const ver=p.licence_verified_at?'<span style="font-size:11.5px;font-weight:800;color:#1F8E5A;margin-left:6px">✓ Verified licence</span>':'';
+  let dist='';const oLat=gpsLat||userLat,oLng=gpsLng||userLng;
+  if(oLat&&oLng&&p.lat&&p.lng){const d=haversineKm(oLat,oLng,p.lat,p.lng);dist=d<=1?'Less than 1 km away':`${d<100?d.toFixed(1):Math.round(d)} km away`;}
+  return `<div onclick="logTap('pro','${p.profile_id}','card');openOtherProfile('${p.profile_id}','pro')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid rgba(234,106,18,.45);display:flex;flex-direction:column;gap:6px;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:30px;height:30px;border-radius:50%;background:${PRO_PIN};display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">${t.emoji}</div>
+          <div style="min-width:0;flex:1">
+            <div style="font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(title)}${idvChip(p.profile_id,true)}</div>
+            <div style="font-size:13px;font-weight:800;color:#C4560B">${esc(proTradesText(p.trades))}${ver}</div>
+          </div>
+          <div style="font-size:13.5px;color:var(--muted);font-weight:800;flex-shrink:0">View ›</div>
+        </div>
+        ${dist?`<div style="font-size:12.5px;color:var(--muted);font-weight:700">${esc(dist)}</div>`:''}
+      </div>`;
 }
 
 // ── Post a Job: category picker ──
@@ -2292,7 +2391,7 @@ function renderMapPins(){
   });
   // Find-a-helper filter on: fade all job pins (neighbour + agency, single + stacks) and stop their pulse,
   // so the matching helpers stand out. Cleared when the filter is removed (hsPick → renderMapPins).
-  if(hsCat)jobMarkers.forEach(m=>{const d=m.getElement().firstElementChild;if(d){d.classList.remove('job-glow-new','job-glow-intro');d.classList.add('hs-pin-dim');}});
+  if(hsCat||psTrade)jobMarkers.forEach(m=>{const d=m.getElement().firstElementChild;if(d){d.classList.remove('job-glow-new','job-glow-intro');d.classList.add('hs-pin-dim');}});
   if(publicJobs.some(j=>!isAgencyJob(j)))_jobGlowIntroDone=true; // later re-renders don't replay the 3 pulses
 
   // ── HELPER PINS (profiles with visible_on_map=true AND show_on_map=true) ──
@@ -2315,6 +2414,7 @@ function renderMapPins(){
     const html=`<div class="${g.some(h=>readyOf(h.id))?'rtw-pulse':''}" style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid ${hasMe?'#fff':'rgba(255,255,255,.6)'};box-shadow:${hasMe?'0 0 0 2px #2E7D52,':''}0 2px 8px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:${label.length>2?12:15}px;font-weight:900;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${label}${you}${g.some(h=>readyOf(h.id))?'<span class="rtw-bolt" title="Ready to work">⚡</span>':''}</div>`;
     const marker=_htmlMarker(html,38,38,cLat,cLng,{z:hasMe?4:(nMatch?3:1),onClick:()=>openHelperStack(g)});
     if(hsCat){const d=marker.getElement().firstElementChild;if(d)d.classList.add(nMatch?'hs-pin-glow':'hs-pin-dim');}
+    else if(psTrade){const d=marker.getElement().firstElementChild;if(d)d.classList.add('hs-pin-dim');}
     helperMarkers.push(marker);
   });
   publicHelpers.forEach(h=>{
@@ -2327,6 +2427,7 @@ function renderMapPins(){
     const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:hsMatch(h)?3:1,onClick:()=>{logTap('helper',h.id,'pin');openOtherProfile(h.id);}});
     // chosen category → matching helpers glow amber, others fade
     if(hsCat){const d=marker.getElement().firstElementChild;if(d)d.classList.add(hsMatch(h)?'hs-pin-glow':'hs-pin-dim');}
+    else if(psTrade){const d=marker.getElement().firstElementChild;if(d)d.classList.add('hs-pin-dim');}
     helperMarkers.push(marker);
   });
   // Own helper pin: white ring + "You" tag, never dimmed by search. If stacked, the bubble carries the "You" tag instead.
@@ -2339,18 +2440,20 @@ function renderMapPins(){
     helperMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:4,onClick:()=>{if(vague){hpFocusAreaNext=true;nav('helper');}else openOtherProfile(m.id);}}));
   }
 
-  // ── PRO PINS (orange, trade emoji; ✓ = licence checked) ──
+  // ── PRO PINS (orange, trade emoji; ✓ = licence checked) — hidden until a trade is picked in Find a PRO ──
   proMarkers.forEach(m=>m.remove());proMarkers=[];
   const _helperAt=new Set([...publicHelpers,...(myHelperPin?[myHelperPin]:[])].map(h=>h.id));
   (allPros||[]).forEach(p=>{
+    if(!psMatch(p))return;
     const t=proTrade((p.trades||[])[0]);
     const[fLat,fLng]=[p.lat,p.lng]; // business address is public (Yoodle Pro Terms) — exact pin, no offset
     const ver=p.licence_verified_at?`<span style="position:absolute;right:-5px;bottom:-5px;width:17px;height:17px;border-radius:50%;background:#1F8E5A;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid #fff">✓</span>`:'';
+    const idv=isIdVerified(p.profile_id)?'<span class="idv-tick" style="left:-5px;right:auto" title="ID checked by Stripe">✓</span>':'';
     const you=p.mine?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#000;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span>`:'';
-    const html=`<div style="position:relative;width:38px;height:38px;border-radius:50%;background:${PRO_PIN};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer">${t.emoji}${ver}${you}</div>`;
+    const html=`<div class="ps-pin-glow" style="position:relative;width:38px;height:38px;border-radius:50%;background:${PRO_PIN};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer">${t.emoji}${ver}${idv}${you}</div>`;
     // same person also listed as a helper → nudge the pro pin so the two never sit exactly on top of each other
     const off=_helperAt.has(p.profile_id)?[24,-24]:[0,0];
-    proMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:p.mine?4:2,offset:off,onClick:()=>openOtherProfile(p.profile_id,'pro')}));
+    proMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:p.mine?5:4,offset:off,onClick:()=>{logTap('pro',p.profile_id,'pin');openOtherProfile(p.profile_id,'pro');}}));
   });
 
   // ── BUSINESS FLAG PINS ──
@@ -2450,7 +2553,7 @@ function logAgency(taskId,ev){
   if(taskId)fireRpc('log_agency_event',{p_task:taskId,p_event:ev,p_anon:me?null:yAnonId()});
 }
 function logTap(kind,id,src){
-  if(me&&id){const a={p_kind:kind,p_target:id,p_src:src};if(kind==='helper'&&hsCat)a.p_filter=hsCat;fireRpc('log_tap',a);}
+  if(me&&id){const a={p_kind:kind,p_target:id,p_src:src};if(kind==='helper'&&hsCat)a.p_filter=hsCat;if(kind==='pro'&&psTrade)a.p_filter=psTrade;fireRpc('log_tap',a);}
 }
 // Find-a-helper category picks → public.search_events via log_search() (server skips repeats within 10 min). Never blocks the UI.
 function logSearch(cat,n){
@@ -2512,7 +2615,6 @@ async function loadJobs() {
   const _countsEl=document.getElementById('map-counts');
   const _loadingEl=document.getElementById('map-counts-loading');
   const _dataEl=document.getElementById('map-counts-data');
-  if(_countsEl)_countsEl.style.display='block';
   if(_loadingEl)_loadingEl.style.display='flex';
   if(_dataEl)_dataEl.style.display='none';
 
@@ -2670,11 +2772,18 @@ function renderListTabContent(){
   // Find-a-helper filter applies to the Helpers tab too
   const listHelpers=hsCat?sheetHelpers.filter(hsMatch):sheetHelpers;
   if(jc)jc.textContent=sheetJobs.length;
-  if(hc)hc.textContent=listHelpers.length;
+  // Find-a-PRO filter: the Help tab lists only pros of that trade (whole map, closest first)
+  const listPros=psTrade?psList():null;
+  if(listPros){const oLat=gpsLat||userLat,oLng=gpsLng||userLng;if(oLat&&oLng)listPros.sort((a,b)=>haversineKm(oLat,oLng,a.lat,a.lng)-haversineKm(oLat,oLng,b.lat,b.lng));}
+  if(hc)hc.textContent=listPros?listPros.length:listHelpers.length;
 
   if(listTab==='jobs'){
     if(!sheetJobs.length){el.innerHTML=emptyState('🌱','No jobs in this area','Move the map or try a larger radius');return;}
     el.innerHTML=`<div class="jobs-grid">${sheetJobs.map(j=>listCard(j,j.profiles)).join('')}</div>`;
+  } else if(listPros){
+    el.innerHTML=listPros.length
+      ?`<div style="display:flex;flex-direction:column;gap:10px">${listPros.map(proListCard).join('')}</div>`
+      :emptyState('🔧',`No ${esc(proTrade(psTrade).label)} pros yet`,'Tap ✕ on PRO to see helpers again');
   } else {
     if(!listHelpers.length){
       el.innerHTML=hsCat
