@@ -1272,7 +1272,7 @@ function refreshAll() {
 }
 
 // ── TAP-TO-LOAD SECTIONS (15 Oct 2026) ──
-// Regions (+ admin-geo.js ≈140 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
+// Regions (+ admin-geo.js ≈300 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
 const LAZY = { regions: loadRegions, onboard: loadOnboardStats, share: loadShareStats, tap: loadTapStats, agency: loadAgencyStats, search: loadSearchStats,
   reports: loadReports, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended };
@@ -1293,7 +1293,7 @@ let _geoScript = null;
 function loadGeoScript() {   // admin-geo.js on demand (Regions only)
   if (window.YoodleGeo) return Promise.resolve();
   if (!_geoScript) _geoScript = new Promise((res, rej) => {
-    const sc = document.createElement('script'); sc.src = 'admin-geo.js';
+    const sc = document.createElement('script'); sc.src = 'admin-geo.js?v=2026-10-29';   // bump ?v= whenever admin-geo.js changes
     sc.onload = () => res(); sc.onerror = () => { _geoScript = null; rej(new Error('admin-geo.js not loaded')); };
     document.head.appendChild(sc);
   });
