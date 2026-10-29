@@ -1,0 +1,47 @@
+# Publishes yoodle.ca to GitHub Pages on every push to main.
+# index.html is minified (comments + extra whitespace removed, local names shortened) in the published copy only;
+# the commented source in the repo is unchanged. All other files are published as they are.
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Build site copy (minify index.html)
+        run: |
+          mkdir _site
+          tar --exclude=./.git --exclude=./.github --exclude=./_site -cf - . | tar -xf - -C _site
+          npx --yes html-minifier-terser@7.2.0 --collapse-whitespace --conservative-collapse --remove-comments --minify-css true --minify-js true -o _site/index.html _site/index.html
+          echo "index.html: $(wc -c < index.html) -> $(wc -c < _site/index.html) bytes"
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v5
