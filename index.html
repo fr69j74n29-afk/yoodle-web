@@ -4274,7 +4274,7 @@ async function loadMyJobs(){
       cardMenu=`<div class="card-menu-wrap">
         <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-${j.id}')" aria-label="More options">⋮</button>
         <div class="card-menu-drop" id="cm-${j.id}">
-          <button onclick="event.stopPropagation();closeAllCardMenus();openEditModal('${j.id}','${esc(j.title)}','${esc(j.description||'')}','${j.price??0}')">Edit</button>
+          <button onclick="event.stopPropagation();closeAllCardMenus();openEditModal('${j.id}')">Edit</button>
           <div class="menu-divider"></div>
           <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}')">Cancel Job</button>
         </div>
@@ -4452,11 +4452,13 @@ async function checkAndRate(taskId,ratedId,prompt){
   openRatingModal(taskId,ratedId,prompt);
 }
 
-function openEditModal(jobId,title,description,budget){
+async function openEditModal(jobId){
+  const{data:j,error}=await sb.from('tasks').select('title,description,price').eq('id',jobId).maybeSingle();
+  if(error||!j)return toast('❌ Could not load job');
   document.getElementById('edit-job-id').value=jobId;
-  document.getElementById('edit-title').value=title;
-  document.getElementById('edit-desc').value=description;
-  document.getElementById('edit-budget').value=budget;
+  document.getElementById('edit-title').value=j.title||'';
+  document.getElementById('edit-desc').value=j.description||'';
+  document.getElementById('edit-budget').value=j.price??0;
   openOv('edit-modal');
 }
 
