@@ -4124,13 +4124,14 @@ async function detectLocation(){
 }
 
 let jobGpsPending=null;
+let jobLocSet=false; // job address picked from suggestions or GPS-confirmed (gpsLat alone can be the user's own GPS reading)
 function jobGpsConfirm(ok){
   const p=jobGpsPending;jobGpsPending=null;
   document.getElementById('p-gps-confirm').style.display='none';
   if(!p)return;
   const st=document.getElementById('loc-status');
   if(ok){
-    gpsLat=p.exactLat;gpsLng=p.exactLng;locVerified=true; // jobs keep the exact GPS position (Roman, 11 Oct)
+    gpsLat=p.exactLat;gpsLng=p.exactLng;locVerified=true;jobLocSet=true; // jobs keep the exact GPS position (Roman, 11 Oct)
     st.textContent='✅ GPS verified — street only, no house number';st.className='loc-status verified';
   }else{
     const inp=document.getElementById('p-loc');
@@ -4180,7 +4181,7 @@ const jobAddr=makeAddrSearch({sugId:'loc-suggestions',statusId:'loc-status',pick
     return{main:main.trim()||item.display_name.split(',')[0],sub:sub||item.display_name};}});
 
 function onLocInput(val){
-  locVerified=false;
+  locVerified=false;jobLocSet=false;
   if(jobGpsPending){jobGpsPending=null;document.getElementById('p-gps-confirm').style.display='none';}
   const st=document.getElementById('loc-status');
   if(val.length>=3){st.textContent='Searching…';st.className='loc-status loading';}
@@ -4197,7 +4198,7 @@ function selectLocSuggestion(i){
   const display=addrDisplay([road,area,city,prov]);
   const inp=document.getElementById('p-loc');
   inp.value=display||item.display_name.split(',').slice(0,3).join(',').trim();
-  gpsLat=parseFloat(item.lat);gpsLng=parseFloat(item.lon);locVerified=false;
+  gpsLat=parseFloat(item.lat);gpsLng=parseFloat(item.lon);locVerified=false;jobLocSet=true;
   const st=document.getElementById('loc-status');
   st.innerHTML=`📍 Address confirmed: <span style="color:var(--text)">${esc(item.display_name.split(',').slice(0,3).join(',').trim())}</span>`;
   st.className='loc-status manual';
@@ -4215,7 +4216,7 @@ async function postJob(){
   if(!cat)return toast('Pick a category!');
   if(!loc)return toast('Add your location!');
   if(jobGpsPending)return toast('⚠️ Please confirm your GPS address first');
-  if(!gpsLat||!gpsLng)return toast('⚠️ Please select an address from the suggestions or use GPS');
+  if(!jobLocSet||!gpsLat||!gpsLng)return toast('⚠️ Please select an address from the suggestions or use GPS');
   if(!sb||!me){toast('🚀 Job posted! (demo mode)');resetPost();nav('browse');return;}
   const btn=document.getElementById('post-btn');btn.disabled=true;btn.textContent='Posting…';
   const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
@@ -4228,7 +4229,7 @@ async function postJob(){
 }
 
 function resetPost(){
-  gpsLat=null;gpsLng=null;locVerified=false;
+  gpsLat=null;gpsLng=null;locVerified=false;jobLocSet=false;
   jobGpsPending=null;document.getElementById('p-gps-confirm').style.display='none';
   ['p-title','p-desc','p-budget','p-cat'].forEach(id=>document.getElementById(id).value='');
   ysRenderPostCats();
