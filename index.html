@@ -2337,7 +2337,7 @@ function updateCircleOverlay() {
 function fuzzyCoords(lat,lng){return[lat+(Math.random()-.5)*.0014,lng+(Math.random()-.5)*.0018];}
 
 let helperMarkers=[];
-let myHelperPin=null,hpFocusAreaNext=false,myIsTester=false; // own helper pin: drawn for the helper themself; tap may open the area field
+let myHelperPin=null,myJobPins=[],hpFocusAreaNext=false,myIsTester=false; // own helper pin: drawn for the helper themself; tap may open the area field
 let allBizListings=[], bizMarkers=[];
 // ── YOODLE PROS: pro listings from pro.yoodle.ca — orange pins, separate from helper pins ──
 const PRO_PIN='#EA6A12';
@@ -2375,22 +2375,25 @@ function renderMapPins(){
     const html=`<div class="${_gCls}" style="position:relative;width:38px;height:38px;border-radius:50%;background:${color};border:3px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:${_gShadow};cursor:pointer">${allAgency?'':'📋'}<span style="position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#fff;color:#111;font:800 12px/20px 'Nunito',sans-serif;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.25)">${g.length}</span></div>`;
     jobMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:2,onClick:()=>openJobStack(g)}));
   });
-  publicJobs.filter(j=>_jGroups[(+j.lat).toFixed(4)+','+(+j.lng).toFixed(4)].length===1).forEach(job=>{
+  // Own jobs (myJobPins, 29 Oct 2026) use the same loop: white ring + "You" tag, no pulse, z:4, never dimmed.
+  publicJobs.filter(j=>_jGroups[(+j.lat).toFixed(4)+','+(+j.lng).toFixed(4)].length===1).concat(myJobPins).forEach(job=>{
+    const _mine=myJobPins.includes(job);
     const _ag=isAgencyJob(job);
     const color=_ag?AGENCY_PIN:'#EF4444';
     const emoji=_ag?'':(CAT_EMOJI[job.category]||ysEmoji(job.category)||'📋');
     const[fLat,fLng]=job._fuzzy||(job._fuzzy=fuzzyCoords(job.lat,job.lng));
     const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
-      html:`<div class="${_ag?'':jobGlowClass(jobIsNew(job))}" style="width:38px;height:38px;border-radius:50%;background:${color};border:3px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:${_ag?'0 2px 8px rgba(0,0,0,.15)':JOB_GLOW_SHADOW};cursor:pointer">${emoji}</div>`,
+      html:`<div class="${_ag||_mine?'':jobGlowClass(jobIsNew(job))}" style="position:relative;width:38px;height:38px;border-radius:50%;background:${color};border:3px solid ${_mine?'#fff':'rgba(255,255,255,.25)'};display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:${_mine?`0 0 0 2px ${color},0 2px 8px rgba(0,0,0,.25)`:_ag?'0 2px 8px rgba(0,0,0,.15)':JOB_GLOW_SHADOW};cursor:pointer">${emoji}${_mine?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px;font-family:'Nunito',sans-serif">You</span>`:''}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
     // z:2 → job bubbles sit in front of regular helper pins (z:1); search-matched helpers (z:3) still on top
-    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:2,onClick:()=>{logTap('job',job.id,'pin');openJob(job);}});
+    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:_mine?4:2,onClick:()=>{if(!_mine)logTap('job',job.id,'pin');openJob(job);}});
+    marker._mine=_mine;
     jobMarkers.push(marker);
   });
   // Find-a-helper filter on: fade all job pins (neighbour + agency, single + stacks) and stop their pulse,
   // so the matching helpers stand out. Cleared when the filter is removed (hsPick → renderMapPins).
-  if(hsCat||psTrade)jobMarkers.forEach(m=>{const d=m.getElement().firstElementChild;if(d){d.classList.remove('job-glow-new','job-glow-intro');d.classList.add('hs-pin-dim');}});
+  if(hsCat||psTrade)jobMarkers.forEach(m=>{if(m._mine)return;const d=m.getElement().firstElementChild;if(d){d.classList.remove('job-glow-new','job-glow-intro');d.classList.add('hs-pin-dim');}});
   if(publicJobs.some(j=>!isAgencyJob(j)))_jobGlowIntroDone=true; // later re-renders don't replay the 3 pulses
 
   // ── HELPER PINS (profiles with visible_on_map=true AND show_on_map=true) ──
@@ -2624,7 +2627,7 @@ async function loadJobs() {
   // What the map loads: jobs AND helpers within 3× the ring radius (min 30 km) so pins fill the
   // whole screen. Counts and lists still use only the ring (updateRadiusCounts → sheetJobs / sheetHelpers).
   const mapLoadKm=Math.max(30,RADIUS_KM*3);
-  const[{data:helpers},{data:bizData},_jobsRes,_meRes,_prosRes]=await Promise.all([
+  const[{data:helpers},{data:bizData},_jobsRes,_meRes,_prosRes,_myJobsRes]=await Promise.all([
     // helpers for map — nearby only, closest first (get_helpers_near), so the API's 1,000-row cap can't drop
     // nearby helpers. Self excluded server-side (own pin comes from _meRes below).
     sb.rpc('get_helpers_near',{
@@ -2651,13 +2654,16 @@ async function loadJobs() {
     // own helper row — the helpers query above excludes me (own pin)
     pid?sb.from('profiles').select('id,name,last_lat,last_lng,show_on_map,visible_on_map,helper_address,is_tester').eq('id',pid).maybeSingle():Promise.resolve({data:null}),
     // Pro listings + trades (same round trip)
-    fetchPros(userLat||43.6532,userLng||-79.3832,mapLoadKm)
+    fetchPros(userLat||43.6532,userLng||-79.3832,mapLoadKm),
+    // own open jobs (29 Oct 2026) — get_open_jobs_near excludes me; drawn on the map only (not in list/counts)
+    pid?sb.from('tasks').select('id,poster_id,title,description,price,category,lat,lng,address,status,doer_id,claimer_id,expires_at,location_verified,completed_at,created_at,show_on_map,url,type').eq('poster_id',pid).eq('status','open').eq('show_on_map',true).limit(50):Promise.resolve({data:null})
   ]);
   const _mp=_meRes?.data;
   myIsTester=!!_mp?.is_tester; // test accounts (profiles.is_tester) are only shown to other test accounts
   allHelpers=(helpers||[]).filter(h=>!hiddenUserIds.has(h.id)&&(!h.is_tester||myIsTester));
   // own pin: same rule as other helpers' pins — active listing (not paused) with a location
   myHelperPin=(_mp&&_mp.visible_on_map&&_mp.show_on_map&&_mp.last_lat&&_mp.last_lng)?_mp:null;
+  myJobPins=(_myJobsRes?.data||[]).filter(j=>j.lat&&j.lng&&(!j.expires_at||Date.parse(j.expires_at)>Date.now())).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   allBizListings=bizData||[];
   applyPros(_prosRes,pid); // after myIsTester is known
 
