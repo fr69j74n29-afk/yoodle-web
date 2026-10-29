@@ -2220,6 +2220,8 @@ function locateUser(silent) {
       toast('📍 Couldn\'t pin your exact spot — please type your area');
       if(_needHome)return;
     }
+    // Silent GPS refresh while the home-base screen is up → use it. 700 ms = after showApp()'s 150/600 ms first-load setView.
+    if(_needHome&&cache){setTimeout(()=>{if(_needHome)homeSave(lat,lng);},700);return;}
     // Move only if meaningfully different from where the map already sits
     if(map&&haversineKm(userLat,userLng,lat,lng)*1000>50)
       map.flyTo({center:[lng,lat],zoom:map.getZoom()}); // moveend handles userLat/userLng + loadJobs
