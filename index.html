@@ -2000,7 +2000,8 @@ function hsPick(k){
 // ══ FIND A PRO (Oct 2026) ══
 // "PRO" button (top bar) → popup of trades that have at least one approved pro NEAR the map (allPros /
 // get_pros_near, same distance as helpers) → pick one: pros of that trade appear on the map (glowing orange) and in the List's Help tab
-// (regular helpers drop out of the list; on the map they fade). Pro pins are hidden until a trade is picked.
+// (regular helpers drop out of the list; on the map they fade). Pro pins are hidden until a trade is picked —
+// except pros whose paid plan includes always_on_map (get_pros_near.always_on_map, from pro_plans.benefits), shown always (30 Oct 2026).
 // One filter at a time: picking a pro trade clears the helper category and vice versa.
 // Tracking: log_search('pro:<trade>') for picks, log_tap('pro', …) for pin/card taps (filter = trade).
 let psTrade=null;
@@ -2470,20 +2471,22 @@ function renderMapPins(){
     helperMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:4,onClick:()=>{if(vague){hpFocusAreaNext=true;nav('helper');}else openOtherProfile(m.id);}}));
   }
 
-  // ── PRO PINS (orange, trade emoji; ✓ = licence checked) — hidden until a trade is picked in Find a PRO ──
+  // ── PRO PINS (orange, trade emoji; ✓ = licence checked) — hidden until a trade is picked in Find a PRO,
+  //    except paid pros with always_on_map: always shown; they glow only when their trade is picked (30 Oct 2026) ──
   proMarkers.forEach(m=>m.remove());proMarkers=[];
   const _helperAt=new Set([...publicHelpers,...(myHelperPin?[myHelperPin]:[])].map(h=>h.id));
   (allPros||[]).forEach(p=>{
-    if(!psMatch(p))return;
+    const _match=psMatch(p);
+    if(!_match&&!p.always_on_map)return;
     const t=proTrade((p.trades||[])[0]);
     const[fLat,fLng]=[p.lat,p.lng]; // business address is public (Yoodle Pro Terms) — exact pin, no offset
     const ver=p.licence_verified_at?`<span style="position:absolute;right:-5px;bottom:-5px;width:17px;height:17px;border-radius:50%;background:#1F8E5A;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid #fff">✓</span>`:'';
     const idv=isIdVerified(p.profile_id)?'<span class="idv-tick" style="left:-5px;right:auto" title="ID checked by Stripe">✓</span>':'';
     const you=p.mine?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#000;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span>`:'';
-    const html=`<div class="ps-pin-glow" style="position:relative;width:38px;height:38px;border-radius:50%;background:${PRO_PIN};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer">${t.emoji}${ver}${idv}${you}</div>`;
+    const html=`<div class="${_match?'ps-pin-glow':''}" style="position:relative;width:38px;height:38px;border-radius:50%;background:${PRO_PIN};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer">${t.emoji}${ver}${idv}${you}</div>`;
     // same person also listed as a helper → nudge the pro pin so the two never sit exactly on top of each other
     const off=_helperAt.has(p.profile_id)?[24,-24]:[0,0];
-    proMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:p.mine?5:4,offset:off,onClick:()=>{logTap('pro',p.profile_id,'pin');openOtherProfile(p.profile_id,'pro');}}));
+    proMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:p.mine?5:(_match?4:3),offset:off,onClick:()=>{logTap('pro',p.profile_id,'pin');openOtherProfile(p.profile_id,'pro');}}));
   });
 
   // ── BUSINESS FLAG PINS ──
@@ -2812,7 +2815,7 @@ function renderListTabContent(){
   if(jc)jc.textContent=sheetJobs.length;
   // Find-a-PRO filter: the Help tab lists only pros of that trade (whole map, closest first)
   const listPros=psTrade?psList():null;
-  if(listPros){const oLat=gpsLat||userLat,oLng=gpsLng||userLng;if(oLat&&oLng)listPros.sort((a,b)=>haversineKm(oLat,oLng,a.lat,a.lng)-haversineKm(oLat,oLng,b.lat,b.lng));}
+  if(listPros){const oLat=gpsLat||userLat,oLng=gpsLng||userLng;listPros.sort((a,b)=>(!!b.listed_first-!!a.listed_first)||(oLat&&oLng?haversineKm(oLat,oLng,a.lat,a.lng)-haversineKm(oLat,oLng,b.lat,b.lng):0));}  // paid (listed_first) first, then closest (30 Oct 2026)
   if(hc)hc.textContent=listPros?listPros.length:listHelpers.length;
 
   if(listTab==='jobs'){
