@@ -366,6 +366,10 @@ body::before {
 .stat-card.users  { --accent: linear-gradient(90deg, #9B59D4, #EC4899); }
 .stat-card.jobs   { --accent: linear-gradient(90deg, #A3E635, #06B6D4); }
 .stat-card.convs  { --accent: linear-gradient(90deg, #F97316, #FCD34D); }
+.stat-card.pros   { --accent: linear-gradient(90deg, #EA6A12, #4CC38A); grid-column: 1 / -1; }
+/* Yoodle Pros card (30 Oct 2026): registered · approved · paying, side by side */
+.pro-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.pro-stats .stat-sub { margin-top: 4px; }
 
 .stat-label {
   font-family: var(--mono);
@@ -1039,6 +1043,18 @@ body::before {
       </div>
     </div>
 
+    <!-- YOODLE PROS (30 Oct 2026): registered, approved, paying (live Stripe subscriptions) -->
+    <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="stat-card pros">
+        <div class="stat-label"><span class="stat-icon">🛠️</span> Yoodle Pros</div>
+        <div class="pro-stats">
+          <div><div class="stat-num loading-val" id="stat-pros-reg">—</div><div class="stat-sub">Registered</div></div>
+          <div><div class="stat-num loading-val" id="stat-pros-ok">—</div><div class="stat-sub" id="stat-pros-ok-detail">Approved</div></div>
+          <div><div class="stat-num loading-val" id="stat-pros-pay">—</div><div class="stat-sub" id="stat-pros-pay-detail">Paying</div></div>
+        </div>
+      </div>
+    </div>
+
     <!-- NEW ACCOUNTS CHART -->
     <div class="chart-card">
       <div class="chart-card-header">
@@ -1365,6 +1381,7 @@ async function loadStats() {
     document.getElementById('stat-open-jobs-detail').textContent = `${openRows.length - agencyOpen} direct · ${agencyOpen} agency`;
 
     loadConvOverview();
+    loadProStats();
 
     const now = new Date();
     document.getElementById('last-updated').textContent = 'Last updated: ' + now.toLocaleTimeString();
@@ -1381,6 +1398,31 @@ async function loadStats() {
 
   btn.classList.remove('spinning');
   btn.textContent = '↻ Refresh';
+}
+
+// ── YOODLE PROS CARD (30 Oct 2026) ──
+// Head-only counts (no rows downloaded). Admin reads pro_profiles / pro_subscriptions via is_admin() RLS.
+// Paying = live Stripe subscription that hasn't ended and is active/trialing (sandbox rows excluded).
+async function loadProStats() {
+  const ids = ['stat-pros-reg', 'stat-pros-ok', 'stat-pros-pay'];
+  ids.forEach(id => { const el = document.getElementById(id); if (el) { el.textContent = '—'; el.classList.add('loading-val'); } });
+  const head = { count: 'exact', head: true };
+  const live = () => sb.from('pro_subscriptions').select('*', head).eq('livemode', true).eq('source', 'stripe').is('ended_at', null);
+  const [reg, ok, pend, pay, founder, overdue] = await Promise.all([
+    sb.from('pro_profiles').select('*', head),
+    sb.from('pro_profiles').select('*', head).eq('status', 'approved'),
+    sb.from('pro_profiles').select('*', head).eq('status', 'pending'),
+    live().in('status', ['active', 'trialing']),
+    live().in('status', ['active', 'trialing']).eq('is_founder', true),
+    live().in('status', ['past_due', 'unpaid'])
+  ]);
+  const show = (id, r) => { if (r.error) { const el = document.getElementById(id); el.classList.remove('loading-val'); el.textContent = 'n/a'; } else animateNumber(id, r.count ?? 0); };
+  show('stat-pros-reg', reg); show('stat-pros-ok', ok); show('stat-pros-pay', pay);
+  document.getElementById('stat-pros-ok-detail').textContent = 'Approved' + (!pend.error && pend.count ? ` · ${pend.count} pending` : '');
+  const bits = [];
+  if (!founder.error && founder.count) bits.push(`${founder.count} founder`);
+  if (!overdue.error && overdue.count) bits.push(`${overdue.count} overdue`);
+  document.getElementById('stat-pros-pay-detail').textContent = 'Paying' + (bits.length ? ' · ' + bits.join(' · ') : '');
 }
 
 // ── LIVE NOW (admin_live_now RPC over daily_active; active in last 15 min) ──
