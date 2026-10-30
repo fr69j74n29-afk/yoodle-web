@@ -1403,15 +1403,20 @@ async function loadStats() {
 // ── YOODLE PROS CARD (30 Oct 2026) ──
 // Head-only counts (no rows downloaded). Admin reads pro_profiles / pro_subscriptions via is_admin() RLS.
 // Paying = live Stripe subscription that hasn't ended and is active/trialing (sandbox rows excluded).
+// Excludes admin/team accounts (protectedIds, e.g. "Yoodle team") and tester accounts (profiles.is_tester, e.g. "Yoodle Tester").
 async function loadProStats() {
   const ids = ['stat-pros-reg', 'stat-pros-ok', 'stat-pros-pay'];
   ids.forEach(id => { const el = document.getElementById(id); if (el) { el.textContent = '—'; el.classList.add('loading-val'); } });
   const head = { count: 'exact', head: true };
-  const live = () => sb.from('pro_subscriptions').select('*', head).eq('livemode', true).eq('source', 'stripe').is('ended_at', null);
+  const { data: testers } = await sb.from('profiles').select('id').eq('is_tester', true);
+  const skip = [...new Set([...protectedIds, ...(testers || []).map(t => t.id)])];
+  const ex = q => skip.length ? q.not('profile_id', 'in', '(' + skip.join(',') + ')') : q;
+  const pros = () => ex(sb.from('pro_profiles').select('*', head));
+  const live = () => ex(sb.from('pro_subscriptions').select('*', head).eq('livemode', true).eq('source', 'stripe').is('ended_at', null));
   const [reg, ok, pend, pay, founder, overdue] = await Promise.all([
-    sb.from('pro_profiles').select('*', head),
-    sb.from('pro_profiles').select('*', head).eq('status', 'approved'),
-    sb.from('pro_profiles').select('*', head).eq('status', 'pending'),
+    pros(),
+    pros().eq('status', 'approved'),
+    pros().eq('status', 'pending'),
     live().in('status', ['active', 'trialing']),
     live().in('status', ['active', 'trialing']).eq('is_founder', true),
     live().in('status', ['past_due', 'unpaid'])
