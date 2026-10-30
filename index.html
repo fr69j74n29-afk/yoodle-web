@@ -1239,6 +1239,14 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <label class="form-lbl">Budget (CAD $)</label>
       <input class="form-inp" id="edit-budget" type="number" min="0" placeholder="e.g. 50">
     </div>
+    <div class="form-g">
+      <label class="form-lbl">Location</label>
+      <div class="loc-autocomplete-wrap">
+        <input class="form-inp" id="edit-loc" type="text" placeholder="Start typing the job address…" autocomplete="off" oninput="onEditLocInput(this.value)" onblur="setTimeout(()=>closeOv('edit-loc-suggestions'),200)">
+        <div class="loc-suggestions" id="edit-loc-suggestions"></div>
+      </div>
+      <div class="loc-status" id="edit-loc-status">To move the pin, type the new address and pick it from the suggestions</div>
+    </div>
     <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
     <button onclick="closeOv('edit-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px">Cancel</button>
   </div>
@@ -4176,12 +4184,21 @@ function makeAddrSearch(cfg){
   };
 }
 
-const jobAddr=makeAddrSearch({sugId:'loc-suggestions',statusId:'loc-status',pickFn:'selectLocSuggestion',
-  noResults:'No addresses found — try a different search',
-  format:item=>{const a=item.address||{};
+// Job address suggestion format + saved text — shared by Post a Job and Edit Job
+function jobAddrFormat(item){const a=item.address||{};
     const main=a.house_number?`${a.house_number} ${a.road||a.pedestrian||''}`:(a.road||a.pedestrian||a.footway||a.path||a.neighbourhood||a.suburb||item.display_name.split(',')[0]);
     const sub=[a.suburb||a.neighbourhood,a.city||a.town||a.village||a.county,a.state||a.state_code,a.country_code?.toUpperCase()].filter(Boolean).join(', ');
-    return{main:main.trim()||item.display_name.split(',')[0],sub:sub||item.display_name};}});
+    return{main:main.trim()||item.display_name.split(',')[0],sub:sub||item.display_name};}
+function jobAddrText(item){
+  const a=item.address||{};
+  const road=a.house_number?`${a.house_number} ${a.road||''}`.trim():(a.road||a.pedestrian||a.footway||a.path||'');
+  const area=a.suburb||a.neighbourhood||a.city_district||'';
+  const city=a.city||a.town||a.village||a.municipality||'';
+  const prov=a.state_code||a.state||'';
+  return addrDisplay([road,area,city,prov])||item.display_name.split(',').slice(0,3).join(',').trim();
+}
+const jobAddr=makeAddrSearch({sugId:'loc-suggestions',statusId:'loc-status',pickFn:'selectLocSuggestion',
+  noResults:'No addresses found — try a different search',format:jobAddrFormat});
 
 function onLocInput(val){
   locVerified=false;jobLocSet=false;
@@ -4193,14 +4210,7 @@ function onLocInput(val){
 
 function selectLocSuggestion(i){
   const item=jobAddr.item(i);if(!item)return;
-  const a=item.address||{};
-  const road=a.house_number?`${a.house_number} ${a.road||''}`.trim():(a.road||a.pedestrian||a.footway||a.path||'');
-  const area=a.suburb||a.neighbourhood||a.city_district||'';
-  const city=a.city||a.town||a.village||a.municipality||'';
-  const prov=a.state_code||a.state||'';
-  const display=addrDisplay([road,area,city,prov]);
-  const inp=document.getElementById('p-loc');
-  inp.value=display||item.display_name.split(',').slice(0,3).join(',').trim();
+  document.getElementById('p-loc').value=jobAddrText(item);
   gpsLat=parseFloat(item.lat);gpsLng=parseFloat(item.lon);locVerified=false;jobLocSet=true;
   const st=document.getElementById('loc-status');
   st.innerHTML=`📍 Address confirmed: <span style="color:var(--text)">${esc(item.display_name.split(',').slice(0,3).join(',').trim())}</span>`;
@@ -4534,13 +4544,37 @@ async function checkAndRate(taskId,ratedId,prompt){
   openRatingModal(taskId,ratedId,prompt);
 }
 
+// Edit Job location: only saved when a suggestion was picked (same rule as Post a Job)
+let editLat=null,editLng=null,editLocChanged=false;
+const editAddr=makeAddrSearch({sugId:'edit-loc-suggestions',statusId:'edit-loc-status',pickFn:'selectEditLocSuggestion',
+  noResults:'No addresses found — try a different search',format:jobAddrFormat});
+function onEditLocInput(val){
+  editLocChanged=true;editLat=null;editLng=null;
+  const st=document.getElementById('edit-loc-status');
+  if(val.length>=3){st.textContent='Searching…';st.className='loc-status loading';}
+  editAddr.input(val);
+}
+function selectEditLocSuggestion(i){
+  const item=editAddr.item(i);if(!item)return;
+  document.getElementById('edit-loc').value=jobAddrText(item);
+  editLat=parseFloat(item.lat);editLng=parseFloat(item.lon);
+  const st=document.getElementById('edit-loc-status');
+  st.innerHTML=`📍 New address: <span style="color:var(--text)">${esc(item.display_name.split(',').slice(0,3).join(',').trim())}</span>`;
+  st.className='loc-status manual';
+  closeOv('edit-loc-suggestions');
+}
+
 async function openEditModal(jobId){
-  const{data:j,error}=await sb.from('tasks').select('title,description,price').eq('id',jobId).maybeSingle();
+  const{data:j,error}=await sb.from('tasks').select('title,description,price,address').eq('id',jobId).maybeSingle();
   if(error||!j)return toast('❌ Could not load job');
   document.getElementById('edit-job-id').value=jobId;
   document.getElementById('edit-title').value=j.title||'';
   document.getElementById('edit-desc').value=j.description||'';
   document.getElementById('edit-budget').value=j.price??0;
+  editLat=null;editLng=null;editLocChanged=false;
+  document.getElementById('edit-loc').value=j.address||'';
+  const st=document.getElementById('edit-loc-status');
+  st.textContent='To move the pin, type the new address and pick it from the suggestions';st.className='loc-status';
   openOv('edit-modal');
 }
 
@@ -4551,8 +4585,14 @@ async function saveEdit(){
   const budget=document.getElementById('edit-budget').value;
   if(!title)return toast('Title cannot be empty');
   if(!desc)return toast('Description cannot be empty');
-  const{error}=await sb.from('tasks').update({title,description:desc,price:budget?parseFloat(budget):0}).eq('id',jobId).eq('poster_id',myProfileId||me.id);
+  const upd={title,description:desc,price:budget?parseFloat(budget):0};
+  if(editLocChanged){
+    if(!editLat||!editLng)return toast('⚠️ Please select the new address from the suggestions');
+    upd.address=document.getElementById('edit-loc').value.trim();upd.lat=editLat;upd.lng=editLng;upd.location_verified=false;
+  }
+  const{data:saved,error}=await sb.from('tasks').update(upd).eq('id',jobId).eq('poster_id',myProfileId||me.id).select('id');
   if(error)return toast('❌ '+error.message);
+  if(!saved||!saved.length)return toast('❌ Could not save changes — please try again');
   closeOv('edit-modal');
   toast('✅ Job updated!');loadMyJobs();loadJobs();
 }
