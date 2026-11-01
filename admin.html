@@ -438,15 +438,16 @@ body::before {
 
 /* BREAKDOWN SECTION */
 .section-title.lazy-h { cursor: pointer; user-select: none; }
-.section-title.lazy-h .lazy-hint { float: right; letter-spacing: 1px; opacity: .7; }
-.section-title.lazy-h:hover { color: var(--text); }
+.section-title.lazy-h .lazy-hint { float: right; font-size: 11px; font-weight: 700; letter-spacing: .5px; color: var(--muted); }
+.section-title.lazy-h:hover { color: var(--lime); }
+/* Section headings (31 Oct 2026, Roman: Space Mono 10px was impossible to read) → Nunito 14px, full-contrast text */
 .section-title {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 2.5px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: .4px;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--text);
   margin-bottom: 16px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
@@ -1131,6 +1132,10 @@ body::before {
     <div class="section-title lazy-h" onclick="toggleLazy('tap')">WHAT PEOPLE TAP — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-tap">▸ TAP TO LOAD</span></div>
     <div id="lazy-tap" style="display:none"><div id="tap-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
+    <!-- YOODLE PROS — TAPS & MESSAGES (tap_events kind 'pro' + Contact Pro chats), 31 Oct 2026 -->
+    <div class="section-title lazy-h" onclick="toggleLazy('protap')">YOODLE PROS — TAPS &amp; MESSAGES — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-protap">▸ TAP TO LOAD</span></div>
+    <div id="lazy-protap" style="display:none"><div id="protap-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
+
     <!-- AGENCY JOBS (agency_events) -->
     <div class="section-title lazy-h" onclick="toggleLazy('agency')">AGENCY JOBS — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-agency">▸ TAP TO LOAD</span></div>
     <div id="lazy-agency" style="display:none"><div id="agency-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
@@ -1290,7 +1295,7 @@ function refreshAll() {
 // ── TAP-TO-LOAD SECTIONS (15 Oct 2026) ──
 // Regions (+ admin-geo.js ≈300 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
-const LAZY = { regions: loadRegions, onboard: loadOnboardStats, share: loadShareStats, tap: loadTapStats, agency: loadAgencyStats, search: loadSearchStats,
+const LAZY = { regions: loadRegions, onboard: loadOnboardStats, share: loadShareStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
   reports: loadReports, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended };
 // After an admin action: reload a section only if it's open; a closed one reloads fresh the next time it's opened.
 function lazyReload(k) {
@@ -2229,6 +2234,22 @@ async function loadTapStats() {
     const rows = data.map(r => `<tr><td>${esc(r.label || '—')}${r.sub && g[0] !== 'area' ? `<div style="font-size:11.5px;color:var(--muted)">${esc(r.sub)}</div>` : (g[0] === 'area' && r.sub && r.sub !== r.label ? `<div style="font-size:11.5px;color:var(--muted)">${esc(r.sub)}</div>` : '')}</td><td class="num">${Number(r.taps)}</td><td class="num helpers">${Number(r.people)}</td></tr>`).join('');
     return head + `<table class="region-table"><thead><tr><th>${g[2]}</th><th>Taps</th><th>People</th></tr></thead><tbody>${rows}</tbody></table>`;
   }).join('') + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Taps on job map pins and list cards by signed-in members. Your own taps, admin and demo accounts are excluded; the same person tapping the same job again within 10 minutes counts once.</div>`;
+}
+
+// ── YOODLE PROS — TAPS & MESSAGES (admin-only RPC admin_pro_stats, 31 Oct 2026) ──
+async function loadProTapStats() {
+  const el = document.getElementById('protap-stats');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_pro_stats', { p_days: 30 });
+  if (error) { el.innerHTML = `<div style="padding:6px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`; return; }
+  if (!data || !data.length) { el.innerHTML = `<div style="padding:10px 0;color:var(--muted);font-size:13px">No approved pros yet.</div>`; return; }
+  const sum = k => data.reduce((a, r) => a + Number(r[k] || 0), 0);
+  const total = `<div style="padding:6px 0 8px;font-size:13px;color:var(--text)">${sum('taps')} taps · ${sum('requests')} Contact Pro requests · ${sum('msgs_in')} customer messages · ${sum('msgs_out')} pro replies</div>`;
+  const tag = '<span style="font-size:10px;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:0 4px;margin-left:4px">TEST</span>';
+  const rows = data.map(r => `<tr><td>${esc(r.name || 'Pro')}${r.is_tester ? tag : ''}<div style="font-size:11.5px;color:var(--muted)">${esc(r.trades || '')}${r.last_at ? ' · last ' + esc(timeAgo(r.last_at)) : ''}</div></td><td class="num" title="${Number(r.pin_taps)} pin · ${Number(r.card_taps)} card">${Number(r.taps)}</td><td class="num helpers">${Number(r.tap_people)}</td><td class="num">${Number(r.requests)}</td><td class="num">${Number(r.msgs_in)}</td><td class="num">${Number(r.msgs_out)}</td></tr>`).join('');
+  el.innerHTML = total + `<table class="region-table"><thead><tr><th>Pro</th><th>Taps</th><th>People</th><th>Requests</th><th>Msgs in</th><th>Replies</th></tr></thead><tbody>${rows}</tbody></table>`
+    + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Every approved pro, last 30 days. Taps = pro map pins and Find a PRO list cards tapped by signed-in members (hover the number for pin/card split); the same person tapping the same pro again within 10 minutes counts once. Requests = Contact Pro job requests sent to the pro. Msgs in = messages from customers in those request chats; Replies = messages the pro sent back. Admin and demo accounts are excluded. Pro taps were only saved from 31 Oct 2026 (a database check blocked them before).</div>`;
 }
 
 // ── AGENCY JOBS (admin-only RPC over agency_events) ──
