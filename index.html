@@ -1771,7 +1771,7 @@ function _htmlMarker(html,w,h,lat,lng,opts){
   const el=document.createElement('div');
   el.className=opts.className||'';
   el.style.width=w+'px';el.style.height=h+'px';
-  if(opts.z)el.style.zIndex=opts.z;
+  if(opts.z)el.style.zIndex=Math.round(opts.z*10); // ×10 so half-steps fit between levels (5 Nov 2026: ready helpers z 1.5 → 15)
   el.innerHTML=html;
   if(opts.onClick)el.addEventListener('click',e=>{e.stopPropagation();opts.onClick();});
   const m=new maplibregl.Marker({element:el,anchor:opts.anchor||'center',offset:opts.offset||[0,0]}).setLngLat([lng,lat]).addTo(map);
@@ -2423,7 +2423,7 @@ function renderMapPins(){
       html:`<div class="${_ag||_mine?'':jobGlowClass(jobIsNew(job))}" style="position:relative;width:38px;height:38px;border-radius:50%;background:${color};border:3px solid ${_mine?'#fff':'rgba(255,255,255,.25)'};display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:${_mine?`0 0 0 2px ${color},0 2px 8px rgba(0,0,0,.25)`:_ag?'0 2px 8px rgba(0,0,0,.15)':JOB_GLOW_SHADOW};cursor:pointer">${emoji}${_mine?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px;font-family:'Nunito',sans-serif">You</span>`:''}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
-    // z:2 → job bubbles sit in front of regular helper pins (z:1); search-matched helpers (z:3) still on top
+    // z:2 → job bubbles sit in front of ⚡ ready helpers (z:1.5) and regular helper pins (z:1); search-matched helpers (z:3) still on top
     const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:_mine?4:2,onClick:()=>{if(!_mine)logTap('job',job.id,'pin');openJob(job);}});
     marker._mine=_mine;
     jobMarkers.push(marker);
@@ -2451,7 +2451,7 @@ function renderMapPins(){
     const label=hsCat&&nMatch?`${nMatch}/${g.length}`:String(g.length);
     const you=hasMe?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span>`:'';
     const html=`<div class="${g.some(h=>readyOf(h.id))?'rtw-pulse':''}" style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid ${hasMe?'#fff':'rgba(255,255,255,.6)'};box-shadow:${hasMe?'0 0 0 2px #2E7D52,':''}0 2px 8px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:${label.length>2?12:15}px;font-weight:900;color:#fff;cursor:pointer;font-family:'Nunito',sans-serif">${label}${you}${g.some(h=>readyOf(h.id))?'<span class="rtw-bolt" title="Ready to work">⚡</span>':''}</div>`;
-    const marker=_htmlMarker(html,38,38,cLat,cLng,{z:hasMe?4:(nMatch?3:1),onClick:()=>openHelperStack(g)});
+    const marker=_htmlMarker(html,38,38,cLat,cLng,{z:hasMe?4:(nMatch?3:(g.some(h=>readyOf(h.id))?1.5:1)),onClick:()=>openHelperStack(g)});
     if(hsCat){const d=marker.getElement().firstElementChild;if(d)d.classList.add(nMatch?'hs-pin-glow':'hs-pin-dim');}
     else if(psTrade){const d=marker.getElement().firstElementChild;if(d)d.classList.add('hs-pin-dim');}
     helperMarkers.push(marker);
@@ -2463,7 +2463,7 @@ function renderMapPins(){
       html:`<div class="${rtwPulse(h.id)}" style="position:relative;width:38px;height:38px;border-radius:50%;background:#5C8A6A;border:3px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-family:'Nunito',sans-serif">${isIdVerified(h.id)?'<span class="idv-tick">✓</span>':''}${rtwBolt(h.id)}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
-    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:hsMatch(h)?3:1,onClick:()=>{logTap('helper',h.id,'pin');openOtherProfile(h.id);}});
+    const marker=_htmlMarker(icon.html,38,38,fLat,fLng,{z:hsMatch(h)?3:(readyOf(h.id)?1.5:1),onClick:()=>{logTap('helper',h.id,'pin');openOtherProfile(h.id);}});
     // chosen category → matching helpers glow amber, others fade
     if(hsCat){const d=marker.getElement().firstElementChild;if(d)d.classList.add(hsMatch(h)?'hs-pin-glow':'hs-pin-dim');}
     else if(psTrade){const d=marker.getElement().firstElementChild;if(d)d.classList.add('hs-pin-dim');}
@@ -2819,7 +2819,10 @@ function renderListTabContent(){
   const jc=document.getElementById('list-jobs-count');
   const hc=document.getElementById('list-helpers-count');
   // Find-a-helper filter applies to the Helpers tab too
-  const listHelpers=hsCat?sheetHelpers.filter(hsMatch):sheetHelpers;
+  const listHelpers=hsCat?sheetHelpers.filter(hsMatch):sheetHelpers.slice();
+  // ⚡ Available now first (ready today, then tomorrow), rest keep their order (stable sort) (5 Nov 2026)
+  const _rk=h=>{const r=readyOf(h.id);return r==='today'?0:r==='tomorrow'?1:2;};
+  listHelpers.sort((a,b)=>_rk(a)-_rk(b));
   if(jc)jc.textContent=sheetJobs.length;
   // Find-a-PRO filter: the Help tab lists only pros of that trade (whole map, closest first)
   const listPros=psTrade?psList():null;
@@ -5062,6 +5065,7 @@ async function loadReadyIds(){
     readyIds=m;
     if(!changed)return;
     try{if(map&&(allHelpers||[]).length)renderMapPins();}catch(e){}
+    try{if(_hsInList())renderListTabContent();}catch(e){} // keep ⚡ helpers on top of the List view (5 Nov 2026)
   }catch(e){}
 }
 function readyOf(id){const r=id&&readyIds.get(id);return r?(r.today?'today':(r.tomorrow?'tomorrow':null)):null;}
