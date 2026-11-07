@@ -2135,6 +2135,15 @@ window.addEventListener('DOMContentLoaded', () => {
   // Evening push "Ready to work tomorrow?": ?ready=today|tomorrow — handled in handleReadyLanding() once signed in
   const _readyLand = _notifParams.get('ready');
   if(_readyLand==='today'||_readyLand==='tomorrow') window._readyLand = _readyLand;
+  // Expiry reminder email "Edit your job" (?edit={task_id}) / "Post a new one" (?post=1) —
+  // kept in localStorage so they survive sign-in (Google OAuth reloads the page). Handled in handleEmailJobLanding().
+  const _editLand = _notifParams.get('edit');
+  const _postLand = _notifParams.get('post')==='1';
+  if(_editLand && /^[0-9a-f-]{36}$/i.test(_editLand)){
+    try{localStorage.setItem('yoodle_job_land', JSON.stringify({e:_editLand, ts:Date.now()}));}catch(e){}
+  }else if(_postLand){
+    try{localStorage.setItem('yoodle_job_land', JSON.stringify({p:1, ts:Date.now()}));}catch(e){}
+  }
   // Helper page "Contact on Yoodle" deep link: ?helper={id}[&s=share|fwd] — kept in localStorage
   // so it survives sign-in (Google OAuth reloads the page). Handled in handleHelperLanding().
   const _landHelper = _notifParams.get('helper');
@@ -2153,7 +2162,7 @@ window.addEventListener('DOMContentLoaded', () => {
       try{localStorage.setItem('yoodle_chat_land', JSON.stringify({t:_notifTaskId, c:(_notifConvId&&/^[0-9a-f-]{36}$/i.test(_notifConvId))?_notifConvId:null, ts:Date.now()}));}catch(e){}
     }
   }
-  if(_notifTaskId || _refCode || _openEmail || _landHelper || window._idvReturn || window._renewToken || window._readyLand){
+  if(_notifTaskId || _refCode || _openEmail || _landHelper || window._idvReturn || window._renewToken || window._readyLand || _editLand || _postLand){
     window.history.replaceState({}, '', '/');
   }
   if(window.navigator.standalone===true||window.matchMedia('(display-mode:standalone)').matches){
@@ -2189,7 +2198,15 @@ window.addEventListener('DOMContentLoaded', () => {
   // Start-up once per signed-in user. Supabase also fires auth events on token refresh (~hourly) and tab focus,
   // and getSession + INITIAL_SESSION both fire on load — repeats only update the session user
   // (showApp() is ≈24 API calls + a map recentre).
-  sb.auth.getSession().then(({data:{session}})=>{ if(session)_startApp(session); });
+  sb.auth.getSession().then(({data:{session}})=>{
+    if(session)return _startApp(session);
+    // Signed out and came from the expiry email: edit → ask to sign in; post → open the guest post form
+    try{
+      const d=JSON.parse(localStorage.getItem('yoodle_job_land')||'null');
+      if(d&&d.e&&!window._renewToken)showRenewNote('Sign in to edit your job.');
+      else if(d&&d.p)openGuestPost();
+    }catch(e){}
+  });
   sb.auth.onAuthStateChange((_e,session)=>{
     if(session)_startApp(session);
     else{me=null;_appStartedFor=null;showAuthScreen();}
@@ -3538,6 +3555,7 @@ async function showApp(){
   if(window._idvReturn)handleIdvReturn();
   loadReadyIds(); // ⚡ Ready to work bolts (signed-in only)
   if(window._readyLand)handleReadyLanding();
+  handleEmailJobLanding();
   recordOnboardPath();
   logActive();
   loadPoints();
@@ -3801,7 +3819,7 @@ async function openJob(j){
   document.getElementById('m-budget').textContent=_agency?agencyPay(j):`$${j.price??'?'}`;
   document.getElementById('m-budget-l').textContent=_agency?'Pay':'Budget';
   const _an=document.getElementById('m-agency-note');_an.style.display='none';_an.textContent='';
-  if(_agency&&!isCommunityJob(j))logAgency(j.id,'open');
+  if(_agency)logAgency(j.id,'open'); // agency + imported (community) jobs → agency_events (Nov 2026: imported jobs tracked too)
 
   // fetch poster profile for trust signals
   document.getElementById('m-poster').innerHTML=`<div class="spinner" style="width:16px;height:16px"></div>`;
@@ -3843,7 +3861,7 @@ async function openJob(j){
     _an.style.display='block';
     if(j.status==='open'&&/^https:\/\//i.test(j.url||'')){
       btn.textContent=`View & apply at ${_co} ↗`;
-      btn.onclick=()=>window.open(j.url,'_blank','noopener');
+      btn.onclick=()=>{logAgency(j.id,'apply');window.open(j.url,'_blank','noopener');};
     } else {
       btn.textContent='No longer available';btn.disabled=true;
     }
@@ -4586,6 +4604,7 @@ function selectEditLocSuggestion(i){
 }
 
 async function openEditModal(jobId){
+  window._editRenew=null;
   const{data:j,error}=await sb.from('tasks').select('title,description,price,address').eq('id',jobId).maybeSingle();
   if(error||!j)return toast('❌ Could not load job');
   document.getElementById('edit-job-id').value=jobId;
@@ -4611,11 +4630,20 @@ async function saveEdit(){
     if(!editLat||!editLng)return toast('⚠️ Please select the new address from the suggestions');
     upd.address=document.getElementById('edit-loc').value.trim();upd.lat=editLat;upd.lng=editLng;upd.location_verified=false;
   }
+  // Opened from the expiry email: saving also keeps the job up 14 more days (never shortens it)
+  const _rn=window._editRenew&&window._editRenew.id===jobId?window._editRenew:null;
+  if(_rn){
+    const t14=Date.now()+14*24*60*60*1000, cur=_rn.exp?new Date(_rn.exp).getTime():0;
+    upd.expires_at=new Date(Math.max(t14,cur)).toISOString();upd.status='open';
+  }
   const{data:saved,error}=await sb.from('tasks').update(upd).eq('id',jobId).eq('poster_id',myProfileId||me.id).select('id');
   if(error)return toast('❌ '+error.message);
   if(!saved||!saved.length)return toast('❌ Could not save changes — please try again');
   closeOv('edit-modal');
-  toast('✅ Job updated!');loadMyJobs();loadJobs();
+  window._editRenew=null;
+  if(_rn)showRenewNote('✅ Job updated — it\'s up for neighbours until '+new Date(upd.expires_at).toLocaleDateString('en-CA',{month:'short',day:'numeric'})+'.');
+  else toast('✅ Job updated!');
+  loadMyJobs();loadJobs();
 }
 
 
@@ -5236,6 +5264,26 @@ async function rtwSet(day,on){
   loadReadyIds();
 }
 // Evening push "Ready to work tomorrow?" → ?ready=tomorrow → one tap = on (if eligible), else the Profile card explains why
+// Expiry reminder email links (saved in DOMContentLoaded): edit the job (saving also keeps it up 14 more days) or post a new one.
+async function handleEmailJobLanding(){
+  if(!sb||!me)return;
+  let d=null;
+  try{d=JSON.parse(localStorage.getItem('yoodle_job_land')||'null');localStorage.removeItem('yoodle_job_land');}catch(e){}
+  if(!d||Date.now()-(d.ts||0)>7*24*60*60*1000)return;
+  // restoreGuestDraft() may already have opened the form with a draft — don't reset it
+  if(d.p){if(!document.getElementById('app-postjob')?.classList.contains('active'))nav('postjob');return;}
+  if(!d.e)return;
+  const{data:j,error}=await sb.from('tasks').select('id,poster_id,status,type,expires_at').eq('id',d.e).maybeSingle();
+  if(error||!j)return toast('This job is no longer available');
+  if(j.poster_id!==(myProfileId||me.id))return showRenewNote('This job was posted from a different account — sign in with that one to edit it.');
+  if((j.type||'job')!=='job'||(j.status!=='open'&&j.status!=='expired'))return showRenewNote('This job is already closed. You can post a new one any time.');
+  nav('myjobs');
+  setTimeout(async()=>{
+    await openEditModal(j.id);
+    window._editRenew={id:j.id,exp:j.expires_at}; // saveEdit() also keeps it up 14 more days
+  },600);
+}
+
 async function handleReadyLanding(){
   const d=window._readyLand;window._readyLand=null;
   if(d!=='today'&&d!=='tomorrow')return;
