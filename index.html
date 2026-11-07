@@ -2372,6 +2372,9 @@ function updateCircleOverlay() {
 
 // Max ~80m fuzzy offset — enough for privacy, not enough to jump streets
 function fuzzyCoords(lat,lng){return[lat+(Math.random()-.5)*.0014,lng+(Math.random()-.5)*.0018];}
+// Job pin position: imported employer jobs (isCommunityJob) show the employer's public worksite exactly, like Pros;
+// neighbour and agency jobs keep the ~80 m privacy offset.
+function jobPinCoords(j){return isCommunityJob(j)?[+j.lat,+j.lng]:(j._fuzzy||(j._fuzzy=fuzzyCoords(j.lat,j.lng)));}
 
 let helperMarkers=[];
 let myHelperPin=null,myJobPins=[],hpFocusAreaNext=false,myIsTester=false; // own helper pin: drawn for the helper themself; tap may open the area field
@@ -2405,7 +2408,7 @@ function renderMapPins(){
   Object.values(_jGroups).filter(g=>g.length>1).forEach(g=>{
     const allAgency=g.every(isAgencyJob);
     const color=allAgency?AGENCY_PIN:'#EF4444';
-    const[fLat,fLng]=g[0]._fuzzy||(g[0]._fuzzy=fuzzyCoords(g[0].lat,g[0].lng));
+    const[fLat,fLng]=g.every(isCommunityJob)?[+g[0].lat,+g[0].lng]:(g[0]._fuzzy||(g[0]._fuzzy=fuzzyCoords(g[0].lat,g[0].lng)));
     const _gNb=g.filter(j=>!isAgencyJob(j)); // neighbour jobs in this stack → glow
     const _gShadow=_gNb.length?JOB_GLOW_SHADOW:'0 2px 8px rgba(0,0,0,.15)';
     const _gCls=_gNb.length?jobGlowClass(_gNb.some(jobIsNew)):'';
@@ -2418,7 +2421,7 @@ function renderMapPins(){
     const _ag=isAgencyJob(job);
     const color=_ag?AGENCY_PIN:'#EF4444';
     const emoji=_ag?'':(CAT_EMOJI[job.category]||ysEmoji(job.category)||'📋');
-    const[fLat,fLng]=job._fuzzy||(job._fuzzy=fuzzyCoords(job.lat,job.lng));
+    const[fLat,fLng]=jobPinCoords(job);
     const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
       html:`<div class="${_ag||_mine?'':jobGlowClass(jobIsNew(job))}" style="position:relative;width:38px;height:38px;border-radius:50%;background:${color};border:3px solid ${_mine?'#fff':'rgba(255,255,255,.25)'};display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:${_mine?`0 0 0 2px ${color},0 2px 8px rgba(0,0,0,.25)`:_ag?'0 2px 8px rgba(0,0,0,.15)':JOB_GLOW_SHADOW};cursor:pointer">${emoji}${_mine?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px;font-family:'Nunito',sans-serif">You</span>`:''}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
