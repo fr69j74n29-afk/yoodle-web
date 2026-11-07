@@ -1035,7 +1035,7 @@ body::before {
       <div class="stat-card jobs">
         <div class="stat-label"><span class="stat-icon">📋</span> Open Jobs</div>
         <div class="stat-num loading-val" id="stat-open-jobs">—</div>
-        <div class="stat-sub" id="stat-open-jobs-detail">Direct · agency</div>
+        <div class="stat-sub" id="stat-open-jobs-detail">Direct · agency · imported</div>
       </div>
       <div class="stat-card convs">
         <div class="stat-label"><span class="stat-icon">💬</span> Conversations</div>
@@ -1380,10 +1380,12 @@ async function loadStats() {
 
     // Open jobs (same rule as the old "Open" bar: status open, admin auto-reply poster excluded)
     // Split (Oct 2026): direct = posted by members; agency = synced partner listings (type 'agency_job')
+    // + imported (Nov 2026) = employer jobs imported by Muse via jobs-ingest (type 'community_job', poster "Yoodle Community")
     const openRows = (taskStatuses || []).filter(t => t.status?.toLowerCase() === 'open');
     const agencyOpen = openRows.filter(t => t.type === 'agency_job').length;
+    const importedOpen = openRows.filter(t => t.type === 'community_job').length;
     animateNumber('stat-open-jobs', openRows.length);
-    document.getElementById('stat-open-jobs-detail').textContent = `${openRows.length - agencyOpen} direct · ${agencyOpen} agency`;
+    document.getElementById('stat-open-jobs-detail').textContent = `${openRows.length - agencyOpen - importedOpen} direct · ${agencyOpen} agency · ${importedOpen} imported`;
 
     loadConvOverview();
     loadProStats();
@@ -2295,7 +2297,7 @@ async function loadRecentActivity() {
     const [{ data: jobs, error: jobErr }, { data: helpers2, error: helpErr }] = await Promise.all([
       sb.from('tasks')
         .select('id, title, description, price, status, address, created_at, poster_id, category')
-        .not('type', 'in', '(admin_note,agency_job)')   // agency jobs have their own section (Oct 2026)
+        .not('type', 'in', '(admin_note,agency_job,community_job)')   // agency jobs have their own section (Oct 2026); imported employer jobs (Nov 2026) aren't member activity
         .gte('created_at', cutoff)
         .order('created_at', { ascending: false })
         .limit(5),
