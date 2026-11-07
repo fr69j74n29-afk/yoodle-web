@@ -852,7 +852,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <div class="map-legend" aria-label="Map legend">
           <div class="ml-h" id="map-radius-corner">WITHIN — KM</div>
           <div><i style="background:#EF4444"></i>Need help</div>
-          <div><i style="background:#2563EB"></i>Agency jobs</div>
+          <div><i style="background:#2563EB"></i>Job listings</div>
           <div><i style="background:#5C8A6A"></i>Offering help</div>
         </div>
       </div>
@@ -2583,6 +2583,11 @@ function openHelperStack(g){
 }
 function isAgencyJob(j){return !!(j&&(j.type==='agency_job'||j.url));}
 function agencyPay(j){return j.price!=null?`$${j.price}/hr`:'See posting';}
+// Community jobs: tasks.type='community_job', posted by the hidden "Yoodle Community" account, imported from an employer's
+// own careers site (jobs-ingest). Same blue pin as agency jobs (isAgencyJob → url); the card names the employer instead.
+const COMMUNITY_POSTER_ID='3aa7ad98-895c-4d67-bd83-f467b755d8d4';
+function isCommunityJob(j){return !!(j&&(j.type==='community_job'||j.poster_id===COMMUNITY_POSTER_ID));}
+function communityCompany(j){const c=(((j&&j.description)||'').split('\n')[0].split(' · ')[0]||'').trim();return c&&c.length<=100?c:'the employer';}
 // Opens + Apply taps → public.agency_events via log_agency_event() (signed-out viewers counted by a random browser id). Never blocks the UI.
 function yAnonId(){try{let a=localStorage.getItem('yoodle_anon');if(!a){a=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2));localStorage.setItem('yoodle_anon',a);}return a;}catch(e){return null;}}
 // Fire-and-forget logging: never blocks or breaks the UI. A failed call leaves a console warning
@@ -3793,7 +3798,7 @@ async function openJob(j){
   document.getElementById('m-budget').textContent=_agency?agencyPay(j):`$${j.price??'?'}`;
   document.getElementById('m-budget-l').textContent=_agency?'Pay':'Budget';
   const _an=document.getElementById('m-agency-note');_an.style.display='none';_an.textContent='';
-  if(_agency)logAgency(j.id,'open');
+  if(_agency&&!isCommunityJob(j))logAgency(j.id,'open');
 
   // fetch poster profile for trust signals
   document.getElementById('m-poster').innerHTML=`<div class="spinner" style="width:16px;height:16px"></div>`;
@@ -3829,7 +3834,17 @@ async function openJob(j){
   btn.disabled=false;btn.style.display='block';unclaimBtn.style.display='none';
   btn.onclick=()=>jobAction();
 
-  if(_agency){
+  if(_agency&&isCommunityJob(j)){
+    const _co=communityCompany(j);
+    _an.textContent=`From ${_co}'s careers page. You apply directly with the employer — Yoodle isn't part of the hiring.`;
+    _an.style.display='block';
+    if(j.status==='open'&&/^https:\/\//i.test(j.url||'')){
+      btn.textContent=`View & apply at ${_co} ↗`;
+      btn.onclick=()=>window.open(j.url,'_blank','noopener');
+    } else {
+      btn.textContent='No longer available';btn.disabled=true;
+    }
+  } else if(_agency){
     const _pn=window._mPosterName||'the agency';
     _an.textContent=`Listed by ${_pn}. You apply directly with the agency on their website — Yoodle isn't part of the hiring.`;
     _an.style.display='block';
