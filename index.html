@@ -4296,8 +4296,10 @@ async function loadMyJobs(){
   const g=document.getElementById('my-grid');g.innerHTML=spin();
   if(!sb||!me){g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
   const pid=myProfileId||me.id;
+  const expSince=new Date(Date.now()-30*24*60*60*1000).toISOString();
   const[postedRes,appRes,hoRes]=await Promise.all([
-    sb.from('tasks').select('*').eq('poster_id',pid).in('status',['open','claimed']).neq('type','admin_note').order('created_at',{ascending:false}),
+    // open/claimed + jobs that expired in the last 30 days (so the poster can still see applicants and renew)
+    sb.from('tasks').select('*').eq('poster_id',pid).or(`status.in.(open,claimed),and(status.eq.expired,expires_at.gte.${expSince})`).neq('type','admin_note').order('created_at',{ascending:false}),
     // applications by this user with task details
     sb.from('applications').select('id,status,created_at,tasks!inner(*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color))').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','claimed']).order('created_at',{ascending:false}),
     // help_offer tasks where I'm the doer
@@ -4306,7 +4308,10 @@ async function loadMyJobs(){
   const err=postedRes.error||appRes.error;
   if(err){g.innerHTML=emptyState('😕','Error',err.message);return;}
   if(hoRes.error)console.warn('help_offer query error:',hoRes.error.message);
-  const posted=postedRes.data||[], apps=appRes.data||[], helpOfferTasks=hoRes.data||[];
+  const posted=(postedRes.data||[])
+    .filter(j=>j.status!=='expired'||((j.type||'job')==='job'&&!isAgencyJob(j)))
+    .sort((a,b)=>(a.status==='expired')-(b.status==='expired'));
+  const apps=appRes.data||[], helpOfferTasks=hoRes.data||[];
 
   if(!posted.length&&!apps.length&&!helpOfferTasks.length){g.innerHTML=emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.');return;}
 
@@ -4314,7 +4319,7 @@ async function loadMyJobs(){
   let doerNames={};
   let applicantCounts={};
   const claimedJobs=posted.filter(j=>j.status==='claimed'&&j.doer_id);
-  const openJobs=posted.filter(j=>j.status==='open');
+  const openJobs=posted.filter(j=>j.status==='open'||j.status==='expired');
   await Promise.all([
     claimedJobs.length?sb.from('profiles').select('id,name').in('id',[...new Set(claimedJobs.map(j=>j.doer_id))]).then(({data:doerData})=>{(doerData||[]).forEach(p=>doerNames[p.id]=p.name);}):null,
     openJobs.length?sb.from('applications').select('task_id').eq('status','pending').in('task_id',openJobs.map(j=>j.id)).then(({data:appData})=>{(appData||[]).forEach(a=>{applicantCounts[a.task_id]=(applicantCounts[a.task_id]||0)+1;});}):null
@@ -4392,6 +4397,7 @@ async function loadMyJobs(){
     const gpsTag=j.status==='open'?(j.location_verified?` · <span style="color:var(--lime);font-size:12.5px;font-weight:800">GPS</span>`:` · <span style="color:var(--yellow);font-size:12.5px;font-weight:800">⚠️ Unverified</span>`):'';
     let statusBadge;
     if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:13.5px;font-weight:800">Active</span>`;
+    else if(j.status==='expired') statusBadge=`<span style="color:var(--muted);font-size:13.5px;font-weight:800">Expired${j.expires_at?' '+new Date(j.expires_at).toLocaleDateString('en-CA',{month:'short',day:'numeric'}):''}</span>`;
     else statusBadge=`<span style="color:var(--lime);font-size:13.5px;font-weight:800">Open${daysLeft!==null?` · ${daysLeft}d left`:''}${gpsTag}</span>`;
 
     let actionBtn='';
@@ -4411,6 +4417,15 @@ async function loadMyJobs(){
         </div>
       </div>`;
       actionBtn=appBadge;
+    } else if(j.status==='expired'){
+      // Expired: no map pin. Renew puts it back up for 14 days; Review still shows who was interested.
+      // data- attributes + one delegated listener (see bindMyJobsActions) — no inline onclick strings.
+      const appCount=applicantCounts[j.id]||0;
+      actionBtn=`<div style="margin-top:8px;font-size:13.5px;color:var(--text2)">Not on the map any more.${appCount>0?` <strong style="color:var(--purple)">${appCount} interested</strong> — renew to chat with them.`:''}</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button data-act="renew" data-id="${esc(j.id)}" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">🔄 Renew 14 days</button>
+        ${appCount>0?`<button data-act="review" data-id="${esc(j.id)}" data-title="${esc(j.title||'')}" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Review →</button>`:''}
+      </div>`;
     } else if(j.status==='claimed'){
       const doerName=doerNames[j.doer_id]||'Helper';
       if(isHelperContact(j)){
@@ -4449,15 +4464,30 @@ async function loadMyJobs(){
   }).join('');
 
   const helpingCards=appCards+hoCards;
+  bindMyJobsActions(g);
   g.innerHTML=(postedCards?`<div class="act-h">Jobs you posted</div>`+postedCards:'')
     +(helpingCards?`<div class="act-h">Jobs you're helping with</div>`+helpingCards:'')
     ||emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.');
 }
 
+// One delegated click listener for Activity card buttons that use data-act (expired cards: Renew / Review).
+function bindMyJobsActions(g){
+  if(!g||g._myJobsBound)return;
+  g._myJobsBound=true;
+  g.addEventListener('click',e=>{
+    const b=e.target.closest('button[data-act]');
+    if(!b||!g.contains(b))return;
+    e.stopPropagation();
+    const id=b.dataset.id;
+    if(b.dataset.act==='renew'){b.disabled=true;renewJob(id).finally(()=>{b.disabled=false;});}
+    else if(b.dataset.act==='review')openApplicants(id,b.dataset.title||'');
+  });
+}
+
 async function renewJob(jobId){
   if(!sb||!me)return;
   const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
-  const{error}=await sb.from('tasks').update({expires_at:expiresAt,status:'open'}).eq('id',jobId).eq('poster_id',myProfileId||me.id);
+  const{error}=await sb.from('tasks').update({expires_at:expiresAt,status:'open',expired_push_at:null}).eq('id',jobId).eq('poster_id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
   toast('🔄 Job renewed for 14 days!');loadMyJobs();loadJobs();
 }
