@@ -33,7 +33,7 @@ jobs:
       - name: Build site copy (minify index.html)
         run: |
           mkdir _site
-          tar --exclude=./.git --exclude=./.github --exclude=./_site -cf - . | tar -xf - -C _site
+          tar --exclude=./.git --exclude=./.github --exclude=./_site --exclude=./docs -cf - . | tar -xf - -C _site
           npx --yes html-minifier-terser@7.2.0 --collapse-whitespace --conservative-collapse --remove-comments --minify-css true --minify-js true -o _site/index.html _site/index.html
           echo "index.html: $(wc -c < index.html) -> $(wc -c < _site/index.html) bytes"
 
