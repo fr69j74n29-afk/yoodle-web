@@ -3653,10 +3653,19 @@ async function refreshUnreadCount(){
 }
 function clearMessageBadge(){_setMessageBadge(false);}
 
-let _unreadPollInterval=null;
+let _unreadPollInterval=null,_lastUnreadPoll=0;
+// Poll every 60s while the tab is visible; every 5 min while hidden (cuts API/log volume from background tabs).
+// Returning to the tab triggers an immediate catch-up via _onVisibility → _catchUpMessages().
+function _unreadPollTick(){
+  const hidden=document.visibilityState!=='visible';
+  if(hidden&&Date.now()-_lastUnreadPoll<5*60*1000)return;
+  _lastUnreadPoll=Date.now();
+  refreshUnreadCount();
+}
 function startUnreadPoller(){
   if(_unreadPollInterval)clearInterval(_unreadPollInterval);
-  _unreadPollInterval=setInterval(refreshUnreadCount,60000);
+  _lastUnreadPoll=Date.now();
+  _unreadPollInterval=setInterval(_unreadPollTick,60000);
   // re-check whenever the tab comes back into focus
   document.removeEventListener('visibilitychange',_onVisibility);
   document.addEventListener('visibilitychange',_onVisibility);
