@@ -1128,6 +1128,10 @@ body::before {
     <div class="section-title lazy-h" onclick="toggleLazy('share')">HELPER PAGE SHARING — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-share">▸ TAP TO LOAD</span></div>
     <div id="lazy-share" style="display:none"><div id="share-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
+    <!-- YOODI — one profile email to each new helper (yoodi_sends), 14 Nov 2026 -->
+    <div class="section-title lazy-h" onclick="toggleLazy('yoodi')">YOODI — NEW-HELPER PROFILE EMAILS <span class="lazy-hint" id="lazy-hint-yoodi">▸ TAP TO LOAD</span></div>
+    <div id="lazy-yoodi" style="display:none"><div id="yoodi-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
+
     <!-- WHAT PEOPLE TAP (tap_events) -->
     <div class="section-title lazy-h" onclick="toggleLazy('tap')">WHAT PEOPLE TAP — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-tap">▸ TAP TO LOAD</span></div>
     <div id="lazy-tap" style="display:none"><div id="tap-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
@@ -1295,7 +1299,7 @@ function refreshAll() {
 // ── TAP-TO-LOAD SECTIONS (15 Oct 2026) ──
 // Regions (+ admin-geo.js ≈300 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
-const LAZY = { regions: loadRegions, onboard: loadOnboardStats, share: loadShareStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
+const LAZY = { regions: loadRegions, onboard: loadOnboardStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
   reports: loadReports, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended };
 // After an admin action: reload a section only if it's open; a closed one reloads fresh the next time it's opened.
 function lazyReload(k) {
@@ -2219,6 +2223,41 @@ async function loadShareStats() {
   ${loginErr ? `<div style="padding:6px 0;color:var(--muted);font-size:13px">Could not load: ${esc(loginErr.message)}</div>` :
   `<table class="region-table"><thead><tr><th>Source</th><th>People signed in</th><th>Helpers</th></tr></thead><tbody>${loginRows}</tbody></table>`}
   <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">New-helper screen: ${p('shared')} shared via the share sheet (picked an app; sending isn't confirmed), ${p('copied')} copied the link on desktop. "Signed in" counts people who opened a shared helper link, tapped Contact on Yoodle and were signed in (each person counted once per helper); "Helpers" is how many different helpers' links led to it.</div>`;
+}
+
+// ── YOODI (admin-only RPC over yoodi_sends), 14 Nov 2026 ──
+// One email per new helper with a link to /helpers/update/{token}; "saved" = they confirmed name + bio there.
+async function loadYoodiStats() {
+  const el = document.getElementById('yoodi-stats');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data: d, error } = await sb.rpc('admin_yoodi_stats');
+  if (error) {
+    el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`;
+    return;
+  }
+  const sent = Number(d?.sent || 0), opened = Number(d?.opened || 0), saved = Number(d?.saved || 0);
+  const pct = n => sent ? Math.round(n / sent * 100) + '%' : '—';
+  const val = v => (v === null || v === undefined) ? '—' : esc(String(v));
+  const since = d?.first_sent ? new Date(d.first_sent).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : '';
+  el.innerHTML = `<table class="region-table"><thead><tr><th>Step</th><th>Helpers</th><th>% of sent</th></tr></thead><tbody>
+    <tr><td>Email sent</td><td class="num">${sent}</td><td class="num helpers">${sent ? '100%' : '—'}</td></tr>
+    <tr><td>Opened the update page</td><td class="num">${opened}</td><td class="num helpers">${pct(opened)}</td></tr>
+    <tr><td>Saved their profile</td><td class="num">${saved}</td><td class="num helpers">${pct(saved)}</td></tr>
+  </tbody></table>
+  <div style="padding:14px 0 4px;font-size:12px;font-weight:800;color:var(--muted)">WHAT SAVERS CHANGED</div>
+  <table class="region-table"><thead><tr><th>Change</th><th>Helpers</th></tr></thead><tbody>
+    <tr><td>Name</td><td class="num">${Number(d?.changed_name || 0)}</td></tr>
+    <tr><td>Bio</td><td class="num">${Number(d?.changed_bio || 0)}</td></tr>
+    <tr><td>Skills</td><td class="num">${Number(d?.changed_skills || 0)}</td></tr>
+    <tr><td>Average bio length (characters)</td><td class="num">${val(d?.avg_bio_before)} → ${val(d?.avg_bio_after)}</td></tr>
+  </tbody></table>
+  <div style="padding:14px 0 4px;font-size:12px;font-weight:800;color:var(--muted)">DID IT HELP? (CONVERSATIONS IN THE 14 DAYS AFTER THE EMAIL)</div>
+  <table class="region-table"><thead><tr><th>Group</th><th>Avg conversations per helper</th></tr></thead><tbody>
+    <tr><td>Saved their profile</td><td class="num">${val(d?.contacts_14d_saved)}</td></tr>
+    <tr><td>Didn't save</td><td class="num">${val(d?.contacts_14d_not_saved)}</td></tr>
+  </tbody></table>
+  <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">All time${since ? ' (first email ' + esc(since) + ')' : ''}. Only helpers who joined from 14 Nov 2026 12:00 PM get the email, once each, 9 AM–8 PM. "Opened" = opened the update page (no email tracking pixel). The 14-day comparison only includes emails sent more than 14 days ago, so it stays "—" at first.</div>`;
 }
 
 // ── WHAT PEOPLE TAP (admin-only RPC over tap_events) ──
