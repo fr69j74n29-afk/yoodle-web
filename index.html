@@ -692,7 +692,10 @@ body.theme-sage-dark .map-legend{background:rgba(20,26,22,.93)}
 .safety-tip{--tip-bg:#FFF6E6;--tip-bd:#F2D49B;--tip-tx:#7A5410;background:var(--tip-bg);border:1.5px solid var(--tip-bd);color:var(--tip-tx);border-radius:16px;padding:12px 14px;margin-bottom:14px;font-size:13.5px;font-weight:700;line-height:1.45}
 body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0CF8A}
 .safety-tip b{font-weight:900;display:block;margin-bottom:4px;font-size:14px}
+.safety-tip p{margin:0 0 6px}
 .safety-tip ul{margin:6px 0 8px;padding-left:18px}
+.st-link{background:none;border:none;padding:0;font-family:'Nunito',sans-serif;font-size:inherit;font-weight:800;color:var(--idv);cursor:pointer}
+.st-link.st-rep2{color:inherit;text-decoration:underline}
 .safety-tip .st-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}
 .safety-tip .st-rep{background:none;border:none;padding:4px 0;color:inherit;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;text-decoration:underline;cursor:pointer}
 .safety-tip .st-got{background:transparent;border:1.5px solid var(--tip-bd);color:var(--tip-tx);border-radius:100px;padding:5px 12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:12.5px;cursor:pointer}
@@ -4756,18 +4759,25 @@ async function loadMessages(){
 }
 
 let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null, activeChatConvId=null;
-// Direct-contact safety tip: helper side of a help_offer chat
+// Standard chat safety card (13 Nov 2026, replaces the 14 Oct direct-contact tip): every chat except Yoodle team threads, both sides.
+// 'Got it' is remembered per chat on this device (new key, so chats where the old tip was dismissed show the new card once).
 let activeChatSafetyTip=false;
-function _tipSeen(cid){try{return (JSON.parse(localStorage.getItem('yoodle_tip_seen')||'[]')||[]).includes(cid);}catch(e){return false;}}
+const SAFETY_KEY='yoodle_safety_seen_v2';
+function _tipSeen(cid){try{return (JSON.parse(localStorage.getItem(SAFETY_KEY)||'[]')||[]).includes(cid);}catch(e){return false;}}
 function dismissSafetyTip(){
   if(!activeChatConvId)return;
-  try{let a=JSON.parse(localStorage.getItem('yoodle_tip_seen')||'[]')||[];if(!a.includes(activeChatConvId))a.push(activeChatConvId);localStorage.setItem('yoodle_tip_seen',JSON.stringify(a.slice(-200)));}catch(e){}
+  try{let a=JSON.parse(localStorage.getItem(SAFETY_KEY)||'[]')||[];if(!a.includes(activeChatConvId))a.push(activeChatConvId);localStorage.setItem(SAFETY_KEY,JSON.stringify(a.slice(-200)));}catch(e){}
   loadChatMessages(true);
+}
+// "get yours": close the chat and show Profile → ID verification (the block shows the right state, incl. verified)
+function openIdvFromChat(){
+  closeChat();nav('profile');
+  setTimeout(()=>{document.getElementById('idv-block')?.scrollIntoView({behavior:'smooth',block:'center'});},400);
 }
 function safetyTipHtml(){
   if(!activeChatSafetyTip)return'';
-  if(_tipSeen(activeChatConvId))return`<div style="text-align:center;margin:0 0 14px"><span style="font-size:12.5px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">🛡️ Ask for job details before sharing contact info</span></div>`;
-  return`<div class="safety-tip"><b>🛡️ ${esc(activeChatOtherName)} contacted you directly</b>Before sharing your phone, email or address, ask about the job:<ul><li>What needs doing</li><li>Where and when</li><li>What it pays</li></ul>Keep chatting here until it feels right.<div class="st-foot"><button class="st-rep" onclick="reportFromChat()">Report</button><button class="st-got" onclick="dismissSafetyTip()">Got it</button></div></div>`;
+  if(_tipSeen(activeChatConvId))return`<div class="safety-mini" style="text-align:center;margin:0 0 14px"><span style="display:inline-block;font-size:12.5px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">🛡️ Ask for ID verification or <button class="st-link" onclick="openIdvFromChat()">get yours</button> · <button class="st-link st-rep2" onclick="reportFromChat()">Report</button></span></div>`;
+  return`<div class="safety-tip"><b>🛡️ Stay safe on Yoodle</b><p>Before you agree, make sure you both understand the job and how payment will work.</p><p>Keep chatting here until it feels right. Don't share your phone, email or address before then.</p><p>Never send money back, buy gift cards or share verification codes.</p><div class="st-foot"><button class="st-rep" onclick="reportFromChat()">Report</button><button class="st-got" onclick="dismissSafetyTip()">Got it</button></div></div>`;
 }
 function closeChat(){
   closeOv('chat-modal');
@@ -4856,7 +4866,8 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   const isPoster=task.poster_id===pid;
   const isDoer=task.doer_id===pid;
   const isHO=isHelperContact(task);
-  if(isHO&&isDoer&&task.status==='claimed'&&activeChatTaskId===taskId){activeChatSafetyTip=true;loadChatMessages(true);}
+  // Safety card: every chat except Yoodle team threads (returned above). Add it in place — no second messages fetch.
+  if(activeChatTaskId===taskId){activeChatSafetyTip=true;const cm=document.getElementById('chat-messages');if(cm&&!cm.querySelector('.safety-tip,.safety-mini'))cm.insertAdjacentHTML('afterbegin',safetyTipHtml());}
 
   const withdrawBtn=`<button onclick="tapConfirm(this,'Tap again to withdraw',()=>chatUnclaim('${taskId}'))" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Withdraw</button>`;
   const cancelHOLabel=isPoster?'Cancel':'Decline';
