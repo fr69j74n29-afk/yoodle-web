@@ -2795,8 +2795,8 @@ async function loadJobs() {
   allJobs=(data||[]).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
   updateRadiusCounts();
   if(sb&&me){
-    const taskIds=allJobs.map(j=>j.id);
-    const{data:apps}=await sb.from('applications').select('task_id').eq('applicant_id',myProfileId||me.id).eq('status','pending').in('task_id',taskIds);
+    // Only this user's pending applications (a short list) - no task_id=in.(...) list in the URL (log ingestion fix, 14 Nov 2026)
+    const{data:apps}=await sb.from('applications').select('task_id').eq('applicant_id',myProfileId||me.id).eq('status','pending');
     myAppliedTaskIds=new Set((apps||[]).map(a=>a.task_id));
   }
   renderListTabContent();
