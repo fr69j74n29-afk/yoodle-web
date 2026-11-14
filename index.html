@@ -256,13 +256,23 @@ body.theme-sage-dark .le{color:#E0C45A}
 .theme-btn .ic-sun{display:none}
 body.theme-sage-dark .theme-btn .ic-sun{display:block}
 body.theme-sage-dark .theme-btn .ic-moon{display:none}
-.inv-card{padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)}
+.inv-card{padding:16px;background:var(--surface);border-radius:16px;margin-bottom:12px;border:1px solid var(--border)}
+/* Profile screen cards + buttons (13 Nov 2026): one card, one primary, one secondary. Colour lives in the icon tile only. */
+.pf-card{padding:16px;background:var(--surface);border-radius:16px;border:1px solid var(--border)}
+.pf-row{display:flex;align-items:flex-start;gap:12px}
+.pf-ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;background:var(--surface2)}
+.pf-ic.y{background:rgba(234,179,8,.14)}.pf-ic.g{background:rgba(46,125,82,.12)}.pf-ic.b{background:rgba(37,99,235,.12)}
+.pf-t{font-size:15px;font-weight:800;color:var(--text)}
+.pf-d{font-size:13px;font-weight:700;color:var(--muted);line-height:1.5;margin-top:2px}
+.pf-btn{display:block;width:100%;margin-top:12px;min-height:48px;padding:10px 14px;border-radius:12px;border:1.5px solid var(--btn-lime);background:var(--btn-lime);color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer}
+.pf-btn.sec{background:var(--surface);color:var(--lime);border-color:var(--lime)}
+.pf-btn+.pf-btn{margin-top:8px}
 .inv-row{display:flex;align-items:center;gap:12px}
 .inv-t{font-size:15px;font-weight:800;color:var(--text)}
 .inv-d{font-size:13.5px;color:var(--muted);font-weight:700;margin-top:3px;line-height:1.5}
 .inv-pts{font-size:22px;font-weight:800;color:var(--yellow);line-height:1;text-align:right}
 .inv-pts-l{font-size:11.5px;color:var(--muted);font-weight:800;text-align:right}
-.inv-btn{margin-top:12px;width:100%;padding:11px;border:none;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit}
+.inv-btn{margin-top:12px;width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--lime);border-radius:12px;background:var(--surface);color:var(--lime);font-weight:800;font-size:15px;cursor:pointer;font-family:inherit}
 .top-avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--purple);overflow:hidden;cursor:pointer;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--purple);flex-shrink:0}
 .top-avatar img{width:100%;height:100%;object-fit:cover}
 
@@ -427,7 +437,7 @@ html:not(.ml-css) #map>*{visibility:hidden} /* until maplibre-gl.css has applied
 .setting-i{display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--surface);font-size:15px;font-weight:700;cursor:pointer;min-height:54px}
 .setting-i:first-child{border-radius:var(--radius) var(--radius) var(--radius-sm) var(--radius-sm)}
 .setting-i:last-child{border-radius:var(--radius-sm) var(--radius-sm) var(--radius) var(--radius)}
-.btn-so{width:100%;padding:16px;border-radius:var(--radius);background:var(--surface);color:#DC5046;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:1.5px solid rgba(220,80,70,.20);cursor:pointer;margin-top:20px}
+.btn-so{width:100%;min-height:48px;padding:10px 14px;border-radius:12px;background:var(--surface);color:#DC5046;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;border:1.5px solid rgba(220,80,70,.35);cursor:pointer;margin-top:20px}
 .set-gear{flex-shrink:0;width:44px;height:44px;border-radius:50%;background:var(--surface);border:1.5px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .set-gear:active{transform:scale(.94)}
 .btn-del{display:block;margin:14px auto 0;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;text-decoration:underline;cursor:pointer}
@@ -551,7 +561,7 @@ svg.star-off{fill:none;stroke:#4a4a4a}
 .rtw-in{font-size:19px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
 .rtw-chip{display:inline-flex;align-items:center;gap:3px;margin-left:5px;background:rgba(245,184,46,.14);color:#B7860B;border:1px solid rgba(245,184,46,.45);font-family:'Nunito',sans-serif;font-size:11.5px;font-weight:800;line-height:1.5;padding:0 8px;border-radius:100px;white-space:nowrap;vertical-align:middle}
 body.theme-sage-dark .rtw-chip{color:#F5B82E}
-.rtw-card{border-radius:var(--radius);border:1.5px solid rgba(245,184,46,.35);background:rgba(245,184,46,.05);padding:16px}
+.rtw-card{border-radius:16px;border:1px solid var(--border);background:var(--surface);padding:16px}
 .rtw-seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .rtw-seg button{border:1.5px solid var(--border);border-radius:12px;padding:10px;background:var(--surface);color:var(--muted);font:800 14px 'Nunito',sans-serif;cursor:pointer}
 .rtw-seg button small{display:block;font-weight:700;font-size:11.5px;margin-top:2px}
@@ -976,7 +986,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
           <div id="p-rating" style="font-size:13.5px;font-weight:800;color:var(--yellow)"></div>
         </div>
         <!-- Settings gear (opens #settings-sheet: email, blocked users, help, delete account) -->
-        <button class="set-gear" onclick="openSettings()" aria-label="Settings" title="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+        <button class="set-gear" onclick="openSettings()" aria-label="Settings and edit profile" title="Settings · edit profile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       </div>
 
       <!-- Helper status block (populated by loadProfile) -->
@@ -986,21 +996,15 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <!-- ID verification card (populated by renderIdvBlock) -->
       <div id="idv-block" style="margin-bottom:12px"></div>
 
-	<div style="margin-bottom:8px">
-        <label class="form-lbl">Display Name</label>
-        <input class="form-inp" id="p-name" type="text" placeholder="Your name" style="margin-bottom:8px">
-        <label class="form-lbl">About Me</label>
-	<textarea class="form-ta" id="p-bio" placeholder="Tell your neighbours a bit about yourself…" 	style="height:120px;margin-bottom:8px"></textarea>
-        <button class="btn-primary" onclick="saveBio()">Save Profile</button>
-      </div>
       <!-- Notification tip -->
-      <div id="notif-tip" style="display:none;background:rgba(92,138,106,.06);border:1.5px solid rgba(92,138,106,.18);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px">
-        <div style="font-size:14px;font-weight:800;color:var(--purple);margin-bottom:6px">Push Notifications</div>
-        <div id="notif-tip-body" style="font-size:13.5px;color:var(--muted);line-height:1.6;font-weight:700"></div>
+      <div id="notif-tip" class="pf-card" style="display:none;margin-bottom:12px">
+        <div class="pf-row"><div class="pf-ic" aria-hidden="true">🔔</div>
+          <div style="flex:1;min-width:0"><div class="pf-t">Push notifications</div><div id="notif-tip-body" class="pf-d"></div></div></div>
       </div>
       <!-- Invite neighbours (referrals) -->
       <div class="inv-card" id="inv-card">
-        <div class="inv-row">
+        <div class="inv-row" style="align-items:flex-start">
+          <div class="pf-ic g" aria-hidden="true">👥</div>
           <div style="flex:1;min-width:0">
             <div class="inv-t">Invite neighbours to Yoodle</div>
             <div class="inv-d">Share your link — you both get 10 points when they join. <span id="inv-count"></span></div>
@@ -1009,7 +1013,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         </div>
         <button class="inv-btn" onclick="openReferralModal()">Invite neighbours</button>
       </div>
-      <button class="btn-so" onclick="signOut()">Sign Out</button>
+      <button class="btn-so" onclick="signOut()">Sign out</button>
     </div>
   </div>
 
@@ -1341,6 +1345,14 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <div style="font-size:22px;font-weight:800">Settings</div>
       <button onclick="closeSettings()" aria-label="Close" style="background:var(--surface2);border:none;border-radius:50%;width:34px;height:34px;font-size:18px;color:var(--muted);cursor:pointer">✕</button>
     </div>
+      <!-- Your profile (moved here from the Profile tab, 13 Nov 2026) -->
+      <div style="padding:16px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:12px;border:1.5px solid var(--border)">
+        <label class="form-lbl" for="p-name">Display Name</label>
+        <input class="form-inp" id="p-name" type="text" placeholder="Your name" style="margin-bottom:8px">
+        <label class="form-lbl" for="p-bio">About Me</label>
+        <textarea class="form-ta" id="p-bio" placeholder="Tell your neighbours a bit about yourself…" style="height:110px;margin-bottom:0"></textarea>
+        <button class="pf-btn" onclick="saveBio()">Save profile</button>
+      </div>
       <!-- Email notifications -->
       <div class="em-card" id="em-card">
         <div class="em-row">
@@ -5397,17 +5409,17 @@ function idvState(row){
 }
 function _idvLeft(row){const n=Math.max(0,(row?.max_attempts||3)-(row?.attempts_used||0));return `${n} ${n===1?'try':'tries'} left`;}
 function _idvBox(icon,title,sub,btnHtml){
-  return `<div style="border-radius:var(--radius);border:1.5px solid var(--idv-line);background:var(--idv-soft);padding:16px">
-    <div style="display:flex;align-items:flex-start;gap:12px">
-      <div style="width:42px;height:42px;border-radius:12px;background:var(--idv);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${icon}</div>
+  return `<div class="pf-card">
+    <div class="pf-row">
+      <div class="pf-ic b" aria-hidden="true">${icon}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:15px;font-weight:800;color:var(--text)">${title}</div>
-        <div style="font-size:13px;font-weight:700;color:var(--muted);line-height:1.5;margin-top:2px">${sub}</div>
+        <div class="pf-t">${title}</div>
+        <div class="pf-d">${sub}</div>
       </div>
     </div>${btnHtml||''}</div>`;
 }
 function _idvBtn(label,fn,ghost){
-  return `<button onclick="${fn}" style="width:100%;margin-top:12px;padding:11px;border-radius:var(--radius-sm);border:${ghost?'1.5px solid var(--border)':'none'};background:${ghost?'var(--surface)':'var(--idv)'};color:${ghost?'var(--text)':'#fff'};font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">${label}</button>`;
+  return `<button onclick="${fn}" class="pf-btn${ghost?' sec':''}">${label}</button>`;
 }
 async function renderIdvBlock(){
   const el=document.getElementById('idv-block');
@@ -5421,7 +5433,7 @@ async function renderIdvBlock(){
   }
   if(st==='verified'){
     const d=row?.verified_at?new Date(row.verified_at).toLocaleDateString('en-CA',{month:'short',year:'numeric'}):'';
-    el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:var(--radius);border:1.5px solid var(--idv-line);background:var(--idv-soft)"><span class="idv-chip" style="margin-left:0">✓ ID verified</span><span style="font-size:13px;font-weight:700;color:var(--muted)">Checked by Stripe${d?' · '+esc(d):''}</span></div>`;
+    el.innerHTML=`<div class="pf-card" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px"><span class="idv-chip" style="margin-left:0">✓ ID verified</span><span style="font-size:13px;font-weight:700;color:var(--muted)">Checked by Stripe${d?' · '+esc(d):''}</span></div>`;
     return;
   }
   if(st==='processing'){el.innerHTML=_idvBox('⏳','Checking your ID…','Stripe is checking your ID and selfie — usually a few minutes.',_idvBtn('Refresh','refreshIdv()',true));return;}
@@ -5651,13 +5663,11 @@ function updateProfileHelperBlock(prof){
   if(!hasProfile){
     // Never set up
     el.innerHTML=`
-      <button onclick="nav('helper')" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-family:'Nunito',sans-serif;text-align:left">
-        <div style="width:42px;height:42px;border-radius:12px;background:rgba(46,125,82,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <span style="font-size:20px">💪</span>
-        </div>
+      <button onclick="nav('helper')" class="pf-card" style="width:100%;display:flex;align-items:center;gap:12px;cursor:pointer;font-family:'Nunito',sans-serif;text-align:left">
+        <div class="pf-ic g" aria-hidden="true">💪</div>
         <div style="flex:1">
-          <div style="font-size:15px;font-weight:800;color:var(--text)">Become a Helper</div>
-          <div style="font-size:13.5px;font-weight:700;color:var(--muted)">Offer your skills to neighbours nearby</div>
+          <div class="pf-t">Become a Helper</div>
+          <div class="pf-d">Offer your skills to neighbours nearby</div>
         </div>
         <span style="font-size:18px;color:var(--muted)">›</span>
       </button>`;
@@ -5671,37 +5681,33 @@ function updateProfileHelperBlock(prof){
     const cats=(prof.helper_categories||[]).slice(0,3);
     const catsHtml=cats.length?cats.map(c=>`<span style="font-size:11.5px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:2px 8px">${esc(c)}</span>`).join(' '):'';
     el.innerHTML=`
-      <div style="border-radius:var(--radius);border:1.5px solid rgba(46,125,82,.15);background:rgba(46,125,82,.03);padding:16px">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:${catsHtml?'10px':'0'}">
-          <div style="width:42px;height:42px;border-radius:12px;background:rgba(46,125,82,.10);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <span style="font-size:20px">✅</span>
-          </div>
+      <div class="pf-card">
+        <div class="pf-row" style="align-items:center">
+          <div class="pf-ic g" aria-hidden="true">✅</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:15px;font-weight:800;color:var(--lime)">Helper listing active</div>
-            ${expiresLabel?`<div style="font-size:12.5px;font-weight:700;color:var(--muted)">${expiresLabel}</div>`:''}
+            <div class="pf-t">Helper listing active</div>
+            ${expiresLabel?`<div class="pf-d">${expiresLabel}</div>`:''}
           </div>
         </div>
-        ${catsHtml?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${catsHtml}</div>`:''}
-        <button onclick="nav('helper')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Edit Helper Profile</button>
-        <button onclick="shareMyHelperPage(null)" style="width:100%;margin-top:8px;padding:10px;border-radius:var(--radius-sm);border:none;background:var(--btn-lime);color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Share my page</button>
+        ${catsHtml?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">${catsHtml}</div>`:''}
+        <button onclick="shareMyHelperPage(null)" class="pf-btn">Share my page</button>
+        <button onclick="nav('helper')" class="pf-btn sec">Edit helper profile</button>
       </div>`;
   } else {
     // Paused or expired
     const expired=prof.helper_expires_at&&new Date(prof.helper_expires_at)<new Date();
-    const label=expired?'Helper Listing expired':'Helper Listing paused';
+    const label=expired?'Helper listing expired':'Helper listing paused';
     const icon=expired?'⏰':'⏸️';
     el.innerHTML=`
-      <div style="border-radius:var(--radius);border:1.5px solid rgba(234,179,8,.25);background:rgba(234,179,8,.04);padding:16px">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-          <div style="width:42px;height:42px;border-radius:12px;background:rgba(234,179,8,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <span style="font-size:20px">${icon}</span>
-          </div>
+      <div class="pf-card">
+        <div class="pf-row" style="align-items:center">
+          <div class="pf-ic y" aria-hidden="true">${icon}</div>
           <div style="flex:1">
-            <div style="font-size:15px;font-weight:800;color:var(--text)">${label}</div>
-            <div style="font-size:12.5px;font-weight:700;color:var(--muted)">Your profile is hidden from searches</div>
+            <div class="pf-t">${label}</div>
+            <div class="pf-d">Your profile is hidden from searches</div>
           </div>
         </div>
-        <button onclick="nav('helper')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:none;background:var(--btn-lime);color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">${expired?'Renew Listing ✨':'Resume Listing ✨'}</button>
+        <button onclick="nav('helper')" class="pf-btn">${expired?'Renew listing':'Resume listing'}</button>
       </div>`;
   }
 }
