@@ -268,7 +268,7 @@ body.theme-sage-dark .theme-btn .ic-moon{display:none}
 .pf-btn.sec{background:var(--surface);color:var(--lime);border-color:var(--lime)}
 .pf-btn+.pf-btn{margin-top:8px}
 .pf-btn.idv{background:#2563EB;border-color:#2563EB} /* ID actions stay blue on every screen */
-.pf-edit{display:inline-flex;align-items:center;min-height:32px;margin-top:2px;padding:0;background:none;border:none;color:var(--lime);font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer}
+.pf-edit{display:inline-flex;align-items:center;min-height:32px;margin:0;padding:0;background:none;border:none;color:var(--lime);font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer}
 .inv-row{display:flex;align-items:center;gap:12px}
 .inv-t{font-size:15px;font-weight:800;color:var(--text)}
 .inv-d{font-size:13.5px;color:var(--muted);font-weight:700;margin-top:3px;line-height:1.5}
@@ -985,8 +985,10 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
           <div class="profile-nm" id="pnm" style="margin-bottom:2px">—</div>
           <div id="p-idv" style="display:none;margin:1px 0 3px"></div>
           <div id="pem" style="font-size:13.5px;color:var(--muted)">—</div>
-          <div id="p-rating" style="font-size:13.5px;font-weight:800;color:var(--yellow)"></div>
-          <button class="pf-edit" onclick="openEditProfile()">Edit profile ›</button>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div id="p-rating" style="font-size:13.5px;font-weight:800;color:var(--yellow)"></div>
+            <button class="pf-edit" onclick="openEditProfile()">Edit profile ›</button>
+          </div>
         </div>
         <!-- Settings gear (opens #settings-sheet: email, blocked users, help, delete account) -->
         <button class="set-gear" onclick="openSettings()" aria-label="Settings and edit profile" title="Settings · edit profile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
