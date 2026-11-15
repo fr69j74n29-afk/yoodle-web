@@ -644,6 +644,31 @@ body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 .hs-btn #hs-label,.hs-btn #ps-label{overflow:hidden;text-overflow:ellipsis}
 .hs-btn.on{background:#F59E0B;border-color:#F59E0B;color:#1E2620}
 .hs-btn.on svg{color:#1E2620}
+/* ── ONE FILTER BUTTON (15 Nov 2026): "🔍 Filter", orange outline; widens to show the pick ── */
+.fs-btn{border-color:#EA6A12;background:var(--surface)}
+.fs-btn svg{color:#EA6A12}
+.fs-btn.on.pro-on{background:#EA6A12;border-color:#EA6A12;color:#fff}
+.fs-btn.on.pro-on svg{color:#fff}
+.fs-back{border:none;background:none;padding:0 4px 0 0;font:900 15px 'Nunito',sans-serif;color:var(--muted);cursor:pointer}
+.fs-pane{display:none}.fs-pane.on{display:block}
+.fs-choice{display:flex;align-items:center;gap:12px;width:100%;padding:16px 14px;margin-bottom:10px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);font-family:'Nunito',sans-serif;text-align:left;cursor:pointer;color:var(--text)}
+.fs-choice:active{transform:scale(.98)}
+.fs-choice .e{font-size:28px;flex-shrink:0}
+.fs-choice b{display:block;font-size:16px;font-weight:900}
+.fs-choice small{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-top:2px}
+.fs-choice.help{border-color:rgba(245,158,11,.55)}
+.fs-choice.pro{border-color:rgba(234,106,18,.55)}
+.fs-ready{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.fs-ready .hs-cat{border-color:rgba(245,184,46,.6);background:rgba(245,184,46,.08)}
+.fs-ready .hs-cat.on{border-color:#F59E0B;background:rgba(245,158,11,.16)}
+.fs-sep{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:2px 0 8px}
+.fs-become{display:block;width:100%;margin-top:14px;padding:12px 4px 2px;border:none;border-top:1px dashed var(--border);background:none;font:800 14px 'Nunito',sans-serif;color:#C4560B;cursor:pointer;text-align:center}
+body.theme-sage-dark .fs-become{color:#EA6A12}
+.fs-become-box p{font-size:14.5px;font-weight:700;line-height:1.5;color:var(--text);margin:4px 0 14px}
+.fs-become-box .row{display:flex;gap:8px}
+.fs-become-box .row button{flex:1;padding:12px;border-radius:12px;font:800 14.5px 'Nunito',sans-serif;cursor:pointer}
+.fs-go{border:0;background:#EA6A12;color:#fff}
+.fs-cancel{border:1px solid var(--border);background:transparent;color:var(--muted)}
 .hs-x{margin-left:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.14);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
 .hs-ov{display:none;position:absolute;inset:0;z-index:150;background:rgba(20,30,24,.28)}
 .hs-ov.open{display:block}
@@ -828,15 +853,10 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   <div class="top-bar">
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
     <div class="top-right">
-      <button class="hs-btn" id="hs-btn" onclick="hsToggle()" aria-label="Find a helper by category">
+      <button class="hs-btn fs-btn" id="hs-btn" onclick="hsToggle()" aria-label="Filter the map: helpers or professionals">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <span id="hs-label">Helper</span>
-        <span id="hs-x" class="hs-x" style="display:none" onclick="event.stopPropagation();hsPick(null)" aria-label="Clear">✕</span>
-      </button>
-      <button class="hs-btn ps-btn" id="ps-btn" onclick="psToggle()" aria-label="Find a pro by trade">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <span id="ps-label">PRO</span>
-        <span id="ps-x" class="hs-x" style="display:none" onclick="event.stopPropagation();psPick(null)" aria-label="Clear">✕</span>
+        <span id="hs-label">Filter</span>
+        <span id="hs-x" class="hs-x" style="display:none" onclick="event.stopPropagation();fsClear()" aria-label="Clear filter">✕</span>
       </button>
       <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Switch light/dark mode" title="Switch light/dark mode">
         <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -845,21 +865,34 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
     </div>
   </div>
 
-  <!-- FIND A HELPER popup -->
+  <!-- FILTER popup (15 Nov 2026): step 1 = helper or professional; then skills / trades -->
   <div id="hs-ov" class="hs-ov" onclick="if(event.target===this)hsClose()">
-    <div class="hs-pop" role="dialog" aria-label="Find a helper">
-      <div class="hs-head"><b>Find a helper</b><button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>
-      <div class="hs-sub" id="hs-sub">Helpers within — km</div>
-      <div id="hs-grid" class="hs-grid"></div>
-    </div>
-  </div>
-
-  <!-- FIND A PRO popup -->
-  <div id="ps-ov" class="hs-ov" onclick="if(event.target===this)psClose()">
-    <div class="hs-pop ps-pop" role="dialog" aria-label="Find a pro">
-      <div class="hs-head"><b>Find a Pro</b><button class="hs-close" onclick="psClose()" aria-label="Close">✕</button></div>
-      <div class="hs-sub" id="ps-sub">Yoodle Pros</div>
-      <div id="ps-grid" class="hs-grid"></div>
+    <div class="hs-pop" id="fs-pop" role="dialog" aria-label="Filter">
+      <div class="fs-pane on" id="fs-start">
+        <div class="hs-head"><b>What do you need?</b><button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>
+        <div class="hs-sub">Pick one</div>
+        <button class="fs-choice help" onclick="fsStep('help')"><span class="e">🤝</span><span><b>Find a helper in the community</b><small>Neighbours · ready today or tomorrow</small></span></button>
+        <button class="fs-choice pro" onclick="fsStep('pro')"><span class="e">🧰</span><span><b>Find me a professional</b><small>Plumbers, electricians, HVAC &amp; more</small></span></button>
+      </div>
+      <div class="fs-pane" id="fs-help">
+        <div class="hs-head"><b><button class="fs-back" onclick="fsStep('start')" aria-label="Back">‹</button>Find a helper</b><button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>
+        <div class="hs-sub" id="hs-sub">Helpers within — km</div>
+        <div class="fs-sep">⚡ Ready to work</div>
+        <div id="hs-ready" class="fs-ready"></div>
+        <div class="fs-sep">Or by skill</div>
+        <div id="hs-grid" class="hs-grid"></div>
+      </div>
+      <div class="fs-pane ps-pop" id="fs-pro">
+        <div class="hs-head"><b><button class="fs-back" onclick="fsStep('start')" aria-label="Back">‹</button>Find a Pro</b><button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>
+        <div class="hs-sub" id="ps-sub">Yoodle Pros</div>
+        <div id="ps-grid" class="hs-grid"></div>
+        <button class="fs-become" onclick="fsStep('become')">Are you a pro? Become a PRO →</button>
+      </div>
+      <div class="fs-pane fs-become-box" id="fs-become">
+        <div class="hs-head"><b><button class="fs-back" onclick="fsStep('pro')" aria-label="Back">‹</button>Become a PRO</b><button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>
+        <p>This will leave <b>yoodle.ca</b> and take you to <b>pro.yoodle.ca</b> to set up your professional account. Sign in with the same email you use on Yoodle.</p>
+        <div class="row"><button class="fs-cancel" onclick="fsStep('pro')">Cancel</button><button class="fs-go" id="fs-go" onclick="fsBecomePro()">Continue</button></div>
+      </div>
     </div>
   </div>
 
@@ -1992,7 +2025,12 @@ function ysEmoji(cat){const c=ysCats.find(x=>ysKey(x.name)===ysKey(cat));return 
 function ysLabel(cat){const c=ysCats.find(x=>ysKey(x.name)===ysKey(cat));return c?c.name:cat;}
 function ysAttr(k){return esc(k).replace(/'/g,"\\'");}
 // highlight only, no filtering: counts, list and pins keep everyone
-function hsMatch(h){return !!hsCat&&ysHelperCats(h).includes(hsCat);}
+// Filter button (15 Nov 2026): hsCat can also be 'ready:today' / 'ready:tomorrow' (⚡ Ready to work) — one pick at a time
+const FS_READY={'ready:today':{emoji:'⚡',label:'Ready today'},'ready:tomorrow':{emoji:'⚡',label:'Ready tomorrow'}};
+function fsReadyOk(h,k){const r=h&&readyIds.get(h.id);return !!r&&(k==='ready:today'?r.today:r.tomorrow);}
+function hsName(k){return FS_READY[k]?FS_READY[k].label:ysLabel(k);}
+function hsIcon(k){return FS_READY[k]?FS_READY[k].emoji:ysEmoji(k);}
+function hsMatch(h){if(!hsCat)return false;if(FS_READY[hsCat])return fsReadyOk(h,hsCat);return ysHelperCats(h).includes(hsCat);}
 
 async function ysInit(){
   try{
@@ -2016,32 +2054,50 @@ function hsRenderGrid(){
   ysBaseHelpers.forEach(h=>new Set(ysHelperCats(h)).forEach(k=>{if(k in counts)counts[k]++;}));
   const sub=document.getElementById('hs-sub');
   if(sub)sub.textContent=userLat&&userLng?`${ysBaseHelpers.length} ${ysBaseHelpers.length===1?'helper':'helpers'} within ${RADIUS_KM} km`:'Share your location to see helpers nearby';
+  const rd=document.getElementById('hs-ready');
+  if(rd)rd.innerHTML=Object.keys(FS_READY).map(k=>{const n=ysBaseHelpers.filter(h=>fsReadyOk(h,k)).length;
+    return `<button class="hs-cat${n?'':' zero'}${hsCat===k?' on':''}" onclick="hsPick('${k}')"><span class="e">⚡</span><span class="t">${k==='ready:today'?'Today':'Tomorrow'}</span><span class="n">${n}</span></button>`;}).join('');
   el.innerHTML=ysCats.map(c=>{
     const k=ysKey(c.name),n=counts[k]||0;
     return `<button class="hs-cat${n?'':' zero'}${hsCat===k?' on':''}" onclick="hsPick('${ysAttr(k)}')"><span class="e">${c.emoji||''}</span><span class="t">${esc(c.name)}</span><span class="n">${n}</span></button>`;
   }).join('');
 }
 function _hsInList(){return document.getElementById('app-list')?.classList.contains('active');}
-function hsOpen(){
+function fsStep(s){
+  ['start','help','pro','become'].forEach(x=>document.getElementById('fs-'+x)?.classList.toggle('on',x===s));
+  if(s==='help')hsRenderGrid();
+  if(s==='pro')psRenderGrid();
+  if(s==='become'){const g=document.getElementById('fs-go');if(g){g.disabled=false;g.textContent='Continue';}}
+}
+function hsOpen(step){
   // from the list, stay in the list; from anywhere else, go to the map
   if(!document.getElementById('app-map').classList.contains('active')&&!_hsInList())nav('map');
-  psClose();hsRenderGrid();openOv('hs-ov');
+  fsStep(step||'start');openOv('hs-ov');
 }
 function hsClose(){closeOv('hs-ov');}
 function hsToggle(){document.getElementById('hs-ov').classList.contains('open')?hsClose():hsOpen();}
+function fsClear(){if(psTrade)psPick(null);else hsPick(null);}
+// "Become a PRO" → leaves yoodle.ca for pro.yoodle.ca (tap logged as search 'pro:become', no helper count)
+async function fsBecomePro(){
+  const g=document.getElementById('fs-go');if(g){g.disabled=true;g.textContent='Opening…';}
+  try{if(sb&&me)await Promise.race([sb.rpc('log_search',{p_category:'pro:become',p_helpers:null,p_radius:Math.round(RADIUS_KM)||0}),new Promise(r=>setTimeout(r,1200))]);}catch(e){}
+  window.location.href='https://pro.yoodle.ca/';
+}
 function hsPick(k){
   hsCat=k||null;hsClose();
   if(hsCat&&psTrade){psTrade=null;psSetBtn();} // one filter at a time: a helper pick clears the pro pick
   const btn=document.getElementById('hs-btn'),lbl=document.getElementById('hs-label'),x=document.getElementById('hs-x');
   if(hsCat){
-    btn.classList.add('on');lbl.textContent=`${ysEmoji(hsCat)} ${ysLabel(hsCat)}`;x.style.display='inline-flex';
+    btn.classList.add('on');btn.classList.remove('pro-on');lbl.textContent=`${hsIcon(hsCat)} ${hsName(hsCat)}`;btn.title=hsName(hsCat);x.style.display='inline-flex';
     if(_hsInList()){if(listTab!=='helpers')switchListTab('helpers');}
     else if(!document.getElementById('app-map').classList.contains('active'))nav('map');
     const n=ysBaseHelpers.filter(hsMatch).length;
     logSearch(hsCat,n);
-    toast(n?`✨ ${n} ${ysLabel(hsCat)} ${n===1?'helper':'helpers'} nearby`:`No ${ysLabel(hsCat)} helpers within ${RADIUS_KM} km yet — try zooming out`);
-  }else{
-    btn.classList.remove('on');lbl.textContent='Helper';x.style.display='none';
+    if(FS_READY[hsCat]){const d=hsCat==='ready:today'?'today':'tomorrow';
+      toast(n?`⚡ ${n} ${n===1?'helper':'helpers'} ready ${d} nearby`:`No helpers ready ${d} within ${RADIUS_KM} km yet — try zooming out`);}
+    else toast(n?`✨ ${n} ${ysLabel(hsCat)} ${n===1?'helper':'helpers'} nearby`:`No ${ysLabel(hsCat)} helpers within ${RADIUS_KM} km yet — try zooming out`);
+  }else if(!psTrade){
+    btn.classList.remove('on','pro-on');lbl.textContent='Filter';btn.title='';x.style.display='none';
   }
   renderMapPins();
   renderListTabContent(); // list Helpers tab follows the Find-a-helper filter
@@ -2068,16 +2124,14 @@ function psRenderGrid(){
     return `<button class="hs-cat ps-cat${psTrade===k?' on':''}" onclick="psPick('${ysAttr(k)}')"><span class="e">${t.emoji}</span><span class="t">${esc(t.label)}</span><span class="n">${c[k]}</span></button>`;
   }).join(''):'<div class="ps-empty">No pros near you yet — check back soon.</div>';
 }
-function psOpen(){
-  if(!document.getElementById('app-map').classList.contains('active')&&!_hsInList())nav('map');
-  hsClose();psRenderGrid();openOv('ps-ov');
-}
-function psClose(){closeOv('ps-ov');}
-function psToggle(){document.getElementById('ps-ov').classList.contains('open')?psClose():psOpen();}
+// one Filter button + popup now (15 Nov 2026): the pro step lives inside #hs-ov
+function psOpen(){hsOpen('pro');}
+function psClose(){hsClose();}
+function psToggle(){hsToggle();}
 function psSetBtn(){
-  const btn=document.getElementById('ps-btn'),lbl=document.getElementById('ps-label'),x=document.getElementById('ps-x');if(!btn)return;
-  if(psTrade){const t=proTrade(psTrade);btn.classList.add('on');lbl.textContent=`${t.emoji} PRO`;btn.title=t.label;x.style.display='inline-flex';}
-  else{btn.classList.remove('on');lbl.textContent='PRO';btn.title='';x.style.display='none';}
+  const btn=document.getElementById('hs-btn'),lbl=document.getElementById('hs-label'),x=document.getElementById('hs-x');if(!btn)return;
+  if(psTrade){const t=proTrade(psTrade);btn.classList.add('on','pro-on');lbl.textContent=`${t.emoji} ${t.label}`;btn.title=t.label;x.style.display='inline-flex';}
+  else if(!hsCat){btn.classList.remove('on','pro-on');lbl.textContent='Filter';btn.title='';x.style.display='none';}
 }
 function psPick(k){
   psTrade=k||null;psClose();
@@ -2902,11 +2956,11 @@ function renderListTabContent(){
   } else if(listPros){
     el.innerHTML=listPros.length
       ?`<div style="display:flex;flex-direction:column;gap:10px">${listPros.map(proListCard).join('')}</div>`
-      :emptyState('🔧',`No ${esc(proTrade(psTrade).label)} pros yet`,'Tap ✕ on PRO to see helpers again');
+      :emptyState('🔧',`No ${esc(proTrade(psTrade).label)} pros yet`,'Tap ✕ on the filter to see helpers again');
   } else {
     if(!listHelpers.length){
       el.innerHTML=hsCat
-        ?emptyState('🔍',`No ${esc(ysLabel(hsCat))} helpers nearby`,'Tap ✕ to see all helpers, or try a larger radius')
+        ?emptyState('🔍',FS_READY[hsCat]?`No helpers ${esc(hsName(hsCat).toLowerCase())} nearby`:`No ${esc(ysLabel(hsCat))} helpers nearby`,'Tap ✕ to see all helpers, or try a larger radius')
         :emptyState('💪','No helpers nearby','Helpers can enable visibility in their profile');
       return;
     }
