@@ -260,12 +260,14 @@ body.theme-sage-dark .le{color:#E0C45A}
 /* View counter badge (15 Nov 2026): helpers only, all-time views of their helper profile */
 .vw-btn{display:none;align-items:center;gap:4px;height:38px;padding:0 11px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:transform .15s}
 .vw-btn.on{display:flex}
-.vw-btn.off{opacity:.5}
+.vw-btn.off{color:var(--muted)}
+.vw-btn svg{width:19px;height:19px;display:block}
+.vw-ttl{display:flex;align-items:center;gap:7px}.vw-ttl svg{width:19px;height:19px}
 .vw-btn:active{transform:scale(.94)}
 .vw-big{font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-top:10px}
 .vw-big b{font-size:22px;font-weight:900}
 .vw-note{font-size:13px;font-weight:700;color:var(--muted);line-height:1.5;margin-top:6px}
-.jc-views{margin-top:8px;font-size:13px;font-weight:800;color:var(--muted)}
+.jc-views{margin-top:8px;font-size:13px;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:5px}.jc-views svg{width:15px;height:15px;flex-shrink:0}
 .theme-btn .ic-sun{display:none}
 body.theme-sage-dark .theme-btn .ic-sun{display:block}
 body.theme-sage-dark .theme-btn .ic-moon{display:none}
@@ -868,7 +870,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   <div class="top-bar">
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
     <div class="top-right">
-      <button class="vw-btn" id="vw-btn" onclick="openViewPanel()" aria-label="Views of your helper profile"><span aria-hidden="true">👀</span><span id="vw-n">0</span></button>
+      <button class="vw-btn" id="vw-btn" onclick="openViewPanel()" aria-label="Views of your helper profile"><span id="vw-ic" aria-hidden="true"></span><span id="vw-n">0</span></button>
       <button class="hs-btn fs-btn" id="hs-btn" onclick="hsToggle()" aria-label="Filter the map: helpers or professionals">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <span id="hs-label">Filter</span>
@@ -881,10 +883,10 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
     </div>
   </div>
 
-  <!-- VIEWS popup (15 Nov 2026): opened from the 👀 badge -->
+  <!-- VIEWS popup (15 Nov 2026): opened from the eye badge -->
   <div id="vw-ov" class="hs-ov" onclick="if(event.target===this)closeViewPanel()">
     <div class="hs-pop" role="dialog" aria-label="Your views">
-      <div class="hs-head"><b>👀 Your views</b><button class="hs-close" onclick="closeViewPanel()" aria-label="Close">✕</button></div>
+      <div class="hs-head"><b class="vw-ttl" id="vw-ttl">Your views</b><button class="hs-close" onclick="closeViewPanel()" aria-label="Close">✕</button></div>
       <div id="vw-body"></div>
     </div>
   </div>
@@ -960,7 +962,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <!-- Tabs -->
       <div style="display:flex;gap:6px;background:var(--surface2);border-radius:12px;padding:4px">
         <button id="list-tab-jobs" onclick="switchListTab('jobs')" style="flex:1;padding:9px;border-radius:8px;border:none;background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Jobs <span id="list-jobs-count" style="color:var(--purple)">0</span></button>
-        <button id="list-tab-helpers" onclick="switchListTab('helpers')" style="flex:1;padding:9px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Help <span id="list-helpers-count" style="color:var(--lime)">0</span></button>
+        <button id="list-tab-helpers" onclick="switchListTab('helpers')" style="flex:1;padding:9px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Helpers <span id="list-helpers-count" style="color:var(--lime)">0</span></button>
       </div>
     </div>
     <!-- Scrollable content -->
@@ -2754,6 +2756,9 @@ function logActive(){
 // ── VIEW COUNTER (15 Nov 2026) ── my_view_stats(): all-time views (tap_events) of my helper profile + my posted jobs.
 // One small call after sign-in; refreshed when Profile or Activity opens and when the app comes back after 15+ min.
 let myViewStats=null,_viewStatsAt=0;
+// Line icons (Feather style, same weight as the Filter magnifier). Eye = views; eye-off = profile hidden.
+const EYE_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 async function loadViewStats(){
   if(!sb||!me)return null;
   const{data,error}=await sb.rpc('my_view_stats');
@@ -2767,7 +2772,7 @@ function renderViewBadge(){
   const h=myViewStats?.helper;
   b.classList.toggle('on',!!h);
   b.classList.toggle('off',!!h&&!h.active);
-  if(h)document.getElementById('vw-n').textContent=h.views;
+  if(h){document.getElementById('vw-n').textContent=h.views;document.getElementById('vw-ic').innerHTML=h.active?EYE_SVG:EYE_OFF_SVG;}
 }
 function openViewPanel(){
   const h=myViewStats?.helper;if(!h)return;
@@ -2780,6 +2785,7 @@ function openViewPanel(){
     html+=`<div class="vw-note">${n<3?'New profiles get noticed faster when shared.':'Each view is a neighbour who opened your profile.'}</div>
       <button class="pf-btn" onclick="closeViewPanel();shareMyHelperPage(null)">Share my page</button>`;
   }
+  document.getElementById('vw-ttl').innerHTML=(h.active?EYE_SVG:EYE_OFF_SVG)+'Your views';
   document.getElementById('vw-body').innerHTML=html;
   document.getElementById('vw-ov').classList.add('open');
 }
@@ -3688,7 +3694,7 @@ async function showApp(){
   if(await startupChecks())return; // suspended — stop here (profile, gates, demo, blocks in one round trip)
   await Promise.race([_viewReady,new Promise(r=>setTimeout(r,1000))]); // map resized + ring synced (max 1 s)
   loadJobs(); // the one start-up load (before: a 2nd load also ran from the resize timer)
-  loadViewStats(); // 👀 badge (helpers only)
+  loadViewStats(); // eye badge (helpers only)
   ysInit(); // Find a helper counts + Post a Job category picker
   closeAuthSheet();
   restoreGuestDraft();
@@ -4467,7 +4473,7 @@ async function loadMyJobs(){
     sb.from('applications').select('id,status,created_at,tasks!inner(*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color))').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','claimed']).order('created_at',{ascending:false}),
     // help_offer tasks where I'm the doer
     sb.from('tasks').select('*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color)').eq('doer_id',pid).eq('type','help_offer').in('status',['claimed']).order('created_at',{ascending:false}),
-    loadViewStats() // 👀 views per posted job (also refreshes the top-bar badge)
+    loadViewStats() // views per posted job (also refreshes the top-bar badge)
   ]);
   const jobViews=_vs?.jobs||{};
   const err=postedRes.error||appRes.error;
@@ -4624,7 +4630,7 @@ async function loadMyJobs(){
       </div>
       <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
       <div class="jc-desc">${esc(j.description||'')}</div>
-      ${(j.status==='open'||j.status==='expired')&&jobViews[j.id]!=null?`<div class="jc-views">👀 ${jobViews[j.id]} ${jobViews[j.id]===1?'view':'views'}</div>`:''}
+      ${(j.status==='open'||j.status==='expired')&&jobViews[j.id]!=null?`<div class="jc-views">${EYE_SVG}${jobViews[j.id]} ${jobViews[j.id]===1?'view':'views'}</div>`:''}
       ${actionBtn}
     </div>`;
   }).join('');
