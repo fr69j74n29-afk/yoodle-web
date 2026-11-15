@@ -257,6 +257,15 @@ body.theme-sage-dark .le{color:#E0C45A}
 .theme-btn{width:38px;height:38px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:transform .15s}
 .theme-btn:active{transform:scale(.92)}
 .theme-btn svg{width:19px;height:19px;display:block}
+/* View counter badge (15 Nov 2026): helpers only, all-time views of their helper profile */
+.vw-btn{display:none;align-items:center;gap:4px;height:38px;padding:0 11px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:transform .15s}
+.vw-btn.on{display:flex}
+.vw-btn.off{opacity:.5}
+.vw-btn:active{transform:scale(.94)}
+.vw-big{font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-top:10px}
+.vw-big b{font-size:22px;font-weight:900}
+.vw-note{font-size:13px;font-weight:700;color:var(--muted);line-height:1.5;margin-top:6px}
+.jc-views{margin-top:8px;font-size:13px;font-weight:800;color:var(--muted)}
 .theme-btn .ic-sun{display:none}
 body.theme-sage-dark .theme-btn .ic-sun{display:block}
 body.theme-sage-dark .theme-btn .ic-moon{display:none}
@@ -859,6 +868,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   <div class="top-bar">
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
     <div class="top-right">
+      <button class="vw-btn" id="vw-btn" onclick="openViewPanel()" aria-label="Views of your helper profile"><span aria-hidden="true">👀</span><span id="vw-n">0</span></button>
       <button class="hs-btn fs-btn" id="hs-btn" onclick="hsToggle()" aria-label="Filter the map: helpers or professionals">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <span id="hs-label">Filter</span>
@@ -868,6 +878,14 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
+    </div>
+  </div>
+
+  <!-- VIEWS popup (15 Nov 2026): opened from the 👀 badge -->
+  <div id="vw-ov" class="hs-ov" onclick="if(event.target===this)closeViewPanel()">
+    <div class="hs-pop" role="dialog" aria-label="Your views">
+      <div class="hs-head"><b>👀 Your views</b><button class="hs-close" onclick="closeViewPanel()" aria-label="Close">✕</button></div>
+      <div id="vw-body"></div>
     </div>
   </div>
 
@@ -2733,6 +2751,40 @@ function logActive(){
   if(sb&&me){const n=Date.now();if(n-_lastActivePing<15*60*1000)return;_lastActivePing=n;fireRpc('log_active');}
 }
 
+// ── VIEW COUNTER (15 Nov 2026) ── my_view_stats(): all-time views (tap_events) of my helper profile + my posted jobs.
+// One small call after sign-in; refreshed when Profile or Activity opens and when the app comes back after 15+ min.
+let myViewStats=null,_viewStatsAt=0;
+async function loadViewStats(){
+  if(!sb||!me)return null;
+  const{data,error}=await sb.rpc('my_view_stats');
+  if(error){console.warn('[log] my_view_stats: '+error.message);return null;}
+  myViewStats=data||null;_viewStatsAt=Date.now();
+  renderViewBadge();
+  return myViewStats;
+}
+function renderViewBadge(){
+  const b=document.getElementById('vw-btn');if(!b)return;
+  const h=myViewStats?.helper;
+  b.classList.toggle('on',!!h);
+  b.classList.toggle('off',!!h&&!h.active);
+  if(h)document.getElementById('vw-n').textContent=h.views;
+}
+function openViewPanel(){
+  const h=myViewStats?.helper;if(!h)return;
+  const n=h.views,times=`<b>${n}</b> ${n===1?'time':'times'}`;
+  let html=`<div class="vw-big">Your helper profile was viewed ${times}.</div>`;
+  if(!h.active){
+    html+=`<div class="vw-note">Your profile is hidden right now, so neighbours can't find you.</div>
+      <button class="pf-btn" onclick="closeViewPanel();nav('helper')">Resume listing</button>`;
+  }else{
+    html+=`<div class="vw-note">${n<3?'New profiles get noticed faster when shared.':'Each view is a neighbour who opened your profile.'}</div>
+      <button class="pf-btn" onclick="closeViewPanel();shareMyHelperPage(null)">Share my page</button>`;
+  }
+  document.getElementById('vw-body').innerHTML=html;
+  document.getElementById('vw-ov').classList.add('open');
+}
+function closeViewPanel(){document.getElementById('vw-ov')?.classList.remove('open');}
+
 function logBizEvent(listingId,eventType){
   fireRpc('log_business_event',{p_listing_id:listingId,p_event_type:eventType,p_viewer_id:myProfileId||me?.id||null});
 }
@@ -3602,7 +3654,7 @@ function oneSignalLogout(){
   try{if(oneSignalReady&&window.OneSignalDeferred)window.OneSignalDeferred.push(async(os)=>{try{await os.logout();}catch(e){}});}catch(e){}
 }
 async function signOut(){oneSignalLogout();if(sb)await sb.auth.signOut();else showAuthScreen();}
-function showAuthScreen(){document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';}
+function showAuthScreen(){myViewStats=null;renderViewBadge();closeViewPanel();document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';}
 
 let _appStartedFor=null;
 function _startApp(session){
@@ -3636,6 +3688,7 @@ async function showApp(){
   if(await startupChecks())return; // suspended — stop here (profile, gates, demo, blocks in one round trip)
   await Promise.race([_viewReady,new Promise(r=>setTimeout(r,1000))]); // map resized + ring synced (max 1 s)
   loadJobs(); // the one start-up load (before: a 2nd load also ran from the resize timer)
+  loadViewStats(); // 👀 badge (helpers only)
   ysInit(); // Find a helper counts + Post a Job category picker
   closeAuthSheet();
   restoreGuestDraft();
@@ -3785,6 +3838,7 @@ function _onVisibility(){
     if(me&&sb&&(_away>30000||realtimeChannel?.state!=='joined'))subscribeToMessages();
     _catchUpMessages(); // includes refreshUnreadCount()
     logActive();
+    if(me&&sb&&Date.now()-_viewStatsAt>15*60*1000)loadViewStats();
     // Restore GPS cache if in-memory was lost (e.g. post-form reset)
     if(!gpsLat||!gpsLng){
       const _c=_restoreCachedGps();
@@ -4406,14 +4460,16 @@ async function loadMyJobs(){
   if(!sb||!me){g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
   const pid=myProfileId||me.id;
   const expSince=new Date(Date.now()-30*24*60*60*1000).toISOString();
-  const[postedRes,appRes,hoRes]=await Promise.all([
+  const[postedRes,appRes,hoRes,_vs]=await Promise.all([
     // open/claimed + jobs that expired in the last 30 days (so the poster can still see applicants and renew)
     sb.from('tasks').select('*').eq('poster_id',pid).or(`status.in.(open,claimed),and(status.eq.expired,expires_at.gte.${expSince})`).neq('type','admin_note').order('created_at',{ascending:false}),
     // applications by this user with task details
     sb.from('applications').select('id,status,created_at,tasks!inner(*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color))').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','claimed']).order('created_at',{ascending:false}),
     // help_offer tasks where I'm the doer
-    sb.from('tasks').select('*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color)').eq('doer_id',pid).eq('type','help_offer').in('status',['claimed']).order('created_at',{ascending:false})
+    sb.from('tasks').select('*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color)').eq('doer_id',pid).eq('type','help_offer').in('status',['claimed']).order('created_at',{ascending:false}),
+    loadViewStats() // 👀 views per posted job (also refreshes the top-bar badge)
   ]);
+  const jobViews=_vs?.jobs||{};
   const err=postedRes.error||appRes.error;
   if(err){g.innerHTML=emptyState('😕','Error',err.message);return;}
   if(hoRes.error)console.warn('help_offer query error:',hoRes.error.message);
@@ -4568,6 +4624,7 @@ async function loadMyJobs(){
       </div>
       <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
       <div class="jc-desc">${esc(j.description||'')}</div>
+      ${(j.status==='open'||j.status==='expired')&&jobViews[j.id]!=null?`<div class="jc-views">👀 ${jobViews[j.id]} ${jobViews[j.id]===1?'view':'views'}</div>`:''}
       ${actionBtn}
     </div>`;
   }).join('');
@@ -4806,6 +4863,7 @@ if(!url){
 }
 // populate helper status block
 updateProfileHelperBlock(prof);
+loadViewStats();
 renderRtwBlock(prof); // Ready to work card
 renderIdvBlock(); // ID verification card + own badge
 loadEmailPref();
