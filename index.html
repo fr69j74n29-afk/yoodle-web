@@ -658,7 +658,13 @@ body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 .fs-choice small{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-top:2px}
 .fs-choice.help{border-color:rgba(245,158,11,.55)}
 .fs-choice.pro{border-color:rgba(234,106,18,.55)}
-.fs-ready{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.fs-ready{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.fs-fast{margin-top:14px;padding:12px;border-radius:14px;border:1.5px dashed rgba(245,184,46,.6);background:rgba(245,184,46,.06)}
+.fs-fast b{display:block;font-size:15px;font-weight:900;color:var(--text)}
+.fs-fast span{display:block;font-size:12.5px;font-weight:700;color:var(--muted);line-height:1.4;margin-top:2px}
+.fs-ready .hs-cat{justify-content:center}
+#fs-help .hs-grid{gap:6px}#fs-help .hs-cat{padding:8px 9px}#fs-help .hs-cat .e{font-size:17px}
+.fs-fast{margin-top:12px;padding:10px 12px}
 .fs-ready .hs-cat{border-color:rgba(245,184,46,.6);background:rgba(245,184,46,.08)}
 .fs-ready .hs-cat.on{border-color:#F59E0B;background:rgba(245,158,11,.16)}
 .fs-sep{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:2px 0 8px}
@@ -876,11 +882,9 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       </div>
       <div class="fs-pane" id="fs-help">
         <div class="hs-head"><b><button class="fs-back" onclick="fsStep('start')" aria-label="Back">‹</button>Find a helper</b><button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>
-        <div class="hs-sub" id="hs-sub">Helpers within — km</div>
-        <div class="fs-sep">⚡ Ready to work</div>
-        <div id="hs-ready" class="fs-ready"></div>
-        <div class="fs-sep">Or by skill</div>
-        <div id="hs-grid" class="hs-grid"></div>
+        <div id="hs-grid" class="hs-grid" style="margin-top:12px"></div>
+        <div class="fs-fast"><b>⚡ Need someone fast?</b><span>Everyone above takes jobs. These helpers are on standby and can start right away.</span>
+          <div id="hs-ready" class="fs-ready"></div></div>
       </div>
       <div class="fs-pane ps-pop" id="fs-pro">
         <div class="hs-head"><b><button class="fs-back" onclick="fsStep('start')" aria-label="Back">‹</button>Find a Pro</b><button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>
@@ -2026,7 +2030,7 @@ function ysLabel(cat){const c=ysCats.find(x=>ysKey(x.name)===ysKey(cat));return 
 function ysAttr(k){return esc(k).replace(/'/g,"\\'");}
 // highlight only, no filtering: counts, list and pins keep everyone
 // Filter button (15 Nov 2026): hsCat can also be 'ready:today' / 'ready:tomorrow' (⚡ Ready to work) — one pick at a time
-const FS_READY={'ready:today':{emoji:'⚡',label:'Ready today'},'ready:tomorrow':{emoji:'⚡',label:'Ready tomorrow'}};
+const FS_READY={'ready:today':{emoji:'⚡',label:'Can start today'},'ready:tomorrow':{emoji:'⚡',label:'Can start tomorrow'}};
 function fsReadyOk(h,k){const r=h&&readyIds.get(h.id);return !!r&&(k==='ready:today'?r.today:r.tomorrow);}
 function hsName(k){return FS_READY[k]?FS_READY[k].label:ysLabel(k);}
 function hsIcon(k){return FS_READY[k]?FS_READY[k].emoji:ysEmoji(k);}
@@ -2055,8 +2059,9 @@ function hsRenderGrid(){
   const sub=document.getElementById('hs-sub');
   if(sub)sub.textContent=userLat&&userLng?`${ysBaseHelpers.length} ${ysBaseHelpers.length===1?'helper':'helpers'} within ${RADIUS_KM} km`:'Share your location to see helpers nearby';
   const rd=document.getElementById('hs-ready');
-  if(rd)rd.innerHTML=Object.keys(FS_READY).map(k=>{const n=ysBaseHelpers.filter(h=>fsReadyOk(h,k)).length;
-    return `<button class="hs-cat${n?'':' zero'}${hsCat===k?' on':''}" onclick="hsPick('${k}')"><span class="e">⚡</span><span class="t">${k==='ready:today'?'Today':'Tomorrow'}</span><span class="n">${n}</span></button>`;}).join('');
+  // standby buttons: no counts (small numbers made it look like only 1–2 people are available — Roman, 15 Nov 2026)
+  if(rd)rd.innerHTML=Object.keys(FS_READY).map(k=>
+    `<button class="hs-cat${hsCat===k?' on':''}" onclick="hsPick('${k}')"><span class="e">⚡</span><span class="t">${k==='ready:today'?'Start today':'Start tomorrow'}</span></button>`).join('');
   el.innerHTML=ysCats.map(c=>{
     const k=ysKey(c.name),n=counts[k]||0;
     return `<button class="hs-cat${n?'':' zero'}${hsCat===k?' on':''}" onclick="hsPick('${ysAttr(k)}')"><span class="e">${c.emoji||''}</span><span class="t">${esc(c.name)}</span><span class="n">${n}</span></button>`;
@@ -2094,7 +2099,7 @@ function hsPick(k){
     const n=ysBaseHelpers.filter(hsMatch).length;
     logSearch(hsCat,n);
     if(FS_READY[hsCat]){const d=hsCat==='ready:today'?'today':'tomorrow';
-      toast(n?`⚡ ${n} ${n===1?'helper':'helpers'} ready ${d} nearby`:`No helpers ready ${d} within ${RADIUS_KM} km yet — try zooming out`);}
+      toast(n?`⚡ ${n} ${n===1?'helper':'helpers'} nearby can start ${d}`:`No standby helpers for ${d} within ${RADIUS_KM} km yet — try zooming out`);}
     else toast(n?`✨ ${n} ${ysLabel(hsCat)} ${n===1?'helper':'helpers'} nearby`:`No ${ysLabel(hsCat)} helpers within ${RADIUS_KM} km yet — try zooming out`);
   }else if(!psTrade){
     btn.classList.remove('on','pro-on');lbl.textContent='Filter';btn.title='';x.style.display='none';
@@ -2960,7 +2965,7 @@ function renderListTabContent(){
   } else {
     if(!listHelpers.length){
       el.innerHTML=hsCat
-        ?emptyState('🔍',FS_READY[hsCat]?`No helpers ${esc(hsName(hsCat).toLowerCase())} nearby`:`No ${esc(ysLabel(hsCat))} helpers nearby`,'Tap ✕ to see all helpers, or try a larger radius')
+        ?emptyState('🔍',FS_READY[hsCat]?`No standby helpers for ${hsCat==='ready:today'?'today':'tomorrow'} nearby`:`No ${esc(ysLabel(hsCat))} helpers nearby`,'Tap ✕ to see all helpers, or try a larger radius')
         :emptyState('💪','No helpers nearby','Helpers can enable visibility in their profile');
       return;
     }
