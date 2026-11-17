@@ -181,6 +181,30 @@ function hsvcBuildScreen(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hsvcBuildScreen);else hsvcBuildScreen();
 
+// Direct link from emails: https://yoodle.ca/?go=services opens this screen once the member is signed in
+// (17 Nov 2026, Brevo announcement). Remembered for a day so it still works after a magic-link sign-in.
+(function(){
+  try{
+    var q=new URLSearchParams(location.search);
+    if(q.get('go')==='services'){
+      localStorage.setItem('yoodle_go',JSON.stringify({to:'services',at:Date.now()}));
+      q.delete('go');var qs=q.toString();
+      history.replaceState(null,'',location.pathname+(qs?'?'+qs:'')+location.hash);
+    }
+    var g=JSON.parse(localStorage.getItem('yoodle_go')||'null');
+    if(!g||g.to!=='services')return;
+    if(Date.now()-g.at>86400000){localStorage.removeItem('yoodle_go');return;}
+    var tries=0,t=setInterval(function(){
+      tries++;
+      var ready=typeof me!=='undefined'&&me&&typeof sb!=='undefined'&&sb&&typeof myProfileId!=='undefined'&&myProfileId;
+      if(ready&&document.querySelector('.app-view.active')){
+        clearInterval(t);localStorage.removeItem('yoodle_go');
+        setTimeout(function(){hsvcGoSettings('profile');},400);
+      }else if(tries>120)clearInterval(t); // 60 s; the flag stays for the next visit (e.g. after sign-in)
+    },500);
+  }catch(e){}
+})();
+
 // Profile tab button (active, paused and expired helper cards). "NEW" label until opened once on this device.
 function hsvcProfileBtn(){
   var seen=false;try{seen=localStorage.getItem('yoodle_hsvc_seen')==='1';}catch(e){}
