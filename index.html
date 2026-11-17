@@ -54,7 +54,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"></noscript>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <!-- Standard services (17 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
-<script src="js/home-services.js?v=20261117b" defer></script>
+<script src="js/home-services.js?v=20261117c" defer></script>
 <style>
 :root{
   --purple:#5C8A6A;--lime:#2E7D52;--pink:#3D6B50;
@@ -5840,7 +5840,7 @@ function updateProfileHelperBlock(prof){
         ${catsHtml?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">${catsHtml}</div>`:''}
         <button onclick="shareMyHelperPage(null)" class="pf-btn">Share my page</button>
         <button onclick="nav('helper')" class="pf-btn sec">Edit helper profile</button>
-        ${window.hsvcGoSettings?`<button onclick="hsvcGoSettings()" class="pf-btn sec">Standard services ›</button>`:''}
+        ${window.hsvcProfileBtn?hsvcProfileBtn():''}
       </div>`;
   } else {
     // Paused or expired
@@ -5857,6 +5857,7 @@ function updateProfileHelperBlock(prof){
           </div>
         </div>
         <button onclick="nav('helper')" class="pf-btn">${expired?'Renew listing':'Resume listing'}</button>
+        ${window.hsvcProfileBtn?hsvcProfileBtn():''}
       </div>`;
   }
 }

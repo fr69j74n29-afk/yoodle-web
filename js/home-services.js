@@ -177,11 +177,18 @@ function hsvcBuildScreen(){
   '</div>';
   helper.parentNode.insertBefore(v,helper.nextSibling);
   // entry points that exist in index.html but stay hidden unless this file loaded
-  ['hsvc-link','live-svc-btn'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='';});
+  ['live-svc-btn'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='';});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hsvcBuildScreen);else hsvcBuildScreen();
 
+// Profile tab button (active, paused and expired helper cards). "NEW" label until opened once on this device.
+function hsvcProfileBtn(){
+  var seen=false;try{seen=localStorage.getItem('yoodle_hsvc_seen')==='1';}catch(e){}
+  return '<button onclick="hsvcGoSettings()" class="pf-btn sec">Standard services'+(seen?'':' <span style="font-size:11px;font-weight:800;color:#fff;background:var(--lime);border-radius:100px;padding:2px 7px;margin-left:4px;vertical-align:1px">NEW</span>')+' ›</button>';
+}
 function hsvcGoSettings(from){
+  try{localStorage.setItem('yoodle_hsvc_seen','1');}catch(e){}
+  document.querySelectorAll('.pf-btn').forEach(function(b){if(/Standard services/.test(b.textContent)){var n=b.querySelector('span');if(n)n.remove();}});
   hsvcBuildScreen();
   HSVC.from=from||'profile';
   nav('services');
