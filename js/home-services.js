@@ -1,16 +1,18 @@
 // ══ STANDARD SERVICES (17 Nov 2026) ══
 // Helpers set fixed prices for standard home services (snow removal, windows, gutters, bins…) in their
-// helper profile; prices show on the helper list card (one line) and the profile card (collapsed rows).
+// own screen (#app-services, created by this file; opened from the Profile tab, a link at the bottom of the
+// helper profile screen, and the "You're live" screen); prices show on the helper list card (one line) and the
+// profile card (collapsed rows).
 // Tables: service_catalog (categories), service_options (sizes/add-ons), helper_service_offers (prices).
 // Catalog is data-driven: add/remove a category in Supabase, no code change.
-// Rules (Roman, 17 Nov 2026): street-level helper address required (city-only = hpLocVague → locked);
+// Rules (Roman, 17 Nov 2026): helper profile needed first; street-level helper address required (city-only → locked);
 // services show only while the helper listing is active; empty price = option not offered;
 // quote_only options (e.g. "Other — custom quote") have no price.
 // Loaded as a classic deferred script (NOT a module): index.html calls these by name through guarded
-// hooks (if(window.hsvcX)…), and this file reads index.html globals (sb, me, myProfileId, hpLocVague,
+// hooks (if(window.hsvcX)…), and this file reads index.html globals (sb, me, myProfileId, hpIsVagueText,
 // esc, toast, nav) at call time. If this file fails to load, the app works as before without services.
 
-var HSVC={catP:null,cat:[],opts:[],cache:new Map(),pending:new Set(),fillTimer:null,mine:null,lockTimer:null,scrollNext:false};
+var HSVC={catP:null,cat:[],opts:[],cache:new Map(),pending:new Set(),fillTimer:null,mine:null,locked:false,from:'profile',saving:false};
 var HSVC_PT={visit:['Per visit','/visit'],season:['Season','/season'],job:['Per job','/job'],month:['Month','/month'],year:['Year','/year']};
 
 (function(){ // styles live here so index.html stays untouched
@@ -52,6 +54,9 @@ var HSVC_PT={visit:['Per visit','/visit'],season:['Season','/season'],job:['Per 
 .hsvc-pi{display:flex;align-items:center;gap:3px;border:1.5px solid var(--border);border-radius:10px;padding:7px 8px;background:var(--surface2)}
 .hsvc-pi span{font-weight:800;color:var(--muted);font-size:13px}
 .hsvc-pi input{width:100%;min-width:0;border:none;background:none;outline:none;font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;color:var(--text)}
+.hsvc-gate{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:16px;font-size:14.5px;font-weight:700;color:var(--text2);line-height:1.5}
+.hsvc-gate button{margin-top:12px}
+.hsvc-note{font-size:13px;font-weight:800;color:#B07A12;background:rgba(240,207,90,.12);border:1.5px solid rgba(240,207,90,.35);border-radius:var(--radius-sm);padding:9px 12px;margin-bottom:10px;line-height:1.5}
 .hsvc-q{font-size:13px;font-weight:800;color:var(--muted);background:var(--surface2);border-radius:10px;padding:8px 10px;text-align:center}`;
   var s=document.createElement('style');s.id='hsvc-css';s.textContent=css;document.head.appendChild(s);
 })();
@@ -157,25 +162,61 @@ function hsvcToggleRow(el){
   if(!wasOpen)el.classList.add('open');
 }
 
-// ── Helper profile: "Standard services" settings section (container #hsvc-settings) ──
-function hsvcGoSettings(){HSVC.scrollNext=true;nav('helper');}
-function hsvcLocked(){return typeof hpLocVague!=='undefined'&&!!hpLocVague;}
+// ── "Standard services" screen (#app-services, own Save) ──
+// Built once from here so index.html only needs the entry points. Back goes to where it was opened from.
+function hsvcBuildScreen(){
+  if(document.getElementById('app-services'))return;
+  var helper=document.getElementById('app-helper');if(!helper||!helper.parentNode)return;
+  var v=document.createElement('div');v.className='app-view';v.id='app-services';
+  v.innerHTML='<div class="myjobs-inner" style="padding-bottom:40px">'+
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">'+
+      '<button onclick="hsvcBack()" aria-label="Back" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>'+
+      '<div class="section-h" style="margin-bottom:0">Standard services</div></div>'+
+    '<div id="hsvc-settings"></div>'+
+    '<button class="btn-primary" id="hsvc-save-btn" onclick="hsvcSaveClick()" style="display:none">Save services</button>'+
+  '</div>';
+  helper.parentNode.insertBefore(v,helper.nextSibling);
+  // entry points that exist in index.html but stay hidden unless this file loaded
+  ['hsvc-link','live-svc-btn'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='';});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hsvcBuildScreen);else hsvcBuildScreen();
+
+function hsvcGoSettings(from){
+  hsvcBuildScreen();
+  HSVC.from=from||'profile';
+  nav('services');
+  try{window.scrollTo(0,0);}catch(e){}
+  hsvcOpenSettings();
+}
+function hsvcBack(){nav(HSVC.from==='helper'?'helper':'profile');}
+function hsvcGate(html,btn,to){
+  var box=document.getElementById('hsvc-settings'),sv=document.getElementById('hsvc-save-btn');
+  if(sv)sv.style.display='none';
+  box.innerHTML='<div class="hsvc-gate">'+html+(btn?'<button class="btn-primary" onclick="nav(\''+to+'\')">'+btn+'</button>':'')+'</div>';
+}
 async function hsvcOpenSettings(){
-  var box=document.getElementById('hsvc-settings');
+  var box=document.getElementById('hsvc-settings'),sv=document.getElementById('hsvc-save-btn');
   if(!box||!sb||!me)return;
   HSVC.mine=null;
-  box.innerHTML='<div class="form-g hsvc-set"><label class="form-lbl">Standard services</label><div class="sub">Loading…</div></div>';
+  if(sv)sv.style.display='none';
+  box.innerHTML='<div style="color:var(--muted);font-weight:700;font-size:14px">Loading…</div>';
   var pid=myProfileId||me.id;
-  var res=await Promise.all([hsvcCatalog(),sb.from('helper_service_offers').select('service_key,option_key,price_type,price,active').eq('profile_id',pid)]);
-  var cats=res[0],own=res[1];
-  if(own.error||!cats.length){box.innerHTML='<div class="form-g hsvc-set"><label class="form-lbl">Standard services</label><div class="sub">Could not load services right now. Your other profile details still save.</div></div>';return;}
+  var res=await Promise.all([
+    hsvcCatalog(),
+    sb.from('helper_service_offers').select('service_key,option_key,price_type,price,active').eq('profile_id',pid),
+    sb.from('profiles').select('helper_address,visible_on_map').eq('id',pid).maybeSingle()
+  ]);
+  var cats=res[0],own=res[1],prof=res[2]&&res[2].data;
+  if(own.error||!cats.length){hsvcGate('Could not load services right now. Please try again in a minute.');return;}
+  if(!prof||!prof.helper_address){hsvcGate('Standard services are part of your helper profile. Set up your helper profile first, then come back here to add fixed prices.','Set up helper profile ›','helper');return;}
+  HSVC.locked=typeof hpIsVagueText==='function'?hpIsVagueText(prof.helper_address):false;
   HSVC.mine=own.data||[];
   var mine=HSVC.mine;
-  box.innerHTML='<div class="form-g hsvc-set" id="hsvc-set">'+
-    '<label class="form-lbl">Standard services</label>'+
-    '<div class="hsvc-req">🔒 Needs your street address (set at the top of this screen). It\'s used only to match you with homeowners nearby and is never shown.</div>'+
-    '<div class="hsvc-lock">📍 Your location is only a city. Add your street address at the top of this screen to offer standard services.</div>'+
+  box.innerHTML='<div class="hsvc-set'+(HSVC.locked?' locked':'')+'" id="hsvc-set">'+
     '<div class="sub">Set fixed prices so homeowners near you can book you directly. Leave a price empty if you don\'t offer that option.</div>'+
+    (prof.visible_on_map?'':'<div class="hsvc-note">⏸️ Your helper listing is paused or expired, so neighbours can\'t see these services until you turn it back on.</div>')+
+    '<div class="hsvc-req">🔒 Uses your helper address to match you with homeowners nearby. It\'s never shown.</div>'+
+    '<div class="hsvc-lock">📍 Your helper location is only a city. Add your street address to offer standard services.<br><button class="btn-primary" style="margin-top:10px" onclick="nav(\'helper\')">Add street address ›</button></div>'+
     '<div class="hsvc-cards">'+cats.map(function(c){
       var rows=mine.filter(function(r){return r.service_key===c.key;});
       var on=rows.some(function(r){return r.active;});
@@ -195,16 +236,18 @@ async function hsvcOpenSettings(){
         '<div class="hsvc-cb"><div class="hsvc-grid" style="grid-template-columns:1.25fr repeat('+types.length+',1fr)">'+head+body+'</div></div></div>';
     }).join('')+'</div></div>';
   cats.forEach(function(c){hsvcSub(c.key);});
-  hsvcSyncLock();
-  clearInterval(HSVC.lockTimer); // follow address changes while the helper screen is open
-  HSVC.lockTimer=setInterval(function(){
-    var scr=document.getElementById('app-helper');
-    if(!scr||!scr.classList.contains('active')){clearInterval(HSVC.lockTimer);return;}
-    hsvcSyncLock();
-  },800);
-  if(HSVC.scrollNext){HSVC.scrollNext=false;try{document.getElementById('hsvc-set').scrollIntoView({block:'start'});}catch(e){}}
+  if(sv)sv.style.display=HSVC.locked?'none':'';
 }
-function hsvcSyncLock(){var s=document.getElementById('hsvc-set');if(s)s.classList.toggle('locked',hsvcLocked());}
+function hsvcLocked(){return !!HSVC.locked;}
+async function hsvcSaveClick(){
+  if(HSVC.saving||HSVC.mine===null)return;
+  if(!hsvcValidate())return;
+  var b=document.getElementById('hsvc-save-btn');
+  HSVC.saving=true;if(b){b.disabled=true;b.textContent='Saving…';}
+  var ok=await hsvcSave();
+  HSVC.saving=false;if(b){b.disabled=false;b.textContent='Save services';}
+  if(ok){toast('✅ Services saved');hsvcBack();}
+}
 function hsvcToggleCard(card){card.classList.toggle('on');hsvcSub(card.getAttribute('data-svc'));}
 function hsvcSub(key){
   var card=document.querySelector('.hsvc-card[data-svc="'+key+'"]');
@@ -218,7 +261,7 @@ function hsvcSub(key){
 // Before saving the helper profile: every switched-on service needs at least one valid price.
 function hsvcValidate(){
   if(HSVC.mine===null)return true; // section not loaded → nothing to check
-  if(hsvcLocked())return true;     // city-only: services get paused on save, nothing to validate
+  if(hsvcLocked())return false;    // city-only: save button is hidden; nothing to save
   var cards=document.querySelectorAll('.hsvc-card.on');
   for(var i=0;i<cards.length;i++){
     var c=cards[i],n=0,bad=false;
@@ -233,12 +276,11 @@ function hsvcValidate(){
   }
   return true;
 }
-// After the helper profile saves: upsert current prices, delete emptied ones.
+// Save button on the services screen: upsert current prices, delete emptied ones.
 // Switched-off service → its prices stay but active=false (comes back when switched on).
-// City-only address → everything saved as paused.
 async function hsvcSave(){
-  if(HSVC.mine===null||!sb||!me)return true;
-  var pid=myProfileId||me.id,locked=hsvcLocked(),now=new Date().toISOString(),rows=[];
+  if(HSVC.mine===null||!sb||!me)return false;
+  var pid=myProfileId||me.id,locked=false,now=new Date().toISOString(),rows=[];
   document.querySelectorAll('.hsvc-card').forEach(function(card){
     var key=card.getAttribute('data-svc'),on=card.classList.contains('on')&&!locked,svcRows=[];
     card.querySelectorAll('input[data-t]').forEach(function(inp){
@@ -261,9 +303,8 @@ async function hsvcSave(){
     if(rows.length){var up=await sb.from('helper_service_offers').upsert(rows,{onConflict:'profile_id,service_key,option_key,price_type'});if(up.error)throw up.error;}
     var dels=await Promise.all(gone.map(function(r){return sb.from('helper_service_offers').delete().match({profile_id:pid,service_key:r.service_key,option_key:r.option_key,price_type:r.price_type});}));
     dels.forEach(function(d){if(d.error)throw d.error;});
-  }catch(e){var m=e&&e.message||e;setTimeout(function(){toast('⚠️ Profile saved, but services were not: '+m);},1800);return false;} // after the "profile saved" toast
+  }catch(e){toast('⚠️ Services not saved: '+(e&&e.message||e));return false;}
   HSVC.mine=rows.map(function(r){return {service_key:r.service_key,option_key:r.option_key,price_type:r.price_type,price:r.price,active:r.active};});
   HSVC.cache.delete(pid);
-  if(locked&&rows.length)setTimeout(function(){toast('📍 Services paused: add your street address to offer them');},1800);
   return true;
 }

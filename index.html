@@ -54,7 +54,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"></noscript>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <!-- Standard services (17 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
-<script src="js/home-services.js?v=20261117" defer></script>
+<script src="js/home-services.js?v=20261117b" defer></script>
 <style>
 :root{
   --purple:#5C8A6A;--lime:#2E7D52;--pink:#3D6B50;
@@ -1145,7 +1145,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <!-- RATE -->
       <div class="form-g">
         <label class="form-lbl">Your rate for other jobs</label>
-        <div style="font-size:13.5px;color:var(--muted);margin-bottom:10px">For jobs not covered by your standard services below.</div>
+        <div style="font-size:13.5px;color:var(--muted);margin-bottom:10px">For jobs not covered by your standard services.</div>
         <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:6px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;min-width:120px">
             <span style="font-size:15px;font-weight:800;color:var(--muted)">$</span>
@@ -1160,8 +1160,8 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         </div>
       </div>
 
-      <!-- STANDARD SERVICES (js/home-services.js fills this) -->
-      <div id="hsvc-settings"></div>
+      <!-- STANDARD SERVICES: own screen (js/home-services.js); link shown only when that file loaded -->
+      <button id="hsvc-link" onclick="hsvcGoSettings('helper')" style="display:none;width:100%;margin-bottom:16px;padding:13px 14px;border-radius:var(--radius-sm);border:1.5px dashed var(--lime);background:rgba(46,125,82,.06);color:var(--lime);font-family:'Nunito',sans-serif;font-size:14.5px;font-weight:800;cursor:pointer;text-align:left">➕ Offer fixed-price services (snow, windows, gutters…) ›</button>
 
       <!-- EXPIRY NOTICE -->
       <div style="background:rgba(92,138,106,.06);border:1.5px solid rgba(92,138,106,.18);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:20px;font-size:13.5px;color:var(--muted);font-weight:700;line-height:1.6">
@@ -1541,6 +1541,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <div class="live-chips" id="live-chips"></div>
     </div>
     <button class="btn-primary" id="live-share-btn" onclick="shareMyHelperPage()">Message friends</button>
+    <button class="live-later" id="live-svc-btn" style="display:none;color:var(--lime)" onclick="closeLiveScreen();hsvcGoSettings('profile')">➕ Add standard services</button>
     <button class="live-later" onclick="logShare('later');closeLiveScreen()">Maybe later</button>
   </div>
 </div>
@@ -5974,7 +5975,6 @@ async function openHelperScreen(){
   });
   // own-pin tap with a city-only location → go straight to adding the neighbourhood
   if(hpFocusAreaNext){hpFocusAreaNext=false;if(hpLocVague)hpStartAddArea((String(prof?.helper_address||'').split(',')[0]||'').trim()||'your city');}
-  if(window.hsvcOpenSettings)hsvcOpenSettings(); // Standard services section (js/home-services.js)
 }
 
 function toggleHPCategory(name,id){
@@ -6111,7 +6111,6 @@ async function saveHelperProfile(){
   if(hpGpsPending)return toast('⚠️ Please confirm your GPS address first');
   if(!hpLat||!hpLng)return toast('⚠️ Please select your area from suggestions');
   if(hpLocVague&&!hpLocVagueAck){hpAskArea();return;}
-  if(window.hsvcValidate&&!hsvcValidate())return; // Standard services: each switched-on service needs a price
   const address=document.getElementById('hp-loc').value||'';
   const bio=document.getElementById('hp-bio').value||'';
   const rate=hpRateType==='free'?null:parseFloat(document.getElementById('hp-rate').value)||null;
@@ -6137,7 +6136,6 @@ async function saveHelperProfile(){
   }).eq('id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
   myHomeHasAddr=!!address; // home base = helper address from now on (postJob won't overwrite it)
-  if(window.hsvcSave)await hsvcSave(); // Standard services prices (js/home-services.js)
   toast('✅ Helper profile saved!');
   // No GPS → show jobs around the helper's address, not the Toronto default
   if(!_centerOnHome(hpLat,hpLng,1))loadJobs();
