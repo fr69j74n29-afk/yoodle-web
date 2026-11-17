@@ -277,18 +277,6 @@ body.theme-sage-dark .theme-btn .ic-moon{display:none}
 /* Profile screen cards + buttons (13 Nov 2026): one card, one primary, one secondary. Colour lives in the icon tile only. */
 .pf-card{padding:16px;background:var(--surface);border-radius:16px;border:1px solid var(--border)}
 .pf-row{display:flex;align-items:flex-start;gap:12px}
-/* Yoodle sites page (15 Nov 2026) — 2 square tiles per row; tile colour = that site's accent */
-.site-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.site-tile{position:relative;aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;padding:16px;border-radius:20px;text-decoration:none;color:#fff;font-family:'Nunito',sans-serif;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.15);transition:transform .15s}
-.site-tile:active{transform:scale(.97)}
-.site-tile:focus-visible{outline:3px solid var(--text);outline-offset:3px}
-.site-tile.tutor{background:linear-gradient(145deg,#2E7D52,#1F5C3B)}
-.site-tile.pros{background:linear-gradient(145deg,#EA6A12,#C4560B)}
-.site-ic{position:absolute;top:14px;left:14px;width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:28px}
-.site-go{position:absolute;top:14px;right:16px;font-size:18px;font-weight:800;opacity:.85}
-.site-name{font-size:18px;font-weight:900;line-height:1.15}
-.site-d{font-size:12.5px;font-weight:700;line-height:1.35;opacity:.92}
-@media (max-width:340px){.site-d{display:none}}
 /* Notifications bell + sheet (15 Nov 2026) — bell reuses .theme-btn; red count like the tutor app */
 .nt-btn{position:relative;flex-shrink:0}
 .nt-badge{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#DC2626;color:#fff;font:800 10.5px/17px 'Nunito',sans-serif;text-align:center;display:none}
@@ -524,13 +512,8 @@ html:not(.ml-css) #map>*{visibility:hidden} /* until maplibre-gl.css has applied
 .nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;transition:color .15s;flex:1;min-height:44px;justify-content:center;white-space:nowrap}
 .nav-i.active{color:var(--purple)}
 body:not(.theme-sage-dark) .nav-i.active{color:#2E4A38}
-/* Post (+) button, pinned just above the bottom nav on every screen (15 Nov 2026). Lives inside .bottom-nav
-   (always shown, z-index 200) so it floats over every view; scroll areas get extra bottom room below. */
-.post-fab{position:absolute;left:50%;top:-68px;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;border:none;background:var(--orange);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.28);transition:transform .15s;padding:0}
-.post-fab:active{transform:translateX(-50%) scale(.92)}
-.post-fab:focus-visible{outline:3px solid var(--text);outline-offset:3px}
-.post-fab svg{width:26px;height:26px}
-.myjobs-inner,.profile-scroll,.post-scroll,.list-scroll{padding-bottom:calc(var(--sab) + 96px) !important}
+.nav-i.nav-post{color:var(--muted)}
+.nav-i.nav-post.active{color:var(--muted)}
 .nav-i svg{width:22px;height:22px;flex-shrink:0}
 
 /* FAB */
@@ -976,7 +959,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         </svg>
       </button>
       <!-- Map/List toggle pill — bottom center -->
-      <button id="browse-toggle" onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:16px;z-index:10;pointer-events:all;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;border-radius:100px;padding:11px 24px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#fff;box-shadow:0 4px 16px rgba(92,138,106,.25)">
+      <button id="browse-toggle" onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;pointer-events:all;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;border-radius:100px;padding:11px 24px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#fff;box-shadow:0 4px 16px rgba(92,138,106,.25)">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
         <span style="font-size:14px;font-weight:800;color:#fff;font-family:'Nunito',sans-serif">List</span>
       </button>
@@ -1013,7 +996,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
     <!-- Scrollable content -->
     <div id="list-tab-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px 80px"></div>
     <!-- Map toggle pill -->
-    <button onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:16px;z-index:10;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;border-radius:100px;padding:11px 24px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#fff;box-shadow:0 4px 16px rgba(92,138,106,.25)">
+    <button onclick="toggleBrowseMode()" style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:10;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;border-radius:100px;padding:11px 24px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#fff;box-shadow:0 4px 16px rgba(92,138,106,.25)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
       <span style="font-size:14px;font-weight:800;color:#fff;font-family:'Nunito',sans-serif">Map</span>
     </button>
@@ -1108,25 +1091,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 
       <!-- Helper status block (populated by loadProfile) -->
       <div id="helper-status-block" style="margin-bottom:12px"></div>
-      <!-- Become a tutor (15 Nov 2026) → tutor.yoodle.ca, same account; ?start=tutor opens tutor onboarding there.
-           17 Nov 2026: openTutorSignedIn() adds a one-time sign-in token (#th=) so they arrive already signed in. -->
-      <a href="https://tutor.yoodle.ca/?start=tutor" target="_blank" rel="noopener" onclick="return openTutorSignedIn(event)" class="pf-card" style="display:flex;align-items:center;gap:12px;margin-bottom:12px;text-decoration:none;font-family:'Nunito',sans-serif">
-        <div class="pf-ic b" aria-hidden="true">📚</div>
-        <div style="flex:1;min-width:0">
-          <div class="pf-t">Become a Tutor</div>
-          <div class="pf-d">Teach students near you or online on Yoodle Tutors. Same account.</div>
-        </div>
-        <span style="font-size:18px;color:var(--muted)">↗</span>
-      </a>
-      <!-- More from Yoodle (15 Nov 2026) → #app-sites: big buttons to the other Yoodle sites -->
-      <button onclick="nav('sites')" class="pf-card" style="width:100%;display:flex;align-items:center;gap:12px;margin-bottom:12px;cursor:pointer;font-family:'Nunito',sans-serif;text-align:left">
-        <div class="pf-ic" aria-hidden="true">🧭</div>
-        <div style="flex:1;min-width:0">
-          <div class="pf-t">More from Yoodle</div>
-          <div class="pf-d">Yoodle Tutors and Yoodle Pros</div>
-        </div>
-        <span style="font-size:18px;color:var(--muted)">›</span>
-      </button>
       <!-- Ready to work card (helpers with a Ready-to-work skill — list kept in SQL table ready_to_work_categories; populated by renderRtwBlock) -->
       <div id="rtw-block" style="margin-bottom:12px;display:none"></div>
       <!-- ID verification card (populated by renderIdvBlock) -->
@@ -1158,29 +1122,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
     <div class="myjobs-inner">
       <div class="section-h" style="margin-bottom:16px">Messages</div>
       <div id="conversations-list"><div class="loading"><div class="spinner"></div></div></div>
-    </div>
-  </div>
-
-  <!-- YOODLE SITES (15 Nov 2026): large square buttons to the other Yoodle sites. Opened from Profile → More from Yoodle.
-       Add a site = add one more <a class="site-tile">. Same account works on every site. -->
-  <div class="app-view" id="app-sites">
-    <div class="myjobs-inner" style="padding-bottom:40px">
-      <div class="section-h" style="margin-bottom:6px">More from Yoodle</div>
-      <div class="pf-d" style="margin:0 0 18px">Sign in with this same account on every Yoodle site.</div>
-      <div class="site-grid">
-        <a class="site-tile tutor" href="https://tutor.yoodle.ca/" target="_blank" rel="noopener">
-          <span class="site-ic" aria-hidden="true">📚</span>
-          <span class="site-name">Yoodle Tutors</span>
-          <span class="site-d">Find a tutor, or teach students near you</span>
-          <span class="site-go" aria-hidden="true">↗</span>
-        </a>
-        <a class="site-tile pros" href="https://pro.yoodle.ca/" target="_blank" rel="noopener">
-          <span class="site-ic" aria-hidden="true">🧰</span>
-          <span class="site-name">Yoodle Pros</span>
-          <span class="site-d">Plumbers, electricians, HVAC &amp; more</span>
-          <span class="site-go" aria-hidden="true">↗</span>
-        </a>
-      </div>
     </div>
   </div>
 
@@ -1268,15 +1209,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
-    <!-- Post (+) — pinned just above the nav bar on every screen (15 Nov 2026; was the middle tab) -->
-    <button class="post-fab" id="ni-post" onclick="nav('post')" aria-label="Post a job or offer help">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    </button>
-    <!-- Yoodle sites (15 Nov 2026) → #app-sites -->
-    <button class="nav-i" id="ni-sites" onclick="nav('sites')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      Sites
-    </button>
     <button class="nav-i active" id="ni-map" onclick="nav('browse')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
       Browse
@@ -1285,6 +1217,11 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       Activity
       <span id="rating-badge" onclick="event.stopPropagation();openRatingsSheet()" style="display:none;position:absolute;top:4px;right:6px;background:var(--yellow);color:#fff;font-size:10.5px;font-weight:800;border-radius:100px;padding:2px 5px;line-height:1.2;cursor:pointer"></span>
+    </button>
+    <button class="nav-i nav-post" id="ni-post" onclick="nav('post')">
+      <div style="width:46px;height:46px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:-10px 0 -2px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
     </button>
     <button class="nav-i" id="ni-messages" onclick="nav('messages')" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -3770,7 +3707,7 @@ async function signOut(){oneSignalLogout();if(sb)await sb.auth.signOut();else sh
 const TUTOR_SITE_RE=/^https:\/\/tutor\.yoodle\.ca(\/|$)/i;
 function openTutorSignedIn(ev,url){
   url=(url||'https://tutor.yoodle.ca/?start=tutor').split('#')[0];
-  if(!sb||!me)return true; // signed out: let the link open normally
+  if(!sb||!me){if(!ev)window.open(url,'_blank','noopener');return true;} // signed out: plain link
   if(ev)ev.preventDefault();
   let w=null;try{w=window.open('','_blank');if(w)w.opener=null;}catch(e){}
   const go=dest=>{if(w&&!w.closed)w.location.replace(dest);else location.href=dest;};
@@ -5961,6 +5898,12 @@ function forkHelperCardNew(){
 
 
 
+// "Tutor Profile" button (17 Nov 2026): only for helpers who picked the Tutoring tag. Opens tutor.yoodle.ca
+// signed in, at tutor onboarding (same as the old "Become a Tutor" profile card) via openTutorSignedIn().
+function tutorProfileBtn(prof){
+  const tutors=(prof?.helper_categories||[]).some(c=>String(c).trim().toLowerCase()==='tutoring');
+  return tutors?'<button onclick="openTutorSignedIn(null)" class="pf-btn sec">Tutor Profile ↗</button>':'';
+}
 function updateProfileHelperBlock(prof){
   const el=document.getElementById('helper-status-block');
   if(!el)return;
@@ -6000,6 +5943,7 @@ function updateProfileHelperBlock(prof){
         <button onclick="shareMyHelperPage(null)" class="pf-btn">Share my page</button>
         <button onclick="nav('helper')" class="pf-btn sec">Edit helper profile</button>
         ${window.hsvcProfileBtn?hsvcProfileBtn():''}
+        ${tutorProfileBtn(prof)}
       </div>`;
   } else {
     // Paused or expired
@@ -6017,6 +5961,7 @@ function updateProfileHelperBlock(prof){
         </div>
         <button onclick="nav('helper')" class="pf-btn">${expired?'Renew listing':'Resume listing'}</button>
         ${window.hsvcProfileBtn?hsvcProfileBtn():''}
+        ${tutorProfileBtn(prof)}
       </div>`;
   }
 }
