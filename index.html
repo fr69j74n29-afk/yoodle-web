@@ -321,6 +321,11 @@ body.theme-sage-dark .theme-btn .ic-moon{display:none}
 .live-card-m{font-size:13.5px;font-weight:700;color:var(--muted);margin-bottom:10px}
 .live-chips{display:flex;flex-wrap:wrap;gap:6px}
 .live-chip{font-size:12px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:3px 10px}
+/* Share button icon + "Add your service prices" outline button (17 Nov 2026) */
+.live-share-ic{width:19px;height:19px;flex-shrink:0}
+.live-svc{width:100%;margin-top:12px;padding:15px;border-radius:var(--radius);border:2px solid var(--lime);background:rgba(46,125,82,.08);color:var(--lime);font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s}
+.live-svc:active{transform:scale(.97)}
+.live-svc svg{width:19px;height:19px;flex-shrink:0}
 .live-later{margin-top:14px;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;padding:12px;text-decoration:underline}
 
 /* ── REFERRAL MODAL ── */
@@ -1567,8 +1572,14 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <div class="live-card-m" id="live-rate"></div>
       <div class="live-chips" id="live-chips"></div>
     </div>
-    <button class="btn-primary" id="live-share-btn" onclick="shareMyHelperPage()">Message friends</button>
-    <button class="live-later" id="live-svc-btn" style="display:none;color:var(--lime)" onclick="closeLiveScreen();hsvcGoSettings('profile')">➕ Add standard services</button>
+    <button class="btn-primary" id="live-share-btn" onclick="shareMyHelperPage()">
+      <svg class="live-share-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      <span id="live-share-label">Tell friends you're on Yoodle</span>
+    </button>
+    <button class="live-svc" id="live-svc-btn" style="display:none" onclick="closeLiveScreen();hsvcGoSettings('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Add your service prices
+    </button>
     <button class="live-later" onclick="logShare('later');closeLiveScreen()">Maybe later</button>
   </div>
 </div>
@@ -6284,7 +6295,7 @@ function openLiveScreen(d){
   document.getElementById('live-area').textContent=helperShareArea(d.address);
   document.getElementById('live-rate').textContent=d.rateType==='free'||!d.rate?'🤝 Free':`💰 $${d.rate}${d.rateType==='hourly'?' / hour':d.rateType==='daily'?' / day':' flat'}`;
   document.getElementById('live-chips').innerHTML=(d.categories||[]).map(c=>`<span class="live-chip">${esc(c)}</span>`).join('');
-  document.getElementById('live-share-btn').textContent=navigator.share?'Message friends':'Copy link';
+  document.getElementById('live-share-label').textContent=navigator.share?"Tell friends you're on Yoodle":'Copy your page link';
   openOv('live-ov');
 }
 function closeLiveScreen(){closeOv('live-ov');}
@@ -6307,8 +6318,8 @@ async function shareMyHelperPage(d){
     const ta=document.createElement('textarea');ta.value=full;ta.style.position='fixed';ta.style.opacity='0';
     document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
   }
-  const btn=document.getElementById('live-share-btn');
-  if(btn&&document.getElementById('live-ov').classList.contains('open')){btn.textContent='Copied! ✓';setTimeout(()=>btn.textContent='Copy link',2000);}
+  const btn=document.getElementById('live-share-label');
+  if(btn&&document.getElementById('live-ov').classList.contains('open')){btn.textContent='Copied! ✓';setTimeout(()=>btn.textContent='Copy your page link',2000);}
   toast('📋 Copied! Paste it into a message');
 }
 
