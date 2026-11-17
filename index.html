@@ -891,10 +891,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <span id="hs-label">Filter</span>
         <span id="hs-x" class="hs-x" style="display:none" onclick="event.stopPropagation();fsClear()" aria-label="Clear filter">✕</span>
       </button>
-      <button class="theme-btn nt-btn" id="nt-btn" onclick="openNotifications()" aria-label="Notifications" title="Notifications">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span class="nt-badge" id="nt-badge"></span>
-      </button>
       <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Switch light/dark mode" title="Switch light/dark mode">
         <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -1120,7 +1116,14 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   <!-- MESSAGES VIEW -->
   <div class="app-view" id="app-messages">
     <div class="myjobs-inner">
-      <div class="section-h" style="margin-bottom:16px">Messages</div>
+      <!-- Notifications bell (17 Nov 2026): moved here from the top bar; unread notifications also light the Messages tab dot -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
+        <div class="section-h" style="margin-bottom:0">Messages</div>
+        <button class="theme-btn nt-btn" id="nt-btn" onclick="openNotifications()" aria-label="Notifications" title="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="nt-badge" id="nt-badge"></span>
+        </button>
+      </div>
       <div id="conversations-list"><div class="loading"><div class="spinner"></div></div></div>
     </div>
   </div>
@@ -3735,6 +3738,7 @@ function renderNotifBadge(){
   const n=_notifs.filter(x=>!x.read_at).length;
   b.textContent=n>9?'9+':n;b.style.display=n?'block':'none';
   const btn=document.getElementById('nt-btn');if(btn)btn.setAttribute('aria-label',n?`Notifications, ${n} unread`:'Notifications');
+  _setMessageBadge(_msgUnread); // redraw the Messages tab dot
 }
 function openNotifications(){renderNotifList();openOv('nt-sheet');loadNotifications();}
 function renderNotifList(){
@@ -3898,7 +3902,10 @@ function playNotificationSound(){
 }
 
 // ── UNREAD BADGE — single source of truth from DB ──
+let _msgUnread=false; // last known unread-messages state; the dot also shows for unread notifications
 function _setMessageBadge(hasUnread){
+  _msgUnread=!!hasUnread;
+  hasUnread=_msgUnread||_notifs.some(x=>!x.read_at);
   const btn=document.getElementById('ni-messages');if(!btn)return;
   const existing=btn.querySelector('.msg-badge');
   if(hasUnread&&!existing){
