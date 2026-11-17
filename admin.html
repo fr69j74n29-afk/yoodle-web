@@ -1378,9 +1378,13 @@ async function loadStats() {
     // "List only" was removed from the app (8 Oct 2026) → show Ready to work (⚡ today) instead (25 Oct 2026)
     const _hd = document.getElementById('stat-helpers-detail');
     _hd.textContent = '⚡ … ready now';
-    sb.rpc('get_ready_ids').then(({ data, error }) => {
-      _hd.textContent = error ? '⚡ ready now n/a' : `⚡ ${(data || []).filter(r => r.today).length} ready now`;
-    }, () => { _hd.textContent = '⚡ ready now n/a'; });
+    // + Standard services (17 Nov 2026): active helpers with at least one active service price (helper_service_offers)
+    const _helperIds = new Set(allHelpers.map(h => h.id));
+    const _readyTxt = sb.rpc('get_ready_ids').then(({ data, error }) =>
+      error ? '⚡ ready now n/a' : `⚡ ${(data || []).filter(r => r.today).length} ready now`, () => '⚡ ready now n/a');
+    const _svcTxt = sb.from('helper_service_offers').select('profile_id').eq('active', true).then(({ data, error }) =>
+      error ? '🛠 services n/a' : `🛠 ${new Set((data || []).map(r => r.profile_id).filter(id => _helperIds.has(id))).size} offer services`, () => '🛠 services n/a');
+    Promise.all([_readyTxt, _svcTxt]).then(([r, s]) => { _hd.textContent = `${r} · ${s}`; });
 
     // Open jobs (same rule as the old "Open" bar: status open, admin auto-reply poster excluded)
     // Split (Oct 2026): direct = posted by members; agency = synced partner listings (type 'agency_job')
