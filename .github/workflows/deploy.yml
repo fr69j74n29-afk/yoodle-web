@@ -1,5 +1,5 @@
 # Publishes yoodle.ca to GitHub Pages on every push to main.
-# index.html is minified (comments + extra whitespace removed, local names shortened) in the published copy only;
+# index.html and js/*.js are minified (comments + extra whitespace removed, local names shortened) in the published copy only;
 # the commented source in the repo is unchanged. All other files are published as they are.
 name: Deploy site
 
@@ -36,6 +36,14 @@ jobs:
           tar --exclude=./.git --exclude=./.github --exclude=./_site --exclude=./docs -cf - . | tar -xf - -C _site
           npx --yes html-minifier-terser@7.2.0 --collapse-whitespace --conservative-collapse --remove-comments --minify-css true --minify-js true -o _site/index.html _site/index.html
           echo "index.html: $(wc -c < index.html) -> $(wc -c < _site/index.html) bytes"
+          # js/*.js (feature files split out of index.html, e.g. js/home-services.js): minified in the
+          # published copy only. Top-level names are kept (index.html calls them by name).
+          if ls js/*.js >/dev/null 2>&1; then
+            for f in js/*.js; do
+              npx --yes terser@5 "$f" --compress --mangle -o "_site/$f"
+              echo "$f: $(wc -c < "$f") -> $(wc -c < "_site/$f") bytes"
+            done
+          fi
 
       - uses: actions/configure-pages@v6
 
