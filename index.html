@@ -53,6 +53,8 @@
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"></noscript>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<!-- Standard services (17 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
+<script src="js/home-services.js?v=20261117" defer></script>
 <style>
 :root{
   --purple:#5C8A6A;--lime:#2E7D52;--pink:#3D6B50;
@@ -1142,7 +1144,8 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 
       <!-- RATE -->
       <div class="form-g">
-        <label class="form-lbl">Your rate</label>
+        <label class="form-lbl">Your rate for other jobs</label>
+        <div style="font-size:13.5px;color:var(--muted);margin-bottom:10px">For jobs not covered by your standard services below.</div>
         <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:6px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;min-width:120px">
             <span style="font-size:15px;font-weight:800;color:var(--muted)">$</span>
@@ -1156,6 +1159,9 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
           </div>
         </div>
       </div>
+
+      <!-- STANDARD SERVICES (js/home-services.js fills this) -->
+      <div id="hsvc-settings"></div>
 
       <!-- EXPIRY NOTICE -->
       <div style="background:rgba(92,138,106,.06);border:1.5px solid rgba(92,138,106,.18);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:20px;font-size:13.5px;color:var(--muted);font-weight:700;line-height:1.6">
@@ -2973,6 +2979,7 @@ function helperCard(h){
           <div style="font-size:13.5px;color:var(--muted);font-weight:800;flex-shrink:0">View ›</div>
         </div>
         ${cats?`<div style="display:flex;flex-wrap:wrap;gap:4px">${cats}</div>`:''}
+        ${window.hsvcCardLine?hsvcCardLine(h.id):''}
       </div>`;
 }
 
@@ -3052,6 +3059,7 @@ function renderListTabContent(){
           <div style="font-size:13.5px;color:var(--muted);font-weight:800;flex-shrink:0">View ›</div>
         </div>
         ${cats?`<div style="display:flex;flex-wrap:wrap;gap:4px">${cats}</div>`:''}
+        ${window.hsvcCardLine?hsvcCardLine(h.id):''}
         ${distLabel?`<div style="font-size:12.5px;color:var(--muted);font-weight:700">${esc(distLabel)}</div>`:''}
       </div>`;
     }).join('')}</div>`;
@@ -3425,6 +3433,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
         ${cats.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${cats.map(c=>`<span style="font-size:12.5px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:3px 10px">${c}</span>`).join('')}</div>`:''}
         ${prof.helper_bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(prof.helper_bio)}</div>`:''}
         <div style="font-size:14px;font-weight:800;color:var(--lime)">${rateLabel}</div>
+        ${window.hsvcProfileSlot?hsvcProfileSlot(userId):''}
         ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Helper')}')" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Helper</button>`:''}
       </div>`;
     })():''}
@@ -5832,6 +5841,7 @@ function updateProfileHelperBlock(prof){
         ${catsHtml?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">${catsHtml}</div>`:''}
         <button onclick="shareMyHelperPage(null)" class="pf-btn">Share my page</button>
         <button onclick="nav('helper')" class="pf-btn sec">Edit helper profile</button>
+        ${window.hsvcGoSettings?`<button onclick="hsvcGoSettings()" class="pf-btn sec">Standard services ›</button>`:''}
       </div>`;
   } else {
     // Paused or expired
@@ -5964,6 +5974,7 @@ async function openHelperScreen(){
   });
   // own-pin tap with a city-only location → go straight to adding the neighbourhood
   if(hpFocusAreaNext){hpFocusAreaNext=false;if(hpLocVague)hpStartAddArea((String(prof?.helper_address||'').split(',')[0]||'').trim()||'your city');}
+  if(window.hsvcOpenSettings)hsvcOpenSettings(); // Standard services section (js/home-services.js)
 }
 
 function toggleHPCategory(name,id){
@@ -6100,6 +6111,7 @@ async function saveHelperProfile(){
   if(hpGpsPending)return toast('⚠️ Please confirm your GPS address first');
   if(!hpLat||!hpLng)return toast('⚠️ Please select your area from suggestions');
   if(hpLocVague&&!hpLocVagueAck){hpAskArea();return;}
+  if(window.hsvcValidate&&!hsvcValidate())return; // Standard services: each switched-on service needs a price
   const address=document.getElementById('hp-loc').value||'';
   const bio=document.getElementById('hp-bio').value||'';
   const rate=hpRateType==='free'?null:parseFloat(document.getElementById('hp-rate').value)||null;
@@ -6125,6 +6137,7 @@ async function saveHelperProfile(){
   }).eq('id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
   myHomeHasAddr=!!address; // home base = helper address from now on (postJob won't overwrite it)
+  if(window.hsvcSave)await hsvcSave(); // Standard services prices (js/home-services.js)
   toast('✅ Helper profile saved!');
   // No GPS → show jobs around the helper's address, not the Toronto default
   if(!_centerOnHome(hpLat,hpLng,1))loadJobs();
