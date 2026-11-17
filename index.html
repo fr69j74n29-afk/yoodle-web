@@ -1694,6 +1694,11 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 
 <script>
 const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
+// Staging copy (17 Nov 2026): the staging branch is published at yoodle.ca/staging/ (see .github/workflows/deploy.yml).
+// Same database as the live site. On staging: sign-in returns to /staging/, no push signup, and a STAGING label shows.
+const IS_STAGING=location.pathname.startsWith('/staging/');
+const AUTH_RETURN=IS_STAGING?location.origin+'/staging/':location.origin; // live: unchanged (origin)
+if(IS_STAGING)document.addEventListener('DOMContentLoaded',()=>{const b=document.createElement('div');b.textContent='STAGING';b.setAttribute('aria-hidden','true');b.style.cssText='position:fixed;top:max(6px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:99999;background:#DC2626;color:#fff;font:900 10.5px/1 Nunito,sans-serif;letter-spacing:1px;padding:4px 8px;border-radius:6px;pointer-events:none';document.body.appendChild(b);});
 const SUPABASE_ANON = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
 
 const CAT_COLOR = {
@@ -3603,7 +3608,7 @@ function restoreGuestDraft(){
 
 async function signIn(provider) {
   if(!sb)return toast('⚠️ Add Supabase credentials first');
-  await sb.auth.signInWithOAuth({provider,options:{redirectTo:window.location.origin}});
+  await sb.auth.signInWithOAuth({provider,options:{redirectTo:AUTH_RETURN}});
 }
 
 async function sendMagicLink() {
@@ -3613,7 +3618,7 @@ async function sendMagicLink() {
   if(sb){
     btn.disabled=true;btn.textContent='Sending…';
     // Same email contains a 6-digit code AND a link — code works inside the home-screen app / iOS app
-    const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
+    const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:AUTH_RETURN}});
     btn.textContent='Email me a code';
     if(error){btn.disabled=false;return toast('❌ '+error.message);}
   }else{btn.disabled=true;}
@@ -3851,7 +3856,7 @@ async function showApp(){
 
 let oneSignalReady=false;
 async function registerOneSignal(){
-  if(!me||!sb)return;
+  if(!me||!sb||IS_STAGING)return; // staging: no push signup (OneSignal is set up for the live site)
   try{
     window.OneSignalDeferred=window.OneSignalDeferred||[];
     window.OneSignalDeferred.push(async(os)=>{

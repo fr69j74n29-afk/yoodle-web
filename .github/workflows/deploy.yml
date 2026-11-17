@@ -1,11 +1,16 @@
-# Publishes yoodle.ca to GitHub Pages on every push to main.
+# Publishes yoodle.ca to GitHub Pages on every push to main or staging.
+#   main    → https://yoodle.ca/          (the live site)
+#   staging → https://yoodle.ca/staging/  (preview for reviewers; same live database, so test with a test account)
+# Every run builds BOTH branches, so a push to either one republishes the whole site.
 # index.html and js/*.js are minified (comments + extra whitespace removed, local names shortened) in the published copy only;
 # the commented source in the repo is unchanged. All other files are published as they are.
+# Staging copy: <meta name="robots" content="noindex,nofollow"> is added to every page; robots.txt (main) disallows /staging/.
+# This file must be the same on main and staging (whichever branch is pushed, its copy of this file runs).
 name: Deploy site
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
   workflow_dispatch:
 
 permissions:
@@ -25,25 +30,43 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: main
+          path: src-main
+
+      - uses: actions/checkout@v7
+        with:
+          ref: staging
+          path: src-staging
 
       - uses: actions/setup-node@v7
         with:
           node-version: 22
 
-      - name: Build site copy (minify index.html)
+      - name: Build site (main at /, staging at /staging/)
         run: |
-          mkdir _site
-          tar --exclude=./.git --exclude=./.github --exclude=./_site --exclude=./docs --exclude=./supabase -cf - . | tar -xf - -C _site
-          npx --yes html-minifier-terser@7.2.0 --collapse-whitespace --conservative-collapse --remove-comments --minify-css true --minify-js true -o _site/index.html _site/index.html
-          echo "index.html: $(wc -c < index.html) -> $(wc -c < _site/index.html) bytes"
-          # js/*.js (feature files split out of index.html, e.g. js/home-services.js): minified in the
-          # published copy only. Top-level names are kept (index.html calls them by name).
-          if ls js/*.js >/dev/null 2>&1; then
-            for f in js/*.js; do
-              npx --yes terser@5 "$f" --compress --mangle -o "_site/$f"
-              echo "$f: $(wc -c < "$f") -> $(wc -c < "_site/$f") bytes"
-            done
-          fi
+          # build <source dir> <output dir>: copy the site, then minify index.html and js/*.js in the copy
+          build() {
+            src="$1"; out="$2"
+            mkdir -p "$out"
+            (cd "$src" && tar --exclude=./.git --exclude=./.github --exclude=./docs --exclude=./supabase -cf - .) | tar -xf - -C "$out"
+            npx --yes html-minifier-terser@7.2.0 --collapse-whitespace --conservative-collapse --remove-comments --minify-css true --minify-js true -o "$out/index.html" "$out/index.html"
+            echo "$out/index.html: $(wc -c < "$src/index.html") -> $(wc -c < "$out/index.html") bytes"
+            # js/*.js (feature files split out of index.html, e.g. js/home-services.js). Top-level names are kept (index.html calls them by name).
+            if ls "$src"/js/*.js >/dev/null 2>&1; then
+              for f in "$src"/js/*.js; do
+                rel="js/$(basename "$f")"
+                npx --yes terser@5 "$f" --compress --mangle -o "$out/$rel"
+                echo "$out/$rel: $(wc -c < "$f") -> $(wc -c < "$out/$rel") bytes"
+              done
+            fi
+          }
+          build src-main _site
+          build src-staging _site/staging
+          # Staging: keep it out of search results; drop files that only matter at the site root.
+          rm -f _site/staging/CNAME _site/staging/robots.txt
+          find _site/staging -name '*.html' -exec sed -i '0,/<head[^>]*>/s//&<meta name="robots" content="noindex,nofollow">/' {} +
+          echo "staging pages: $(find _site/staging -name '*.html' | wc -l), noindex tagged: $(grep -l 'content="noindex,nofollow"' -r _site/staging --include='*.html' | wc -l)"
 
       - uses: actions/configure-pages@v6
 
