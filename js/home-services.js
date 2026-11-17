@@ -12,7 +12,7 @@
 // hooks (if(window.hsvcX)…), and this file reads index.html globals (sb, me, myProfileId, hpIsVagueText,
 // esc, toast, nav) at call time. If this file fails to load, the app works as before without services.
 
-var HSVC={catP:null,cat:[],opts:[],cache:new Map(),pending:new Set(),fillTimer:null,mine:null,locked:false,from:'profile',saving:false};
+var HSVC={catP:null,cat:[],opts:[],cache:new Map(),pending:new Set(),fillTimer:null,mine:null,locked:false,paused:false,from:'profile',saving:false};
 var HSVC_PT={visit:['Per visit','/visit'],season:['Season','/season'],job:['Per job','/job'],month:['Month','/month'],year:['Year','/year']};
 
 (function(){ // styles live here so index.html stays untouched
@@ -217,11 +217,12 @@ async function hsvcOpenSettings(){
   if(own.error||!cats.length){hsvcGate('Could not load services right now. Please try again in a minute.');return;}
   if(!prof||!prof.helper_address){hsvcGate('Standard services are part of your helper profile. Set up your helper profile first, then come back here to add fixed prices.','Set up helper profile ›','helper');return;}
   HSVC.locked=typeof hpIsVagueText==='function'?hpIsVagueText(prof.helper_address):false;
+  HSVC.paused=!prof.visible_on_map;
   HSVC.mine=own.data||[];
   var mine=HSVC.mine;
   box.innerHTML='<div class="hsvc-set'+(HSVC.locked?' locked':'')+'" id="hsvc-set">'+
     '<div class="sub">Set fixed prices so homeowners near you can book you directly. Leave a price empty if you don\'t offer that option.</div>'+
-    (prof.visible_on_map?'':'<div class="hsvc-note">⏸️ Your helper listing is paused or expired, so neighbours can\'t see these services until you turn it back on.</div>')+
+    (prof.visible_on_map?'':'<div class="hsvc-note">⏸️ Your helper listing is paused or expired, so neighbours can\'t see these services until you resume it.<br><button class="btn-primary" style="margin-top:10px" onclick="hsvcResume()">Resume listing ›</button></div>')+
     '<div class="hsvc-req">🔒 Uses your helper address to match you with homeowners nearby. It\'s never shown.</div>'+
     '<div class="hsvc-lock">📍 Your helper location is only a city. Add your street address to offer standard services.<br><button class="btn-primary" style="margin-top:10px" onclick="nav(\'helper\')">Add street address ›</button></div>'+
     '<div class="hsvc-cards">'+cats.map(function(c){
@@ -253,7 +254,30 @@ async function hsvcSaveClick(){
   HSVC.saving=true;if(b){b.disabled=true;b.textContent='Saving…';}
   var ok=await hsvcSave();
   HSVC.saving=false;if(b){b.disabled=false;b.textContent='Save services';}
-  if(ok){toast('✅ Services saved');hsvcBack();}
+  if(!ok)return;
+  toast('✅ Services saved');
+  var anyOn=!!document.querySelector('.hsvc-card.on');
+  if(HSVC.paused&&anyOn){hsvcAskResume();return;} // paused listing: offer to resume so the services are visible
+  hsvcBack();
+}
+// Resume = the existing helper profile screen (saving it turns the listing back on and renews 90 days)
+function hsvcResume(){var w=document.getElementById('hsvc-resume');if(w)w.remove();nav('helper');}
+function hsvcAskResume(){
+  if(document.getElementById('hsvc-resume'))return;
+  var w=document.createElement('div');w.id='hsvc-resume';
+  w.style.cssText='position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + var(--sab,0px))';
+  w.innerHTML='<div style="width:100%;max-width:420px;background:var(--surface);color:var(--text);border-radius:var(--radius);padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.25);font-family:\'Nunito\',sans-serif">'+
+    '<div style="font-size:28px;line-height:1;margin-bottom:8px">⏸️</div>'+
+    '<div style="font-size:18px;font-weight:800;margin-bottom:6px">Your listing is paused</div>'+
+    '<div style="font-size:15px;font-weight:600;line-height:1.45;margin-bottom:16px">Your services are saved, but neighbours can\'t see them until you resume your helper listing.</div>'+
+    '<div style="display:flex;gap:10px">'+
+      '<button id="hsvc-rs-later" style="flex:1;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--muted);font-family:\'Nunito\',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Later</button>'+
+      '<button onclick="hsvcResume()" style="flex:1;padding:12px;border:none;border-radius:var(--radius-sm);background:var(--btn-a);color:#fff;font-family:\'Nunito\',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Resume listing</button>'+
+    '</div></div>';
+  document.body.appendChild(w);
+  var later=function(){w.remove();hsvcBack();};
+  w.addEventListener('click',function(e){if(e.target===w)later();});
+  w.querySelector('#hsvc-rs-later').addEventListener('click',later);
 }
 function hsvcToggleCard(card){card.classList.toggle('on');hsvcSub(card.getAttribute('data-svc'));}
 function hsvcSub(key){
