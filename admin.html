@@ -1079,6 +1079,39 @@ body::before {
       <div id="conv-rows" style="display:none;margin-top:12px"></div>
     </div>
 
+    <!-- SEND NOTIFICATION (17 Nov 2026) — admin_send_notification(); shows in the app's notifications bell (in-app only, no push) -->
+    <div class="section-title lazy-h" onclick="toggleLazy('notify')">SEND NOTIFICATION <span class="lazy-hint" id="lazy-hint-notify">▸ TAP TO SHOW</span></div>
+    <div id="lazy-notify" style="display:none">
+    <div class="breakdown-card" style="margin-bottom:28px">
+      <label class="ac-lbl" for="nf-audience">Send to</label>
+      <select class="ac-inp" id="nf-audience" onchange="nfAudience()">
+        <option value="user">One member (by email)</option>
+        <option value="helpers">Helpers</option>
+        <option value="all">Everyone</option>
+      </select>
+      <div id="nf-email-wrap">
+        <label class="ac-lbl" for="nf-email">Member's sign-in email</label>
+        <input class="ac-inp" id="nf-email" type="email" autocomplete="off" placeholder="name@example.com">
+      </div>
+      <div id="nf-cat-wrap" style="display:none">
+        <label class="ac-lbl" for="nf-category">Helper category (blank = all helpers)</label>
+        <input class="ac-inp" id="nf-category" type="text" autocomplete="off" placeholder="e.g. Tutoring — exact name, case matters">
+      </div>
+      <label class="ac-lbl" for="nf-kind">Kind</label>
+      <input class="ac-inp" id="nf-kind" type="text" autocomplete="off" maxlength="40" placeholder="e.g. announcement or invite:winter_promo">
+      <div style="font-size:12px;color:var(--muted);margin:-8px 0 14px;line-height:1.5">A kind starting with <b>invite:</b> reaches each person only once, so sending it again only reaches people who don't have it yet.</div>
+      <label class="ac-lbl" for="nf-title">Title <span id="nf-title-n"></span></label>
+      <input class="ac-inp" id="nf-title" type="text" maxlength="120" oninput="nfCount()">
+      <label class="ac-lbl" for="nf-body">Body (optional) <span id="nf-body-n"></span></label>
+      <textarea class="admin-msg-textarea" id="nf-body" maxlength="400" style="min-height:80px;margin-bottom:14px" oninput="nfCount()"></textarea>
+      <label class="ac-lbl" for="nf-link">Link (optional, https://yoodle.ca or a yoodle.ca subdomain)</label>
+      <input class="ac-inp" id="nf-link" type="url" autocomplete="off" placeholder="https://yoodle.ca/...">
+      <label class="ac-lbl" for="nf-link-label">Button label (required with a link)</label>
+      <input class="ac-inp" id="nf-link-label" type="text" maxlength="40" autocomplete="off">
+      <button class="btn-send-admin-msg" id="nf-send" onclick="sendNotification()">Send notification</button>
+    </div>
+    </div>
+
     <!-- MEMBERS & HELPERS BY REGION -->
     <div class="section-title lazy-h" onclick="toggleLazy('regions')">MEMBERS &amp; HELPERS BY REGION <span class="lazy-hint" id="lazy-hint-regions">▸ TAP TO LOAD</span></div>
     <div id="lazy-regions" style="display:none">
@@ -1300,7 +1333,7 @@ function refreshAll() {
 // Regions (+ admin-geo.js ≈300 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
 const LAZY = { regions: loadRegions, onboard: loadOnboardStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
-  reports: loadReports, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended };
+  reports: loadReports, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended, notify: nfCount };
 // After an admin action: reload a section only if it's open; a closed one reloads fresh the next time it's opened.
 function lazyReload(k) {
   if (_lazyOpen[k]) return LAZY[k]();
@@ -2583,6 +2616,64 @@ async function sendAdminMsg() {
 
   btn.disabled = false;
   btn.textContent = 'Send Message';
+}
+
+// ── SEND NOTIFICATION (admin_send_notification, 17 Nov 2026) ──
+// In-app only: rows land in public.notifications and show in the app's bell. No push is sent.
+const NF_LINK_RE = /^https:\/\/([a-z0-9-]+\.)*yoodle\.ca(\/|$)/;   // same rule as the table's check constraint
+
+function nfAudience() {
+  const a = document.getElementById('nf-audience').value;
+  document.getElementById('nf-email-wrap').style.display = a === 'user' ? '' : 'none';
+  document.getElementById('nf-cat-wrap').style.display = a === 'helpers' ? '' : 'none';
+}
+function nfCount() {
+  document.getElementById('nf-title-n').textContent = `(${document.getElementById('nf-title').value.length}/120)`;
+  document.getElementById('nf-body-n').textContent = `(${document.getElementById('nf-body').value.length}/400)`;
+}
+
+async function sendNotification() {
+  const v = id => document.getElementById(id).value.trim();
+  const p = {
+    p_audience: v('nf-audience'), p_kind: v('nf-kind'), p_title: v('nf-title'),
+    p_body: v('nf-body') || null, p_link: v('nf-link') || null, p_link_label: v('nf-link-label') || null,
+    p_email: v('nf-email') || null, p_category: v('nf-category') || null
+  };
+  if (p.p_audience === 'user' && !p.p_email) return adminToast('⚠️ Enter the member\'s email');
+  if (!p.p_kind) return adminToast('⚠️ Kind is required');
+  if (!p.p_title) return adminToast('⚠️ Title is required');
+  if (p.p_link && !NF_LINK_RE.test(p.p_link)) return adminToast('⚠️ Link must be an https://yoodle.ca address');
+  if (!!p.p_link !== !!p.p_link_label) return adminToast('⚠️ Give both a link and a button label, or neither');
+
+  const btn = document.getElementById('nf-send');
+  btn.disabled = true; btn.textContent = 'Checking…';
+  try {
+    // Dry run first: how many people would get it (also checks the email exists).
+    const { data: n, error: dryErr } = await sb.rpc('admin_send_notification', { ...p, p_dry_run: true });
+    if (dryErr) throw dryErr;
+    if (!n) { adminToast('ℹ️ Nobody to send to (no match, or everyone already has this invite)'); return; }
+
+    const who = p.p_audience === 'user' ? esc(p.p_email)
+      : p.p_audience === 'helpers' ? (p.p_category ? 'Helpers in ' + esc(p.p_category) : 'All helpers') : 'Everyone';
+    const ok = await adminConfirm({
+      title: `Send to ${n} ${n === 1 ? 'person' : 'people'}?`, target: '🔔 ' + who,
+      body: `<b>${esc(p.p_title)}</b>${p.p_body ? '<br>' + esc(p.p_body) : ''}${p.p_link ? `<br><span style="color:var(--muted)">${esc(p.p_link_label)} → ${esc(p.p_link)}</span>` : ''}<br><br>It appears in their notifications bell. Sent notifications can't be recalled from here.`,
+      word: 'SEND', button: 'Send notification', danger: p.p_audience !== 'user'
+    });
+    if (!ok) return;
+
+    btn.textContent = 'Sending…';
+    const { data: sent, error } = await sb.rpc('admin_send_notification', { ...p, p_dry_run: false });
+    if (error) throw error;
+    adminToast(`✅ Sent to ${sent} ${sent === 1 ? 'person' : 'people'}`);
+    ['nf-title', 'nf-body', 'nf-link', 'nf-link-label'].forEach(id => document.getElementById(id).value = '');
+    nfCount();
+  } catch (err) {
+    console.error('Send notification error:', err);
+    adminToast('❌ ' + (err.message || 'Failed to send'));
+  } finally {
+    btn.disabled = false; btn.textContent = 'Send notification';
+  }
 }
 
 // ── AUTH STATE HANDLER ──
