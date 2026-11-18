@@ -89,13 +89,13 @@ function hsvcSummary(rows){
     var mine=rows.filter(function(r){return r.service_key===c.key;});
     if(!mine.length)return;
     var min=null,unit='';
-    mine.forEach(function(r){if(r.price!=null&&(min===null||+r.price<min)){min=+r.price;unit=(HSVC_PT[r.price_type]||['',''])[1];}});
+    mine.forEach(function(r){if(r.price!=null&&+r.price>0&&(min===null||+r.price<min)){min=+r.price;unit=(HSVC_PT[r.price_type]||['',''])[1];}});
     var lines=[];
     hsvcOptsFor(c.key).forEach(function(o){
       var rs=mine.filter(function(r){return r.option_key===o.key;});
       if(!rs.length)return;
       if(o.quote_only){lines.push([o.label.replace(/\s*[—-]\s*custom quote$/i,''),'Custom quote']);return;}
-      var txt=(c.price_types||[]).map(function(t){var r=rs.find(function(x){return x.price_type===t&&x.price!=null;});return r?hsvcMoney(r.price)+HSVC_PT[t][1]:null;}).filter(Boolean).join(' · ');
+      var txt=(c.price_types||[]).map(function(t){var r=rs.find(function(x){return x.price_type===t&&x.price!=null&&+x.price>0;});return r?hsvcMoney(r.price)+HSVC_PT[t][1]:null;}).filter(Boolean).join(' · ');
       if(txt)lines.push([o.label,txt]);
     });
     if(!lines.length)return;
@@ -259,7 +259,7 @@ async function hsvcOpenSettings(){
         if(o.quote_only)return '<div class="hsvc-ol">'+esc(o.label.replace(/\s*[—-]\s*custom quote$/i,''))+'</div><div class="hsvc-q" style="grid-column:span '+types.length+'">Custom quote — homeowner messages you</div>';
         return '<div class="hsvc-ol">'+esc(o.label)+'</div>'+types.map(function(t){
           var r=rows.find(function(x){return x.option_key===o.key&&x.price_type===t;});
-          var v=r&&r.price!=null?(+r.price):'';
+          var v=r&&r.price!=null&&+r.price>0?(+r.price):''; // $0 = not offered → show empty
           return '<div class="hsvc-pi"><span>$</span><input inputmode="decimal" maxlength="7" data-s="'+c.key+'" data-o="'+o.key+'" data-t="'+t+'" value="'+v+'" placeholder="—" oninput="hsvcSub(\''+c.key+'\')"></div>';
         }).join('');
       }).join('');
@@ -310,7 +310,7 @@ function hsvcSub(key){
   if(!card||!sm)return;
   if(!card.classList.contains('on')){sm.textContent='Tap to offer';return;}
   var best=null,unit='';
-  card.querySelectorAll('input[data-t]').forEach(function(i){var v=parseFloat(i.value);if(!isNaN(v)&&(best===null||v<best)){best=v;unit=HSVC_PT[i.getAttribute('data-t')][1];}});
+  card.querySelectorAll('input[data-t]').forEach(function(i){var v=parseFloat(i.value);if(!isNaN(v)&&v>0&&(best===null||v<best)){best=v;unit=HSVC_PT[i.getAttribute('data-t')][1];}});
   sm.textContent=best===null?'Add at least one price':'from '+hsvcMoney(best)+unit;
 }
 // Before saving the helper profile: every switched-on service needs at least one valid price.
@@ -323,10 +323,10 @@ function hsvcValidate(){
     c.querySelectorAll('input[data-t]').forEach(function(inp){
       var raw=inp.value.trim();if(!raw)return;
       var v=Number(raw.replace(/^\$/,''));
-      if(isNaN(v)||v<0||v>10000)bad=true;else n++;
+      if(isNaN(v)||v<0||v>10000)bad=true;else if(v>0)n++; // $0 counts as empty (not offered)
     });
     var name=(c.querySelector('.nm')||{}).firstChild;name=name?name.textContent:'a service';
-    if(bad){toast('⚠️ Check the prices for '+name+' (numbers from 0 to 10,000)');c.scrollIntoView({block:'center'});return false;}
+    if(bad){toast('⚠️ Check the prices for '+name+' (numbers up to 10,000)');c.scrollIntoView({block:'center'});return false;}
     if(!n){toast('⚠️ Add at least one price for '+name+', or switch it off');c.scrollIntoView({block:'center'});return false;}
   }
   return true;
@@ -340,7 +340,7 @@ async function hsvcSave(){
     var key=card.getAttribute('data-svc'),on=card.classList.contains('on')&&!locked,svcRows=[];
     card.querySelectorAll('input[data-t]').forEach(function(inp){
       var raw=inp.value.trim();if(!raw)return;
-      var v=Number(raw.replace(/^\$/,''));if(isNaN(v)||v<0||v>10000)return;
+      var v=Number(raw.replace(/^\$/,''));if(isNaN(v)||v<=0||v>10000)return; // $0 = not offered
       svcRows.push({profile_id:pid,service_key:key,option_key:inp.getAttribute('data-o'),price_type:inp.getAttribute('data-t'),price:Math.round(v*100)/100,active:on,updated_at:now});
     });
     if(svcRows.length){ // quote-only options ride along with the service
