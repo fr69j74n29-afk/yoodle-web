@@ -369,6 +369,8 @@ html:not(.ml-css) #map>*{visibility:hidden} /* until maplibre-gl.css has applied
 .pin-dot:active{transform:scale(1.15)}
 .pin-dot.pin-pulse::after{content:'';position:absolute;width:36px;height:36px;border-radius:50%;border:2px solid;animation:pulse 1.5s ease-out infinite;opacity:0}
 @keyframes pulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.2);opacity:0}}
+.chat-loc{display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--surface2);font-size:13.5px;font-weight:800;color:var(--text2);cursor:pointer;flex-shrink:0} /* chat location bar (19 Nov 2026) */
+.chat-loc-ring{width:36px;height:36px;border-radius:50%;border:3px solid var(--orange);animation:pulse 1.2s ease-out 3;pointer-events:none}
 .user-ring{width:20px;height:20px;border-radius:50%;background:rgba(74,158,122,.9);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.5)}
 
 /* ── LIST VIEW ── */
@@ -1246,6 +1248,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       </div>
       <button onclick="closeChat()" style="width:44px;height:44px;border-radius:50%;border:none;background:var(--surface2);color:var(--text);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800">✕</button>
     </div>
+    <div id="chat-loc" class="chat-loc" style="display:none" onclick="viewChatPin()"></div>
     <div id="chat-actions" style="display:none;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)"></div>
     <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch"></div>
     <div id="chat-input-bar" style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;background:var(--surface)">
@@ -5046,6 +5049,24 @@ function safetyTipHtml(){
   if(_tipSeen(activeChatConvId))return`<div class="safety-mini" style="text-align:center;margin:0 0 14px"><span style="display:inline-block;font-size:12.5px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">🛡️ Ask for ID verification or <button class="st-link" onclick="openIdvFromChat()">get yours</button> · <button class="st-link st-rep2" onclick="reportFromChat()">Report</button></span></div>`;
   return`<div class="safety-tip"><b>🛡️ Stay safe on Yoodle</b><p>Before you agree, make sure you both understand the job and how payment will work.</p><p>Keep chatting here until it feels right. Don't share your phone, email or address before then.</p><p>Never send money back, buy gift cards or share verification codes.</p><div class="st-foot"><button class="st-rep" onclick="reportFromChat()">Report</button><button class="st-got" onclick="dismissSafetyTip()">Got it</button></div></div>`;
 }
+// Chat location bar (19 Nov 2026): distance + "View on map" — only for pins already public on the map
+// (open + show_on_map + unexpired job; or helper with visible_on_map + show_on_map). No names, no new data exposed.
+let chatPin=null;
+async function setChatLoc(task,taskId,isPoster,isHO,otherId){
+  let lat=null,lng=null;
+  if(!isPoster&&!isHO){if(task.status==='open'&&task.show_on_map&&(!task.expires_at||Date.parse(task.expires_at)>Date.now())){lat=task.lat;lng=task.lng;}}
+  else if(isPoster&&otherId){const{data:h}=await sb.from('profiles').select('last_lat,last_lng,visible_on_map,show_on_map').eq('id',otherId).maybeSingle();if(h?.visible_on_map&&h.show_on_map){lat=h.last_lat;lng=h.last_lng;}}
+  const oLat=gpsLat||userLat,oLng=gpsLng||userLng;
+  if(activeChatTaskId!==taskId||!lat||!lng||!oLat||!oLng)return;
+  const d=haversineKm(oLat,oLng,lat,lng);chatPin={lat:+lat,lng:+lng};
+  const el=document.getElementById('chat-loc');
+  el.innerHTML=`📍<span style="flex:1">${d<=1?'Within 1 km':`${d<100?d.toFixed(1):Math.round(d)} km away`}</span><span style="color:var(--btn-b)">View on map ›</span>`;
+  el.style.display='flex';
+}
+function viewChatPin(){
+  if(!chatPin||!map)return;const p=chatPin;closeChat();nav('map');
+  setTimeout(()=>{_mapResize();map.flyTo({center:[p.lng,p.lat],zoom:Math.max(map.getZoom(),14)});const r=_htmlMarker('<div class="chat-loc-ring"></div>',36,36,p.lat,p.lng,{z:99});setTimeout(()=>r.remove(),4000);},250);
+}
 function closeChat(){
   closeOv('chat-modal');
   activeChatConvId=null;
@@ -5085,6 +5106,7 @@ async function openChatFromNotification(taskId,convId){
 }
 
 async function openChat(taskId,title,otherName,posterId,otherId,otherRating,convId){
+  chatPin=null;document.getElementById('chat-loc').style.display='none';
   activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;activeChatConvId=convId||null;activeChatOtherName=otherName||'this person';activeChatSafetyTip=false;
   document.getElementById('chat-title').textContent=title;
   const ratingStr=otherRating?` · ★ ${otherRating}`:'';
@@ -5119,7 +5141,7 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   actionsEl.innerHTML='';actionsEl.style.display='none';
   if(!sb||!me)return;
   const pid=myProfileId||me.id;
-  const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id,type').eq('id',taskId).single();
+  const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id,type,lat,lng,show_on_map,expires_at').eq('id',taskId).single();
   if(!task)return;
   // "Yoodle team" thread: no job buttons; the member can hide it
   if(task.type==='admin_note'){
@@ -5133,6 +5155,7 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   const isPoster=task.poster_id===pid;
   const isDoer=task.doer_id===pid;
   const isHO=isHelperContact(task);
+  setChatLoc(task,taskId,isPoster,isHO,otherId);
   // Safety card: every chat except Yoodle team threads (returned above). Add it in place — no second messages fetch.
   if(activeChatTaskId===taskId){activeChatSafetyTip=true;const cm=document.getElementById('chat-messages');if(cm&&!cm.querySelector('.safety-tip,.safety-mini'))cm.insertAdjacentHTML('afterbegin',safetyTipHtml());}
 
