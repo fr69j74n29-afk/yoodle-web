@@ -370,6 +370,7 @@ html:not(.ml-css) #map>*{visibility:hidden} /* until maplibre-gl.css has applied
 .pin-dot.pin-pulse::after{content:'';position:absolute;width:36px;height:36px;border-radius:50%;border:2px solid;animation:pulse 1.5s ease-out infinite;opacity:0}
 @keyframes pulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.2);opacity:0}}
 .chat-loc{display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--surface2);font-size:13.5px;font-weight:800;color:var(--text2);cursor:pointer;flex-shrink:0} /* chat location bar (19 Nov 2026) */
+.chat-back{position:absolute;bottom:84px;left:50%;transform:translateX(-50%);z-index:1000;padding:10px 18px;border-radius:999px;border:none;background:var(--btn-b);color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer}
 .chat-loc-ring{width:36px;height:36px;border-radius:50%;border:3px solid var(--orange);animation:pulse 1.2s ease-out 3;pointer-events:none}
 .user-ring{width:20px;height:20px;border-radius:50%;background:rgba(74,158,122,.9);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.5)}
 
@@ -5051,7 +5052,7 @@ function safetyTipHtml(){
 }
 // Chat location bar (19 Nov 2026): distance + "View on map" — only for pins already public on the map
 // (open + show_on_map + unexpired job; or helper with visible_on_map + show_on_map). No names, no new data exposed.
-let chatPin=null;
+let chatPin=null,chatBackArgs=null;
 async function setChatLoc(task,taskId,isPoster,isHO,otherId){
   let lat=null,lng=null;
   if(!isPoster&&!isHO){if(task.status==='open'&&task.show_on_map&&(!task.expires_at||Date.parse(task.expires_at)>Date.now())){lat=task.lat;lng=task.lng;}}
@@ -5064,7 +5065,9 @@ async function setChatLoc(task,taskId,isPoster,isHO,otherId){
   el.style.display='flex';
 }
 function viewChatPin(){
-  if(!chatPin||!map)return;const p=chatPin;closeChat();nav('map');
+  if(!chatPin||!map)return;const p=chatPin,a=chatBackArgs.slice();a[6]=activeChatConvId||a[6];closeChat();nav('map');
+  const b=document.createElement('button');b.id='chat-back';b.className='chat-back';b.textContent='← Back to chat';
+  b.onclick=()=>{b.remove();openChat(...a);};document.getElementById('app-map').appendChild(b);setTimeout(()=>b.remove(),20000);
   setTimeout(()=>{_mapResize();map.flyTo({center:[p.lng,p.lat],zoom:Math.max(map.getZoom(),14)});const r=_htmlMarker('<div class="chat-loc-ring"></div>',36,36,p.lat,p.lng,{z:99});setTimeout(()=>r.remove(),4000);},250);
 }
 function closeChat(){
@@ -5106,7 +5109,8 @@ async function openChatFromNotification(taskId,convId){
 }
 
 async function openChat(taskId,title,otherName,posterId,otherId,otherRating,convId){
-  chatPin=null;document.getElementById('chat-loc').style.display='none';
+  chatPin=null;document.getElementById('chat-loc').style.display='none';document.getElementById('chat-back')?.remove();
+  chatBackArgs=[taskId,title,otherName,posterId,otherId,otherRating,convId];
   activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;activeChatConvId=convId||null;activeChatOtherName=otherName||'this person';activeChatSafetyTip=false;
   document.getElementById('chat-title').textContent=title;
   const ratingStr=otherRating?` · ★ ${otherRating}`:'';
