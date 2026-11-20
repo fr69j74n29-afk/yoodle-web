@@ -301,7 +301,7 @@ One session, ~5 minutes. End it by leaving the page.
 - [ ] **Share** on a job → iOS share sheet
 - [ ] **Terms** / **FAQ** links on the sign-in screen → yoodle.ca page opens in a sheet
 
-**Appetize limitation (2026-11-20):** the mouse is one finger, so **pinch-to-zoom-out doesn't work** (double-tap zoom-in does). The map has no +/− buttons. In Appetize, use MapLibre's one-finger zoom (double-tap, hold, drag up/down). Confirm pinch zoom on a real iPhone (Sideloadly/TestFlight). Open question: should the app block whole-page zoom (`user-scalable=no` in the app only) so only the map zooms?
+**Appetize limitation (2026-11-20):** the mouse is one finger, so **pinch-to-zoom-out doesn't work** (double-tap zoom-in does). The map has no +/− buttons. In Appetize, use MapLibre's one-finger zoom (double-tap, hold, drag up/down). Confirm pinch zoom on a real iPhone (Sideloadly/TestFlight). Rhea confirmed it was the **map**, so this isn't an app bug and no code change is needed. Optional design idea: +/− map buttons for accessibility. Separate open question: should the app block whole-page zoom (`user-scalable=no` in the app only) so only the map zooms?
 
 ### 7.2 Per-release test checklist
 
