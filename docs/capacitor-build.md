@@ -14,7 +14,7 @@ The things currently waiting on someone. Remove a line when it's done and note i
 
 | # | Action | Who | Why |
 |---|--------|-----|-----|
-| P1 | Supabase → Authentication → URL Configuration → **Redirect URLs**: add `ca.yoodle.app://auth` | Rhea | Google sign-in (and email links) can't return to the app without it. Supabase falls back to the website. |
+| P1 | Supabase → Authentication → URL Configuration → **Redirect URLs**: add `ca.yoodle.app://auth` (exactly, with no `https://` and no trailing slash; also `ca.yoodle.app://**` if needed) → Save | Rhea | Google sign-in (and email links) can't return to the app without it. Supabase falls back to the website. **Confirmed missing in the 2026-11-20 test.** |
 | P2 | GitHub → Settings → Secrets and variables → Actions → **Variables**: `APPETIZE_APP_KEY` = `2atf3cdwym3jkudn7pbf7x7gda` | Repo owner (Roman), or Rhea if given admin | Without it every build creates a new Appetize app instead of updating one. |
 | P3 | Appetize → Apps: delete the older Yoodle apps `xj5rqqzprlq2cbpvp7xxlvtrfu`, `uimifbaisvdwjiwtbe4b22jukm`, `auvftf7pb27umop5fiwvbygyc4` | Rhea | Avoid testing an old build by mistake. |
 | P4 | Run the Phase 2 Appetize checklist (§7.1) on https://appetize.io/app/2atf3cdwym3jkudn7pbf7x7gda | Rhea | Verifies sign-in, links, share, location and keyboard in one short session. |
@@ -357,6 +357,7 @@ Exactly what was run, in order, with the date. Note versions installed and anyth
 | 2026-11-20 | Rhea: app opens on iPhone 14 (Appetize) | — | Decision: ration Appetize minutes until TestFlight. |
 | 2026-11-20 | Phase 2 batch: links, share, location, keyboard | `npm install @capacitor/geolocation@8 @capacitor/share@8 @capacitor/keyboard@8` (→ 8.2.5 / 8.0.3 / 8.0.6). `capacitor.config.json`: `plugins.Keyboard = {resize: "native", resizeOnFullScreen: true}`. `Info.plist`: `NSLocationWhenInUseUsageDescription`. `index.html`: one app-only block after `NATIVE_AUTH_RETURN` that routes existing web APIs to plugins (`window.open`, link clicks, `navigator.share`, `navigator.geolocation`), plus the sign-in GPS refresh now uses `Geolocation.checkPermissions()` in the app. Commit `2340b62` | **Links:** site pages (`/terms`, `faq.html` …) open the live `https://yoodle.ca/...` page in the in-app sheet, other sites open in the sheet too, and `mailto:`/`tel:` go to the system. **Bug caught before testing:** for `capacitor://` URLs, `URL.origin` is `"null"`, so the same-site check compares protocol + host. Verified with a Node test against fake plugins for both `capacitor://localhost` (iOS) and `https://localhost` (Android). **Status-bar overlap:** CSS already pads with `env(safe-area-inset-top)` (`--sat`). The overlap in the screenshot happened with the keyboard open (iOS scrolls the page up), so the fix is the keyboard `resize: native` setting. Re-check without the keyboard (§7.1). |
 | 2026-11-20 | Phase 2 batch build | Run 44787173097 | ✅ Both jobs succeeded (simulator + iPhone `.ipa`). Created a fourth Appetize app `2atf3cdwym3jkudn7pbf7x7gda`. **This is the one to keep (P2, P3).** |
+| 2026-11-20 | Rhea: Google sign-in test (build `2340b62`) | Appetize, iPhone 14 Pro | **Partly working.** ✅ The in-app browser sheet opens and Google accepts the sign-in there. ❌ Afterwards Supabase redirected to **yoodle.ca** inside the sheet (signing in the website, not the app), which means `ca.yoodle.app://auth` isn't on Supabase's Redirect URLs yet (P1). Fix is a Supabase setting only, no new build. Seen in the sheet: the site's Terms of Use acceptance prompt for new accounts (covers the App Store UGC "agree to terms" requirement). |
 | 2026-11-20 | Doc review | Rewrote this document | Fixed out-of-date sections (status, §2.2 build command, folder diagram), section order, resolved decisions O1/O3, added pending actions (§0), branch plan (O8), plugin install status, secrets status and the current test checklist. |
 
 ## 10. Store submission checklist
@@ -367,7 +368,7 @@ The full list was shared in chat on 2026-11-20. Tick items here as they are done
 - [ ] Privacy policy URL (`https://yoodle.ca/privacy.html`). Check that it mentions location, push, ID verification (Stripe) and analytics
 - [ ] Support URL and contact email
 - [ ] In-app account deletion (exists: Settings → Delete my account). Play also needs a web deletion URL
-- [ ] User-generated content safeguards: report, block, terms acceptance and a way to remove content (report and block exist. Check that terms are accepted at sign-up)
+- [ ] User-generated content safeguards: report, block, terms acceptance and a way to remove content (report and block exist. ✅ Terms acceptance at sign-up confirmed 2026-11-20: "Our Terms of Use … zero tolerance for objectionable content or abusive behaviour" with I agree / Not now — sign out)
 - [ ] Demo / review account with sample jobs and chats, plus notes for the reviewer
 - [ ] Screenshots per required device size, icon, short and long description, keywords
 - [ ] Age rating questionnaire
