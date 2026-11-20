@@ -106,3 +106,51 @@ jobs:
               echo "New Appetize app created. Save \`$key\` as the repository variable **APPETIZE_APP_KEY** so future builds update this same app."
             fi
           } | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # Real-iPhone build for Sideloadly (Windows): an UNSIGNED device .ipa. Sideloadly re-signs it with a free Apple Account
+  # when installing over USB (app expires after 7 days; re-install to renew). See docs/capacitor-build.md section 2.3.
+  device:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install Capacitor
+        run: npm ci
+
+      - name: Build web bundle and sync into the iOS project
+        run: |
+          npm run build:www
+          npx cap sync ios
+
+      - name: Build for iPhone (unsigned)
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package Yoodle-device.ipa
+        run: |
+          mkdir -p ipa/Payload
+          cp -R build/Build/Products/Release-iphoneos/App.app ipa/Payload/
+          cd ipa && zip -qry "$GITHUB_WORKSPACE/Yoodle-device.ipa" Payload
+          ls -lh "$GITHUB_WORKSPACE/Yoodle-device.ipa"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Yoodle-iphone-sideloadly
+          path: Yoodle-device.ipa
+          retention-days: 14

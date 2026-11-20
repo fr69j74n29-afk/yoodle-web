@@ -64,6 +64,22 @@ Capgo only swaps the **web bundle**: HTML, CSS, JS and images inside `www/`. A C
 4. Release the store build. Only then upload bundles that rely on it, gated to the new native version.
 5. Record it in the build log (§9) and the decision log (§3).
 
+### 2.3 Testing on a real iPhone from Windows (Sideloadly)
+
+Unlimited testing of the real app on a real iPhone without a Mac or the paid Apple account.
+
+1. The `device` job in `ios-build.yml` builds an **unsigned iPhone build** (`-sdk iphoneos`, Release, `CODE_SIGNING_ALLOWED=NO`) and packages it as **`Yoodle-device.ipa`** (artifact `Yoodle-iphone-sideloadly`, kept 14 days).
+2. On Windows, **Sideloadly** (sideloadly.io, official site only) signs the `.ipa` with a free Apple Account and installs it over USB.
+3. One-time PC setup: install **iTunes and iCloud from apple.com** (the direct-download versions, not the Microsoft Store versions), because Sideloadly needs Apple's USB drivers from them.
+4. One-time iPhone setup: tap **Trust** when you connect the phone. After the first install, go to **Settings → General → VPN & Device Management** → trust your Apple Account. On iOS 16+, also turn on **Settings → Privacy & Security → Developer Mode** (it appears after the first sideload; the phone restarts).
+
+**Rules / limits**
+- **Use a spare Apple Account, not your main one.** Sideloadly needs its password to request a free signing certificate. Turn on two-factor authentication for it.
+- **Change the bundle ID in Sideloadly** (Advanced options → bundle ID, e.g. `ca.yoodle.app.dev`). If a free account registers `ca.yoodle.app`, Apple can block that ID from the paid account later.
+- Free-account limits: the app stops opening after **7 days** (re-install from Sideloadly to renew, and the app's data is kept), at most **3 sideloaded apps** on the phone, and about **10 new app IDs per week**.
+- Push notifications and Sign in with Apple don't work with free signing. They need the paid account and TestFlight.
+- The `ca.yoodle.app://auth` URL scheme is inside the app, so Google sign-in works with the changed bundle ID too.
+
 **Store rules on live updates:** Apple allows downloading web code (guideline 3.3.1(b) / 2.5.2) as long as it doesn't change the app's primary purpose, add features that bypass review, or create a storefront for other code. Google Play has a similar rule. Use Capgo for fixes and features in line with what was reviewed. Anything that would change what reviewers saw substantially, such as new payments or a new major feature area, should go through a store review anyway.
 
 ### 2.2 How iOS is built: GitHub Actions on a GitHub-hosted Mac (no local Mac)
@@ -125,6 +141,8 @@ Add a row whenever a tradeoff is settled. Newest first.
 | Android Studio (includes JDK + SDK + emulator) | Android build and emulator | SDK folder exists at `%LOCALAPPDATA%\Android\Sdk`. Android Studio, `java` and `adb` aren't on PATH yet |
 | `ANDROID_HOME` env var + `platform-tools` on PATH | `npx cap run android`, `adb` | Not set |
 | GitHub Actions `macos` runner (Xcode preinstalled) | iOS build, instead of a local Mac | Free (public repo). Workflow to create in Phase 5 |
+| Sideloadly + iTunes + iCloud (apple.com versions) | Installing the iPhone build on a real iPhone over USB (§2.3) | To do (Rhea) |
+| Spare Apple Account (2FA on) | Free signing in Sideloadly | To do (Rhea) |
 | Appetize.io free account | Running the iOS Simulator build in the browser | Created 2026-11-20 (Rhea). **Free plan: 30 streaming minutes/month, 2 concurrent users, resets on the 1st.** Starter is $59/mo if that's ever not enough. Use iOS sessions for short spot checks and do long testing on the Android emulator. |
 | Apple Developer Program ($99 USD/yr) | TestFlight and App Store | To do. Enrolling as an organization needs a D-U-N-S number, which can take days |
 | Google Play Console ($25 one-off) | Play testing and release | To do. New personal accounts must run a closed test before production (see §10) |
