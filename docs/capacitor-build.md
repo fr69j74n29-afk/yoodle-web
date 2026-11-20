@@ -18,6 +18,8 @@ The things currently waiting on someone. Remove a line when it's done and note i
 | P3 | Appetize → Apps: delete the older Yoodle apps `xj5rqqzprlq2cbpvp7xxlvtrfu`, `uimifbaisvdwjiwtbe4b22jukm`, `auvftf7pb27umop5fiwvbygyc4` | Rhea | Avoid testing an old build by mistake. |
 | P4 | Run the Phase 2 Appetize checklist (§7.1) on https://appetize.io/app/2atf3cdwym3jkudn7pbf7x7gda | Rhea | Verifies sign-in, links, share, location and keyboard in one short session. |
 | P5 | Confirm the branch plan (§3, O8): merge `mobile-app` into `main`, mirror `deploy.yml` on `staging`, delete `mobile-app` | Rhea (+ tell Roman) | So `main` feeds both the site and the app. |
+| P10 | Capgo account + two API keys + `npx @capgo/cli login` on the PC (§2.6) | Rhea | Needed before Phase 3 (live updates). |
+| P11 | GitHub secret `CAPGO_TOKEN` = Capgo **Upload**-mode key | Roman | CI uploads bundles to Capgo. |
 | P6 | Sideloadly setup (§2.4): iTunes + iCloud from apple.com, Sideloadly, a spare Apple Account | Rhea | Unlimited real-iPhone testing until TestFlight. |
 | P7 | Apple Developer Program enrolment (organization needs a D-U-N-S number) | Rhea | TestFlight, push, Sign in with Apple, App Store. |
 | P8 | Install Android Studio (+ JDK) and set `ANDROID_HOME` | Rhea | Unlimited local testing on the Android emulator, and the Android build. |
@@ -156,6 +158,19 @@ Unlimited testing of the real app on a real iPhone without a Mac or the paid App
 6. In App Store Connect → TestFlight, add testers. **Internal testers** (team members, up to 100) get builds right away with no review. **External testers** (anyone by email or public link, up to 10,000) need a short Beta App Review for the first build of each version.
 7. Testers install the **TestFlight** app from the App Store and accept the invite. New builds arrive with a notification and an **Update** button. Builds expire after **90 days**.
 8. Web-only changes then arrive through Capgo live updates without a new TestFlight build (§2.1).
+
+### 2.6 Capgo account setup (live updates)
+
+**Rhea:**
+1. Sign up at **capgo.app** with a long-term Yoodle email (ideally `@yoodle.ca`, not personal). Turn on **2FA**, because this account can push code to every installed app.
+2. Organization **Yoodle** (invite Roman later). If onboarding asks for an app: App ID **`ca.yoodle.app`**, name **Yoodle** (or skip it and Claude registers it with the CLI). Use the free trial. Don't pick a paid plan yet (O7).
+3. Create **two API keys** (Settings → API keys):
+   - **Setup key, mode "All"**: used only from Rhea's PC to register the app and create channels. Never pasted into chat.
+   - **CI key, mode "Upload"**: can upload bundles but not delete or change settings. Sent privately to Roman.
+4. Log in on the PC (stores the key locally in the user profile, never in the repo): `cd mobile` → `npx @capgo/cli@latest login <SETUP_KEY>`.
+5. **Roman:** GitHub secret **`CAPGO_TOKEN`** = the CI key.
+
+**Claude (Phase 3, after the above + the merge into `main`, O8):** install `@capgo/capacitor-updater` (a native change, so one new build) → `notifyAppReady()` early in `index.html` → register `ca.yoodle.app` and create the `production` (manual promotion at first) and `staging` channels → CI upload step (`main` → production, `staging` → staging) → native-version gating (§2.1) → one Appetize test of a live text change.
 
 ## 3. Decisions
 
