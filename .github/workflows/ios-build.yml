@@ -76,19 +76,19 @@ jobs:
           retention-days: 14
 
       # Upload straight to Appetize (docs/capacitor-build.md section 2.2).
-      #   Secret   APPETIZE_API_TOKEN: Appetize → Organization Settings → API Token. Skipped if not set.
+      #   Secret   YOODLE_MOBILE_APPETIZE_TOKEN: Appetize -> Organization Settings -> API Token. Skipped if not set.
       #   Variable APPETIZE_APP_KEY: the Appetize app's public key. Set it to update that same app (same link every time);
       #   if it's empty, a new Appetize app is created and its key is printed in the run summary to save as the variable.
       - name: Upload to Appetize
         if: ${{ github.event_name != 'pull_request' }}
         working-directory: .
         env:
-          APPETIZE_API_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
+          APPETIZE_API_TOKEN: ${{ secrets.YOODLE_MOBILE_APPETIZE_TOKEN }}
           APPETIZE_APP_KEY: ${{ vars.APPETIZE_APP_KEY }}
           NOTE: ${{ github.ref_name }} @ ${{ github.sha }}
         run: |
           if [ -z "$APPETIZE_API_TOKEN" ]; then
-            echo "APPETIZE_API_TOKEN secret not set; skipping Appetize upload." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "YOODLE_MOBILE_APPETIZE_TOKEN secret not set; skipping Appetize upload." | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           url="https://api.appetize.io/v1/apps${APPETIZE_APP_KEY:+/$APPETIZE_APP_KEY}"
@@ -99,7 +99,7 @@ jobs:
             --form-string "note=${NOTE:0:200}"
           key=$(jq -r '.publicKey' appetize.json)
           {
-            echo "### 📱 iOS build on Appetize"
+            echo "### iOS build on Appetize"
             echo "Open: https://appetize.io/app/$key"
             if [ -z "$APPETIZE_APP_KEY" ]; then
               echo ""
