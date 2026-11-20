@@ -3941,6 +3941,7 @@ async function showApp(){
 let oneSignalReady=false;
 async function registerOneSignal(){
   if(!me||!sb||IS_STAGING)return; // staging: no push signup (OneSignal is set up for the live site)
+  if(IS_NATIVE)return; // app: web push can't work in the app's web view; native push (OneSignal SDK) comes later (docs/capacitor-build.md)
   try{
     window.OneSignalDeferred=window.OneSignalDeferred||[];
     window.OneSignalDeferred.push(async(os)=>{
@@ -5333,6 +5334,7 @@ function _pushReady(){
   return window.Notification?.permission==='granted';
 }
 function maybeAskPushAfterSend(){
+  if(IS_NATIVE)return; // app: no push yet, so nothing to ask
   const iosBrowser=isIos()&&!isInStandaloneMode();
   try{
     if(_pushReady())return;
@@ -5610,6 +5612,7 @@ function rtwSheet(day,why){
 // ios = iPhone Safari tab (needs Home Screen) · blocked = denied · ask = never asked · granted = allowed but the server
 // hasn't got the phone's push id yet · unsupported = browser has no notifications
 function _rtwPushState(){
+  if(IS_NATIVE)return 'app'; // app: native push not added yet
   if(isIos()&&!isInStandaloneMode())return 'ios';
   if(!('Notification' in window))return 'unsupported';
   const p=Notification.permission;
@@ -5622,7 +5625,9 @@ const RTW_PUSH={
     btn:"I've allowed them — turn on",act:'recheck',later:true},
   ios:{warn:'📲 On iPhone, add Yoodle to your Home Screen first',p:'iPhone only sends notifications to apps on the Home Screen. It takes 10 seconds:',
     steps:['Tap <b>Share</b> at the bottom of Safari','Tap <b>Add to Home Screen</b> → <b>Add</b>','Open <b>Yoodle</b> from your Home Screen and tap <b>Ready to work</b> again'],btn:'Got it',act:'close'},
-  unsupported:{warn:"🔕 This browser can't show notifications",p:'Open yoodle.ca in Chrome or Safari to use Ready to work.',btn:'Got it',act:'close'}
+  unsupported:{warn:"🔕 This browser can't show notifications",p:'Open yoodle.ca in Chrome or Safari to use Ready to work.',btn:'Got it',act:'close'},
+  // App, until native push is added (docs/capacitor-build.md, Phase 5)
+  app:{warn:'🔔 Notifications are coming to the Yoodle app soon',p:'Ready to work sends one reminder each evening, so it needs notifications. Until they arrive in the app, you can turn it on at yoodle.ca.',btn:'Got it',act:'close'}
 };
 function rtwPushSheet(day,note){
   const st=_rtwPushState();
@@ -6491,12 +6496,14 @@ function renderStars(n){
 }
 
 function isIos(){return/iphone|ipad|ipod/i.test(navigator.userAgent);}
-function isInStandaloneMode(){return window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone===true;}
+// App: it's already installed, so never show "Add to Home Screen" steps
+function isInStandaloneMode(){return IS_NATIVE||window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone===true;}
 
 function updateNotifNudge(){
   const nudge=document.getElementById('notif-nudge');
   const nudgeText=document.getElementById('notif-nudge-text');
   if(!nudge)return;
+  if(IS_NATIVE){nudge.style.display='none';return;} // app: no push yet, so no "enable notifications" nudge
   const granted=window.Notification?.permission==='granted';
   const iosNotReady=isIos()&&!isInStandaloneMode();
   if(granted&&!iosNotReady){
@@ -6510,6 +6517,7 @@ function updateNotifNudge(){
 }
 
 async function requestNotifPermission(){
+  if(IS_NATIVE){nav('profile');return;} // app: Profile explains notifications are coming soon
   if(isIos()&&!isInStandaloneMode()){nav('profile');return;}
   if(window.Notification?.permission==='denied'){nav('profile');return;}
   if(window.Notification?.permission==='granted'){updateNotifNudge();return;}
@@ -6535,7 +6543,10 @@ function updateNotifTip(){
   const tip=document.getElementById('notif-tip');
   const body=document.getElementById('notif-tip-body');
   if(!tip||!body)return;
-  if(isIos()&&!isInStandaloneMode()){
+  if(IS_NATIVE){
+    tip.style.display='block';
+    body.innerHTML='Notifications are coming to the Yoodle app soon. Until then, new messages and alerts show up here when you open the app.';
+  } else if(isIos()&&!isInStandaloneMode()){
     tip.style.display='block';
     body.innerHTML='On iPhone, push notifications require adding Yoodle to your home screen.<br><br>Tap <strong style="color:var(--text)">Share →</strong> then <strong style="color:var(--text)">Add to Home Screen</strong>, then open the app from your home screen icon.';
   } else if(isIos()&&isInStandaloneMode()){
