@@ -1,0 +1,15 @@
+node_modules/
+www/
+# iOS build output (CI and local)
+build/
+ios/App/Pods/
+ios/DerivedData/
+*.xcuserstate
+xcuserdata/
+# Android build output
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.keystore
+*.jks

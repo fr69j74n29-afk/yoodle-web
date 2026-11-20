@@ -1,0 +1,9 @@
+{
+  "appId": "ca.yoodle.app",
+  "appName": "Yoodle",
+  "webDir": "www",
+  "backgroundColor": "#0A0A0A",
+  "ios": {
+    "contentInset": "never"
+  }
+}

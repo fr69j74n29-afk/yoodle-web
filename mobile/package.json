@@ -1,0 +1,19 @@
+{
+  "name": "yoodle-mobile",
+  "version": "1.0.0",
+  "description": "Yoodle iOS/Android app (Capacitor)",
+  "scripts": {
+    "build:www": "node scripts/build-www.mjs",
+    "sync": "npm run build:www && cap sync",
+    "sync:ios": "npm run build:www && cap sync ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/ios": "^8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.2"
+  },
+  "private": "true"
+}

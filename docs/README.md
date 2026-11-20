@@ -4,4 +4,4 @@ Internal documentation for the yoodle.ca codebase. This folder is **not** publis
 
 ## Index
 
-_No documents yet._
+- [Capacitor mobile app build](capacitor-build.md): plan, plugins, testing, build log and store checklist for the iOS and Android apps

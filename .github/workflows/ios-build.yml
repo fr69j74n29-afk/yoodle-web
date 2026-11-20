@@ -1,0 +1,76 @@
+# Builds the Yoodle iOS app on a GitHub-hosted Mac (no local Mac needed; free because the repo is public).
+# Stage A (now): an UNSIGNED iOS Simulator build, so no Apple Developer account is needed.
+#   Output: artifact "Yoodle-ios-simulator" -> Yoodle-sim.zip (contains App.app). Upload that zip to Appetize.io to run it in a browser.
+# Stage B (later, after the paid Apple account): add a signed job that uploads to TestFlight.
+# Details: docs/capacitor-build.md section 2.2. Repo is public, so logs are public: never print secrets.
+name: iOS build
+
+on:
+  push:
+    branches: [mobile-app, main, staging]
+    paths:
+      - 'mobile/**'
+      - 'index.html'
+      - 'js/**'
+      - '*.html'
+      - '.github/workflows/ios-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Tool versions
+        run: |
+          xcodebuild -version
+          node -v
+
+      - name: Install Capacitor
+        run: npm ci
+
+      - name: Build web bundle and sync into the iOS project
+        run: |
+          npm run build:www
+          npx cap sync ios
+
+      - name: Build for iOS Simulator (unsigned)
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Zip App.app
+        run: |
+          cd build/Build/Products/Debug-iphonesimulator
+          ditto -c -k --sequesterRsrc --keepParent App.app "$GITHUB_WORKSPACE/Yoodle-sim.zip"
+          ls -lh "$GITHUB_WORKSPACE/Yoodle-sim.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Yoodle-ios-simulator
+          path: Yoodle-sim.zip
+          retention-days: 14

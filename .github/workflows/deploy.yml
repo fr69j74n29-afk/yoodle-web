@@ -49,7 +49,7 @@ jobs:
           build() {
             src="$1"; out="$2"
             mkdir -p "$out"
-            (cd "$src" && tar --exclude=./.git --exclude=./.github --exclude=./docs --exclude=./supabase -cf - .) | tar -xf - -C "$out"
+            (cd "$src" && tar --exclude=./.git --exclude=./.github --exclude=./docs --exclude=./supabase --exclude=./mobile -cf - .) | tar -xf - -C "$out"
             npx --yes html-minifier-terser@7.2.0 --collapse-whitespace --conservative-collapse --remove-comments --minify-css true --minify-js true -o "$out/index.html" "$out/index.html"
             echo "$out/index.html: $(wc -c < "$src/index.html") -> $(wc -c < "$out/index.html") bytes"
             # js/*.js (feature files split out of index.html, e.g. js/home-services.js). Top-level names are kept (index.html calls them by name).
