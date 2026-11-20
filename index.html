@@ -1695,6 +1695,55 @@ const AUTH_RETURN=IS_STAGING?location.origin+'/staging/':location.origin; // liv
 // In the app, sign-in returns through the deep link below (registered in ios/App/App/Info.plist; must be in Supabase Auth → Redirect URLs).
 const IS_NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const NATIVE_AUTH_RETURN='ca.yoodle.app://auth';
+// App only (20 Nov 2026): route the page's existing web APIs to Capacitor plugins, so the rest of this file stays the same
+// as the website. Plugins are injected by the app at page start (window.Capacitor.Plugins.*).
+if(IS_NATIVE)(function(){
+  const P=window.Capacitor.Plugins||{};
+  // Links/windows: site pages (/terms, /faq, faq.html …) open the live yoodle.ca page, other sites open in the in-app browser
+  // sheet. Without this Capacitor sends them to Safari, and site pages bundled in the app would just show the home screen.
+  // Compare scheme+host, not .origin: for capacitor:// URLs the URL parser's .origin is "null"
+  const isApp=u=>u.protocol===location.protocol&&u.host===location.host;
+  const openExt=url=>{
+    if(!P.Browser)return false;
+    let u;try{u=new URL(url,location.href);}catch(e){return false;}
+    if(isApp(u))u=new URL(u.pathname+u.search+u.hash,'https://yoodle.ca');
+    else if(!/^https?:$/.test(u.protocol))return false; // mailto:, tel: … → the system handles them
+    P.Browser.open({url:u.href}).catch(()=>{});return true;
+  };
+  window.open=function(url){
+    // window.open('') then w.location.replace(dest) (tutor handoff): hand back a stand-in window that opens dest in the sheet
+    if(!url){const w={closed:false,opener:null,close(){w.closed=true;},location:{replace:d=>{w.closed=true;openExt(d);}}};return w;}
+    openExt(url);return null;
+  };
+  document.addEventListener('click',e=>{
+    if(e.defaultPrevented)return; // a handler already dealt with it (e.g. openTutorSignedIn)
+    const a=e.target&&e.target.closest&&e.target.closest('a[href]');if(!a)return;
+    const href=a.getAttribute('href');if(!href||href[0]==='#'||/^javascript:/i.test(href))return;
+    let u;try{u=new URL(href,location.href);}catch(_){return;}
+    if(isApp(u)&&(u.pathname==='/'||u.pathname==='/index.html'))return; // stays in the app
+    if(openExt(u.href))e.preventDefault();
+  });
+  // Share sheet (Android WebView has no navigator.share; iOS gets the native sheet)
+  if(P.Share){
+    Object.defineProperty(navigator,'share',{configurable:true,value:d=>P.Share.share({title:d&&d.title,text:d&&d.text,url:d&&d.url}).then(()=>{},err=>{const x=new Error((err&&err.message)||'Share cancelled');x.name='AbortError';throw x;})});
+    Object.defineProperty(navigator,'canShare',{configurable:true,value:()=>true});
+  }
+  // Location: the native permission prompt names Yoodle (Info.plist purpose text) instead of WebKit's "localhost wants your location"
+  if(P.Geolocation){
+    const G=P.Geolocation,watches={};let n=0;
+    const err=e=>{const m=(e&&e.message)||'Location unavailable';return{code:/denied|permission/i.test(m)?1:/time/i.test(m)?3:2,message:m,PERMISSION_DENIED:1,POSITION_UNAVAILABLE:2,TIMEOUT:3};};
+    Object.defineProperty(navigator,'geolocation',{configurable:true,value:{
+      getCurrentPosition(ok,fail,o){G.getCurrentPosition(o||{}).then(ok,e=>fail&&fail(err(e)));},
+      watchPosition(ok,fail,o){
+        const k=++n;watches[k]=undefined;
+        Promise.resolve(G.watchPosition(o||{},(p,e)=>{if(e){if(fail)fail(err(e));}else if(p)ok(p);}))
+          .then(id=>{if(watches[k]===null)G.clearWatch({id});else watches[k]=id;},e=>fail&&fail(err(e)));
+        return k;
+      },
+      clearWatch(k){const id=watches[k];if(id)G.clearWatch({id});watches[k]=null;}
+    }});
+  }
+})();
 if(IS_STAGING)document.addEventListener('DOMContentLoaded',()=>{const b=document.createElement('div');b.textContent='STAGING';b.setAttribute('aria-hidden','true');b.style.cssText='position:fixed;top:max(6px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:99999;background:#DC2626;color:#fff;font:900 10.5px/1 Nunito,sans-serif;letter-spacing:1px;padding:4px 8px;border-radius:6px;pointer-events:none';document.body.appendChild(b);});
 const SUPABASE_ANON = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
 
@@ -3846,7 +3895,10 @@ async function showApp(){
   // Permissions API may be absent on older iOS Safari (<16) → try/catch falls back
   // to today's tap-to-locate behaviour.
   try{
-    if(!isDemoAccount&&navigator.permissions&&navigator.geolocation&&!_restoreCachedGps()){
+    const _GP=IS_NATIVE&&window.Capacitor.Plugins.Geolocation; // app: ask iOS/Android, not WebKit's own permission state
+    if(_GP&&!isDemoAccount&&!_restoreCachedGps()){
+      _GP.checkPermissions().then(p=>{if(p&&p.location==='granted')locateUser(true);}).catch(()=>{});
+    }else if(!IS_NATIVE&&!isDemoAccount&&navigator.permissions&&navigator.geolocation&&!_restoreCachedGps()){
       navigator.permissions.query({name:'geolocation'}).then(p=>{
         if(p.state==='granted')locateUser(true);
       }).catch(()=>{});
