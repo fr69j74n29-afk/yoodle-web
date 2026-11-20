@@ -232,6 +232,7 @@ Each phase ends with something you can test. The commands actually run go in the
 - [ ] Standalone checks: `isInStandaloneMode()` / `isIos()` drive "add to home screen" and web-push prompts. In the app, treat native as installed and hide PWA prompts.
 - [ ] Push: OneSignal native SDK when `IS_NATIVE`, keeping the same `OneSignal.login(userId)` mapping (iOS needs the paid account)
 - [ ] CORS: check Supabase Edge Functions accept the `capacitor://localhost` and `https://localhost` origins (ID verification, etc.)
+- [ ] Stripe Checkout / Identity: in the app, open in the in-app sheet and return to the app (currently `location.href` → Safari → website). Depends on O6.
 - [ ] Android back button: close the open sheet/chat, then go back a tab, then exit
 
 **Phase 3: Live updates (Capgo)**
@@ -298,8 +299,9 @@ One session, ~5 minutes. End it by leaving the page.
 - [ ] **Continue with Google** → sheet slides up → sign in → "Open in Yoodle?" → **Open** → signed in inside the app (needs P1)
 - [ ] Location button → prompt "Yoodle uses your location…" → Allow → map moves (set a fake location from the Appetize toolbar pin)
 - [ ] Open a chat, tap the message box: is the input visible above the keyboard?
-- [ ] **Share** on a job → iOS share sheet
-- [ ] **Terms** / **FAQ** links on the sign-in screen → yoodle.ca page opens in a sheet
+- [x] **Share** on a job → iOS share sheet ✅ (link was `capacitor://localhost/…`, fixed in the next build. Re-check that it shows `https://yoodle.ca/job.html?job=…`)
+- [x] **Terms** / **FAQ** links → yoodle.ca page opens in a sheet ✅ (FAQ checked)
+- [ ] Google sign-in, waiting on P1 (Roman)
 
 **Appetize limitation (2026-11-20):** the mouse is one finger, so **pinch-to-zoom-out doesn't work** (double-tap zoom-in does). The map has no +/− buttons. In Appetize, use MapLibre's one-finger zoom (double-tap, hold, drag up/down). Confirm pinch zoom on a real iPhone (Sideloadly/TestFlight). Rhea confirmed it was the **map**, so this isn't an app bug and no code change is needed. Optional design idea: +/− map buttons for accessibility. Separate open question: should the app block whole-page zoom (`user-scalable=no` in the app only) so only the map zooms?
 
@@ -360,6 +362,8 @@ Exactly what was run, in order, with the date. Note versions installed and anyth
 | 2026-11-20 | Phase 2 batch: links, share, location, keyboard | `npm install @capacitor/geolocation@8 @capacitor/share@8 @capacitor/keyboard@8` (→ 8.2.5 / 8.0.3 / 8.0.6). `capacitor.config.json`: `plugins.Keyboard = {resize: "native", resizeOnFullScreen: true}`. `Info.plist`: `NSLocationWhenInUseUsageDescription`. `index.html`: one app-only block after `NATIVE_AUTH_RETURN` that routes existing web APIs to plugins (`window.open`, link clicks, `navigator.share`, `navigator.geolocation`), plus the sign-in GPS refresh now uses `Geolocation.checkPermissions()` in the app. Commit `2340b62` | **Links:** site pages (`/terms`, `faq.html` …) open the live `https://yoodle.ca/...` page in the in-app sheet, other sites open in the sheet too, and `mailto:`/`tel:` go to the system. **Bug caught before testing:** for `capacitor://` URLs, `URL.origin` is `"null"`, so the same-site check compares protocol + host. Verified with a Node test against fake plugins for both `capacitor://localhost` (iOS) and `https://localhost` (Android). **Status-bar overlap:** CSS already pads with `env(safe-area-inset-top)` (`--sat`). The overlap in the screenshot happened with the keyboard open (iOS scrolls the page up), so the fix is the keyboard `resize: native` setting. Re-check without the keyboard (§7.1). |
 | 2026-11-20 | Phase 2 batch build | Run 44787173097 | ✅ Both jobs succeeded (simulator + iPhone `.ipa`). Created a fourth Appetize app `2atf3cdwym3jkudn7pbf7x7gda`. **This is the one to keep (P2, P3).** |
 | 2026-11-20 | Rhea: Google sign-in test (build `2340b62`) | Appetize, iPhone 14 Pro | **Partly working.** ✅ The in-app browser sheet opens and Google accepts the sign-in there. ❌ Afterwards Supabase redirected to **yoodle.ca** inside the sheet (signing in the website, not the app), which means `ca.yoodle.app://auth` isn't on Supabase's Redirect URLs yet (P1). Fix is a Supabase setting only, no new build. Seen in the sheet: the site's Terms of Use acceptance prompt for new accounts (covers the App Store UGC "agree to terms" requirement). |
+| 2026-11-20 | Rhea: share + FAQ test (build `2340b62`) | Appetize | ✅ **FAQ** opens the live yoodle.ca page in the in-app sheet (Done / yoodle.ca bar). ✅ **Share** opens the native iOS share sheet. ❌ The shared job link was `capacitor://localhost/job.html?job=…` (dead link for anyone receiving it). |
+| 2026-11-20 | Fix shared job link + "Become a PRO" | `index.html`: `shareJob()` uses `https://yoodle.ca` in the app (`IS_NATIVE ? 'https://yoodle.ca' : window.location.origin`). `fsBecomePro()` opens `pro.yoodle.ca` in the in-app sheet in the app (it used `location.href`, which Capacitor would throw out to Safari) and resets the Continue button | A search for `location.origin`/`location.href` found these were the only two. The other share links already hard-code `https://yoodle.ca`. Website behaviour unchanged. **Found, not fixed:** Stripe Checkout / Stripe Identity (`window.location.href = b.url`) would also leave the app for Safari and return to the website. Left until the ID-verification payment decision (O6), because in-app purchase rules may change this flow anyway. |
 | 2026-11-20 | Doc review | Rewrote this document | Fixed out-of-date sections (status, §2.2 build command, folder diagram), section order, resolved decisions O1/O3, added pending actions (§0), branch plan (O8), plugin install status, secrets status and the current test checklist. |
 
 ## 10. Store submission checklist

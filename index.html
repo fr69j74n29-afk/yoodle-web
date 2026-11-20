@@ -2191,6 +2191,8 @@ function fsClear(){if(psTrade)psPick(null);else hsPick(null);}
 async function fsBecomePro(){
   const g=document.getElementById('fs-go');if(g){g.disabled=true;g.textContent='Opening…';}
   try{if(sb&&me)await Promise.race([sb.rpc('log_search',{p_category:'pro:become',p_helpers:null,p_radius:Math.round(RADIUS_KM)||0}),new Promise(r=>setTimeout(r,1200))]);}catch(e){}
+  // App: open it in the in-app browser sheet (a page navigation would be thrown out to Safari) and reset the button
+  if(IS_NATIVE){window.open('https://pro.yoodle.ca/');if(g){g.disabled=false;g.textContent='Continue';}return;}
   window.location.href='https://pro.yoodle.ca/';
 }
 function hsPick(k){
@@ -4287,7 +4289,8 @@ function closeModal(e){if(e.target.id==='modal')closeOv('modal');}
 
 async function shareJob(){
   if(!activeJob)return;
-  const url=`${window.location.origin}/job.html?job=${activeJob.id}`;
+  // App: the page's own origin is capacitor://localhost (iOS) / https://localhost (Android), so share the public site link
+  const url=`${IS_NATIVE?'https://yoodle.ca':window.location.origin}/job.html?job=${activeJob.id}`;
   const title=activeJob.title||'Local job on Yoodle';
   const text=isAgencyJob(activeJob)?`Job opening near you: "${title}". See it on Yoodle.`:`Someone near you needs help: "${title}". Apply free on Yoodle.`;
   if(navigator.share){
