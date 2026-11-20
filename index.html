@@ -1691,6 +1691,10 @@ const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
 // Same database as the live site. On staging: sign-in returns to /staging/, no push signup, and a STAGING label shows.
 const IS_STAGING=location.pathname.startsWith('/staging/');
 const AUTH_RETURN=IS_STAGING?location.origin+'/staging/':location.origin; // live: unchanged (origin)
+// Native app (Capacitor iOS/Android, 20 Nov 2026, docs/capacitor-build.md). Always false on the website.
+// In the app, sign-in returns through the deep link below (registered in ios/App/App/Info.plist; must be in Supabase Auth → Redirect URLs).
+const IS_NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+const NATIVE_AUTH_RETURN='ca.yoodle.app://auth';
 if(IS_STAGING)document.addEventListener('DOMContentLoaded',()=>{const b=document.createElement('div');b.textContent='STAGING';b.setAttribute('aria-hidden','true');b.style.cssText='position:fixed;top:max(6px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:99999;background:#DC2626;color:#fff;font:900 10.5px/1 Nunito,sans-serif;letter-spacing:1px;padding:4px 8px;border-radius:6px;pointer-events:none';document.body.appendChild(b);});
 const SUPABASE_ANON = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
 
@@ -2345,7 +2349,11 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  // App: PKCE flow, so the deep link carries a one-time ?code= (exchanged below) instead of tokens in the URL. Website: unchanged.
+  sb = IS_NATIVE
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {auth:{flowType:'pkce',detectSessionInUrl:false}})
+    : window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  if(IS_NATIVE)_nativeAuthInit();
   if(window._renewToken)handleRenewLink(window._renewToken);
   loadVerifiedIds(); // ID verified badges (public list, signed in or not)
   // Start-up once per signed-in user. Supabase also fires auth events on token refresh (~hourly) and tab focus,
@@ -3601,7 +3609,35 @@ function restoreGuestDraft(){
 
 async function signIn(provider) {
   if(!sb)return toast('⚠️ Add Supabase credentials first');
+  if(IS_NATIVE){
+    // App: Google blocks sign-in inside app web views, and Capacitor would bounce the page out to Safari (signing in the website, not the app).
+    // Open it in the in-app browser sheet instead; Supabase then redirects to ca.yoodle.app://auth and _nativeAuthInit finishes it.
+    const{data,error}=await sb.auth.signInWithOAuth({provider,options:{redirectTo:NATIVE_AUTH_RETURN,skipBrowserRedirect:true}});
+    if(error||!data?.url)return toast('❌ '+(error?.message||'Could not start sign-in'));
+    await window.Capacitor.Plugins.Browser.open({url:data.url});
+    return;
+  }
   await sb.auth.signInWithOAuth({provider,options:{redirectTo:AUTH_RETURN}});
+}
+// App only: finish sign-in when Supabase redirects to ca.yoodle.app://auth (app already open, or launched by the link).
+// ?code= → PKCE exchange; #access_token= (older links) → setSession. onAuthStateChange then starts the app as on the website.
+function _nativeAuthInit(){
+  const P=window.Capacitor.Plugins;
+  if(!P||!P.App)return;
+  const handle=async url=>{
+    if(!url||!url.startsWith(NATIVE_AUTH_RETURN))return;
+    if(P.Browser)P.Browser.close().catch(()=>{}); // close the sign-in sheet (iOS)
+    let u;try{u=new URL(url);}catch(e){return;}
+    const q=u.searchParams,h=new URLSearchParams(u.hash.slice(1));
+    const err=q.get('error_description')||h.get('error_description');
+    if(err)return toast('❌ '+err);
+    const code=q.get('code');
+    if(code){const{error}=await sb.auth.exchangeCodeForSession(code);if(error)toast('❌ '+error.message);return;}
+    const at=h.get('access_token'),rt=h.get('refresh_token');
+    if(at&&rt){const{error}=await sb.auth.setSession({access_token:at,refresh_token:rt});if(error)toast('❌ '+error.message);}
+  };
+  P.App.addListener('appUrlOpen',e=>handle(e&&e.url));
+  if(P.App.getLaunchUrl)P.App.getLaunchUrl().then(r=>handle(r&&r.url)).catch(()=>{});
 }
 
 async function sendMagicLink() {
@@ -3611,7 +3647,8 @@ async function sendMagicLink() {
   if(sb){
     btn.disabled=true;btn.textContent='Sending…';
     // Same email contains a 6-digit code AND a link — code works inside the home-screen app / iOS app
-    const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:AUTH_RETURN}});
+    // App: the email's link opens the app through the deep link (works when tapped on the same phone); the 6-digit code works everywhere
+    const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:IS_NATIVE?NATIVE_AUTH_RETURN:AUTH_RETURN}});
     btn.textContent='Email me a code';
     if(error){btn.disabled=false;return toast('❌ '+error.message);}
   }else{btn.disabled=true;}
