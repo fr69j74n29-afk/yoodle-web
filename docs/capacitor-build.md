@@ -14,7 +14,7 @@ The things currently waiting on someone. Remove a line when it's done and note i
 
 | # | Action | Who | Why |
 |---|--------|-----|-----|
-| P1 | Supabase → Authentication → URL Configuration → **Redirect URLs**: add `ca.yoodle.app://auth` (exactly, with no `https://` and no trailing slash; also `ca.yoodle.app://**` if needed) → Save | Rhea | Google sign-in (and email links) can't return to the app without it. Supabase falls back to the website. **Confirmed missing in the 2026-11-20 test.** |
+| P1 | Supabase → Authentication → URL Configuration → **Redirect URLs**: add `ca.yoodle.app://auth` (exactly, with no `https://` and no trailing slash; also `ca.yoodle.app://**` if needed) → Save | **Roman** (Rhea doesn't have permission to change Supabase Auth settings. Waiting on him, 2026-11-20) | Google sign-in (and email links) can't return to the app without it. Supabase falls back to the website. **Confirmed missing in the 2026-11-20 test.** Until it's done, test the app with the **email code** sign-in. After it's done, re-test Google in Appetize (no new build needed). |
 | P2 | GitHub → Settings → Secrets and variables → Actions → **Variables**: `APPETIZE_APP_KEY` = `2atf3cdwym3jkudn7pbf7x7gda` | Repo owner (Roman), or Rhea if given admin | Without it every build creates a new Appetize app instead of updating one. |
 | P3 | Appetize → Apps: delete the older Yoodle apps `xj5rqqzprlq2cbpvp7xxlvtrfu`, `uimifbaisvdwjiwtbe4b22jukm`, `auvftf7pb27umop5fiwvbygyc4` | Rhea | Avoid testing an old build by mistake. |
 | P4 | Run the Phase 2 Appetize checklist (§7.1) on https://appetize.io/app/2atf3cdwym3jkudn7pbf7x7gda | Rhea | Verifies sign-in, links, share, location and keyboard in one short session. |
@@ -322,7 +322,7 @@ Keep secrets out of the repo. Record *where* each one lives, not its value. On t
 |------------------|----------|--------|
 | Appetize API token | GitHub Actions secret `YOODLE_MOBILE_APPETIZE_TOKEN` | ✅ Added 2026-11-20 |
 | Appetize app key (not secret) | GitHub Actions **variable** `APPETIZE_APP_KEY` | Pending (P2) |
-| Supabase redirect URL `ca.yoodle.app://auth` | Supabase → Authentication → URL Configuration | Pending (P1) |
+| Supabase redirect URL `ca.yoodle.app://auth` | Supabase → Authentication → URL Configuration (needs Roman's Supabase access) | Pending (P1, waiting on Roman) |
 | Capgo API key | GitHub Actions secret `CAPGO_TOKEN` | Phase 3 |
 | App Store Connect API key (key ID, issuer ID, `.p8`) | GitHub Actions secrets | After P7 |
 | Android upload keystore + passwords | To decide: keep it **backed up**, because losing it blocks Play updates unless Play App Signing is used (recommended) | Later |
