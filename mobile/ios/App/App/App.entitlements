@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Push notifications (OneSignal). Only used by signed builds (TestFlight / App Store); the unsigned CI builds
+	     for Appetize and Sideloadly skip signing, so this has no effect there. Xcode switches it to "production"
+	     when it exports an App Store / TestFlight build. -->
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>

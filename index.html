@@ -56,6 +56,7 @@
 <!-- Standard services (17 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
 <script src="js/home-services.js?v=20261118a" defer></script>
 <script src="js/native-app.js?v=20261120a" defer></script>
+<script src="js/native-push.js?v=20261121a" defer></script>
 <style>
 :root{
   --purple:#5C8A6A;--lime:#2E7D52;--pink:#3D6B50;
@@ -3792,6 +3793,7 @@ async function confirmDeleteAccount(){
   toast('Your account has been deleted');
 }
 function oneSignalLogout(){
+  if(IS_NATIVE){try{npLogout();}catch(e){}return;} // app: native SDK (js/native-push.js)
   try{if(oneSignalReady&&window.OneSignalDeferred)window.OneSignalDeferred.push(async(os)=>{try{await os.logout();}catch(e){}});}catch(e){}
 }
 async function signOut(){oneSignalLogout();if(sb)await sb.auth.signOut();else showAuthScreen();}
@@ -3953,7 +3955,9 @@ async function showApp(){
 let oneSignalReady=false;
 async function registerOneSignal(){
   if(!me||!sb||IS_STAGING)return; // staging: no push signup (OneSignal is set up for the live site)
-  if(IS_NATIVE)return; // app: web push can't work in the app's web view; native push (OneSignal SDK) comes later (docs/capacitor-build.md)
+  // App: web push can't work in the app's web view; the native OneSignal SDK does it instead (js/native-push.js).
+  // Same mapping: this phone belongs to the profile id (external_id), and its push id is saved to profiles.onesignal_id.
+  if(IS_NATIVE){try{npLogin();}catch(e){}return;}
   try{
     window.OneSignalDeferred=window.OneSignalDeferred||[];
     window.OneSignalDeferred.push(async(os)=>{
@@ -5346,12 +5350,14 @@ function _pushReady(){
   return window.Notification?.permission==='granted';
 }
 function maybeAskPushAfterSend(){
-  if(IS_NATIVE)return; // app: no push yet, so nothing to ask
-  const iosBrowser=isIos()&&!isInStandaloneMode();
+  const iosBrowser=isIos()&&!isInStandaloneMode(); // always false in the app (it counts as installed)
   try{
-    if(_pushReady())return;
-    if(!iosBrowser&&!window.Notification)return;            // browser can't do push at all
-    if(window.Notification?.permission==='denied')return;   // can't re-ask; Profile explains the fix
+    if(IS_NATIVE){if(npPermission()!=='default')return;}  // app: ask only if never asked (allowed, or Profile explains the fix)
+    else{
+      if(_pushReady())return;
+      if(!iosBrowser&&!window.Notification)return;            // browser can't do push at all
+      if(window.Notification?.permission==='denied')return;   // can't re-ask; Profile explains the fix
+    }
     if(document.getElementById('push-ask'))return;
     const k='yoodle_push_ask',last=+(localStorage.getItem(k)||0);
     if(Date.now()-last<7*864e5)return;
@@ -5624,7 +5630,7 @@ function rtwSheet(day,why){
 // ios = iPhone Safari tab (needs Home Screen) · blocked = denied · ask = never asked · granted = allowed but the server
 // hasn't got the phone's push id yet · unsupported = browser has no notifications
 function _rtwPushState(){
-  if(IS_NATIVE)return 'app'; // app: native push not added yet
+  if(IS_NATIVE){const p=npPermission();return p==='granted'?'granted':p==='denied'?'appblocked':p==='unavailable'?'app':'ask';} // app: native permission (js/native-push.js)
   if(isIos()&&!isInStandaloneMode())return 'ios';
   if(!('Notification' in window))return 'unsupported';
   const p=Notification.permission;
@@ -5638,8 +5644,12 @@ const RTW_PUSH={
   ios:{warn:'📲 On iPhone, add Yoodle to your Home Screen first',p:'iPhone only sends notifications to apps on the Home Screen. It takes 10 seconds:',
     steps:['Tap <b>Share</b> at the bottom of Safari','Tap <b>Add to Home Screen</b> → <b>Add</b>','Open <b>Yoodle</b> from your Home Screen and tap <b>Ready to work</b> again'],btn:'Got it',act:'close'},
   unsupported:{warn:"🔕 This browser can't show notifications",p:'Open yoodle.ca in Chrome or Safari to use Ready to work.',btn:'Got it',act:'close'},
-  // App, until native push is added (docs/capacitor-build.md, Phase 5)
-  app:{warn:'🔔 Notifications are coming to the Yoodle app soon',p:'Ready to work sends one reminder each evening, so it needs notifications. Until they arrive in the app, you can turn it on at yoodle.ca.',btn:'Got it',act:'close'}
+  // App: they said no to notifications before, so iOS/Android won't ask again; it's turned on in the phone's Settings
+  appblocked:{warn:'🔕 Notifications are off for Yoodle',p:'We send one reminder each evening so you stay listed. To allow them:',
+    steps:[npSettingsPath(),'Come back to Yoodle and tap the button below'],
+    btn:"I've allowed them — turn on",act:'recheck',later:true},
+  // App build without the push plugin (installed before push was added; Capgo still updates its web code)
+  app:{warn:'🔔 Update the Yoodle app to get notifications',p:'Ready to work sends one reminder each evening, so it needs notifications. Install the latest Yoodle app to turn them on, or use yoodle.ca.',btn:'Got it',act:'close'}
 };
 function rtwPushSheet(day,note){
   const st=_rtwPushState();
@@ -5676,6 +5686,7 @@ function _rtwAskPush(day){
     else if(p==='denied')rtwPushSheet(day);              // they said Block → show how to undo it
     else rtwPushSheet(day,'No answer yet — tap again to see the question.');
   };
+  if(IS_NATIVE){npRequest(false).then(ok=>finish(ok?'granted':npPermission()));return;} // app: the system prompt always answers
   try{
     if(window.OneSignalDeferred){window.OneSignalDeferred.push(async os=>{try{await os.Notifications.requestPermission();}catch(e){}finish(Notification.permission);});}
     else Notification.requestPermission().then(finish,()=>finish(Notification.permission));
@@ -6539,6 +6550,13 @@ function renderStars(n){
 }
 
 function isIos(){return/iphone|ipad|ipod/i.test(navigator.userAgent);}
+// App only: where to turn notifications back on after saying no (iOS/Android won't ask again). Used by RTW_PUSH while
+// this script loads, so it lives here and not in js/native-push.js (that file runs later, with defer).
+function npSettingsPath(){
+  return window.Capacitor?.getPlatform?.()==='android'
+    ?'Open your phone\'s <b>Settings</b> → <b>Apps</b> → <b>Yoodle</b> → <b>Notifications</b> and turn them on'
+    :'Open the iPhone <b>Settings</b> app → <b>Yoodle</b> → <b>Notifications</b> → turn on <b>Allow Notifications</b>';
+}
 // App: it's already installed, so never show "Add to Home Screen" steps
 function isInStandaloneMode(){return IS_NATIVE||window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone===true;}
 
@@ -6546,7 +6564,12 @@ function updateNotifNudge(){
   const nudge=document.getElementById('notif-nudge');
   const nudgeText=document.getElementById('notif-nudge-text');
   if(!nudge)return;
-  if(IS_NATIVE){nudge.style.display='none';return;} // app: no push yet, so no "enable notifications" nudge
+  if(IS_NATIVE){ // app: native permission (js/native-push.js)
+    const p=npPermission();
+    nudge.style.display=p==='default'||p==='denied'?'flex':'none';
+    if(nudgeText)nudgeText.textContent=p==='denied'?'Notifications are off — tap to fix':'Tap to enable notifications';
+    return;
+  }
   const granted=window.Notification?.permission==='granted';
   const iosNotReady=isIos()&&!isInStandaloneMode();
   if(granted&&!iosNotReady){
@@ -6560,7 +6583,15 @@ function updateNotifNudge(){
 }
 
 async function requestNotifPermission(){
-  if(IS_NATIVE){nav('profile');return;} // app: Profile explains notifications are coming soon
+  if(IS_NATIVE){ // app: system prompt; if they said no before, offer to open the phone's Settings instead
+    const p=npPermission();
+    if(p==='granted'){updateNotifNudge();return;}
+    if(p==='unavailable'){nav('profile');return;} // older app build: Profile says to update the app
+    const ok=await npRequest(p==='denied');
+    if(ok)toast('✅ Notifications enabled!');
+    else if(npPermission()==='denied'){toast('Notifications are off — see Profile to turn them on');nav('profile');}
+    return;
+  }
   if(isIos()&&!isInStandaloneMode()){nav('profile');return;}
   if(window.Notification?.permission==='denied'){nav('profile');return;}
   if(window.Notification?.permission==='granted'){updateNotifNudge();return;}
@@ -6586,9 +6617,14 @@ function updateNotifTip(){
   const tip=document.getElementById('notif-tip');
   const body=document.getElementById('notif-tip-body');
   if(!tip||!body)return;
-  if(IS_NATIVE){
+  if(IS_NATIVE){ // app: native permission (js/native-push.js)
+    const p=npPermission();
+    const btn='<br><button class="btn-primary" style="margin-top:10px" onclick="requestNotifPermission()">Turn on notifications</button>';
     tip.style.display='block';
-    body.innerHTML='Notifications are coming to the Yoodle app soon. Until then, new messages and alerts show up here when you open the app.';
+    if(p==='granted')body.innerHTML='Push notifications are on for this phone.';
+    else if(p==='denied')body.innerHTML='Notifications are off for Yoodle. To get replies and alerts: '+npSettingsPath()+'.';
+    else if(p==='unavailable')body.innerHTML='Install the latest Yoodle app to get notifications. Until then, new messages and alerts show up here when you open the app.';
+    else body.innerHTML='Turn on notifications to hear about replies and new jobs near you, even when Yoodle is closed.'+btn;
   } else if(isIos()&&!isInStandaloneMode()){
     tip.style.display='block';
     body.innerHTML='On iPhone, push notifications require adding Yoodle to your home screen.<br><br>Tap <strong style="color:var(--text)">Share →</strong> then <strong style="color:var(--text)">Add to Home Screen</strong>, then open the app from your home screen icon.';

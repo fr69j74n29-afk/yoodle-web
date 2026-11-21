@@ -79,5 +79,13 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- Push notifications (OneSignal, js/native-push.js): wake the app for notifications in the background -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+	<!-- A tapped notification's yoodle.ca link is handled by the page (npOnClick), not opened in Safari -->
+	<key>OneSignal_suppress_launch_urls</key>
+	<true/>
 </dict>
 </plist>

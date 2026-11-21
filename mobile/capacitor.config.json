@@ -4,7 +4,8 @@
   "webDir": "www",
   "backgroundColor": "#0A0A0A",
   "ios": {
-    "contentInset": "never"
+    "contentInset": "never",
+    "handleApplicationNotifications": false
   },
   "plugins": {
     "Keyboard": {

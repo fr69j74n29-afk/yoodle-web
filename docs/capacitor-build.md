@@ -245,7 +245,7 @@ Each phase ends with something you can test. The commands actually run go in the
 - [x] Location → native permission prompt + GPS. *Test*
 - [x] Keyboard resizes the app (fixes header under the status bar while typing). *Test*
 - [x] Standalone checks: the app counts as installed (no "Add to Home Screen" steps), and web-push prompts are off in the app until native push. *Test*
-- [ ] Push: OneSignal native SDK when `IS_NATIVE`, keeping the same `OneSignal.login(userId)` mapping (iOS needs the paid account)
+- [x] Push: OneSignal native SDK when `IS_NATIVE`, keeping the same `OneSignal.login(userId)` mapping (2026-11-21, §6.1). *iOS delivery needs P7 + the APNs key in OneSignal, then a TestFlight build*
 - [ ] CORS: check Supabase Edge Functions accept the `capacitor://localhost` and `https://localhost` origins (ID verification, etc.)
 - [ ] Stripe Checkout / Identity: in the app, open in the in-app sheet and return to the app (currently `location.href` → Safari → website). Depends on O6.
 - [ ] Android back button: close the open sheet/chat, then go back a tab, then exit
@@ -260,7 +260,7 @@ Each phase ends with something you can test. The commands actually run go in the
 App icon and splash (`@capacitor/assets`), status bar text colour for the dark theme (`@capacitor/status-bar`), safe-area check (notch, home indicator), haptics if wanted.
 
 **Phase 5: Signed iOS + TestFlight** (after P7, §2.5)
-TestFlight job, Info.plist purpose strings review, push capability + OneSignal, Sign in with Apple (O5), Universal Links (Associated Domains) instead of the custom scheme.
+TestFlight job, Info.plist purpose strings review, push: APNs key in OneSignal + Push capability on the App ID (app code done, §6.1), Sign in with Apple (O5), Universal Links (Associated Domains) instead of the custom scheme.
 
 **Phase 6: Store prep and beta.** See §10. TestFlight, Play internal or closed testing, then submission.
 
@@ -278,7 +278,7 @@ All plugins are reached from `index.html` through `window.Capacitor.Plugins.<Nam
 | `@capacitor/share` | ✅ 8.0.3 | Native share sheet (invite, share a job, live screen) | `navigator.share` (shimmed; missing on Android WebView) | None |
 | `@capacitor/keyboard` | ✅ 8.0.6 | Resizes the app above the keyboard, so chat input stays visible and the page doesn't scroll under the status bar | Nothing | `capacitor.config.json` → `plugins.Keyboard.resize: "native"` ✅ |
 | `@capgo/capacitor-updater` | ✅ 8.54.2 | Live updates: web changes reach installed apps without a store release | Nothing (new). App-only `notifyAppReady()` call in `js/native-app.js` | Capgo app ID / API key |
-| `onesignal-cordova-plugin` (OneSignal's official Capacitor-compatible SDK) | Later | Native push. Web push doesn't work in the app WebView | OneSignal web SDK + `sw.js` | APNs key, FCM `google-services.json`, iOS push capability + notification service extension |
+| `@onesignal/capacitor-plugin` (OneSignal's official Capacitor SDK; SPM) | ✅ 1.2.3 | Native push (§6.1). Web push doesn't work in the app WebView | OneSignal web SDK + `sw.js` (still used on the website) | `App.entitlements` (`aps-environment`) ✅, `UIBackgroundModes: remote-notification` ✅, `OneSignal_suppress_launch_urls` ✅, `ios.handleApplicationNotifications: false` ✅. **Still needed:** APNs `.p8` key in OneSignal (after P7). Later: notification service extension (images, badges), FCM `google-services.json` for Android |
 | `@capacitor/splash-screen` | Phase 4 | Branded launch screen. Hide it only once the map is ready | Nothing | Splash assets |
 | `@capacitor/status-bar` | Phase 4 | Status bar text colour that matches the light/dark theme | `theme_color` meta | None |
 | `@capacitor-community/apple-sign-in` (or Supabase Apple OAuth via Browser) | Phase 5 | Sign in with Apple (guideline 4.8) | Nothing (new) | Sign in with Apple capability, Apple Services ID, Supabase Apple provider |
@@ -287,6 +287,19 @@ All plugins are reached from `index.html` through `window.Capacitor.Plugins.<Nam
 | `@capacitor/assets` *(dev tool, not a runtime plugin)* | Phase 4 | Generates all icon and splash sizes from one source image | Nothing | None |
 
 **Not needed for now:** a camera plugin (Stripe Identity takes its own photos in the browser) or file upload (the app has no file inputs today). Add rows here if that changes.
+
+### 6.1 Push notifications in the app (added 2026-11-21)
+
+- **Code:** `js/native-push.js` (classic deferred script; does nothing on the website). It calls the plugin's bridge methods through `window.Capacitor.Plugins.OneSignalCapacitor`, because the site has no bundler to import the plugin's JS wrapper.
+- **Same OneSignal app and mapping as the website:** `initialize(258cf4ad-…)` at app start, then `login(profile id)` (OneSignal external_id) from `registerOneSignal()` once signed in, and the push subscription id is saved to `profiles.onesignal_id` (the server's Ready to work `no_push` check reads it). Like the website, the last device to register wins that column.
+- **Permission:** never asked on launch. The same places as the website ask: after sending a message (`maybeAskPushAfterSend`), Ready to work, and the Profile card's **Turn on notifications** button. If the user said no before, the button offers to open the phone's Settings, and the cards show the Settings path. The state is re-read when the app comes back to the foreground.
+- **Tapping a notification:** `task_id` in the data → opens that chat (same as the website's click listener). Otherwise a yoodle.ca home-page link (e.g. `?ready=tomorrow`) reloads the app's own page with that query so the existing landing code runs; other links open in the in-app browser sheet. Cold-start taps are held by the plugin until the listener is attached.
+- **Older app builds:** Capgo can deliver this web code to installs built before the plugin. There `npPermission()` is `unavailable`, and the cards say to update the app (no dead button).
+- **What can be tested where:**
+  - Appetize / Simulator build: the app starts, the **Allow notifications?** prompt appears, and the Profile card follows the answer. **No pushes arrive** (unsigned build, no APNs; Appetize has no push feature).
+  - Sideloadly: same as Appetize (free signing can't have the push entitlement).
+  - TestFlight (after P7 + APNs key in OneSignal): real pushes. Test with OneSignal → Messages → New Push → send to a test user (External ID = your profile id), and a real chat message.
+- **Not done yet:** OneSignal's Notification Service Extension (rich images, badge counts, confirmed delivery). Basic notifications work without it. It needs a new Xcode target, best added with the TestFlight job. Android (FCM) after P8.
 
 ## 7. Testing and emulation
 
@@ -357,6 +370,7 @@ Exactly what was run, in order, with the date. Note versions installed and anyth
 | Date | Step | Command / action | Result / notes |
 |------|------|------------------|----------------|
 | 2026-11-20 | Plan | Wrote this document | No code changes yet |
+| 2026-11-21 | Native push (app code) | `npm install @onesignal/capacitor-plugin@1.2.3` → `npm run sync:ios`; `js/native-push.js`; `App.entitlements` + `CODE_SIGN_ENTITLEMENTS`; Info.plist `UIBackgroundModes`, `OneSignal_suppress_launch_urls`; config `ios.handleApplicationNotifications: false` | Native change, so a new app build is needed. Delivery on iOS waits for P7 + APNs key (§6.1). |
 | 2026-11-20 | Check the Android toolchain | Looked at `%LOCALAPPDATA%\Android\Sdk`, `~\.android\avd`, PATH | **Found:** SDK with `platform-tools` (adb), `emulator`, platform `android-34`, build-tools `34.0.0`, system images `android-34` + `android-VanillaIceCream` (35). An emulator `Yoodle_API34` already exists. **Missing:** Android Studio app, a JDK (`java`/`JAVA_HOME`), `ANDROID_HOME` env var, PATH entries. Newer platforms Capacitor needs (API 35/36) will be installed by SDK Manager or Gradle. |
 | 2026-11-20 | Decide to go iOS first | — | Android waits until Android Studio + JDK are installed. iOS is built in CI (§2.2), so it needs nothing local. |
 | 2026-11-20 | Branch | `git switch -c mobile-app` | Temporary branch for the scaffold. Only `main`/`staging` deploy the site, so this branch doesn't touch yoodle.ca. To be merged into `main` and deleted (O8). |
