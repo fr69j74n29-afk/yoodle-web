@@ -3441,6 +3441,8 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
         </div>`:''}
       </div>
     </div>
+    <!-- 21 Nov 2026: fixed-price services right under the name (was at the bottom of the helper block); js/home-services.js relabels .op-rate "Other jobs: …" when there are services -->
+    ${prof.visible_on_map&&window.hsvcProfileSlot?hsvcProfileSlot(userId,true):''}
     ${_proLive?`<button onclick="openOtherProfile('${userId}','pro')" style="width:100%;margin-top:12px;padding:12px 14px;border-radius:var(--radius);background:transparent;border:1.5px solid ${PRO_PIN};color:${PRO_PIN};font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;text-align:left">🔧 Also a Yoodle Pro — ${esc(proTradesText(_pro.trades))} ›</button>`:''}
     ${(prof.bio||!prof.visible_on_map)?`<div class="op-bio">
       <div class="op-bio-lbl">About</div>
@@ -3456,8 +3458,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
         <div class="op-bio-lbl" style="color:var(--lime)">Available as Helper</div>
         ${cats.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${cats.map(c=>`<span style="font-size:12.5px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:3px 10px">${c}</span>`).join('')}</div>`:''}
         ${prof.helper_bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(prof.helper_bio)}</div>`:''}
-        <div style="font-size:14px;font-weight:800;color:var(--lime)">${rateLabel}</div>
-        ${window.hsvcProfileSlot?hsvcProfileSlot(userId):''}
+        <div class="op-rate" style="font-size:14px;font-weight:800;color:var(--lime)">${rateLabel}</div>
         ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Helper')}')" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Helper</button>`:''}
       </div>`;
     })():''}
