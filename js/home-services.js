@@ -444,4 +444,6 @@ async function hsvcFilterSync(){
 }
 (function(){var s=document.getElementById('hsvc-css');if(s)s.textContent+='\n.fs-choice.svc{border-color:rgba(46,125,82,.55)}'+
   // bright "$" badge (the 💲 emoji rendered thin and faded next to the colour emojis — Roman, 21 Nov 2026)
+  // services submenu: one service per line (Roman, 21 Nov 2026)
+  '\n#fs-svc-grid{grid-template-columns:1fr}#fs-svc-grid .hs-cat{padding:13px 14px}#fs-svc-grid .hs-cat .e{font-size:22px}'+
   '\n.hsvc-dol{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin:0 2px;border-radius:50%;background:#22A45D;color:#fff;font:900 20px/1 \'Nunito\',sans-serif;box-shadow:0 2px 8px rgba(34,164,93,.4)}';})();
