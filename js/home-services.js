@@ -407,7 +407,7 @@ function hsvcFilterMarkup(){
   if(!st||document.getElementById('fs-svc-choice'))return;
   var b=document.createElement('button');
   b.className='fs-choice svc';b.id='fs-svc-choice';b.style.display='none';b.setAttribute('onclick',"fsStep('svc')");
-  b.innerHTML='<span class="e">💲</span><span><b>Fixed-price services</b><small id="fs-svc-small">Prices set up front</small></span>';
+  b.innerHTML='<span class="e"><span class="hsvc-dol">$</span></span><span><b>Fixed-price services</b><small id="fs-svc-small">Prices set up front</small></span>';
   var pro=st.querySelector('.fs-choice.pro');if(pro)pro.insertAdjacentElement('afterend',b);else st.appendChild(b);
   var pane=document.createElement('div');pane.className='fs-pane';pane.id='fs-svc';
   pane.innerHTML='<div class="hs-head"><b><button class="fs-back" onclick="fsStep(\'start\')" aria-label="Back">‹</button>Fixed-price services</b>'+
@@ -442,4 +442,6 @@ async function hsvcFilterSync(){
     try{renderMapPins();renderListTabContent();}catch(e){}
   }
 }
-(function(){var s=document.getElementById('hsvc-css');if(s)s.textContent+='\n.fs-choice.svc{border-color:rgba(46,125,82,.55)}';})();
+(function(){var s=document.getElementById('hsvc-css');if(s)s.textContent+='\n.fs-choice.svc{border-color:rgba(46,125,82,.55)}'+
+  // bright "$" badge (the 💲 emoji rendered thin and faded next to the colour emojis — Roman, 21 Nov 2026)
+  '\n.hsvc-dol{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin:0 2px;border-radius:50%;background:#22A45D;color:#fff;font:900 20px/1 \'Nunito\',sans-serif;box-shadow:0 2px 8px rgba(34,164,93,.4)}';})();
