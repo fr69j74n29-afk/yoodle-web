@@ -5878,13 +5878,40 @@ async function _idvCall(fn){
     return b||{};
   }catch(e){return{error:'network'};}
 }
+// App only: Stripe opens in the in-app browser sheet. A page navigation would be thrown out to Safari, and Stripe's
+// ?idv=paid|done return would then land on the website instead of the app. Stripe's return page loads inside the sheet;
+// when the user closes the sheet, check the result here and continue as handleIdvReturn() does on the website.
+// kind: 'pay' (Stripe Checkout) | 'check' (Stripe Identity)
+async function _idvOpenInSheet(url,kind){
+  const B=window.Capacitor.Plugins.Browser;
+  if(!B){window.location.href=url;return;}
+  const paidBefore=_idvRow?.paid_at||null; // a member buying a new set of tries already has an older paid_at
+  let l=null;
+  try{l=await B.addListener('browserFinished',async()=>{
+    if(l)l.remove();
+    // the webhook can land a few seconds after the sheet closes
+    for(let i=0;i<5;i++){
+      const row=await loadIdvRow();
+      if(kind==='pay'&&(row?.status==='verified'||(row?.paid_at&&row.paid_at!==paidBefore))){window._idvReturn='paid';return handleIdvReturn();}
+      if(kind==='check'&&(row?.status==='processing'||row?.status==='verified')){window._idvReturn='done';return handleIdvReturn();}
+      await _idvSleep(2000);
+    }
+    if(kind==='pay')logIdvTap('cancel');
+    refreshIdv(); // closed without finishing: the profile card shows where they are
+  });}catch(e){}
+  try{await B.open({url});}catch(e){if(l)l.remove();toast('❌ '+IDV_CALL_ERR.server);}
+}
 async function startIdvPayment(){
   const g=document.getElementById('idv-go');
   if(!document.getElementById('idv-consent')?.checked)return;
   const logged=logIdvTap('pay');   // runs alongside the checkout call
   g.disabled=true;g.textContent='Opening Stripe…';
   const b=await _idvCall('identity-checkout');
-  if(b.url){await _idvLogged(logged);window.location.href=b.url;return;}   // Stripe Checkout → back to ?idv=paid|cancel
+  if(b.url){
+    await _idvLogged(logged);
+    if(IS_NATIVE){closeOv('idv-modal');g.disabled=false;g.textContent='Continue to payment';return _idvOpenInSheet(b.url,'pay');}
+    window.location.href=b.url;return;   // Stripe Checkout → back to ?idv=paid|cancel
+  }
   if(b.already_paid){closeOv('idv-modal');return startIdvCheck(_idvSrc);}
   g.disabled=false;g.textContent='Continue to payment';
   if(b.error==='already_verified'){closeOv('idv-modal');toast('✅ '+IDV_CALL_ERR.already_verified);refreshIdv();return;}
@@ -5897,7 +5924,11 @@ async function startIdvCheck(src){
   const logged=logIdvTap('start',src==='plus'||src==='profile'?src:null);   // src: 'plus' | 'profile' | none (auto-start after paying)
   const b=await _idvCall('identity-start');
   _idvStarting=false;
-  if(b.url){await _idvLogged(logged);window.location.href=b.url;return;}   // Stripe Identity → back to ?idv=done (link is single-use, never stored)
+  if(b.url){
+    await _idvLogged(logged);
+    if(IS_NATIVE)return _idvOpenInSheet(b.url,'check');
+    window.location.href=b.url;return;   // Stripe Identity → back to ?idv=done (link is single-use, never stored)
+  }
   toast('❌ '+(IDV_CALL_ERR[b.error]||IDV_CALL_ERR.server));
   refreshIdv();
 }
