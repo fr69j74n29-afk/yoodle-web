@@ -3676,8 +3676,19 @@ async function signIn(provider) {
 function _nativeAuthInit(){
   const P=window.Capacitor.Plugins;
   if(!P||!P.App)return;
+  // Each sign-in link works once, but it can arrive more than once: on a cold launch both appUrlOpen and getLaunchUrl()
+  // report it, and getLaunchUrl() keeps returning it for the life of the app, so every page reload (e.g. a Capgo update)
+  // would see it again and show an error. Remember the links already handled (sessionStorage survives reloads, not app restarts).
+  const DONE_KEY='yoodle_auth_links_done';
+  const linkId=s=>{let x=0;for(let i=0;i<s.length;i++)x=(x*31+s.charCodeAt(i))|0;return String(x);}; // short id; the link itself holds a code/token, so don't store it
+  const done=()=>{try{return JSON.parse(sessionStorage.getItem(DONE_KEY)||'[]');}catch(e){return[];}};
+  const busy=new Set();
   const handle=async url=>{
     if(!url||!url.startsWith(NATIVE_AUTH_RETURN))return;
+    const id=linkId(url);
+    if(busy.has(id)||done().includes(id))return;
+    busy.add(id);
+    try{const a=done().slice(-9);a.push(id);sessionStorage.setItem(DONE_KEY,JSON.stringify(a));}catch(e){}
     if(P.Browser)P.Browser.close().catch(()=>{}); // close the sign-in sheet (iOS)
     let u;try{u=new URL(url);}catch(e){return;}
     const q=u.searchParams,h=new URLSearchParams(u.hash.slice(1));
