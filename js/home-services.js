@@ -21,6 +21,9 @@ var HSVC_PT={visit:['Per visit','/visit'],season:['Season','/season'],job:['Per 
 .hsvc-line{display:inline-block;align-self:flex-start;font-size:12.5px;font-weight:800;color:var(--lime);background:rgba(46,125,82,.08);border-radius:100px;padding:3px 10px}
 .hsvc-prof{margin-top:12px}
 .hsvc-prof .lbl{font-size:12.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.hsvc-prof.top{margin-top:14px;padding:12px 12px 5px;border:1.5px solid rgba(46,125,82,.35);background:rgba(46,125,82,.06);border-radius:var(--radius-sm)}
+.hsvc-prof.top .lbl{font-weight:900;color:var(--lime)}
+.hsvc-prof.top .hsvc-row{background:var(--surface)}
 .hsvc-row{border:1.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:7px;overflow:hidden}
 .hsvc-row.open{border-color:var(--lime)}
 .hsvc-rh{display:flex;align-items:center;gap:8px;padding:11px 12px;cursor:pointer;font-size:14.5px;font-weight:800;color:var(--text)}
@@ -138,8 +141,11 @@ async function hsvcFill(){
   });
 }
 
-// ── Profile card: "Services" block, one collapsed row per service; tap to expand (one open at a time) ──
-function hsvcProfileSlot(userId){
+// ── Profile card: "Fixed prices" box right under the helper's name (moved up 21 Nov 2026 — was buried at the bottom).
+// One row per service; the first row is open (prices visible without a tap). If the viewer came from the
+// Filter → 💲 Fixed-price services pick, that service goes first. Once services show, the helper's general
+// rate line (.op-rate in index.html) is relabelled "Other jobs: …" so the two prices don't look like they conflict.
+function hsvcProfileSlot(userId,top){ // top=true: new layout (box under the name). Old call (no 2nd arg) keeps the old look.
   if(!userId)return '';
   setTimeout(async function(){
     try{HSVC.cache.delete(userId);await hsvcLoad([userId]);}catch(e){return;}
@@ -147,14 +153,18 @@ function hsvcProfileSlot(userId){
     if(!el)return;
     var s=hsvcSummary(HSVC.cache.get(userId));
     if(!s.length){el.innerHTML='';return;}
-    el.innerHTML='<div class="lbl">Services</div>'+s.map(function(x){
-      return '<div class="hsvc-row"><div class="hsvc-rh" onclick="hsvcToggleRow(this.parentNode)">'+x.emoji+' '+esc(x.name)+
+    var pick=(typeof hsCat!=='undefined'&&typeof hsCat==='string'&&hsCat.indexOf('svc:')===0)?hsCat.slice(4):null;
+    if(top&&pick)s.sort(function(a,b){return (a.key===pick?0:1)-(b.key===pick?0:1);});
+    el.innerHTML='<div class="lbl">'+(top?'💲 Fixed prices':'Services')+'</div>'+s.map(function(x,i){
+      return '<div class="hsvc-row'+(top&&i===0?' open':'')+'"><div class="hsvc-rh" onclick="hsvcToggleRow(this.parentNode)">'+x.emoji+' '+esc(x.name)+
         '<span class="p">'+(x.quoteOnly?'Custom quote':'from '+hsvcMoney(x.min)+x.unit)+'</span><span class="c">›</span></div>'+
         '<div class="hsvc-rb">'+x.lines.map(function(l){return '<div><span>'+esc(l[0])+'</span><span>'+esc(l[1])+'</span></div>';}).join('')+'</div></div>';
     }).join('');
+    var card=el.parentNode,rate=card&&card.querySelector('.op-rate');
+    if(top&&rate&&!rate.getAttribute('data-hsvc')){rate.setAttribute('data-hsvc','1');rate.textContent='Other jobs: '+rate.textContent;}
     document.querySelectorAll('.hsvc-line[data-hsvc="'+userId+'"]').forEach(function(l){l.textContent=hsvcLineHtml(userId);});
   },0);
-  return '<div class="hsvc-prof" data-hsvc-prof="'+esc(userId)+'"></div>';
+  return '<div class="hsvc-prof'+(top?' top':'')+'" data-hsvc-prof="'+esc(userId)+'"></div>';
 }
 function hsvcToggleRow(el){
   var wasOpen=el.classList.contains('open');
@@ -363,3 +373,77 @@ async function hsvcSave(){
   HSVC.cache.delete(pid);
   return true;
 }
+
+// ── FILTER: "💲 Fixed-price services" (21 Nov 2026) ──
+// 3rd choice in the Filter popup (#hs-ov, index.html), shown ONLY when at least one helper within the map radius
+// (ysBaseHelpers) offers an in-season service (Roman, 21 Nov 2026). Its submenu lists those services with counts
+// (services nobody nearby offers are left out). Picking one sets hsCat='svc:<service_key>' — same rules as a skill
+// pick: one filter at a time, matching helpers glow / others fade, list Helpers tab filtered, ✕ clears.
+// Tracking: log_search('svc:<key>') for picks; helper taps carry filter 'svc:<key>' (log_tap).
+// index.html hooks (all guarded): ysRender() → hsvcFilterRefresh(); fsStep('svc') → hsvcFilterGrid();
+// hsName / hsIcon / hsMatch → hsvcIsKey / hsvcFilterName / hsvcFilterIcon / hsvcFilterMatch.
+// This file adds the choice button and the #fs-svc pane itself (hsvcFilterMarkup).
+var HSVC_F={timer:null};
+function hsvcIsKey(k){return typeof k==='string'&&k.indexOf('svc:')===0;}
+function hsvcFilterCat(k){var key=String(k).slice(4);return HSVC.cat.find(function(c){return c.key===key;});}
+// short name for the filter ("Snow removal — driveway" → "Snow removal") so it fits the tiles and the Filter button
+function hsvcShort(n){return String(n||'').replace(/\s+[—–-]\s.*$/,'');}
+function hsvcFilterName(k){var c=hsvcFilterCat(k);return c?hsvcShort(c.name):'Fixed-price services';}
+function hsvcFilterIcon(k){var c=hsvcFilterCat(k);return c?(c.emoji||'🏠'):'💲';}
+function hsvcOffers(h,key){var rows=h&&HSVC.cache.get(h.id);return !!rows&&hsvcSummary(rows).some(function(s){return s.key===key;});}
+function hsvcFilterMatch(h,k){return hsvcOffers(h,String(k).slice(4));}
+function hsvcBase(){return (typeof ysBaseHelpers!=='undefined'&&ysBaseHelpers)||[];}
+// {service_key: number of nearby helpers offering it} — in-season, active services with a real price or custom quote
+function hsvcFilterCounts(){
+  var c={};
+  hsvcBase().forEach(function(h){
+    var rows=HSVC.cache.get(h.id);if(!rows||!rows.length)return;
+    hsvcSummary(rows).forEach(function(s){c[s.key]=(c[s.key]||0)+1;});
+  });
+  return c;
+}
+function hsvcFilterMarkup(){
+  var st=document.getElementById('fs-start');
+  if(!st||document.getElementById('fs-svc-choice'))return;
+  var b=document.createElement('button');
+  b.className='fs-choice svc';b.id='fs-svc-choice';b.style.display='none';b.setAttribute('onclick',"fsStep('svc')");
+  b.innerHTML='<span class="e"><span class="hsvc-dol">$</span></span><span><b>Fixed-price services</b><small id="fs-svc-small">Prices set up front</small></span>';
+  var pro=st.querySelector('.fs-choice.pro');if(pro)pro.insertAdjacentElement('afterend',b);else st.appendChild(b);
+  var pane=document.createElement('div');pane.className='fs-pane';pane.id='fs-svc';
+  pane.innerHTML='<div class="hs-head"><b><button class="fs-back" onclick="fsStep(\'start\')" aria-label="Back">‹</button>Fixed-price services</b>'+
+    '<button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>'+
+    '<div class="hs-sub">Helpers near you who list their prices</div><div id="fs-svc-grid" class="hs-grid" style="margin-top:12px"></div>';
+  var pp=document.getElementById('fs-pro');
+  if(pp)pp.insertAdjacentElement('afterend',pane);else{var pop=document.getElementById('fs-pop');if(pop)pop.appendChild(pane);}
+}
+function hsvcFilterGrid(){
+  var el=document.getElementById('fs-svc-grid');if(!el)return;
+  var cnt=hsvcFilterCounts(),cur=(typeof hsCat!=='undefined')?hsCat:null;
+  var list=HSVC.cat.filter(function(c){return cnt[c.key];});
+  el.innerHTML=list.length?list.map(function(c){
+    return '<button class="hs-cat'+(cur==='svc:'+c.key?' on':'')+'" onclick="hsPick(\'svc:'+esc(c.key)+'\')"><span class="e">'+(c.emoji||'🏠')+'</span>'+
+      '<span class="t">'+esc(hsvcShort(c.name))+'</span><span class="n">'+cnt[c.key]+'</span></button>';
+  }).join(''):'<div class="ps-empty">No fixed-price helpers near you yet.</div>';
+}
+// called (debounced) whenever the nearby helpers change: load missing offers, then show/hide the choice
+function hsvcFilterRefresh(){clearTimeout(HSVC_F.timer);HSVC_F.timer=setTimeout(hsvcFilterSync,250);}
+async function hsvcFilterSync(){
+  if(typeof sb==='undefined'||!sb)return;
+  hsvcFilterMarkup();
+  var miss=hsvcBase().map(function(h){return h.id;}).filter(function(id){return id&&!HSVC.cache.has(id);});
+  try{await hsvcCatalog();if(miss.length)await hsvcLoad(miss);}catch(e){console.warn('[hsvc] filter',e&&e.message||e);}
+  var cnt=hsvcFilterCounts(),names=HSVC.cat.filter(function(c){return cnt[c.key];}).map(function(c){return hsvcShort(c.name);});
+  var ch=document.getElementById('fs-svc-choice');if(ch)ch.style.display=names.length?'':'none';
+  var sm=document.getElementById('fs-svc-small');
+  if(sm)sm.textContent=names.length>2?names.slice(0,2).join(', ')+' & more':names.join(' · ');
+  if(document.getElementById('fs-svc')&&document.getElementById('fs-svc').classList.contains('on'))hsvcFilterGrid();
+  // a service filter is on and new helpers came into range → redraw so they glow / list correctly
+  if(miss.length&&typeof hsCat!=='undefined'&&hsvcIsKey(hsCat)){
+    try{renderMapPins();renderListTabContent();}catch(e){}
+  }
+}
+(function(){var s=document.getElementById('hsvc-css');if(s)s.textContent+='\n.fs-choice.svc{border-color:rgba(46,125,82,.55)}'+
+  // bright "$" badge (the 💲 emoji rendered thin and faded next to the colour emojis — Roman, 21 Nov 2026)
+  // services submenu: one service per line (Roman, 21 Nov 2026)
+  '\n#fs-svc-grid{grid-template-columns:1fr}#fs-svc-grid .hs-cat{padding:13px 14px}#fs-svc-grid .hs-cat .e{font-size:22px}'+
+  '\n.hsvc-dol{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin:0 2px;border-radius:50%;background:#22A45D;color:#fff;font:900 20px/1 \'Nunito\',sans-serif;box-shadow:0 2px 8px rgba(34,164,93,.4)}';})();

@@ -54,7 +54,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"></noscript>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <!-- Standard services (17 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
-<script src="js/home-services.js?v=20261118a" defer></script>
+<script src="js/home-services.js?v=20261121c" defer></script>
 <script src="js/native-app.js?v=20261120a" defer></script>
 <script src="js/native-push.js?v=20261121a" defer></script>
 <style>
@@ -323,6 +323,11 @@ body.theme-sage-dark .theme-btn .ic-moon{display:none}
 .live-card-m{font-size:13.5px;font-weight:700;color:var(--muted);margin-bottom:10px}
 .live-chips{display:flex;flex-wrap:wrap;gap:6px}
 .live-chip{font-size:12px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:3px 10px}
+/* Share button icon + "Add your service prices" outline button (17 Nov 2026) */
+.live-share-ic{width:19px;height:19px;flex-shrink:0}
+.live-svc{width:100%;margin-top:12px;padding:15px;border-radius:var(--radius);border:2px solid var(--lime);background:rgba(46,125,82,.08);color:var(--lime);font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s}
+.live-svc:active{transform:scale(.97)}
+.live-svc svg{width:19px;height:19px;flex-shrink:0}
 .live-later{margin-top:14px;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;padding:12px;text-decoration:underline}
 
 /* ── REFERRAL MODAL ── */
@@ -371,9 +376,6 @@ html:not(.ml-css) #map>*{visibility:hidden} /* until maplibre-gl.css has applied
 .pin-dot:active{transform:scale(1.15)}
 .pin-dot.pin-pulse::after{content:'';position:absolute;width:36px;height:36px;border-radius:50%;border:2px solid;animation:pulse 1.5s ease-out infinite;opacity:0}
 @keyframes pulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.2);opacity:0}}
-.chat-loc{display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--surface2);font-size:13.5px;font-weight:800;color:var(--text2);cursor:pointer;flex-shrink:0} /* chat location bar (19 Nov 2026) */
-.chat-back{position:absolute;bottom:84px;left:50%;transform:translateX(-50%);z-index:1000;padding:10px 18px;border-radius:999px;border:none;background:var(--btn-b);color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer}
-.chat-loc-ring{width:36px;height:36px;border-radius:50%;border:3px solid var(--orange);animation:pulse 1.2s ease-out 3;pointer-events:none}
 .user-ring{width:20px;height:20px;border-radius:50%;background:rgba(74,158,122,.9);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.5)}
 
 /* ── LIST VIEW ── */
@@ -1251,7 +1253,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       </div>
       <button onclick="closeChat()" style="width:44px;height:44px;border-radius:50%;border:none;background:var(--surface2);color:var(--text);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800">✕</button>
     </div>
-    <div id="chat-loc" class="chat-loc" style="display:none" onclick="viewChatPin()"></div>
     <div id="chat-actions" style="display:none;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)"></div>
     <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch"></div>
     <div id="chat-input-bar" style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;background:var(--surface)">
@@ -1562,8 +1563,14 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <div class="live-card-m" id="live-rate"></div>
       <div class="live-chips" id="live-chips"></div>
     </div>
-    <button class="btn-primary" id="live-share-btn" onclick="shareMyHelperPage()">Message friends</button>
-    <button class="live-later" id="live-svc-btn" style="display:none;color:var(--lime)" onclick="closeLiveScreen();hsvcGoSettings('profile')">➕ Add standard services</button>
+    <button class="btn-primary" id="live-share-btn" onclick="shareMyHelperPage()">
+      <svg class="live-share-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      <span id="live-share-label">Tell friends you're on Yoodle</span>
+    </button>
+    <button class="live-svc" id="live-svc-btn" style="display:none" onclick="closeLiveScreen();hsvcGoSettings('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Add your service prices
+    </button>
     <button class="live-later" onclick="logShare('later');closeLiveScreen()">Maybe later</button>
   </div>
 </div>
@@ -2139,9 +2146,9 @@ function ysAttr(k){return esc(k).replace(/'/g,"\\'");}
 // Filter button (15 Nov 2026): hsCat can also be 'ready:today' / 'ready:tomorrow' (⚡ Ready to work) — one pick at a time
 const FS_READY={'ready:today':{emoji:'⚡',label:'Can start today'},'ready:tomorrow':{emoji:'⚡',label:'Can start tomorrow'}};
 function fsReadyOk(h,k){const r=h&&readyIds.get(h.id);return !!r&&(k==='ready:today'?r.today:r.tomorrow);}
-function hsName(k){return FS_READY[k]?FS_READY[k].label:ysLabel(k);}
-function hsIcon(k){return FS_READY[k]?FS_READY[k].emoji:ysEmoji(k);}
-function hsMatch(h){if(!hsCat)return false;if(FS_READY[hsCat])return fsReadyOk(h,hsCat);return ysHelperCats(h).includes(hsCat);}
+function hsName(k){if(window.hsvcIsKey&&hsvcIsKey(k))return hsvcFilterName(k);return FS_READY[k]?FS_READY[k].label:ysLabel(k);}
+function hsIcon(k){if(window.hsvcIsKey&&hsvcIsKey(k))return hsvcFilterIcon(k);return FS_READY[k]?FS_READY[k].emoji:ysEmoji(k);}
+function hsMatch(h){if(!hsCat)return false;if(window.hsvcIsKey&&hsvcIsKey(hsCat))return hsvcFilterMatch(h,hsCat);if(FS_READY[hsCat])return fsReadyOk(h,hsCat);return ysHelperCats(h).includes(hsCat);}
 
 async function ysInit(){
   try{
@@ -2157,7 +2164,8 @@ async function ysInit(){
 }
 
 // called from updateRadiusCounts() — keep popup counts fresh while it's open
-function ysRender(){if(document.getElementById('hs-ov')?.classList.contains('open'))hsRenderGrid();}
+// 21 Nov 2026: also refreshes the "💲 Fixed-price services" choice (js/home-services.js) — shown only when a nearby helper offers one
+function ysRender(){if(window.hsvcFilterRefresh)hsvcFilterRefresh();if(document.getElementById('hs-ov')?.classList.contains('open'))hsRenderGrid();}
 
 function hsRenderGrid(){
   const el=document.getElementById('hs-grid');if(!el)return;
@@ -2176,7 +2184,8 @@ function hsRenderGrid(){
 }
 function _hsInList(){return document.getElementById('app-list')?.classList.contains('active');}
 function fsStep(s){
-  ['start','help','pro','become'].forEach(x=>document.getElementById('fs-'+x)?.classList.toggle('on',x===s));
+  ['start','help','pro','become','svc'].forEach(x=>document.getElementById('fs-'+x)?.classList.toggle('on',x===s));
+  if(s==='svc'&&window.hsvcFilterGrid)hsvcFilterGrid(); // 💲 Fixed-price services (js/home-services.js)
   if(s==='help')hsRenderGrid();
   if(s==='pro')psRenderGrid();
   if(s==='become'){const g=document.getElementById('fs-go');if(g){g.disabled=false;g.textContent='Continue';}}
@@ -2209,7 +2218,7 @@ function hsPick(k){
     logSearch(hsCat,n);
     if(FS_READY[hsCat]){const d=hsCat==='ready:today'?'today':'tomorrow';
       toast(n?`⚡ ${n} ${n===1?'helper':'helpers'} nearby can start ${d}`:`No standby helpers for ${d} within ${RADIUS_KM} km yet — try zooming out`);}
-    else toast(n?`✨ ${n} ${ysLabel(hsCat)} ${n===1?'helper':'helpers'} nearby`:`No ${ysLabel(hsCat)} helpers within ${RADIUS_KM} km yet — try zooming out`);
+    else toast(n?`✨ ${n} ${hsName(hsCat)} ${n===1?'helper':'helpers'} nearby`:`No ${hsName(hsCat)} helpers within ${RADIUS_KM} km yet — try zooming out`);
   }else if(!psTrade){
     btn.classList.remove('on','pro-on');lbl.textContent='Filter';btn.title='';x.style.display='none';
   }
@@ -3117,7 +3126,7 @@ function renderListTabContent(){
   } else {
     if(!listHelpers.length){
       el.innerHTML=hsCat
-        ?emptyState('🔍',FS_READY[hsCat]?`No standby helpers for ${hsCat==='ready:today'?'today':'tomorrow'} nearby`:`No ${esc(ysLabel(hsCat))} helpers nearby`,'Tap ✕ to see all helpers, or try a larger radius')
+        ?emptyState('🔍',FS_READY[hsCat]?`No standby helpers for ${hsCat==='ready:today'?'today':'tomorrow'} nearby`:`No ${esc(hsName(hsCat))} helpers nearby`,'Tap ✕ to see all helpers, or try a larger radius')
         :emptyState('💪','No helpers nearby','Helpers can enable visibility in their profile');
       return;
     }
@@ -3504,6 +3513,8 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
         </div>`:''}
       </div>
     </div>
+    <!-- 21 Nov 2026: fixed-price services right under the name (was at the bottom of the helper block); js/home-services.js relabels .op-rate "Other jobs: …" when there are services -->
+    ${prof.visible_on_map&&window.hsvcProfileSlot?hsvcProfileSlot(userId,true):''}
     ${_proLive?`<button onclick="openOtherProfile('${userId}','pro')" style="width:100%;margin-top:12px;padding:12px 14px;border-radius:var(--radius);background:transparent;border:1.5px solid ${PRO_PIN};color:${PRO_PIN};font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;text-align:left">🔧 Also a Yoodle Pro — ${esc(proTradesText(_pro.trades))} ›</button>`:''}
     ${(prof.bio||!prof.visible_on_map)?`<div class="op-bio">
       <div class="op-bio-lbl">About</div>
@@ -3519,8 +3530,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
         <div class="op-bio-lbl" style="color:var(--lime)">Available as Helper</div>
         ${cats.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${cats.map(c=>`<span style="font-size:12.5px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:3px 10px">${c}</span>`).join('')}</div>`:''}
         ${prof.helper_bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(prof.helper_bio)}</div>`:''}
-        <div style="font-size:14px;font-weight:800;color:var(--lime)">${rateLabel}</div>
-        ${window.hsvcProfileSlot?hsvcProfileSlot(userId):''}
+        <div class="op-rate" style="font-size:14px;font-weight:800;color:var(--lime)">${rateLabel}</div>
         ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Helper')}')" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Helper</button>`:''}
       </div>`;
     })():''}
@@ -5159,26 +5169,6 @@ function safetyTipHtml(){
   if(_tipSeen(activeChatConvId))return`<div class="safety-mini" style="text-align:center;margin:0 0 14px"><span style="display:inline-block;font-size:12.5px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">🛡️ Ask for ID verification or <button class="st-link" onclick="openIdvFromChat()">get yours</button> · <button class="st-link st-rep2" onclick="reportFromChat()">Report</button></span></div>`;
   return`<div class="safety-tip"><b>🛡️ Stay safe on Yoodle</b><p>Before you agree, make sure you both understand the job and how payment will work.</p><p>Keep chatting here until it feels right. Don't share your phone, email or address before then.</p><p>Never send money back, buy gift cards or share verification codes.</p><div class="st-foot"><button class="st-rep" onclick="reportFromChat()">Report</button><button class="st-got" onclick="dismissSafetyTip()">Got it</button></div></div>`;
 }
-// Chat location bar (19 Nov 2026): distance + "View on map" — only for pins already public on the map
-// (open + show_on_map + unexpired job; or helper with visible_on_map + show_on_map). No names, no new data exposed.
-let chatPin=null,chatBackArgs=null;
-async function setChatLoc(task,taskId,isPoster,isHO,otherId){
-  let lat=null,lng=null;
-  if(!isPoster&&!isHO){if(task.status==='open'&&task.show_on_map&&(!task.expires_at||Date.parse(task.expires_at)>Date.now())){lat=task.lat;lng=task.lng;}}
-  else if(isPoster&&otherId){const{data:h}=await sb.from('profiles').select('last_lat,last_lng,visible_on_map,show_on_map').eq('id',otherId).maybeSingle();if(h?.visible_on_map&&h.show_on_map){lat=h.last_lat;lng=h.last_lng;}}
-  const oLat=gpsLat||userLat,oLng=gpsLng||userLng;
-  if(activeChatTaskId!==taskId||!lat||!lng||!oLat||!oLng)return;
-  const d=haversineKm(oLat,oLng,lat,lng);chatPin={lat:+lat,lng:+lng};
-  const el=document.getElementById('chat-loc');
-  el.innerHTML=`📍<span style="flex:1">${d<=1?'Within 1 km':`${d<100?d.toFixed(1):Math.round(d)} km away`}</span><span style="color:var(--btn-b)">View on map ›</span>`;
-  el.style.display='flex';
-}
-function viewChatPin(){
-  if(!chatPin||!map)return;const p=chatPin,a=chatBackArgs.slice();a[6]=activeChatConvId||a[6];closeChat();nav('map');
-  const b=document.createElement('button');b.id='chat-back';b.className='chat-back';b.textContent='← Back to chat';
-  b.onclick=()=>{b.remove();openChat(...a);};document.getElementById('app-map').appendChild(b);setTimeout(()=>b.remove(),20000);
-  setTimeout(()=>{_mapResize();map.flyTo({center:[p.lng,p.lat],zoom:Math.max(map.getZoom(),14)});const r=_htmlMarker('<div class="chat-loc-ring"></div>',36,36,p.lat,p.lng,{z:99});setTimeout(()=>r.remove(),4000);},250);
-}
 function closeChat(){
   closeOv('chat-modal');
   activeChatConvId=null;
@@ -5218,8 +5208,6 @@ async function openChatFromNotification(taskId,convId){
 }
 
 async function openChat(taskId,title,otherName,posterId,otherId,otherRating,convId){
-  chatPin=null;document.getElementById('chat-loc').style.display='none';document.getElementById('chat-back')?.remove();
-  chatBackArgs=[taskId,title,otherName,posterId,otherId,otherRating,convId];
   activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;activeChatConvId=convId||null;activeChatOtherName=otherName||'this person';activeChatSafetyTip=false;
   document.getElementById('chat-title').textContent=title;
   const ratingStr=otherRating?` · ★ ${otherRating}`:'';
@@ -5254,7 +5242,7 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   actionsEl.innerHTML='';actionsEl.style.display='none';
   if(!sb||!me)return;
   const pid=myProfileId||me.id;
-  const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id,type,lat,lng,show_on_map,expires_at').eq('id',taskId).single();
+  const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id,type').eq('id',taskId).single();
   if(!task)return;
   // "Yoodle team" thread: no job buttons; the member can hide it
   if(task.type==='admin_note'){
@@ -5268,7 +5256,6 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   const isPoster=task.poster_id===pid;
   const isDoer=task.doer_id===pid;
   const isHO=isHelperContact(task);
-  setChatLoc(task,taskId,isPoster,isHO,otherId);
   // Safety card: every chat except Yoodle team threads (returned above). Add it in place — no second messages fetch.
   if(activeChatTaskId===taskId){activeChatSafetyTip=true;const cm=document.getElementById('chat-messages');if(cm&&!cm.querySelector('.safety-tip,.safety-mini'))cm.insertAdjacentHTML('afterbegin',safetyTipHtml());}
 
@@ -6451,7 +6438,7 @@ function openLiveScreen(d){
   document.getElementById('live-area').textContent=helperShareArea(d.address);
   document.getElementById('live-rate').textContent=d.rateType==='free'||!d.rate?'🤝 Free':`💰 $${d.rate}${d.rateType==='hourly'?' / hour':d.rateType==='daily'?' / day':' flat'}`;
   document.getElementById('live-chips').innerHTML=(d.categories||[]).map(c=>`<span class="live-chip">${esc(c)}</span>`).join('');
-  document.getElementById('live-share-btn').textContent=navigator.share?'Message friends':'Copy link';
+  document.getElementById('live-share-label').textContent=navigator.share?"Tell friends you're on Yoodle":'Copy your page link';
   openOv('live-ov');
 }
 function closeLiveScreen(){closeOv('live-ov');}
@@ -6474,8 +6461,8 @@ async function shareMyHelperPage(d){
     const ta=document.createElement('textarea');ta.value=full;ta.style.position='fixed';ta.style.opacity='0';
     document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
   }
-  const btn=document.getElementById('live-share-btn');
-  if(btn&&document.getElementById('live-ov').classList.contains('open')){btn.textContent='Copied! ✓';setTimeout(()=>btn.textContent='Copy link',2000);}
+  const btn=document.getElementById('live-share-label');
+  if(btn&&document.getElementById('live-ov').classList.contains('open')){btn.textContent='Copied! ✓';setTimeout(()=>btn.textContent='Copy your page link',2000);}
   toast('📋 Copied! Paste it into a message');
 }
 
