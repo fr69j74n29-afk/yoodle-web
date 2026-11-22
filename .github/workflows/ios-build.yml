@@ -2,7 +2,7 @@
 # Stage A (now): an UNSIGNED iOS Simulator build, so no Apple Developer account is needed.
 #   Output: artifact "Yoodle-ios-simulator" -> Yoodle-sim.zip (contains App.app). Upload that zip to Appetize.io to run it in a browser.
 # Stage B (later, after the paid Apple account): add a signed job that uploads to TestFlight.
-# Details: docs/capacitor-build.md section 2.2. Repo is public, so logs are public: never print secrets.
+# Details: capacitor-build.md (private yoodle-docs repo), section 2.2. Repo is public, so logs are public: never print secrets.
 name: iOS build
 
 on:
@@ -75,7 +75,7 @@ jobs:
           path: Yoodle-sim.zip
           retention-days: 14
 
-      # Upload straight to Appetize (docs/capacitor-build.md section 2.2).
+      # Upload straight to Appetize (capacitor-build.md (private yoodle-docs repo), section 2.2).
       #   Secret   YOODLE_MOBILE_APPETIZE_TOKEN: Appetize -> Organization Settings -> API Token. Skipped if not set.
       #   Variable APPETIZE_APP_KEY: the Appetize app's public key. Set it to update that same app (same link every time);
       #   if it's empty, a new Appetize app is created and its key is printed in the run summary to save as the variable.
@@ -108,7 +108,7 @@ jobs:
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
   # Real-iPhone build for Sideloadly (Windows): an UNSIGNED device .ipa. Sideloadly re-signs it with a free Apple Account
-  # when installing over USB (app expires after 7 days; re-install to renew). See docs/capacitor-build.md section 2.3.
+  # when installing over USB (app expires after 7 days; re-install to renew). See capacitor-build.md in the private yoodle-docs repo section 2.3.
   device:
     runs-on: macos-latest
     timeout-minutes: 40

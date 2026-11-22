@@ -1,4 +1,4 @@
-// Native app push notifications (Capacitor iOS/Android, docs/capacitor-build.md). Does nothing on the website.
+// Native app push notifications (Capacitor iOS/Android, capacitor-build.md in the private yoodle-docs repo). Does nothing on the website.
 // Uses OneSignal's native SDK (@onesignal/capacitor-plugin) through window.Capacitor.Plugins.OneSignalCapacitor.
 // The site has no bundler, so this calls the plugin's bridge methods directly instead of importing its JS wrapper.
 // Same OneSignal app and the same user mapping as the website (login(profile id) = OneSignal external_id),

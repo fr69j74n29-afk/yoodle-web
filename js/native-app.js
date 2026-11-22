@@ -1,4 +1,4 @@
-// Native app only (Capacitor iOS/Android, docs/capacitor-build.md). Does nothing on the website.
+// Native app only (Capacitor iOS/Android, capacitor-build.md in the private yoodle-docs repo). Does nothing on the website.
 // Capgo live updates: tell the updater this bundle started fine, or it rolls back to the previous bundle.
 // Plain script (the site has no bundler), so the plugin comes from window.Capacitor.Plugins, not an import.
 (function(){

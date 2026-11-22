@@ -1700,7 +1700,7 @@ const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
 // Same database as the live site. On staging: sign-in returns to /staging/, no push signup, and a STAGING label shows.
 const IS_STAGING=location.pathname.startsWith('/staging/');
 const AUTH_RETURN=IS_STAGING?location.origin+'/staging/':location.origin; // live: unchanged (origin)
-// Native app (Capacitor iOS/Android, 20 Nov 2026, docs/capacitor-build.md). Always false on the website.
+// Native app (Capacitor iOS/Android, 20 Nov 2026, capacitor-build.md in the private yoodle-docs repo). Always false on the website.
 // In the app, sign-in returns through the deep link below (registered in ios/App/App/Info.plist; must be in Supabase Auth → Redirect URLs).
 const IS_NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const NATIVE_AUTH_RETURN='ca.yoodle.app://auth';
