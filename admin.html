@@ -1832,17 +1832,32 @@ async function resolveReport(id, status) {
   adminToast(status === 'open' ? 'Report reopened' : status === 'resolved' ? 'Report resolved' : 'Report dismissed');
   loadReports();
 }
+// 22 Nov 2026: tell the poster why their job was cancelled. Sent with admin_send_message() into the
+// separate "Yoodle team" thread (admin_note task), so it stays in their Messages after the job's own chats are hidden.
+async function _notifyPosterCancelled(taskId, title, reason) {
+  try {
+    const { data: t } = await sb.from('tasks').select('poster_id').eq('id', taskId).maybeSingle();
+    if (!t?.poster_id) return 'no poster found';
+    const text = `Your job "${title}" was cancelled by the Yoodle team.\nReason: ${reason}`;
+    const { error } = await sb.rpc('admin_send_message', { p_user: t.poster_id, p_body: text });
+    return error ? error.message : null;
+  } catch (e) { return e.message || 'failed'; }
+}
+const _CANCEL_REASON = { reason: 'required', reasonLabel: 'Reason — sent to the poster from Yoodle team' };
+
 async function removeReportedTask(taskId) {
   const title = await _taskTitle(taskId);
   const ok = await adminConfirm({
     title: 'Remove this job?', target: '📋 ' + esc(title),
-    body: 'The job is <b>cancelled</b> and disappears from the map and lists. This can’t be undone from admin.',
+    body: 'The job is <b>cancelled</b> and disappears from the map and lists. This can’t be undone from admin.<br>The poster gets your reason as a message from <b>Yoodle team</b> (it stays in their Messages).',
+    ..._CANCEL_REASON,
     word: 'CANCEL', button: 'Remove job'
   });
   if (!ok) return;
   const { error } = await sb.rpc('admin_remove_task', { p_task_id: taskId });
   if (error) return alert('Error: ' + error.message);
-  adminToast('Job removed');
+  const msgErr = await _notifyPosterCancelled(taskId, title, ok.reason);
+  adminToast(msgErr ? '⚠️ Job removed, but the message to the poster failed: ' + msgErr : 'Job removed · poster notified');
   loadReports();
 }
 async function suspendUser(userId, suspend) {
@@ -1874,17 +1889,19 @@ function suspendBtn(userId, suspendedIds) {
     ? `<button class="btn-admin-msg" onclick="suspendUser('${userId}',false)">Unsuspend</button>`
     : `<button class="btn-admin-msg btn-admin-danger" onclick="suspendUser('${userId}',true)">⛔ Suspend</button>`;
 }
-// Cancel a job from Recent Activity (open/claimed → cancelled via admin_remove_task)
+// Cancel a job from Recent Activity / Live conversations (open/claimed → cancelled via admin_remove_task, then reason sent to poster)
 async function adminCancelJob(taskId, title) {
   const ok = await adminConfirm({
     title: 'Cancel this job?', target: '📋 ' + esc(title),
-    body: 'It disappears from the map and lists, and its chats are hidden from Messages. This can\u2019t be undone from admin.',
+    body: 'It disappears from the map and lists, and its chats are hidden from Messages. This can\u2019t be undone from admin.<br>The poster gets your reason as a message from <b>Yoodle team</b> (it stays in their Messages).',
+    ..._CANCEL_REASON,
     word: 'CANCEL', button: 'Cancel job'
   });
   if (!ok) return;
   const { error } = await sb.rpc('admin_remove_task', { p_task_id: taskId });
   if (error) return alert('Error: ' + error.message);
-  adminToast('Job cancelled');
+  const msgErr = await _notifyPosterCancelled(taskId, title, ok.reason);
+  adminToast(msgErr ? '⚠️ Job cancelled, but the message to the poster failed: ' + msgErr : 'Job cancelled · poster notified');
   lazyReload('activity');
   loadStats();
 }
