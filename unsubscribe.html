@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Stop Yoodle emails</title>
+<link rel="icon" href="/favicon.ico">
+<!-- 17 Nov 2026: unsubscribe page for Yoodle announcement emails (Brevo, edge function brevo-announce).
+     Link format: /unsubscribe.html?u=<profile id>&s=<signature>. The button POSTs to edge function email-unsub,
+     which sets profiles.email_opt_out = true (same switch as Settings > Email notifications in the app).
+     Opening the page alone changes nothing, so email link scanners can't unsubscribe people by accident. -->
+<style>
+  :root{--bg:#F5F4EF;--card:#fff;--text:#1E2620;--muted:#6B7280;--green:#2E7D52}
+  @media (prefers-color-scheme:dark){:root{--bg:#141815;--card:#1E2420;--text:#E8EDE9;--muted:#9AA79E}}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  .card{width:100%;max-width:420px;background:var(--card);border-radius:20px;padding:28px 24px;box-shadow:0 8px 30px rgba(0,0,0,.08);text-align:center}
+  .logo{font-size:30px;font-weight:800;letter-spacing:-.5px;margin-bottom:14px}
+  .logo span:nth-child(1){color:#7C5CBF}.logo span:nth-child(2){color:#4A9E7A}.logo span:nth-child(3){color:#E07A3A}.logo span:nth-child(4){color:#3C8DC5}.logo span:nth-child(5){color:#C8A96E}.logo span:nth-child(6){color:#D45D79}
+  h1{font-size:20px;margin:0 0 8px}
+  p{font-size:15px;line-height:1.5;color:var(--muted);margin:0 0 18px}
+  button{width:100%;padding:14px;border:none;border-radius:12px;background:var(--green);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+  button:disabled{opacity:.6;cursor:default}
+  a{color:var(--green);font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo"><span>y</span><span>o</span><span>o</span><span>d</span><span>l</span><span>e</span></div>
+  <div id="box">
+    <h1>Stop Yoodle emails?</h1>
+    <p>You'll stop getting announcement and reminder emails from Yoodle. Your account and profile stay as they are.</p>
+    <button id="btn" onclick="stop()">Stop these emails</button>
+  </div>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const u = q.get('u') || '', s = q.get('s') || '';
+  const box = document.getElementById('box');
+  function show(title, text) {
+    box.innerHTML = '<h1>' + title + '</h1><p>' + text + '</p><a href="https://yoodle.ca/">Go to Yoodle</a>';
+  }
+  if (!u || !s) show('Link not complete', 'Open the link from the email again, or turn off emails in the Yoodle app under Profile → Settings → Email notifications.');
+  async function stop() {
+    const b = document.getElementById('btn');
+    b.disabled = true; b.textContent = 'Saving…';
+    try {
+      const r = await fetch('https://pyzugtltkbpcxvokdmps.supabase.co/functions/v1/email-unsub?u=' + encodeURIComponent(u) + '&s=' + encodeURIComponent(s), { method: 'POST' });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.ok) show('You’re unsubscribed', 'You won’t get these emails any more. You can turn them back on any time in the Yoodle app under Profile → Settings → Email notifications.');
+      else show('That didn’t work', 'This link may be old or incomplete. You can turn off emails in the Yoodle app under Profile → Settings → Email notifications.');
+    } catch (e) {
+      b.disabled = false; b.textContent = 'Stop these emails';
+      alert('No connection. Please try again.');
+    }
+  }
+</script>
+</body>
+</html>
