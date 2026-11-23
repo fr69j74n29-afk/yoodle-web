@@ -22,7 +22,8 @@ var YOODI_ID='149e5443-528f-4106-871b-890d7fe1f93b';
 var YOODI={active:false,online:null,checkedAt:0,lastMsgs:[],waitTimer:null,pollTimer:null,
   TIP_KEY:'yoodi_tip_seen_v1',DRAFT_KEY:'yoodi_draft_land',BIO_KEY:'yoodi_bio_pending',
   THINK_S:90};          // after this long without a reply, the "thinking" bubble says it's taking longer
-var YOODI_DRAFT_RE=/https:\/\/yoodle\.ca\/\?yoodi_draft=([0-9a-f-]{36})/gi;
+// Links in Yoodi's replies that become buttons: her drafts, and helper / Pro profiles (?helper=<id>[&s=pro])
+var YOODI_LINK_RE=/https:\/\/yoodle\.ca\/\?(?:yoodi_draft=([0-9a-f-]{36})|helper=([0-9a-f-]{36})(&s=pro)?)/gi;
 
 (function(){ // styles live here so index.html stays untouched
   var css=`
@@ -51,6 +52,8 @@ var YOODI_DRAFT_RE=/https:\/\/yoodle\.ca\/\?yoodi_draft=([0-9a-f-]{36})/gi;
 .yd-b{white-space:pre-wrap;word-wrap:break-word}
 .yd-draft{display:block;margin:8px 0 2px;padding:10px 14px;border-radius:12px;border:none;width:100%;
   background:linear-gradient(135deg,var(--btn-a),var(--btn-b));color:#fff;font-family:'Nunito',sans-serif;font-size:14.5px;font-weight:800;cursor:pointer;text-align:center}
+.yd-prof{display:inline-block;margin:6px 0 4px;padding:7px 12px;border-radius:100px;border:1.5px solid var(--lime);
+  background:transparent;color:var(--lime);font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer}
 .yd-chips{display:flex;flex-wrap:wrap;gap:8px;margin:-2px 0 14px}
 .yd-chips button{padding:8px 14px;border-radius:100px;border:1.5px solid var(--border);background:transparent;color:var(--lime);
   font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
@@ -183,10 +186,11 @@ function yoodiMsgHtml(m,isMe){
   if(!YOODI.active)return null;
   var body=String(m.body||''),html='',last=0,match;
   var isBio=/bio/i.test(body.slice(0,60));
-  YOODI_DRAFT_RE.lastIndex=0;
-  while((match=YOODI_DRAFT_RE.exec(body))){
+  YOODI_LINK_RE.lastIndex=0;
+  while((match=YOODI_LINK_RE.exec(body))){
     html+=linkify(esc(body.slice(last,match.index)));
-    html+=`<button class="yd-draft" onclick="yoodiTakeDraft('${match[1]}')">${isBio?'✨ Open my bio draft':'📝 Open my job, filled in'}</button>`;
+    if(match[1])html+=`<button class="yd-draft" onclick="yoodiTakeDraft('${match[1]}')">${isBio?'✨ Open my bio draft':'📝 Open my job, filled in'}</button>`;
+    else html+=`<button class="yd-prof" onclick="yoodiOpenProfile('${match[2]}',${match[3]?'true':'false'})">${match[3]?'View Pro profile':'View profile &amp; message'} ›</button>`;
     last=match.index+match[0].length;
   }
   html+=linkify(esc(body.slice(last)));
@@ -238,6 +242,9 @@ async function yoodiSend(){
   await loadChatMessages(true);
   if(typeof maybeAskPushAfterSend==='function')maybeAskPushAfterSend();
 }
+
+// Helper / Pro intro → their profile, over the chat (openOtherProfile brings the chat back on close)
+function yoodiOpenProfile(id,pro){if(typeof openOtherProfile==='function')openOtherProfile(id,pro?'pro':undefined);}
 
 // ---------- drafts (?yoodi_draft=<id>) ----------
 (function(){ // read the link before sign-in (Google sign-in reloads the page), like ?edit= / ?helper=
