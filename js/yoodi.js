@@ -19,7 +19,7 @@
 // If this file fails to load, the app works exactly as before, just without Yoodi.
 
 var YOODI_ID='149e5443-528f-4106-871b-890d7fe1f93b';
-var YOODI={active:false,online:null,checkedAt:0,lastMsgs:[],waitTimer:null,pollTimer:null,
+var YOODI={active:false,online:null,chips:false,checkedAt:0,lastMsgs:[],waitTimer:null,pollTimer:null,
   TIP_KEY:'yoodi_tip_seen_v1',DRAFT_KEY:'yoodi_draft_land',BIO_KEY:'yoodi_bio_pending',
   THINK_S:90};          // after this long without a reply, the "thinking" bubble says it's taking longer
 // Links in Yoodi's replies that become buttons: her drafts, and helper / Pro profiles (?helper=<id>[&s=pro])
@@ -130,7 +130,7 @@ async function yoodiOpen(opts){
 // Also called by index.html openChat() for a Yoodi chat (Messages list, push tap).
 async function yoodiOpenChat(convId,taskId,opts){
   opts=opts||{};
-  YOODI.active=true;
+  YOODI.active=true;YOODI.chips=!opts.text;   // quick buttons on every visit, until they type
   activeChatTaskId=taskId||null;activeChatPosterId=YOODI_ID;activeChatDoerId=YOODI_ID;
   activeChatConvId=convId||null;activeChatOtherName='Yoodi';activeChatSafetyTip=false;
   var modal=document.getElementById('chat-modal');modal.classList.add('yoodi-chat');
@@ -141,6 +141,8 @@ async function yoodiOpenChat(convId,taskId,opts){
   document.getElementById('chat-av').innerHTML='<img src="yoodi.png?v=20261123" alt="">';
   document.getElementById('chat-actions').style.display='none';
   var inp=document.getElementById('chat-input');inp.placeholder='Message Yoodi…';inp.maxLength=1000;
+  if(!inp._ydTyping){inp._ydTyping=true;inp.addEventListener('input',function(){   // chat started: hide the quick buttons
+    if(YOODI.active&&YOODI.chips&&inp.value.trim()){YOODI.chips=false;var c=document.querySelector('#chat-messages .yd-chips-end');if(c)c.remove();}});}
   if(opts.text)inp.value=opts.text;
   _ydPaintOnline();
   openOv('chat-modal');
@@ -168,14 +170,17 @@ function yoodiOnClose(){
 // ---------- messages ----------
 function _ydIntroHtml(withChips){
   var intro=`<div style="display:flex;justify-content:flex-start;margin-bottom:10px"><div class="yd-b" style="max-width:80%;padding:10px 14px;border-radius:18px 18px 18px 4px;background:var(--surface2);color:var(--text);font-size:14px;font-weight:600;line-height:1.4">Hi! I'm Yoodi. I can turn a few words into a job post, check if a price is fair, or polish your helper profile.</div></div>`;
-  if(!withChips)return intro;
-  return intro+`<div class="yd-chips">`+
+  return withChips?intro+_ydChipsHtml():intro;
+}
+function _ydChipsHtml(){
+  return `<div class="yd-chips">`+
     `<button onclick="yoodiChip('I need help with ')">Post a job</button>`+
     `<button onclick="yoodiChip('Is $ fair for ')">Is my price fair?</button>`+
     `<button onclick="yoodiChip('Can you help me tune up my helper bio? I do ')">Tune up my bio</button>`+
     `<button onclick="yoodiChip('Is Yoodle free?',true)">Is Yoodle free?</button></div>`;
 }
 function yoodiChip(text,send){
+  YOODI.chips=false;var c=document.querySelector('#chat-messages .yd-chips-end');if(c)c.remove();
   var inp=document.getElementById('chat-input');inp.value=text;
   if(send){yoodiSend();return;}
   inp.focus();try{inp.setSelectionRange(text.length,text.length);}catch(e){}
@@ -203,10 +208,11 @@ function yoodiAfterRender(data){
   data=data||[];YOODI.lastMsgs=data;
   var el=document.getElementById('chat-messages');if(!el)return;
   if(!el.querySelector('.yd-intro')){
-    var w=document.createElement('div');w.className='yd-intro';w.innerHTML=_ydIntroHtml(!data.length);
+    var w=document.createElement('div');w.className='yd-intro';w.innerHTML=_ydIntroHtml(false);
     el.insertBefore(w,el.firstChild);
   }
   var old=el.querySelector('.yd-wait');if(old)old.remove();
+  var oc=el.querySelector('.yd-chips-end');if(oc)oc.remove();
   clearTimeout(YOODI.waitTimer);
   var last=data[data.length-1];
   if(last&&last.sender_id!==YOODI_ID){
@@ -222,6 +228,8 @@ function yoodiAfterRender(data){
       html=`<div class="yd-think">⏳ This is taking longer than usual. Yoodi will reply here, and you'll get a notification.</div>`;
     }
     el.insertAdjacentHTML('beforeend',`<div class="yd-wait">${html}</div>`);
+  }else if(YOODI.chips){
+    el.insertAdjacentHTML('beforeend',`<div class="yd-chips-end">${_ydChipsHtml()}</div>`);
   }
   el.scrollTop=el.scrollHeight;
 }
@@ -232,7 +240,7 @@ async function yoodiSend(){
   var inp=document.getElementById('chat-input');
   var text=(inp.value||'').trim();if(!text||!_ydReady())return;
   if(text.length>1000)return toast('Please keep it under 1000 characters');
-  inp.value='';
+  inp.value='';YOODI.chips=false;
   var r;
   try{r=await sb.rpc('yoodi_ask',{p_body:text});}catch(e){r={error:e};}
   if(r.error){inp.value=text;toast('❌ '+(r.error.message||'Could not send'));return;}
