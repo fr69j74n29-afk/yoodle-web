@@ -1,0 +1,156 @@
+# Signed iOS build → TestFlight, on a GitHub-hosted Mac (no local Mac needed).
+# Run by hand only, two ways:
+#   - Push a tag named testflight-<anything> (e.g. git tag testflight-1 && git push origin testflight-1): builds that commit.
+#     Needed while this file is only on mobile-app: GitHub shows the "Run workflow" button only for workflows on main.
+#   - Once on main: Actions → "iOS TestFlight" → Run workflow → pick the branch.
+# About 10–20 minutes later the build shows in App Store Connect → Yoodle → TestFlight (after Apple's processing).
+#
+# Signing is automatic: Xcode uses the App Store Connect API key to create or fetch the signing certificate and
+# profiles itself, so no certificate or profile files are stored anywhere.
+# One-time setup (Roman, App Store Connect Admin; steps in yoodle-docs app/2026-11-24-testflight-setup-for-roman.md):
+#   Secrets   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8 (contents of the AuthKey_XXXX.p8 file; key access: Admin)
+#   Variable  APPLE_TEAM_ID (Rokedge Inc's 10-character Team ID)
+# The repo is public, so logs are public: never print secrets. The key file only exists in the runner's temp folder.
+name: iOS TestFlight
+
+on:
+  push:
+    tags: ['testflight-*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'App version shown in the App Store (e.g. 1.0). Leave empty to keep the one in the Xcode project.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Check setup
+        working-directory: .
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+        run: |
+          missing=""
+          [ -z "$ASC_KEY_ID" ] && missing="$missing ASC_KEY_ID"
+          [ -z "$ASC_ISSUER_ID" ] && missing="$missing ASC_ISSUER_ID"
+          [ -z "$ASC_KEY_P8" ] && missing="$missing ASC_KEY_P8"
+          [ -z "$TEAM_ID" ] && missing="$missing APPLE_TEAM_ID(variable)"
+          if [ -n "$missing" ]; then
+            echo "Missing repository settings:$missing. See the comment at the top of this workflow." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Tool versions
+        run: |
+          xcodebuild -version
+          node -v
+
+      - name: Install Capacitor
+        run: npm ci
+
+      - name: Build web bundle and sync into the iOS project
+        run: |
+          npm run build:www
+          npx cap sync ios
+
+      - name: Write the API key to a temp file
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          key="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          printf '%s\n' "$ASC_KEY_P8" > "$key"
+          chmod 600 "$key"
+          echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
+
+      # Build number: must go up with every upload. run_number.run_attempt (e.g. 7.1, then 7.2 on a re-run, then 8.1).
+      - name: Archive (signed)
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          BUILD_NUMBER: ${{ github.run_number }}.${{ github.run_attempt }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Yoodle.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            ${VERSION:+MARKETING_VERSION="$VERSION"} \
+            archive
+
+      # Export for App Store Connect and upload in one step (destination=upload). Xcode switches push to production.
+      - name: Export and upload to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Yoodle.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Summary
+        working-directory: .
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}.${{ github.run_attempt }}
+        run: |
+          {
+            echo "### Uploaded to TestFlight"
+            echo "Build **$BUILD_NUMBER** from \`$GITHUB_REF_NAME\` @ \`${GITHUB_SHA:0:7}\`."
+            echo "It appears in App Store Connect → Yoodle → TestFlight once Apple finishes processing (usually 5–30 minutes)."
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove the API key
+        if: always()
+        run: rm -f "$RUNNER_TEMP"/AuthKey_*.p8

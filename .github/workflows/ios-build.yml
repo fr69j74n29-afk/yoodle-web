@@ -1,7 +1,7 @@
 # Builds the Yoodle iOS app on a GitHub-hosted Mac (no local Mac needed; free because the repo is public).
 # Stage A (now): an UNSIGNED iOS Simulator build, so no Apple Developer account is needed.
 #   Output: artifact "Yoodle-ios-simulator" -> Yoodle-sim.zip (contains App.app). Upload that zip to Appetize.io to run it in a browser.
-# Stage B (later, after the paid Apple account): add a signed job that uploads to TestFlight.
+# Signed builds for TestFlight: separate workflow, run by hand (.github/workflows/ios-testflight.yml).
 # Details: capacitor-build.md (private yoodle-docs repo), section 2.2. Repo is public, so logs are public: never print secrets.
 name: iOS build
 
