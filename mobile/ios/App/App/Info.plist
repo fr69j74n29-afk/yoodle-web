@@ -28,6 +28,16 @@
 				<string>ca.yoodle.app</string>
 			</array>
 		</dict>
+		<!-- Native Google sign-in (@capgo/capacitor-social-login): Google returns to the app through the iOS client's
+		     reversed client ID ("Yoodle iOS" OAuth client in Google Cloud) -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.848369207711-l8n14j38rlds8vqb0jvkld4f6gc141as</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>

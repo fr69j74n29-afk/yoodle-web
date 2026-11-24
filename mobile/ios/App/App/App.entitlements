@@ -7,5 +7,10 @@
 	     when it exports an App Store / TestFlight build. -->
 	<key>aps-environment</key>
 	<string>development</string>
+	<!-- Sign in with Apple (index.html signIn('apple')); the App ID ca.yoodle.app has the capability -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
 </dict>
 </plist>

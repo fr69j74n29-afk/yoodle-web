@@ -12,6 +12,15 @@
       "resize": "native",
       "resizeOnFullScreen": true
     },
+    "SocialLogin": {
+      "providers": {
+        "google": true,
+        "apple": true,
+        "facebook": false,
+        "twitter": false
+      },
+      "logLevel": 1
+    },
     "CapacitorUpdater": {
       "version": "0.0.0",
       "appId": "ca.yoodle.app",
