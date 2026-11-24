@@ -195,7 +195,7 @@ body.theme-sage-dark .le{color:#E0C45A}
 #ga-landing{padding-top:18px}
 .ga-eyebrow{font-size:13.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);text-align:center;margin-bottom:8px}
 .ga-fork-h{font-family:'Fredoka One',cursive;font-weight:400;font-size:28px;line-height:1.2;text-align:center;color:var(--text)}
-.ga-about{max-width:420px;margin:22px auto 0;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.5}
+.ga-about{max-width:420px;margin:22px auto 0;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.55;background:var(--surface);border:1.5px solid var(--border);border-radius:18px;padding:16px 16px 6px}
 .ga-about h2{font-size:15px;font-weight:800;margin:0 0 6px;color:inherit}
 .ga-about p{margin:0 0 8px}
 .ga-about a{color:inherit;text-decoration:underline}
@@ -208,6 +208,21 @@ body.theme-sage-dark .le{color:#E0C45A}
 .ga-choice-ico svg{width:24px;height:24px}
 .ga-choice-t{font-size:18px;font-weight:800;color:var(--text);margin-bottom:2px}
 .ga-choice-d{font-size:14px;font-weight:700;color:var(--muted)}
+/* Landing (24 Nov 2026): map preview, then the two choices side by side, then a shorter "What is Yoodle?" */
+.ga-map{position:relative;height:190px;border-radius:18px;overflow:hidden;border:1.5px solid var(--border);background:var(--surface2);margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+#ga-map-el{position:absolute;inset:0}
+#ga-map-el .maplibregl-ctrl-bottom-right,#ga-map-el .maplibregl-ctrl-bottom-left{transform:scale(.85);transform-origin:bottom}
+.ga-map-tag{position:absolute;left:10px;top:10px;display:flex;align-items:center;gap:7px;background:var(--surface);color:var(--text);border-radius:100px;padding:6px 11px;font-size:12.5px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.ga-map-dot{width:8px;height:8px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 3px rgba(34,197,94,.25)}
+.ga-map .pin-dot{width:30px;height:30px;font-size:14px;cursor:default}
+.ga-map .ga-hp{width:22px;height:22px;border-radius:50%;background:#22C55E;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.ga-choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ga-choices .ga-choice{flex-direction:column;align-items:flex-start;gap:10px;min-height:0;padding:16px;margin:0}
+.ga-choices .ga-choice-ico{width:44px;height:44px;border-radius:12px}
+.ga-choices .ga-choice-t{font-size:16px;line-height:1.2}
+.ga-choices .ga-choice-d{font-size:13px;line-height:1.35}
+.ga-kinds{list-style:none;padding:0;margin:4px 0 12px;display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.ga-kinds li{background:var(--surface2);color:var(--text);border-radius:100px;padding:5px 11px;font-size:12.5px;font-weight:800}
 .ga-back{background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;padding:0;align-self:flex-start;margin-bottom:12px}
 .ga-post-h{font-family:'Fredoka One',cursive;font-weight:400;font-size:26px;margin-bottom:4px}
 .ga-post-sub{font-size:14px;color:var(--muted);font-weight:600;margin-bottom:18px}
@@ -800,26 +815,37 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
     <!-- LANDING -->
     <div class="ga-page" id="ga-landing">
       <div class="ga-eyebrow">Yoodle · Neighbours helping neighbours</div>
-      <h1 class="ga-fork-h">What would you like to do?</h1>
+      <h1 class="ga-fork-h">Join our growing community!</h1>
       <div class="ga-fork-sub">Free for everyone. No fees, ever.</div>
 
-      <button class="ga-choice ga-choice-job" id="ga-cta" onclick="openGuestPost()">
-        <div class="ga-choice-ico" style="background:#F97316"><svg viewBox="0 0 24 24" fill="none" stroke="#1E2620" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
-        <div><div class="ga-choice-t" id="ga-cta-t">Post a job or task</div><div class="ga-choice-d">I have a task that needs doing</div></div>
-      </button>
+      <!-- Map preview (24 Nov 2026): the app's own map style, still (no dragging), with example pins. Loads no member data. -->
+      <div class="ga-map" aria-hidden="true">
+        <div id="ga-map-el"></div>
+        <div class="ga-map-tag"><span class="ga-map-dot"></span>Jobs and helpers near you</div>
+      </div>
 
-      <button class="ga-choice ga-choice-help" onclick="openAuthSheet('helper')">
-        <div class="ga-choice-ico" style="background:#8DE0A8"><svg viewBox="0 0 24 24" fill="none" stroke="#1E2620" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-        <div><div class="ga-choice-t">Find me work</div><div class="ga-choice-d">I want to offer a skill or service</div></div>
-      </button>
+      <div class="ga-choices">
+        <button class="ga-choice ga-choice-job" id="ga-cta" onclick="openGuestPost()">
+          <div class="ga-choice-ico" style="background:#F97316"><svg viewBox="0 0 24 24" fill="none" stroke="#1E2620" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+          <div><div class="ga-choice-t" id="ga-cta-t">Post a job or task</div><div class="ga-choice-d">I have a task that needs doing</div></div>
+        </button>
+
+        <button class="ga-choice ga-choice-help" onclick="openAuthSheet('helper')">
+          <div class="ga-choice-ico" style="background:#8DE0A8"><svg viewBox="0 0 24 24" fill="none" stroke="#1E2620" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+          <div><div class="ga-choice-t">Find me work</div><div class="ga-choice-d">I want to offer a skill or service</div></div>
+        </button>
+      </div>
 
       <div class="ga-alt">Already on Yoodle? <a onclick="openAuthSheet('signin')">Sign in</a></div>
       <div class="auth-legal">By continuing you agree to Yoodle's <a href="/terms">Terms of Use</a> and <a href="/privacy">Privacy Policy</a>. No spam, ever.<br><a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a> · <a href="/news">News</a> · <a href="/blog">Blog</a> · <a href="/pros">Find a pro</a> · <a href="/ambassadors">Ambassadors</a></div>
       <!-- What Yoodle is: plain text for visitors and for Google's sign-in (OAuth) branding review -->
       <section class="ga-about" aria-labelledby="ga-about-h">
         <h2 id="ga-about-h">What is Yoodle?</h2>
-        <p>Yoodle is a free app that connects neighbours in Canada for odd jobs and local help. Post a task — yard work, moving help, cleaning, snow shovelling and more — and people nearby offer to help. Or set up a helper profile and find paid work close to home.</p>
-        <p>You sign in to Yoodle with Google or with a code sent to your email, so you can post jobs, message neighbours and get updates. Posting and applying for jobs is always free, and Yoodle never sells your data. See our <a href="/privacy">Privacy Policy</a>.</p>
+        <p>Yoodle is a free app where neighbours in Canada help each other out. Need a hand? Post a task and people nearby will offer to help. Got a skill or some spare time? Make a helper profile and find paid work close to home.</p>
+        <ul class="ga-kinds" aria-label="Kinds of help">
+          <li>🌿 Yard work</li><li>📦 Moving help</li><li>🧽 Cleaning</li><li>❄️ Snow shovelling</li><li>🔧 Furniture assembly</li><li>🛒 Errands</li>
+        </ul>
+        <p>You can sign in with Google or with a code we email you. Posting and applying is always free, and we never sell your data. Read our <a href="/privacy">Privacy Policy</a>.</p>
       </section>
     </div>
 
@@ -831,7 +857,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="g-title" type="text" maxlength="120" placeholder="e.g. Help me move a couch"></div>
       <div class="form-g"><label class="form-lbl">Description</label><textarea class="form-ta" id="g-desc" placeholder="Describe what needs doing, when, any requirements…"></textarea></div>
       <div class="form-g"><label class="form-lbl">Budget (CAD $)</label><input class="form-inp" id="g-budget" type="number" min="0" inputmode="decimal" placeholder="e.g. 50"></div>
-      <div class="ga-loc-note">📍 You'll pin your location right after signing in — your exact address is never shown publicly.</div>
+      <div class="ga-loc-note">📍 You'll pin your location right after signing in. Your exact address is never shown publicly.</div>
       <button class="ga-cta" style="margin-top:0" onclick="saveGuestPost()">Continue</button>
     </div>
   </div>
@@ -841,7 +867,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   <div class="ga-sheet" id="ga-sheet" role="dialog" aria-modal="true" aria-labelledby="ga-sheet-h">
     <div class="ga-grab"></div>
     <h3 id="ga-sheet-h">Welcome back</h3>
-    <div class="ga-sheet-p" id="ga-sheet-p">Sign in to Yoodle — no passwords needed.</div>
+    <div class="ga-sheet-p" id="ga-sheet-p">Sign in to Yoodle. No passwords needed.</div>
     <div class="ga-draft" id="ga-draft" style="display:none">
       <div><b id="ga-draft-t"></b><span id="ga-draft-m"></span></div>
       <a onclick="closeAuthSheet();openGuestPost()">Edit</a>
@@ -875,7 +901,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       </div>
     </div>
   <div id="ios-pwa-tip" style="display:none;margin-top:16px;background:rgba(92,138,106,.08);border:1.5px solid rgba(92,138,106,.20);border-radius:12px;padding:12px 16px;font-size:13.5px;color:var(--muted);line-height:1.6;font-weight:700;text-align:center;position:relative;z-index:1">
-    <strong style="color:var(--purple)">Using the home screen app?</strong><br>Type the code from the email here — tapping the link opens Safari instead of the app.
+    <strong style="color:var(--purple)">Using the home screen app?</strong><br>Type the code from the email here. Tapping the link opens Safari instead of the app.
   </div>
     <div class="ga-fine">By continuing you agree to Yoodle's <a href="/terms">Terms of Use</a> and <a href="/privacy">Privacy Policy</a>. No spam, ever.</div>
   </div>
@@ -1870,18 +1896,19 @@ function _webglOK(){
     return !!(c.getContext('webgl2')||c.getContext('webgl'));
   }catch(e){return false;}
 }
-function _sageTint(){
-  if(_usingRasterStyle)return;
+function _sageTint(m){ // m: the map to tint (default: the main map; also the landing preview)
+  m=m||map;
+  if(_usingRasterStyle&&m===map)return;
   const p=SAGE_TINT[_curTheme()];
   try{
-    map.getStyle().layers.forEach(ly=>{
+    m.getStyle().layers.forEach(ly=>{
       const id=ly.id.toLowerCase();
       try{
         const rc=p.roads&&p.roads[ly.id];
-        if(rc){if(ly.type==='line')map.setPaintProperty(ly.id,'line-color',rc);else if(ly.type==='symbol')map.setPaintProperty(ly.id,'text-color',rc);return;}
-        if(ly.type==='background')map.setPaintProperty(ly.id,'background-color',p.bg);
-        else if(ly.type==='fill'&&id.includes('water'))map.setPaintProperty(ly.id,'fill-color',p.water);
-        else if(ly.type==='fill'&&/(park|wood|grass|forest|landcover)/.test(id))map.setPaintProperty(ly.id,'fill-color',p.green);
+        if(rc){if(ly.type==='line')m.setPaintProperty(ly.id,'line-color',rc);else if(ly.type==='symbol')m.setPaintProperty(ly.id,'text-color',rc);return;}
+        if(ly.type==='background')m.setPaintProperty(ly.id,'background-color',p.bg);
+        else if(ly.type==='fill'&&id.includes('water'))m.setPaintProperty(ly.id,'fill-color',p.water);
+        else if(ly.type==='fill'&&/(park|wood|grass|forest|landcover)/.test(id))m.setPaintProperty(ly.id,'fill-color',p.green);
       }catch(e){}
     });
   }catch(e){}
@@ -1894,6 +1921,7 @@ function _armStyleFallback(){
   },8000);
 }
 function _refreshBaseStyle(){
+  try{if(gaMap)gaMap.setStyle(OFM_STYLE[_curTheme()],{diff:false});}catch(e){} // landing preview follows the theme too
   try{
     if(!map||!map.setStyle||_usingRasterStyle)return;
     _armStyleFallback();
@@ -1902,6 +1930,30 @@ function _refreshBaseStyle(){
 }
 function _collapseAttrib(){
   try{document.querySelectorAll('#map .maplibregl-ctrl-attrib.maplibregl-compact-show').forEach(el=>el.classList.remove('maplibregl-compact-show'));}catch(e){}
+}
+// ── LANDING MAP PREVIEW (24 Nov 2026) ── a small still copy of the app's map on the signed-out landing page.
+// Same OpenFreeMap style and sage colours as the real map. Example pins only: it loads no member data (no Supabase calls).
+// Centre: the visitor's last map view in this browser if there is one, otherwise Toronto. Created once, when the
+// landing page is first shown (showAuthScreen); follows the theme (_refreshBaseStyle).
+var gaMap=null; // var: _refreshBaseStyle (theme) can run before this line
+const GA_MAP_DEFAULT={lat:43.6532,lng:-79.3832};
+function _gaMapInit(){
+  if(gaMap||typeof maplibregl==='undefined'||!_webglOK())return;
+  const el=document.getElementById('ga-map-el');if(!el)return;
+  let c=GA_MAP_DEFAULT;
+  try{const s=JSON.parse(localStorage.getItem('yoodle_map')||'null');if(s&&isFinite(s.lat)&&isFinite(s.lng))c={lat:+s.lat,lng:+s.lng};}catch(e){}
+  try{
+    gaMap=new maplibregl.Map({container:el,style:OFM_STYLE[_curTheme()],center:[c.lng,c.lat],zoom:12.2,
+      interactive:false,attributionControl:false,fadeDuration:0});
+    gaMap.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>'}),'bottom-right');
+    gaMap.on('style.load',()=>_sageTint(gaMap));
+  }catch(e){gaMap=null;return;}
+  // Example pins around the centre: jobs (category colour + emoji, like the app) and helpers (green dots)
+  const jobs=[['yard',.012,-.030],['moving',-.010,.022],['assembly',.020,.018],['errands',-.016,-.012],['other',.004,.040]];
+  const helpers=[[.000,.006],[.016,-.008],[-.006,-.032],[-.019,.034],[.009,.030],[.024,-.022],[-.012,.004]];
+  const pin=(html,lat,lng)=>{const d=document.createElement('div');d.innerHTML=html;new maplibregl.Marker({element:d.firstElementChild}).setLngLat([lng,lat]).addTo(gaMap);};
+  jobs.forEach(([cat,dy,dx])=>pin(`<div class="pin-dot" style="background:${CAT_COLOR[cat]||CAT_COLOR.other}">${CAT_EMOJI[cat]||'✨'}</div>`,c.lat+dy,c.lng+dx));
+  helpers.forEach(([dy,dx])=>pin('<div class="ga-hp"></div>',c.lat+dy,c.lng+dx));
 }
 // Build a DOM marker (replaces L.divIcon + L.marker)
 function _htmlMarker(html,w,h,lat,lng,opts){
@@ -3575,7 +3627,7 @@ function openAuthSheet(mode){
   if(mode==='post'){
     const d=_readGuestDraft();
     h.textContent='Almost done!';
-    p.textContent="Sign in so neighbours can reply to you. Your job is saved — you'll pin your location and post it right after.";
+    p.textContent="Sign in so neighbours can reply to you. Your job is saved, and you'll pin your location and post it right after.";
     if(d){
       document.getElementById('ga-draft-t').textContent=d.title;
       document.getElementById('ga-draft-m').textContent=d.budget?('$'+d.budget+' · ready to post'):'ready to post';
@@ -3583,10 +3635,10 @@ function openAuthSheet(mode){
     }
   }else if(mode==='helper'){
     h.textContent='Find work nearby';
-    p.textContent="Sign in and we'll take you straight to your helper profile — neighbours nearby can then find and message you.";
+    p.textContent="Sign in and we'll take you straight to your helper profile, so neighbours nearby can find and message you.";
   }else{
     h.textContent='Welcome back';
-    p.textContent='Sign in to Yoodle — no passwords needed.';
+    p.textContent='Sign in to Yoodle. No passwords needed.';
   }
   openOv('ga-dim');
   openOv('ga-sheet');
@@ -3775,7 +3827,7 @@ function markAllNotifsRead(){
 }
 // Coming back to the tab refreshes the count (no polling)
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&me)loadNotifications();});
-function showAuthScreen(){_notifs=[];renderNotifBadge();closeOv('nt-sheet');myViewStats=null;renderViewBadge();closeViewPanel();document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';}
+function showAuthScreen(){_notifs=[];renderNotifBadge();closeOv('nt-sheet');myViewStats=null;renderViewBadge();closeViewPanel();document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';try{_gaMapInit();}catch(e){}}
 
 let _appStartedFor=null;
 function _startApp(session){
