@@ -7,7 +7,7 @@
 //   Helper, job claimed  → Withdraw                    (help request: Decline)
 //   Applicant, pending   → Withdraw
 //   Yoodle team thread   → Hide (member: closes it; team account: hides it for the team only)
-//   Yoodi chat           → no swipe
+//   Yoodi chat           → Clear (start fresh: closes this chat; the next message to Yoodi starts an empty one)
 // Every button uses the same "tap again to confirm" as the chat screen (tapConfirm) and calls the SAME functions
 // as the chat-screen buttons in index.html (chatComplete, chatUnclaim, cancelHelpOffer, withdrawApplication),
 // so there is still one place where each action happens. Only swDecline is new (no existing per-applicant decline).
@@ -48,8 +48,6 @@ function swInit(listEl){
   swOpenWrap=null;
   listEl.querySelectorAll('.conv-row[data-conv]').forEach(row=>{
     if(row.parentElement.classList.contains('sw-wrap'))return;
-    const poster=row.dataset.poster, other=row.dataset.other;
-    if(window.yoodiOwnsChat&&yoodiOwnsChat(poster,other))return; // Yoodi chat (js/yoodi.js): no actions
     const wrap=document.createElement('div');
     wrap.className='sw-wrap';
     row.parentNode.insertBefore(wrap,row);
@@ -167,6 +165,10 @@ async function swButtonsFor(taskId,convId,posterId,otherId){
   if(!task)return[];
   const isPoster=task.poster_id===pid, isDoer=task.doer_id===pid, isHO=isHelperContact(task);
   const B=(label,cls,run)=>({label,cls,run});
+  if(task.type==='yoodi_chat'){
+    // Yoodi is for one-off help (Roman, 23 Nov): Clear closes the chat so the next question starts fresh.
+    return(!isPoster&&task.status==='claimed')?[B('Clear','sw-grey',()=>swClearYoodi(convId))]:[];
+  }
   if(task.type==='admin_note'){
     // Member: closes the chat (as before). Yoodle team account (poster): hides it from the team's list only; a newer message brings it back.
     return((isDoer&&task.status==='claimed')||isPoster)?[B('Hide','sw-grey',()=>swHideTeam(convId))]:[];
@@ -201,6 +203,16 @@ async function swDecline(convId,taskId,applicantId){
   await closeConversation(convId,taskId,pid,applicantId,`Thanks for your interest — the poster has decided to go another way on this job.`);
   toast('Applicant declined');
   loadMessages();loadMyJobs();refreshUnreadCount();
+}
+
+// Yoodi chat "start fresh": yoodi_clear_chat cancels + archives the member's Yoodi chat; old messages stay in the
+// database for admin/safety. yoodiOpen() then finds no active chat and shows a blank one; yoodi_ask creates the new chat.
+async function swClearYoodi(convId){
+  if(!sb||!me||!convId)return;
+  const{error}=await sb.rpc('yoodi_clear_chat',{p_conversation:convId});
+  if(error)return toast('❌ '+error.message);
+  toast('Yoodi chat cleared');
+  loadMessages();refreshUnreadCount();
 }
 
 // Same as the chat screen's "Hide this chat" (hideTeamThread), without needing the chat open.
