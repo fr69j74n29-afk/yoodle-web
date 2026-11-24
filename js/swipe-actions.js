@@ -6,7 +6,7 @@
 //   Poster, job open     → Decline (this applicant only; Cancel job stays in My Jobs)
 //   Helper, job claimed  → Withdraw                    (help request: Decline)
 //   Applicant, pending   → Withdraw
-//   Yoodle team thread   → Hide
+//   Yoodle team thread   → Hide (member: closes it; team account: hides it for the team only)
 //   Yoodi chat           → no swipe
 // Every button uses the same "tap again to confirm" as the chat screen (tapConfirm) and calls the SAME functions
 // as the chat-screen buttons in index.html (chatComplete, chatUnclaim, cancelHelpOffer, withdrawApplication),
@@ -168,7 +168,8 @@ async function swButtonsFor(taskId,convId,posterId,otherId){
   const isPoster=task.poster_id===pid, isDoer=task.doer_id===pid, isHO=isHelperContact(task);
   const B=(label,cls,run)=>({label,cls,run});
   if(task.type==='admin_note'){
-    return(isDoer&&task.status==='claimed')?[B('Hide','sw-grey',()=>swHideTeam(convId))]:[];
+    // Member: closes the chat (as before). Yoodle team account (poster): hides it from the team's list only; a newer message brings it back.
+    return((isDoer&&task.status==='claimed')||isPoster)?[B('Hide','sw-grey',()=>swHideTeam(convId))]:[];
   }
   if(task.status==='claimed'){
     if(isPoster){
@@ -203,6 +204,7 @@ async function swDecline(convId,taskId,applicantId){
 }
 
 // Same as the chat screen's "Hide this chat" (hideTeamThread), without needing the chat open.
+// hide_team_thread decides by caller: member → cancel + archive; Yoodle team account → sets poster_hidden_at only.
 async function swHideTeam(convId){
   if(!sb||!me||!convId)return;
   const{error}=await sb.rpc('hide_team_thread',{p_conversation:convId});
