@@ -56,7 +56,7 @@
 <!-- Standard services (17 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
 <script src="js/home-services.js?v=20261121c" defer></script>
 <!-- Yoodi Live (23 Nov 2026): Yoodi, Yoodle's assistant, floating on the map; own file, classic deferred script; bump ?v= on every change -->
-<script src="js/yoodi.js?v=20261123e" defer></script>
+<script src="js/yoodi.js?v=20261123f" defer></script>
 <style>
 :root{
   --purple:#5C8A6A;--lime:#2E7D52;--pink:#3D6B50;
@@ -5029,7 +5029,7 @@ async function loadMessages(){
       else if(t.app_status==='assigned'||t.task_status==='claimed') statusTag=`<span style="font-size:11.5px;color:var(--teal);font-weight:800;margin-left:6px">Assigned</span>`;
     }
     return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
-      ${avatarCircle(otherName,null,'28px','12px')}
+      ${window.yoodiAvatar&&yoodiOwnsChat(t.poster_id,t.other_id)?yoodiAvatar():avatarCircle(otherName,null,'28px','12px')}
       <div class="conv-body">
         <div class="conv-top">
           <span class="conv-name">${esc(otherName)}${idvChip(t.other_id,true)}${unreadBadge}</span>

@@ -44,8 +44,12 @@ body.theme-sage-dark #yoodi-fab .yd-dot{border-color:#1a1f1c}
 #yoodi-tip b{display:block;font-size:15.5px;font-weight:800;margin-bottom:2px}
 #yoodi-tip .x{position:absolute;top:6px;right:8px;border:none;background:none;color:var(--muted);font-size:17px;cursor:pointer;padding:2px 4px}
 #chat-modal.yoodi-chat #chat-more-wrap,#chat-modal.yoodi-chat #chat-actions{display:none!important}
-#chat-modal.yoodi-chat #chat-av{background:#fff!important;border:2px solid #2E7D52!important;overflow:hidden;cursor:default;width:38px!important;height:38px!important}
-#chat-modal.yoodi-chat #chat-av img{width:28px;height:auto}
+#chat-modal.yoodi-chat #chat-av{background:none!important;border:none!important;box-shadow:none!important;border-radius:0!important;
+  overflow:visible;cursor:default;width:38px!important;height:44px!important}
+#chat-modal.yoodi-chat #chat-av img,.yd-av img{width:100%;height:auto;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+body.theme-sage-dark #chat-modal.yoodi-chat #chat-av img,body.theme-sage-dark .yd-av img{
+  filter:drop-shadow(0 0 1px #fff) drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.yd-av{width:28px;height:34px;flex-shrink:0;display:flex;align-items:center}
 #chat-modal.yoodi-chat #chat-other{cursor:default}
 #chat-modal .yd-foot{display:none}
 #chat-modal.yoodi-chat .yd-foot{display:block;padding:0 16px 12px;font-size:12px;color:var(--muted);font-weight:700;text-align:center;background:var(--surface);flex-shrink:0}
@@ -76,6 +80,9 @@ function _ydPid(){return (typeof myProfileId!=='undefined'&&myProfileId)||(typeo
 function _ydReady(){return typeof sb!=='undefined'&&sb&&typeof me!=='undefined'&&me;}
 function _ydGet(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}}
 function _ydSet(k,v){try{if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+// Yoodi's picture in the Messages list, no circle (index.html loadMessages)
+function yoodiAvatar(){return '<div class="yd-av"><img src="yoodi.png?v=20261123" alt="Yoodi"></div>';}
 
 // Is this chat a Yoodi chat? (index.html openChat / loadMessages)
 function yoodiOwnsChat(posterId,otherId){return posterId===YOODI_ID||otherId===YOODI_ID;}
