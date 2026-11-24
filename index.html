@@ -56,7 +56,9 @@
 <!-- Standard services (17 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
 <script src="js/home-services.js?v=20261121c" defer></script>
 <!-- Yoodi Live (23 Nov 2026): Yoodi, Yoodle's assistant, floating on the map; own file, classic deferred script; bump ?v= on every change -->
-<script src="js/yoodi.js?v=20261123a" defer></script>
+<script src="js/yoodi.js?v=20261124a" defer></script>
+<!-- Swipe actions on Messages rows (23 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
+<script src="js/swipe-actions.js?v=20261123c" defer></script>
 <style>
 :root{
   --purple:#5C8A6A;--lime:#2E7D52;--pink:#3D6B50;
@@ -95,7 +97,9 @@ body.theme-sage-dark{
 body.theme-sage-dark .top-bar{background:rgba(13,18,15,.96)}
 body.theme-sage-dark .bottom-nav{background:rgba(13,18,15,.97)}
 body.theme-sage-dark .btn-google{background:var(--surface);color:var(--text);border:1.5px solid var(--border)}
-body.theme-sage-dark .map-locate-btn{background:rgba(20,26,22,.95)}
+/* locate button: same white button and green arrow as light mode, so it stands out on the dark map (24 Nov) */
+body.theme-sage-dark .map-locate-btn{background:rgba(255,255,255,.95);border-color:rgba(255,255,255,.95);box-shadow:0 2px 10px rgba(0,0,0,.55)}
+body.theme-sage-dark .map-locate-btn svg{color:#4A9E7A!important}
 body.theme-sage-dark #map,body.theme-sage-dark .maplibregl-map{background:#141A16!important}
 body.theme-sage-dark .nav-i.active{color:#FFFFFF}
 body.theme-sage-dark .pin-dot{border-color:rgba(13,18,15,.7)}
@@ -5028,8 +5032,8 @@ async function loadMessages(){
       else if(window.yoodiOwnsChat&&yoodiOwnsChat(t.poster_id,t.other_id)) statusTag=''; // Yoodi chat (js/yoodi.js)
       else if(t.app_status==='assigned'||t.task_status==='claimed') statusTag=`<span style="font-size:11.5px;color:var(--teal);font-weight:800;margin-left:6px">Assigned</span>`;
     }
-    return `<div class="conv-row" style="${rowBg}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
-      ${avatarCircle(otherName,null,'28px','12px')}
+    return `<div class="conv-row" style="${rowBg}" data-conv="${t.conversation_id}" data-task="${t.task_id}" data-poster="${t.poster_id}" data-other="${t.other_id||''}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
+      ${window.yoodiAvatar&&yoodiOwnsChat(t.poster_id,t.other_id)?yoodiAvatar():avatarCircle(otherName,null,'28px','12px')}
       <div class="conv-body">
         <div class="conv-top">
           <span class="conv-name">${esc(otherName)}${idvChip(t.other_id,true)}${unreadBadge}</span>
@@ -5040,6 +5044,7 @@ async function loadMessages(){
       </div>
     </div>`;
   }).join('');
+  if(window.swInit)swInit(el); // swipe-left actions (js/swipe-actions.js)
 }
 
 let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null, activeChatConvId=null;
