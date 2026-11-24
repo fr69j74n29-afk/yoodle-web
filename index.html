@@ -223,7 +223,10 @@ body.theme-sage-dark .btn-apple{background:#fff;color:#000}
 .ga-dim.open{opacity:1;pointer-events:auto}
 .ga-sheet{position:fixed;left:50%;bottom:0;width:100%;max-width:480px;transform:translate(-50%,105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);background:var(--surface);border-radius:26px 26px 0 0;padding:12px 22px calc(var(--sab) + 22px);z-index:6;max-height:92dvh;overflow-y:auto;box-shadow:0 -8px 30px rgba(0,0,0,.15)}
 .ga-sheet.open{transform:translate(-50%,0)}
-.ga-grab{width:40px;height:5px;border-radius:5px;background:var(--border);margin:0 auto 14px}
+/* Close button (24 Nov 2026): replaces the drag handle, which looked swipeable but wasn't */
+.ga-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:15px;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.ga-x:active{transform:scale(.92)}
+.ga-sheet h3{padding-right:40px;margin-top:10px}
 .ga-sheet h3{font-family:'Fredoka One',cursive;font-weight:400;font-size:24px;color:var(--pink);margin-bottom:4px}
 .ga-sheet-p{font-size:14px;color:var(--muted);font-weight:600;line-height:1.5;margin-bottom:16px}
 .ga-draft{background:var(--bg);border-radius:14px;padding:12px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -247,7 +250,6 @@ body.theme-sage-dark .btn-apple{background:#fff;color:#000}
 @media(min-width:481px){
   .ga-sheet{bottom:50%;border-radius:26px;transform:translate(-50%,60%);opacity:0;pointer-events:none;transition:transform .25s,opacity .25s;max-width:420px}
   .ga-sheet.open{transform:translate(-50%,50%);opacity:1;pointer-events:auto}
-  .ga-grab{display:none}
   #view-auth{padding-top:33px} /* desktop: keep the space of the removed top nav */
 }
 
@@ -760,6 +762,8 @@ body.theme-sage-dark .map-legend{background:rgba(20,26,22,.93)}
 .map-idv-cta .mic-h{font-size:10.5px;font-weight:800;letter-spacing:1px;color:var(--idv);text-transform:uppercase}
 .map-idv-cta .mic-t{font-size:13.5px;font-weight:900;color:var(--text);line-height:1.25}
 body.theme-sage-dark .map-idv-cta{background:rgba(20,26,22,.93)}
+/* iOS app: no paid ID verification offers (Apple in-app purchase rules; Roman, decisions note §4). Badges still show. */
+html.native-app .map-idv-cta{display:none}
 body.theme-sage-dark .map-idv-cta .mic-av,body.theme-sage-dark .map-idv-cta .idv-tick{border-color:#141A16}
 .map-legend div{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:800;color:var(--muted);white-space:nowrap}
 .map-legend .ml-h{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:1px}
@@ -846,7 +850,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   <!-- SIGN-IN SHEET -->
   <div class="ga-dim" id="ga-dim" onclick="closeAuthSheet()"></div>
   <div class="ga-sheet" id="ga-sheet" role="dialog" aria-modal="true" aria-labelledby="ga-sheet-h">
-    <div class="ga-grab"></div>
+    <button class="ga-x" type="button" onclick="closeAuthSheet()" aria-label="Close">✕</button>
     <h3 id="ga-sheet-h">Welcome back</h3>
     <div class="ga-sheet-p" id="ga-sheet-p">Sign in to Yoodle — no passwords needed.</div>
     <div class="ga-draft" id="ga-draft" style="display:none">
@@ -1717,6 +1721,7 @@ const NATIVE_AUTH_RETURN='ca.yoodle.app://auth';
 // App only (20 Nov 2026): route the page's existing web APIs to Capacitor plugins, so the rest of this file stays the same
 // as the website. Plugins are injected by the app at page start (window.Capacitor.Plugins.*).
 if(IS_NATIVE)(function(){
+  document.documentElement.classList.add('native-app'); // app-only CSS (e.g. no paid ID verification offers)
   const P=window.Capacitor.Plugins||{};
   // Links/windows: site pages (/terms, /faq, faq.html …) open the live yoodle.ca page, other sites open in the in-app browser
   // sheet. Without this Capacitor sends them to Safari, and site pages bundled in the app would just show the home screen.
@@ -2422,8 +2427,10 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   // App: PKCE flow, so the deep link carries a one-time ?code= (exchanged below) instead of tokens in the URL. Website: unchanged.
+  // App (24 Nov 2026): the session is kept in native storage (@capacitor/preferences), which iOS never clears, instead of
+  // the web view's localStorage, which iOS can clear when the phone is low on space. App builds without the plugin keep localStorage.
   sb = IS_NATIVE
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {auth:{flowType:'pkce',detectSessionInUrl:false}})
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {auth:{flowType:'pkce',detectSessionInUrl:false,...(_nativeAuthStorage()?{storage:_nativeAuthStorage()}:{})}})
     : window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   if(IS_NATIVE)_nativeAuthInit();
   if(window._renewToken)handleRenewLink(window._renewToken);
@@ -3745,6 +3752,26 @@ async function signIn(provider) {
     return;
   }
   await sb.auth.signInWithOAuth({provider,options:{redirectTo:AUTH_RETURN}});
+}
+// App only: Supabase session storage in native Preferences (see createClient). null → Supabase's default (localStorage).
+// The first time it runs, a session saved earlier in localStorage is moved over, so nobody is signed out by the switch.
+var _nasCache; // var, not let: createClient (earlier in this file) can call this before this line has run
+function _nativeAuthStorage(){
+  if(_nasCache!==undefined)return _nasCache;
+  const Pr=IS_NATIVE&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Preferences;
+  if(!Pr)return(_nasCache=null);
+  const ls={get:k=>{try{return localStorage.getItem(k);}catch(e){return null;}},del:k=>{try{localStorage.removeItem(k);}catch(e){}}};
+  return(_nasCache={
+    async getItem(k){
+      const r=await Pr.get({key:k});
+      if(r&&r.value!=null)return r.value;
+      const old=ls.get(k);
+      if(old!=null){await Pr.set({key:k,value:old});ls.del(k);}
+      return old;
+    },
+    async setItem(k,v){await Pr.set({key:k,value:v});},
+    async removeItem(k){await Pr.remove({key:k});ls.del(k);}
+  });
 }
 // App only: finish sign-in when Supabase redirects to ca.yoodle.app://auth (app already open, or launched by the link).
 // ?code= → PKCE exchange; #access_token= (older links) → setSession. onAuthStateChange then starts the app as on the website.
@@ -5230,7 +5257,7 @@ function openIdvFromMap(){
 function openIdvFromChat(){closeChat();openIdvFromMap();}
 function safetyTipHtml(){
   if(!activeChatSafetyTip)return'';
-  if(_tipSeen(activeChatConvId))return`<div class="safety-mini" style="text-align:center;margin:0 0 14px"><span style="display:inline-block;font-size:12.5px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">🛡️ Ask for ID verification or <button class="st-link" onclick="openIdvFromChat()">get yours</button> · <button class="st-link st-rep2" onclick="reportFromChat()">Report</button></span></div>`;
+  if(_tipSeen(activeChatConvId))return`<div class="safety-mini" style="text-align:center;margin:0 0 14px"><span style="display:inline-block;font-size:12.5px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">🛡️ Ask for ID verification${IS_NATIVE?'':' or <button class="st-link" onclick="openIdvFromChat()">get yours</button>'} · <button class="st-link st-rep2" onclick="reportFromChat()">Report</button></span></div>`;
   return`<div class="safety-tip"><b>🛡️ Stay safe on Yoodle</b><p>Before you agree, make sure you both understand the job and how payment will work.</p><p>Keep chatting here until it feels right. Don't share your phone, email or address before then.</p><p>Never send money back, buy gift cards or share verification codes.</p><div class="st-foot"><button class="st-rep" onclick="reportFromChat()">Report</button><button class="st-got" onclick="dismissSafetyTip()">Got it</button></div></div>`;
 }
 function closeChat(){
@@ -5670,7 +5697,7 @@ function rtwSheet(day,why){
   const w=why&&RTW_WHY[why];
   document.getElementById('rtw-title').textContent=day==='today'?'Ready to work today':'Ready to work tomorrow';
   document.getElementById('rtw-why').innerHTML=w?`<div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:12px">${w.t}</div>`:'';
-  document.getElementById('rtw-idv').style.display=(!w&&!isIdVerified(myProfileId||me?.id))?'block':'none';
+  document.getElementById('rtw-idv').style.display=(!w&&!IS_NATIVE&&!isIdVerified(myProfileId||me?.id))?'block':'none'; // app: no purchase offer
   const go=document.getElementById('rtw-go');
   if(w){go.textContent=w.b||'OK';go.onclick=()=>{closeOv('rtw-modal');if(w.f)w.f();};}
   else{go.textContent=day==='today'?'Turn on for today':'Turn on for tomorrow';go.onclick=()=>{closeOv('rtw-modal');rtwSet(day,true);};}
@@ -5882,6 +5909,8 @@ async function renderIdvBlock(){
   if(st==='processing'){el.innerHTML=_idvBox('⏳','Checking your ID…','Stripe is checking your ID and selfie — usually a few minutes.',_idvBtn('Refresh','refreshIdv()',true));return;}
   if(st==='paid'){el.innerHTML=_idvBox('🛡️','Continue your ID check',`You've paid — the ID and selfie check is next. ${_idvLeft(row)}.`,_idvBtn('Continue verification',"startIdvCheck('profile')"));return;}
   if(st==='retry'){el.innerHTML=_idvBox('⚠️',"Your ID check didn't go through",`${esc(IDV_ERR[row?.last_error_code]||"Stripe couldn't finish the check.")} ${_idvLeft(row)} — no extra charge.`,_idvBtn('Try again',"startIdvCheck('profile')"));return;}
+  // App: don't offer the $2.99 purchase (Apple rules; Roman's decision 22 Nov). Paid-on-the-website states above still show.
+  if(IS_NATIVE){el.innerHTML='';return;}
   const sub=(st==='used_up'?"Your 3 tries are used up. ":'')+'Neighbours see a <span class="idv-chip" style="margin-left:0">✓ ID verified</span> badge on your profile and in chats. Checked by Stripe — takes about 2 minutes.';
   el.innerHTML=_idvBox('🛡️','Get ID verified',sub,_idvBtn('Get verified · $2.99 + tax',"openIdvConsent('profile')"));
 }
@@ -5899,7 +5928,7 @@ async function updateForkIdvCard(){
     retry:['Try your ID check again',`${_idvLeft(row)} · no extra charge`,"startIdvCheck('plus')",false],
     processing:['Checking your ID…','Usually a few minutes',"nav('profile')",false]
   }[st];
-  if(!cfg){el.innerHTML='';return;}
+  if(!cfg||(IS_NATIVE&&(st==='new'||st==='used_up'))){el.innerHTML='';return;} // app: no purchase offer
   const[title,sub,fn,isNew]=cfg;
   el.innerHTML=`<button onclick="${fn}" style="position:relative;width:100%;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;margin-top:16px;border-radius:16px;border:1.5px solid var(--idv-line);background:var(--idv-soft);cursor:pointer;text-align:left;font-family:'Nunito',sans-serif">
     ${isNew?`<span style="position:absolute;top:-9px;right:14px;background:var(--idv);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.5px;padding:2px 8px;border-radius:100px">NEW</span>`:''}
@@ -5923,6 +5952,7 @@ let _idvSrc=null;
 function logIdvTap(step,src){try{if(sb&&me)return sb.rpc('log_idv_tap',{p_step:step,p_source:src===undefined?_idvSrc:src}).then(()=>{},()=>{});}catch(e){}return Promise.resolve();}
 const _idvLogged=p=>Promise.race([p,new Promise(r=>setTimeout(r,1500))]);
 function openIdvConsent(src){
+  if(IS_NATIVE)return; // app: no paid ID verification (all entry points are hidden; this is the safety net)
   if(!me){toast('Sign in first');return;}
   _idvSrc=src==='plus'||src==='profile'?src:null;
   logIdvTap('open');

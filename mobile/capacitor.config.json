@@ -22,9 +22,9 @@
       "logLevel": 1
     },
     "CapacitorUpdater": {
-      "version": "0.0.0",
       "appId": "ca.yoodle.app",
-      "autoUpdate": "atBackground"
+      "autoUpdate": "atBackground",
+      "allowModifyUrl": true
     }
   }
 }
