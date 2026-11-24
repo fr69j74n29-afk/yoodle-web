@@ -45,6 +45,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Yoodle uses your location to show jobs and neighbours near you and how far away they are.</string>
+	<!-- Required by App Store Connect (ITMS-90683) because a plugin's code references the "Always" location API.
+	     Yoodle never asks for background location, so this text is never shown; it says the same as the When In Use text. -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Yoodle uses your location only while you're using the app, to show jobs and neighbours near you and how far away they are.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
