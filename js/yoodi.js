@@ -27,13 +27,16 @@ var YOODI_LINK_RE=/https:\/\/yoodle\.ca\/\?(?:yoodi_draft=([0-9a-f-]{36})|helper
 
 (function(){ // styles live here so index.html stays untouched
   var css=`
-#yoodi-fab{position:absolute;right:12px;bottom:76px;z-index:11;width:60px;height:60px;border-radius:50%;border:2.5px solid #2E7D52;
-  background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
-  transition:transform .15s,filter .3s}
+#yoodi-fab{position:absolute;right:10px;bottom:72px;z-index:11;width:64px;height:76px;border:none;background:none;padding:0;
+  display:flex;align-items:flex-end;justify-content:center;cursor:pointer;transition:transform .15s,filter .3s;-webkit-tap-highlight-color:transparent}
 #yoodi-fab:active{transform:scale(.94)}
-#yoodi-fab img{width:44px;height:auto;display:block;pointer-events:none}
-#yoodi-fab .yd-dot{position:absolute;top:1px;right:1px;width:14px;height:14px;border-radius:50%;background:#22C55E;border:2.5px solid #fff}
-#yoodi-fab.off{filter:grayscale(1);opacity:.8;border-color:#9CA3AF}
+#yoodi-fab img{width:60px;height:auto;display:block;pointer-events:none;
+  filter:drop-shadow(0 3px 5px rgba(0,0,0,.35))}                                   /* light map: soft shadow */
+body.theme-sage-dark #yoodi-fab img{
+  filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 4px 8px rgba(0,0,0,.6))}  /* dark map: thin white edge */
+#yoodi-fab .yd-dot{position:absolute;top:4px;right:6px;width:14px;height:14px;border-radius:50%;background:#22C55E;border:2.5px solid #fff}
+body.theme-sage-dark #yoodi-fab .yd-dot{border-color:#1a1f1c}
+#yoodi-fab.off{filter:grayscale(1);opacity:.8}
 #yoodi-fab.off .yd-dot{background:#9CA3AF}
 #yoodi-tip{position:absolute;right:80px;bottom:84px;z-index:11;max-width:220px;background:var(--surface);color:var(--text);
   border:1.5px solid var(--border);border-radius:16px 16px 4px 16px;padding:12px 30px 12px 14px;box-shadow:0 6px 18px rgba(0,0,0,.18);
