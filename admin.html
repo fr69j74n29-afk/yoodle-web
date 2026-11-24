@@ -2390,7 +2390,7 @@ async function loadRecentActivity() {
     const [{ data: jobs, error: jobErr }, { data: helpers2, error: helpErr }] = await Promise.all([
       sb.from('tasks')
         .select('id, title, description, price, status, address, created_at, poster_id, category')
-        .not('type', 'in', '(admin_note,agency_job,community_job)')   // agency jobs have their own section (Oct 2026); imported employer jobs (Nov 2026) aren't member activity
+        .not('type', 'in', '(admin_note,agency_job,community_job,yoodi_chat)')   // agency jobs have their own section (Oct 2026); imported employer jobs (Nov 2026) aren't member activity; Yoodi chat threads (yoodi_chat, 23 Nov 2026) aren't jobs
         .gte('created_at', cutoff)
         .order('created_at', { ascending: false })
         .limit(5),
