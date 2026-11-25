@@ -9,6 +9,8 @@
 // (paid Apple Developer account). Simulator / Appetize / Sideloadly builds can show the permission prompt but get no pushes.
 var NP_APP_ID = '258cf4ad-768d-4775-a8ce-4f79a5c2de04'; // same OneSignal app as the website (index.html registerOneSignal)
 var NP = { plugin: null, ready: false, perm: 'unavailable', wantLogin: false, init: Promise.resolve() };
+// perm while OneSignal starts: 'unknown' (not 'default'), so nothing asks a member who already allowed notifications
+// before the real answer is in (25 Nov 2026 review). npRefreshPerm() sets the real value once initialize() is done.
 
 (function () {
   var C = window.Capacitor;
@@ -16,7 +18,7 @@ var NP = { plugin: null, ready: false, perm: 'unavailable', wantLogin: false, in
   var P = C.Plugins && C.Plugins.OneSignalCapacitor;
   if (!P) return; // an older app build without the plugin: behave as before (no push)
   NP.plugin = P;
-  NP.perm = 'default';
+  NP.perm = 'unknown';
 
   // Tap on a notification. Registered before initialize(): on a cold start the plugin replays the tap during
   // initialize(), and Capacitor holds it until this listener exists (retainUntilConsumed).
@@ -33,7 +35,7 @@ var NP = { plugin: null, ready: false, perm: 'unavailable', wantLogin: false, in
   }).catch(function (e) { console.warn('OneSignal (app) init error:', e); NP.perm = 'unavailable'; });
 })();
 
-// 'granted' | 'denied' | 'default' (not asked yet) | 'unavailable' (website, or an app build without the plugin:
+// 'granted' | 'denied' | 'default' (not asked yet) | 'unknown' (still starting) | 'unavailable' (website, or an app build without the plugin:
 // Capgo can deliver this file to app installs built before push was added). Cached so the page can check it without waiting.
 function npPermission() { return NP.perm; }
 

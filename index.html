@@ -57,7 +57,7 @@
 <!-- Standard services (17 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
 <script src="js/home-services.js?v=20261121c" defer></script>
 <script src="js/native-app.js?v=20261120a" defer></script>
-<script src="js/native-push.js?v=20261121a" defer></script>
+<script src="js/native-push.js?v=20261125a" defer></script>
 <!-- Yoodi Live (23 Nov 2026): Yoodi, Yoodle's assistant, floating on the map; own file, classic deferred script; bump ?v= on every change -->
 <script src="js/yoodi.js?v=20261124a" defer></script>
 <!-- Swipe actions on Messages rows (23 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
@@ -2538,7 +2538,8 @@ function locateUser(silent) {
       if(_geoWatchId!==null){navigator.geolocation.clearWatch(_geoWatchId);_geoWatchId=null;}
       if(btn)btn.classList.remove('locating');
       if(err.code===1){
-        if(!silent)toast('📍 Tap AA in address bar → Website Settings → Location → Allow');
+        if(!silent)toast(IS_NATIVE?'📍 Location is off for Yoodle: open Settings → Yoodle → Location → While Using the App' // app: no address bar (25 Nov 2026 review)
+          :'📍 Tap AA in address bar → Website Settings → Location → Allow');
       } else {
         if(!silent)toast('📍 Location unavailable — try again');
       }
@@ -3735,13 +3736,18 @@ async function _nativeSocialSignIn(S,provider){
   if(!r.idToken){if(provider==='google')return 'fallback';toast('❌ Sign in with Apple didn\'t work — try again');return 'done';}
   const{data,error}=await sb.auth.signInWithIdToken({provider,token:r.idToken,nonce:raw});
   if(error){toast('❌ '+error.message);return 'done';}
-  // Apple shares the name only with the app (not in the token): save it for new members, as Google's full_name is.
-  // Only fills an empty name, so an existing member's chosen name is never replaced.
+  // Apple shares the name only with the app (not in the token), and only on the first sign-in (the plugin keeps it for
+  // later ones). Save it as Google's full_name is, and waited for, so the app shows it from the start (25 Nov 2026 review).
+  // The profile row is made by the database at sign-up; its name is replaced only when it's empty or still the
+  // email-style fallback (the part before @, e.g. an Apple "Hide My Email" relay), so a chosen name is never overwritten.
   const pf=r.profile||{},full=[pf.givenName,pf.familyName].filter(Boolean).join(' ').trim();
   const u=data&&data.user;
   if(provider==='apple'&&full&&u){
-    if(!u.user_metadata||!u.user_metadata.full_name)sb.auth.updateUser({data:{full_name:full}}).catch(()=>{});
-    sb.from('profiles').update({name:full}).eq('id',u.id).is('name',null).then(()=>{},()=>{});
+    try{if(!u.user_metadata||!u.user_metadata.full_name)await sb.auth.updateUser({data:{full_name:full}});}catch(e){}
+    const pre=String(u.email||'').split('@')[0];
+    try{await sb.from('profiles').update({name:full}).eq('id',u.id).is('name',null);}catch(e){}
+    try{await sb.from('profiles').update({name:full}).eq('id',u.id).in('name',pre?['',pre]:['']);}catch(e){}
+    try{_myNameCache=null;setAvatar();}catch(e){}
   }
   return 'done'; // onAuthStateChange → showApp() takes over, as on the website
 }
@@ -6684,7 +6690,9 @@ async function requestNotifPermission(){
     const p=npPermission();
     if(p==='granted'){updateNotifNudge();return;}
     if(p==='unavailable'){nav('profile');return;} // older app build: Profile says to update the app
-    const ok=await npRequest(p==='denied');
+    // Said no before: this opens the phone's Settings. Nothing else to show now; the app re-checks when they come back (resume).
+    if(p==='denied'){npRequest(true);return;}
+    const ok=await npRequest(false);
     if(ok)toast('✅ Notifications enabled!');
     else if(npPermission()==='denied'){toast('Notifications are off — see Profile to turn them on');nav('profile');}
     return;
@@ -6717,6 +6725,7 @@ function updateNotifTip(){
   if(IS_NATIVE){ // app: native permission (js/native-push.js)
     const p=npPermission();
     const btn='<br><button class="btn-primary" style="margin-top:10px" onclick="requestNotifPermission()">Turn on notifications</button>';
+    if(p==='unknown'){tip.style.display='none';return;} // OneSignal still starting; shown once the real permission is known
     tip.style.display='block';
     if(p==='granted')body.innerHTML='Push notifications are on for this phone.';
     else if(p==='denied')body.innerHTML='Notifications are off for Yoodle. To get replies and alerts: '+npSettingsPath()+'.';
