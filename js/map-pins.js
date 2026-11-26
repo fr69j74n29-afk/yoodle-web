@@ -3,6 +3,7 @@
 // other js/ files: see js/README.md for the load order and how to add code.
 
 let helperMarkers=[];
+let offerPins=[]; // private job offers made to me (js/contacts.js, map-data.js)
 let myHelperPin=null,myJobPins=[],hpFocusAreaNext=false,myIsTester=false; // own helper pin: drawn for the helper themself; tap may open the area field
 let allBizListings=[], bizMarkers=[];
 // ── YOODLE PROS: pro listings from pro.yoodle.ca — orange pins, separate from helper pins ──
@@ -42,14 +43,15 @@ function renderMapPins(){
     jobMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:2,onClick:()=>openJobStack(g)}));
   });
   // Own jobs (myJobPins, 29 Oct 2026) use the same loop: white ring + "You" tag, no pulse, z:4, never dimmed.
-  publicJobs.filter(j=>_jGroups[(+j.lat).toFixed(4)+','+(+j.lng).toFixed(4)].length===1).concat(myJobPins).forEach(job=>{
-    const _mine=myJobPins.includes(job);
+  publicJobs.filter(j=>_jGroups[(+j.lat).toFixed(4)+','+(+j.lng).toFixed(4)].length===1).concat(myJobPins).concat(offerPins).forEach(job=>{
+    const _mine=myJobPins.includes(job)||offerPins.includes(job); // offers to me: same ring, never dimmed
+    const _tag=job.status==='offered'?(offerPins.includes(job)?'🔒 For you':'🔒 You'):'You';
     const _ag=isAgencyJob(job);
     const color=_ag?AGENCY_PIN:'#DC2626';
     const emoji=_ag?'':(CAT_EMOJI[job.category]||ysEmoji(job.category)||'📋');
     const[fLat,fLng]=jobPinCoords(job);
     const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker
-      html:`<div class="${_ag||_mine?'':jobGlowClass(jobIsNew(job))}" style="position:relative;width:38px;height:38px;border-radius:50%;background:${color};border:3px solid ${_mine?'#fff':'rgba(255,255,255,.25)'};display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:${_mine?`0 0 0 2px ${color},0 2px 8px rgba(0,0,0,.25)`:_ag?'0 2px 8px rgba(0,0,0,.15)':JOB_GLOW_SHADOW};cursor:pointer">${emoji}${_mine?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px;font-family:'Nunito',sans-serif">You</span>`:''}</div>`,
+      html:`<div class="${_ag||_mine?'':jobGlowClass(jobIsNew(job))}" style="position:relative;width:38px;height:38px;border-radius:50%;background:${color};border:3px solid ${_mine?'#fff':'rgba(255,255,255,.25)'};display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:${_mine?`0 0 0 2px ${color},0 2px 8px rgba(0,0,0,.25)`:_ag?'0 2px 8px rgba(0,0,0,.15)':JOB_GLOW_SHADOW};cursor:pointer">${emoji}${_mine?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#1F3D2B;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px;font-family:'Nunito',sans-serif;white-space:nowrap">${_tag}</span>`:''}</div>`,
       iconSize:[38,38],iconAnchor:[19,19]
     });
     // z:2 → job bubbles sit in front of ⚡ ready helpers (z:1.5) and regular helper pins (z:1); search-matched helpers (z:3) still on top

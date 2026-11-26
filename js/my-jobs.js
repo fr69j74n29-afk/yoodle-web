@@ -10,7 +10,7 @@ async function loadMyJobs(){
   const expSince=new Date(Date.now()-30*24*60*60*1000).toISOString();
   const[postedRes,appRes,hoRes,_vs]=await Promise.all([
     // open/paused/claimed + jobs that expired in the last 30 days (so the poster can still see applicants, renew or archive)
-    sb.from('tasks').select('*').eq('poster_id',pid).or(`status.in.(open,paused,claimed),and(status.eq.expired,expires_at.gte.${expSince})`).not('type','in','(admin_note,direct,support_chat,yoodi_chat)').order('created_at',{ascending:false}), // chat threads aren't jobs
+    sb.from('tasks').select('*').eq('poster_id',pid).or(`status.in.(open,paused,claimed,offered),and(status.eq.expired,expires_at.gte.${expSince})`).not('type','in','(admin_note,direct,support_chat,yoodi_chat)').order('created_at',{ascending:false}), // chat threads aren't jobs
     // applications by this user with task details
     sb.from('applications').select('id,status,created_at,tasks!inner(*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color))').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','paused','claimed']).order('created_at',{ascending:false}),
     // help_offer tasks where I'm the doer
@@ -34,7 +34,7 @@ async function loadMyJobs(){
   const claimedJobs=posted.filter(j=>j.status==='claimed'&&j.doer_id);
   const openJobs=posted.filter(j=>j.status==='open'||j.status==='paused'||j.status==='expired');
   await Promise.all([
-    claimedJobs.length?sb.from('profiles').select('id,name').in('id',[...new Set(claimedJobs.map(j=>j.doer_id))]).then(({data:doerData})=>{(doerData||[]).forEach(p=>doerNames[p.id]=p.name);}):null,
+    (claimedJobs.length||posted.some(j=>j.private_for))?sb.from('profiles').select('id,name').in('id',[...new Set(claimedJobs.map(j=>j.doer_id).concat(posted.filter(j=>j.private_for).map(j=>j.private_for)))]).then(({data:doerData})=>{(doerData||[]).forEach(p=>doerNames[p.id]=p.name);}):null,
     openJobs.length?sb.from('applications').select('task_id').eq('status','pending').in('task_id',openJobs.map(j=>j.id)).then(({data:appData})=>{(appData||[]).forEach(a=>{applicantCounts[a.task_id]=(applicantCounts[a.task_id]||0)+1;});}):null
   ]);
 
@@ -109,7 +109,8 @@ async function loadMyJobs(){
 
     const gpsTag=j.status==='open'?(j.location_verified?` · <span style="color:var(--lime);font-size:12.5px;font-weight:800">GPS</span>`:` · <span style="color:var(--yellow);font-size:12.5px;font-weight:800">⚠️ Unverified</span>`):'';
     let statusBadge;
-    if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:13.5px;font-weight:800">Active</span>`;
+    if(j.status==='offered') statusBadge=`<span style="color:var(--purple);font-size:13.5px;font-weight:800">🔒 Private offer to ${esc(doerNames[j.private_for]||'your contact')}</span>`;
+    else if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:13.5px;font-weight:800">Active</span>`;
     else if(j.status==='paused') statusBadge=`<span style="color:var(--yellow);font-size:13.5px;font-weight:800">Paused${daysLeft!==null&&daysLeft>0?` · ends in ${daysLeft}d`:''}</span>`;
     else if(j.status==='expired') statusBadge=`<span style="color:var(--muted);font-size:13.5px;font-weight:800">Expired${j.expires_at?' '+new Date(j.expires_at).toLocaleDateString('en-CA',{month:'short',day:'numeric'}):''}</span>`;
     else statusBadge=`<span style="color:var(--lime);font-size:13.5px;font-weight:800">Open${daysLeft!==null?` · ${daysLeft}d left`:''}${gpsTag}</span>`;
@@ -154,6 +155,15 @@ async function loadMyJobs(){
         <button data-act="renew" data-id="${esc(j.id)}" data-chosen="${j.end_date_chosen?1:0}" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff">🔄 Renew</button>
         ${appCount>0?`<button data-act="review" data-id="${esc(j.id)}" data-title="${esc(j.title||'')}" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:var(--surface2);border:1.5px solid var(--border);color:var(--text)">Review →</button>`:''}
         <button data-act="archive" data-id="${esc(j.id)}" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046">Archive</button>
+      </div>`;
+    } else if(j.status==='offered'){
+      // Private offer (js/contacts.js): after a decline, or 3 days with no answer, suggest making it public (Roman's plan)
+      const who=esc(doerNames[j.private_for]||'your contact');
+      const stale=!!j.offer_declined_at||Date.now()-Date.parse(j.created_at)>3*864e5;
+      actionBtn=`<div style="margin-top:8px;font-size:13.5px;color:var(--text2)">${j.offer_declined_at?`${who} can't take it.`:stale?`No answer from ${who} yet.`:`Waiting for ${who} to accept. Only the two of you can see it.`}${stale?' <strong>Make this job public?</strong>':''}</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="event.stopPropagation();tapConfirm(this,'Tap again to make it public',()=>offerMakePublic('${j.id}'))" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff">Make public</button>
+        <button onclick="event.stopPropagation();openCancelConfirm('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046">Cancel offer</button>
       </div>`;
     } else if(j.status==='claimed'){
       const doerName=doerNames[j.doer_id]||'Helper';

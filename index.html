@@ -1054,6 +1054,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <button onclick="nav('post')" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>
         <div class="section-h" style="margin-bottom:0">Post a Job</div>
       </div>
+      <div id="p-offer" class="p-offer" style="display:none"></div><!-- private job offer to a contact (js/contacts.js) -->
       <input type="hidden" id="p-cat" value="">
       <div class="form-g"><label class="form-lbl">Category</label><div id="p-cat-grid" class="ys-pcats"></div></div>
       <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="p-title" type="text" placeholder="e.g. Help me move a couch"></div>
@@ -1269,6 +1270,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="chat-title">—</div>
         <div style="font-size:13.5px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer" id="chat-other" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)">—<span style="font-size:11.5px;opacity:.5">›</span></div>
       </div>
+      <button id="chat-connect" class="chat-connect" type="button" style="display:none" onclick="ctConnectTap(this)"></button><!-- Connect (js/contacts.js) -->
       <div class="card-menu-wrap" id="chat-more-wrap">
         <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'chat-menu')" aria-label="More options" style="width:40px;height:40px;font-size:22px">⋮</button>
         <div class="card-menu-drop" id="chat-menu" style="top:44px">
@@ -1746,11 +1748,11 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/find-helper.js?v=20261125a"></script>
 <script src="js/find-pro.js?v=20261125e"></script>
 <script src="js/location.js?v=20261125a"></script>
-<script src="js/map-pins.js?v=20261126d"></script>
+<script src="js/map-pins.js?v=20261126o"></script>
 <script src="js/listings.js?v=20261125c"></script>
 <script src="js/analytics.js?v=20261125a"></script>
 <script src="js/view-counter.js?v=20261125a"></script>
-<script src="js/map-data.js?v=20261125a"></script>
+<script src="js/map-data.js?v=20261126o"></script>
 <script src="js/list-view.js?v=20261125e"></script>
 <script src="js/account-checks.js?v=20261125a"></script>
 <script src="js/home-base.js?v=20261125a"></script>
@@ -1765,15 +1767,15 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/session.js?v=20261126a"></script>
 <script src="js/push-web.js?v=20261125a"></script>
 <script src="js/realtime.js?v=20261125a"></script>
-<script src="js/job-detail.js?v=20261126a"></script>
+<script src="js/job-detail.js?v=20261126o"></script>
 <script src="js/job-expiry.js?v=20261126d"></script>
-<script src="js/job-post.js?v=20261126a"></script>
-<script src="js/my-jobs.js?v=20261126r"></script>
+<script src="js/job-post.js?v=20261126o"></script>
+<script src="js/my-jobs.js?v=20261126o"></script>
 <script src="js/job-edit.js?v=20261126r"></script>
 <script src="js/profile.js?v=20261125a"></script>
-<script src="js/messages.js?v=20261126r"></script>
-<script src="js/contacts.js?v=20261126i"></script>
-<script src="js/chat.js?v=20261126c"></script>
+<script src="js/messages.js?v=20261126o"></script>
+<script src="js/contacts.js?v=20261126o"></script>
+<script src="js/chat.js?v=20261126o"></script>
 <script src="js/reactions.js?v=20261125a"></script>
 <script src="js/id-verification.js?v=20261125a"></script>
 <script src="js/ready-to-work.js?v=20261126a"></script>

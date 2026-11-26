@@ -3,6 +3,7 @@
 // other js/ files: see js/README.md for the load order and how to add code.
 
 async function openChat(taskId,title,otherName,posterId,otherId,otherRating,convId){
+  if(window.ctChatReset)ctChatReset(); // Connect button (js/contacts.js): forget the previous chat
   if(window.yoodiOwnsChat&&yoodiOwnsChat(posterId,otherId))return yoodiOpenChat(convId,taskId); // Yoodi chat (js/yoodi.js)
   if(window.supportOwnsChat&&supportOwnsChat(posterId,otherId,title))return supportOpenChat(convId,taskId); // Contact support chat (js/support-chat.js)
   if(window.supportOnClose)supportOnClose(); // any other chat: leave support mode
@@ -53,12 +54,17 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   // Contact support thread seen by the Yoodle team account itself: no job buttons, no safety card
   if(task.type==='support_chat')return;
 
-  if(task.type==='direct')return; // friend chat (js/contacts.js): no job buttons, no safety card
+  if(task.type==='direct'){ // contact chat (js/contacts.js): safety card, no job buttons, "Offer a job"
+    if(activeChatTaskId===taskId){activeChatSafetyTip=true;const cm=document.getElementById('chat-messages');if(cm&&!cm.querySelector('.safety-tip,.safety-mini'))cm.insertAdjacentHTML('afterbegin',safetyTipHtml());}
+    if(window.ctOfferButton)ctOfferButton(actionsEl);
+    return;
+  }
   const isPoster=task.poster_id===pid;
   const isDoer=task.doer_id===pid;
   const isHO=isHelperContact(task);
   // Safety card: every chat except Yoodle team threads (returned above). Add it in place — no second messages fetch.
   if(activeChatTaskId===taskId){activeChatSafetyTip=true;const cm=document.getElementById('chat-messages');if(cm&&!cm.querySelector('.safety-tip,.safety-mini'))cm.insertAdjacentHTML('afterbegin',safetyTipHtml());}
+  if(window.ctChatTask&&activeChatTaskId===taskId)ctChatTask({...task,id:taskId},otherId); // Connect button (js/contacts.js)
 
   const withdrawBtn=`<button onclick="tapConfirm(this,'Tap again to withdraw',()=>chatUnclaim('${taskId}'))" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Withdraw</button>`;
   const cancelHOLabel=isPoster?'Cancel':'Decline';
@@ -99,9 +105,10 @@ async function loadChatMessages(quiet){
     const sh=window.supportMsgHtml?supportMsgHtml(m,isMe):null;if(sh)return sh; // Contact support bubbles (js/support-chat.js)
     const isSys=m.body?.startsWith('✅')||m.body?.startsWith('↩️')||m.body?.startsWith('🎉')||m.body?.startsWith('Thanks for');
     if(isSys&&!isMe)return`<div style="text-align:center;margin:10px 0"><span style="font-size:13.5px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">${linkify(esc(m.body||''))}</span></div>`;
-    return`<div data-mid="${esc(m.id)}" data-me="${isMe?1:0}" style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div style="max-width:75%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--btn-a)':'var(--surface2)'};color:${isMe?'#fff':'var(--text)'};font-size:14px;font-weight:600;line-height:1.4">${linkify(esc(m.body||''))}<div style="font-size:11.5px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
+    return`<div data-mid="${esc(m.id)}" data-me="${isMe?1:0}" style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div style="max-width:75%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--btn-a)':'var(--surface2)'};color:${isMe?'#fff':'var(--text)'};font-size:14px;font-weight:600;line-height:1.4">${window.ctOfferBubble?ctOfferBubble(m,isMe):linkify(esc(m.body||''))}<div style="font-size:11.5px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
   }).join('');
   if(window.rxDecorate)rxDecorate(el); // 👍 👎 reactions (js/reactions.js)
+  if(window.ctChatMsgs)ctChatMsgs(data); // Connect button needs both people to have written (js/contacts.js)
   el.scrollTop=el.scrollHeight;
   if(window.yoodiAfterRender)yoodiAfterRender(data); // Yoodi chat: intro + "thinking" (js/yoodi.js)
   if(window.supportAfterRender)supportAfterRender(data); // Contact support: intro (js/support-chat.js)

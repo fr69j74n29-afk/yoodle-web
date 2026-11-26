@@ -11,6 +11,11 @@
 //    Sent (waiting for them: Cancel). The Contacts tab shows a count of requests waiting for you.
 //  - A friend chat is a normal chat anchored on a hidden task of type 'direct' (like Yoodi's chat), so it
 //    also shows in Chats once it has messages. No job buttons or swipe actions on it.
+//  - In a job chat, once both people have written: "＋ Connect" in the chat header (friend_connect). Declines are
+//    silent (the asker keeps seeing "Request sent"), requests expire after 30 days, no new ask for 60 days.
+//  - Contacts show last active, "Not taking jobs right now", the job you connected on, and a private note.
+//  - Contact chats have the safety card and "Offer a job": a private job only the two of you can see
+//    (status 'offered'), Accept / Decline, Make public. Database: 20261126_005_contacts_connect_offers.sql.
 // Database: supabase/migrations/20261126_001_contacts.sql (friendships table, friend_request,
 // friend_respond, friend_remove, get_friends, friend_open_chat). Uses globals sb, me, esc, toast, openChat.
 
@@ -19,6 +24,8 @@ let ctTabNow='chats';
 let ctBusy=false;
 let ctInvites=[];         // my open email invites (people not on Yoodle yet)
 let ctInviteAsk=null;     // email waiting for the "Invite them?" confirmation
+let ctLoaded=false;       // get_friends() has run for this account
+let ctNoteEdit=null;      // contact whose private note is being edited
 const CT_EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 (function ctCss(){
@@ -48,6 +55,17 @@ const CT_EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 .ct-inv p{margin:0 0 10px;font-size:14px;font-weight:700;line-height:1.45;color:var(--text)}
 .ct-inv p small{display:block;margin-top:4px;font-size:12.5px;color:var(--muted)}
 .ct-inv div{display:flex;gap:8px;justify-content:flex-end}
+.ct-meta{display:block;font-size:12.5px;font-weight:700;color:var(--muted)}
+.ct-src{display:block;margin-top:3px;padding:0;border:none;background:none;text-align:left;font:700 12.5px 'Nunito',sans-serif;color:var(--muted);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+button.ct-src:hover{color:var(--text)}
+.ct-pn{display:block;margin-top:3px;padding:0;border:none;background:none;text-align:left;font:700 12.5px 'Nunito',sans-serif;color:var(--btn-a);cursor:pointer;white-space:normal}
+.ct-pn.has{color:var(--text2)}
+.ct-pn-edit{display:flex;gap:6px;margin-top:6px}
+.ct-pn-edit input{flex:1;min-width:0;padding:7px 10px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font:700 13.5px 'Nunito',sans-serif}
+.chat-connect{padding:7px 12px;border-radius:100px;border:1.5px solid var(--btn-a);background:transparent;color:var(--btn-a);font:800 13px 'Nunito',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.chat-connect:disabled{opacity:.6;border-color:var(--border);color:var(--muted);cursor:default}
+.ct-offer-btn{display:block;width:100%;margin-top:8px;padding:8px 12px;border-radius:10px;border:1.5px solid currentColor;background:transparent;color:inherit;font:800 13.5px 'Nunito',sans-serif;cursor:pointer}
+.p-offer{margin:4px 0 14px;padding:12px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--purple);background:rgba(92,138,106,.08);font-size:13.5px;font-weight:700;line-height:1.45;color:var(--text)}
 .ct-note{font-size:13.5px;color:var(--muted);font-weight:700;text-align:center;padding:18px 10px;line-height:1.45}`;
   document.head.appendChild(s);
 })();
@@ -69,7 +87,7 @@ async function ctFetch(){
     sb.from('friend_invites').select('id,email,created_at').is('claimed_at',null).order('created_at',{ascending:false})]);
   if(!inv.error)ctInvites=inv.data||[];
   if(error){console.warn('contacts',error);return ctRows;}
-  ctRows=data||[];
+  ctRows=data||[];ctLoaded=true;
   ctSetBadge();
   if(ctTabNow==='contacts')ctRender(); // keep the visible list in step (e.g. after switching accounts)
   return ctRows;
@@ -80,7 +98,7 @@ function ctSetBadge(){
 }
 // Sign-out (js/auth.js): forget this account's contacts and go back to Chats
 function ctReset(){
-  ctRows=[];ctInvites=[];ctInviteAsk=null;ctSetBadge();
+  ctRows=[];ctInvites=[];ctInviteAsk=null;ctLoaded=false;ctNoteEdit=null;ctSetBadge();
   const pane=document.getElementById('contacts-pane');if(pane)pane.innerHTML='';
   msgTab('chats');
 }
@@ -124,7 +142,7 @@ function ctRender(){
   }
   if(friends.length){
     h+=`<div class="ct-h">Contacts</div>`+friends.map(r=>`<div class="ct-row tap" onclick="ctOpenChat('${r.other_id}')">${av(r)}
-      <div class="ct-name">${esc(r.other_name)}${idvChip(r.other_id,true)}<small>Tap to message</small></div>
+      <div class="ct-name">${esc(r.other_name)}${idvChip(r.other_id,true)}<span class="ct-meta">${ctMeta(r)}</span>${ctSourceHtml(r)}${ctNoteHtml(r)}</div>
       <button class="ct-btn" type="button" onclick="event.stopPropagation();tapConfirm(this,'Tap again to remove',()=>ctRemove('${r.other_id}'))">Remove</button></div>`).join('');
   }
   if(sent.length||invited.length){
@@ -162,7 +180,7 @@ async function ctAddFromBox(){
   if(data&&['sent','accepted','already_friends','already_sent'].includes(data.result)){inp.value='';await ctFetch();}
   ctRender();
 }
-async function ctRespond(id,accept,btn){
+async function ctRespond(id,accept,btn,noOpen){
   if(btn)btn.disabled=true;
   const r=ctRows.find(x=>x.friendship_id===id);
   const{data,error}=await sb.rpc('friend_respond',{p_id:id,p_accept:accept});
@@ -170,7 +188,7 @@ async function ctRespond(id,accept,btn){
   toast(accept?'🎉 Added to your contacts':'Request declined');
   await ctFetch();ctRender();
   // accepting starts your chat with them (friend_respond returns it): open it straight away
-  if(accept&&data&&data.conversation_id&&r)openChat(data.task_id,r.other_name,r.other_name,data.poster_id,data.other_id,'',data.conversation_id);
+  if(accept&&!noOpen&&data&&data.conversation_id&&r)openChat(data.task_id,r.other_name,r.other_name,data.poster_id,data.other_id,'',data.conversation_id);
 }
 const CT_INVITE_RESULT={
   sent:e=>`📧 Invite sent to ${e}`,
@@ -209,4 +227,154 @@ async function ctOpenChat(otherId){
   if(error||!c)return toast('❌ '+(error?.message||'Could not open the chat'));
   r.conversation_id=c.conversation_id;r.task_id=c.task_id;
   openChat(c.task_id,r.other_name,r.other_name,c.poster_id,otherId,'',c.conversation_id);
+}
+
+
+// ── Contact details (26 Nov 2026): last active, not taking jobs, where you connected, private note ──
+const CT_ACTIVE={today:'Active today',week:'Active this week',month:'Active this month',older:'Active a while ago'};
+function ctMeta(r){
+  const bits=[CT_ACTIVE[r.last_active],r.taking_jobs?'':'Not taking jobs right now'].filter(Boolean);
+  return esc(bits.length?bits.join(' · '):'Tap to message');
+}
+function ctDay(t){try{return new Date(t).toLocaleDateString('en-CA',{day:'numeric',month:'short',year:'numeric'});}catch(e){return'';}}
+// Auto note (not editable): the job you connected on opens that job
+function ctSourceHtml(r){
+  const when=ctDay(r.connected_at||r.created_at);
+  if(r.source_task_id&&r.source_title)
+    return `<button type="button" class="ct-src" onclick="event.stopPropagation();ctOpenJobById('${r.source_task_id}')">Connected on “${esc(r.source_title)}” · ${esc(when)}</button>`;
+  return `<span class="ct-meta">Connected ${esc(when)}</span>`;
+}
+// Private note: only you see it
+function ctNoteHtml(r){
+  if(ctNoteEdit===r.other_id)
+    return `<div class="ct-pn-edit" onclick="event.stopPropagation()"><input id="ct-pn-inp" maxlength="300" placeholder="e.g. Great with drywall, prefers weekends" value="${esc(r.note||'')}" onkeydown="if(event.key==='Enter')ctSaveNote('${r.other_id}')"><button class="ct-btn go" type="button" onclick="ctSaveNote('${r.other_id}')">Save</button></div>`;
+  return r.note
+    ?`<button type="button" class="ct-pn has" onclick="event.stopPropagation();ctEditNote('${r.other_id}')">📝 ${esc(r.note)}</button>`
+    :`<button type="button" class="ct-pn" onclick="event.stopPropagation();ctEditNote('${r.other_id}')">＋ Add a private note</button>`;
+}
+function ctEditNote(otherId){ctNoteEdit=otherId;ctRender();setTimeout(()=>{const i=document.getElementById('ct-pn-inp');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},30);}
+async function ctSaveNote(otherId){
+  const v=(document.getElementById('ct-pn-inp')?.value||'').trim();
+  const{error}=await sb.rpc('friend_set_note',{p_other:otherId,p_note:v});
+  if(error)return toast('❌ '+error.message);
+  ctNoteEdit=null;await ctFetch();ctRender();
+}
+async function ctOpenJobById(id){
+  if(!sb||!id)return;
+  const{data}=await sb.from('tasks').select('*').eq('id',id).maybeSingle();
+  if(!data)return toast('That job is no longer available');
+  openJob({...data,category:(data.category||'other').toLowerCase()});
+}
+
+// ── Connect from a chat (Roman's plan): job chats only, once both of you have written ──
+let ctChat={task:null,msgs:null,other:null};
+function ctChatReset(){
+  ctChat={task:null,msgs:null,other:null};
+  const b=document.getElementById('chat-connect');if(b){b.style.display='none';b.disabled=false;tapConfirmReset(b);}
+}
+function ctChatTask(task,otherId){ctChat.task=task;ctChat.other=otherId;ctConnectEval();}
+function ctChatMsgs(data){ctChat.msgs=data||[];ctConnectEval();}
+async function ctConnectEval(){
+  const b=document.getElementById('chat-connect');if(!b||!me)return;
+  const t=ctChat.task,msgs=ctChat.msgs,other=ctChat.other;
+  const hide=()=>{b.style.display='none';};
+  if(!t||!msgs||!other||!activeChatConvId||t.id!==activeChatTaskId)return hide();
+  if(['direct','yoodi_chat','support_chat','admin_note'].includes(t.type))return hide();
+  const pid=myProfileId||me.id;
+  if(!msgs.some(m=>m.sender_id===pid||m.sender_id===me.id)||!msgs.some(m=>m.sender_id===other))return hide();
+  if(!ctLoaded)await ctFetch();
+  if(ctChat.task!==t)return; // another chat opened meanwhile
+  const r=ctRows.find(x=>x.other_id===other);
+  if(r&&r.status==='accepted')return hide();
+  if(b.dataset.busy)return;
+  if(r&&r.incoming){b.textContent='Accept contact';b.dataset.mode='accept';b.dataset.fid=r.friendship_id;b.disabled=false;}
+  else if(r){b.textContent='Request sent';b.dataset.mode='sent';b.disabled=true;}
+  else{b.textContent='＋ Connect';b.dataset.mode='connect';b.disabled=false;}
+  b.style.display='';
+}
+const CT_CONNECT_RESULT={
+  sent:n=>`✅ Contact request sent to ${n}`,
+  accepted:n=>`🎉 You and ${n} are now contacts`,
+  already_friends:n=>`${n} is already in your contacts`,
+  already_sent:n=>`You already asked ${n}`,
+  not_available:()=>`Connect isn't available in this chat`,
+  too_many:()=>`Too many requests today. Try again tomorrow`
+};
+function ctConnectTap(b){
+  if(b.dataset.mode==='accept'){
+    b.disabled=true;
+    ctRespond(b.dataset.fid,true,null,true).then(()=>ctConnectEval());
+    return;
+  }
+  if(b.dataset.mode!=='connect')return;
+  tapConfirm(b,'Tap again to send',async()=>{
+    b.dataset.busy='1';b.disabled=true;
+    const{data,error}=await sb.rpc('friend_connect',{p_conversation:activeChatConvId});
+    delete b.dataset.busy;
+    if(error){b.disabled=false;tapConfirmReset(b);b.textContent='＋ Connect';return toast('❌ '+error.message);}
+    const f=CT_CONNECT_RESULT[data?.result];toast(f?f(data.name||activeChatOtherName||'them'):'Done');
+    await ctFetch();ctConnectEval();
+  });
+}
+
+// ── Private job offers between contacts (Roman's plan): "Offer a job" in a contact chat ──
+let postOffer=null; // {other,name} while the Post Job form is in offer mode
+function ctOfferButton(actionsEl){
+  if(!actionsEl||!activeChatDoerId)return;
+  actionsEl.innerHTML=`<button type="button" onclick="ctOfferJob()" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:transparent;border:1.5px solid var(--btn-a);color:var(--btn-a);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">📋 Offer a job</button>`;
+  actionsEl.style.display='flex';
+}
+function ctOfferJob(){
+  const pid=myProfileId||me.id;
+  const other=activeChatDoerId===pid?activeChatPosterId:activeChatDoerId;
+  window._postOfferNext={other,name:activeChatOtherName||'your contact'};
+  closeChat();nav('postjob'); // resetPost() → ctOfferFormSetup() picks it up
+}
+// Called at the end of resetPost(): offer mode only right after "Offer a job"
+function ctOfferFormSetup(){
+  postOffer=window._postOfferNext||null;window._postOfferNext=null;
+  const ob=document.getElementById('p-offer'),btn=document.getElementById('post-btn');
+  if(ob){ob.style.display=postOffer?'':'none';ob.innerHTML=postOffer?`🔒 <b>Private offer to ${esc(postOffer.name)}</b><br>Only the two of you can see this job. They can accept or decline, and you can make it public at any time.`:'';}
+  if(btn)btn.textContent=postOffer?'Send private offer':'Post Job';
+}
+async function ctSendOffer(f){
+  const o=postOffer;if(!o||!sb||!me)return;
+  const btn=document.getElementById('post-btn');btn.disabled=true;btn.textContent='Sending…';
+  const{error}=await sb.rpc('offer_create',{p_other:o.other,p_title:f.title,p_description:f.desc,p_category:f.cat,
+    p_price:f.budget?parseFloat(f.budget):0,p_address:f.loc,p_lat:gpsLat,p_lng:gpsLng,p_location_verified:!!locVerified,
+    p_expires_at:f.until.toISOString(),p_end_date_chosen:jobExpiryPicked('p-exp')});
+  btn.disabled=false;btn.textContent='Send private offer';
+  if(error)return toast('❌ '+error.message);
+  toast(`📋 Offer sent to ${o.name}`);
+  resetPost();nav('messages');
+  await ctFetch();ctOpenChat(o.other);
+}
+// Offer card in the chat bubble (message written by offer_create): text without the link + a button
+const CT_OFFER_RE=/^📋 Job offer:[\s\S]*?https:\/\/yoodle\.ca\/\?task_id=([0-9a-f-]{36})/;
+function ctOfferBubble(m,isMe){
+  const b=m.body||'',x=b.match(CT_OFFER_RE);
+  if(!x)return linkify(esc(b));
+  const text=b.replace(/\s*Open it to accept or decline: https:\/\/\S+/,'');
+  return esc(text).replace(/\n/g,'<br>')+`<button type="button" class="ct-offer-btn" onclick="ctOpenJobById('${x[1]}')">${isMe?'View your offer':'View offer'} ›</button>`;
+}
+async function offerAccept(j){
+  const{data,error}=await sb.rpc('offer_accept',{p_task:j.id});
+  if(error)return toast('❌ '+error.message);
+  closeOv('modal');toast('🎉 Job accepted. Agree the details in the chat.');
+  if(window.loadJobs)loadJobs();
+  nav('messages');
+  if(data&&data.conversation_id)openChat(data.task_id,data.title||j.title,window._mPosterName||'Poster',data.poster_id,data.poster_id,'',data.conversation_id);
+}
+async function offerDecline(id){
+  const{error}=await sb.rpc('offer_decline',{p_task:id});
+  if(error)return toast('❌ '+error.message);
+  closeOv('modal');toast('Offer declined');
+}
+async function offerMakePublic(id){
+  const{error}=await sb.rpc('offer_make_public',{p_task:id});
+  if(error)return toast('❌ '+error.message);
+  closeOv('modal');toast('🌍 Your job is now public. Anyone nearby can see it.');
+  if(window.loadJobs)loadJobs();
+  if(document.getElementById('app-activity')?.classList.contains('active')&&window.loadMyJobs)loadMyJobs();
+  else if(window.loadMyJobs)loadMyJobs();
 }

@@ -73,6 +73,7 @@ function safetyTipHtml(){
 }
 function closeChat(){
   if(window.yoodiOnClose)yoodiOnClose(); // js/yoodi.js
+  if(window.ctChatReset)ctChatReset(); // js/contacts.js
   if(window.supportOnClose)supportOnClose(); // js/support-chat.js
   closeOv('chat-modal');
   activeChatConvId=null;
@@ -94,7 +95,7 @@ async function openChatFromNotification(taskId,convId){
     if(mine&&mine[0]){convId=mine[0].id;}
     else{
       const{data:job}=await sb.from('tasks').select('*').eq('id',taskId).maybeSingle();
-      if(job&&job.status==='open')openJob(job);
+      if(job&&(job.status==='open'||job.status==='offered'))openJob(job); // offered: a private offer to/from a contact (only the two can read it)
       else toast('This job is no longer available');
       return;
     }
