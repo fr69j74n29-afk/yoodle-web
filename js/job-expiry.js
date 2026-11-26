@@ -38,18 +38,24 @@ function jobExpiryRender(id,opts){
 
 function jobExpiryPick(id,k){
   const s=_jx[id];if(!s)return;
-  s.sel=k;
+  s.sel=k;s.warn='';
   const inp=document.getElementById(id+'-date');
-  if(k==='pick')_jxOpenDate(id);
+  if(k==='pick')_jxOpenDate(id,true); // tap → open the calendar right away
   else inp.style.display='none';
   _jxPaint(id);
 }
 // Show the date field with a day already in it (never blank on iOS).
-function _jxOpenDate(id){
+// openNow (only from a tap — browsers require a user gesture): open the calendar straight away.
+//   showPicker() opens it on desktop/Android/macOS Safari; iPhone Safari has no showPicker() for dates
+//   (webkit.org/b/261703), but its picker opens on focus, so focus() covers iOS. Same tick as the tap.
+function _jxOpenDate(id,openNow){
   const s=_jx[id],inp=document.getElementById(id+'-date');if(!s||!inp)return;
   if(!s.date)s.date=_jxAddDays(JOB_PICK_DEFAULT_DAYS);
   inp.value=_jxYmd(s.date);
   inp.style.display='block';
+  if(!openNow)return;
+  try{inp.focus({preventScroll:true});}catch(e){}
+  try{if(typeof inp.showPicker==='function')inp.showPicker();}catch(e){} // throws where unsupported/not allowed — focus already done
 }
 function jobExpiryDate(id,v){
   const s=_jx[id];if(!s)return;
@@ -57,7 +63,11 @@ function jobExpiryDate(id,v){
   const[y,m,d]=v.split('-').map(Number);
   let dt=_jxEnd(new Date(y,m-1,d));
   const min=_jxAddDays(1),max=_jxAddDays(JOB_MAX_DAYS);
-  if(dt<min)dt=min; if(dt>max)dt=max;
+  // iPhone's calendar lets you tap days outside min/max, so say what happened instead of silently changing it
+  s.warn='';
+  if(dt<min){dt=min;s.warn=`The earliest is tomorrow — set to ${_jxLabel(dt)}.`;}
+  if(dt>max){dt=max;s.warn=`That's more than 2 weeks away — set to ${_jxLabel(dt)}, the latest you can pick.`;}
+  if(s.warn)toast('📅 '+s.warn);
   s.date=dt;document.getElementById(id+'-date').value=_jxYmd(dt);
   _jxPaint(id);
 }
@@ -65,7 +75,12 @@ function _jxPaint(id){
   const s=_jx[id],el=document.getElementById(id);if(!s||!el)return;
   el.querySelectorAll('.jx-chip').forEach(b=>b.classList.toggle('on',b.dataset.k===s.sel));
   const d=jobExpiryValue(id),note=document.getElementById(id+'-note');
-  if(note)note.innerHTML=d?`📅 Comes off the map after <strong>${_jxLabel(d)}</strong>${s.sel==='pick'?' — tap the date to change it':''}`:'Pick a day — up to 2 weeks from today';
+  if(!note)return;
+  const latest=_jxLabel(_jxAddDays(JOB_MAX_DAYS));
+  if(!d){note.textContent=`Pick a day — latest ${latest} (2 weeks).`;return;}
+  note.innerHTML=`📅 Comes off the map after <strong>${_jxLabel(d)}</strong>`
+    +(s.sel==='pick'?`<br><span class="jx-max">You can pick up to 2 weeks out — latest <strong>${latest}</strong>.</span>`:'')
+    +(s.sel==='pick'&&s.warn?`<br><span class="jx-warn">${esc(s.warn)}</span>`:'');
 }
 
 // Chosen end Date, or null ("Pick an end date" with no day yet).
