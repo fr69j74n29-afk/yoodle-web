@@ -1,4 +1,4 @@
-// Message reactions: 👍 / 👎 on chat messages (every chat, Yoodi's too), saved in public.message_reactions.
+// Message reactions: 👍 / 👎 on chat messages (people chats only, not Yoodi), saved in public.message_reactions.
 // Part of the app's main code. Classic script, same global scope as the other js/ files: see js/README.md.
 //
 // How it works (25 Nov 2026):
@@ -9,7 +9,7 @@
 //  - One reaction per person per message (primary key message_id + user_id). Table + rules:
 //    supabase/migrations/20261125_001_message_reactions.sql
 //  - The other person sees a new reaction the next time the chat reloads (opening it, or a new message).
-// Hooks: chat.js loadChatMessages() and yoodi.js yoodiMsgHtml() put data-mid / data-me on each message row
+// Hooks: chat.js loadChatMessages() puts data-mid / data-me on each message row (Yoodi bubbles, from yoodi.js, have none)
 // and call rxDecorate(el) after drawing. Uses globals sb, me, esc.
 
 const RX_EMOJI={up:'👍',down:'👎'};

@@ -213,7 +213,7 @@ function yoodiMsgHtml(m,isMe){
     last=match.index+match[0].length;
   }
   html+=linkify(esc(body.slice(last)));
-  return `<div data-mid="${esc(m.id)}" data-me="${isMe?1:0}" style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div class="yd-b" style="max-width:80%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--btn-a)':'var(--surface2)'};color:${isMe?'#fff':'var(--text)'};font-size:14px;font-weight:600;line-height:1.4">${html.trim()}<div style="font-size:11.5px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
+  return `<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div class="yd-b" style="max-width:80%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--btn-a)':'var(--surface2)'};color:${isMe?'#fff':'var(--text)'};font-size:14px;font-weight:600;line-height:1.4">${html.trim()}<div style="font-size:11.5px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
 }
 
 // index.html loadChatMessages(), after drawing: intro on top, "thinking" / "resting" at the bottom.
