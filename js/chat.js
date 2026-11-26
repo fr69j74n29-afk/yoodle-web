@@ -4,6 +4,8 @@
 
 async function openChat(taskId,title,otherName,posterId,otherId,otherRating,convId){
   if(window.yoodiOwnsChat&&yoodiOwnsChat(posterId,otherId))return yoodiOpenChat(convId,taskId); // Yoodi chat (js/yoodi.js)
+  if(window.supportOwnsChat&&supportOwnsChat(posterId,otherId,title))return supportOpenChat(convId,taskId); // Contact support chat (js/support-chat.js)
+  if(window.supportOnClose)supportOnClose(); // any other chat: leave support mode
   activeChatTaskId=taskId;activeChatPosterId=posterId;activeChatDoerId=otherId;activeChatConvId=convId||null;activeChatOtherName=otherName||'this person';activeChatSafetyTip=false;
   document.getElementById('chat-title').textContent=title;
   const ratingStr=otherRating?` · ★ ${otherRating}`:'';
@@ -48,6 +50,8 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
     }
     return;
   }
+  // Contact support thread seen by the Yoodle team account itself: no job buttons, no safety card
+  if(task.type==='support_chat')return;
 
   const isPoster=task.poster_id===pid;
   const isDoer=task.doer_id===pid;
@@ -91,6 +95,7 @@ async function loadChatMessages(quiet){
   el.innerHTML=safetyTipHtml()+data.map(m=>{
     const isMe=m.sender_id===pid||m.sender_id===me.id;
     const yh=window.yoodiMsgHtml?yoodiMsgHtml(m,isMe):null;if(yh)return yh; // Yoodi chat bubbles (js/yoodi.js)
+    const sh=window.supportMsgHtml?supportMsgHtml(m,isMe):null;if(sh)return sh; // Contact support bubbles (js/support-chat.js)
     const isSys=m.body?.startsWith('✅')||m.body?.startsWith('↩️')||m.body?.startsWith('🎉')||m.body?.startsWith('Thanks for');
     if(isSys&&!isMe)return`<div style="text-align:center;margin:10px 0"><span style="font-size:13.5px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">${linkify(esc(m.body||''))}</span></div>`;
     return`<div data-mid="${esc(m.id)}" data-me="${isMe?1:0}" style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div style="max-width:75%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--btn-a)':'var(--surface2)'};color:${isMe?'#fff':'var(--text)'};font-size:14px;font-weight:600;line-height:1.4">${linkify(esc(m.body||''))}<div style="font-size:11.5px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
@@ -98,6 +103,7 @@ async function loadChatMessages(quiet){
   if(window.rxDecorate)rxDecorate(el); // 👍 👎 reactions (js/reactions.js)
   el.scrollTop=el.scrollHeight;
   if(window.yoodiAfterRender)yoodiAfterRender(data); // Yoodi chat: intro + "thinking" (js/yoodi.js)
+  if(window.supportAfterRender)supportAfterRender(data); // Contact support: intro (js/support-chat.js)
 
   // lock input if task is completed
   const{data:taskStatus}=await sb.from('tasks').select('status').eq('id',activeChatTaskId).single();
@@ -111,6 +117,7 @@ async function loadChatMessages(quiet){
 
 async function sendMessage(){
   if(window.yoodiSendHook&&yoodiSendHook())return; // Yoodi chat sends through yoodi_ask (js/yoodi.js)
+  if(window.supportSendHook&&supportSendHook())return; // Contact support sends through support_send (js/support-chat.js)
   const inp=document.getElementById('chat-input');
   const content=inp.value.trim();
   if(!content||!activeChatTaskId||!activeChatConvId||!sb)return;

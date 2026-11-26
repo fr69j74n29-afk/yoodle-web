@@ -28,10 +28,11 @@ async function loadMessages(){
     if(!isPoster){
       if(t.app_status==='pending') statusTag=`<span style="font-size:11.5px;color:var(--yellow);font-weight:800;margin-left:6px">Pending</span>`;
       else if(window.yoodiOwnsChat&&yoodiOwnsChat(t.poster_id,t.other_id)) statusTag=''; // Yoodi chat (js/yoodi.js)
+      else if(window.supportOwnsChat&&supportOwnsChat(t.poster_id,t.other_id,t.title)) statusTag=''; // Contact support (js/support-chat.js)
       else if(t.app_status==='assigned'||t.task_status==='claimed') statusTag=`<span style="font-size:11.5px;color:var(--teal);font-weight:800;margin-left:6px">Assigned</span>`;
     }
     return `<div class="conv-row" style="${rowBg}" data-conv="${t.conversation_id}" data-task="${t.task_id}" data-poster="${t.poster_id}" data-other="${t.other_id||''}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
-      ${window.yoodiAvatar&&yoodiOwnsChat(t.poster_id,t.other_id)?yoodiAvatar():avatarCircle(otherName,null,'28px','12px')}
+      ${window.yoodiAvatar&&yoodiOwnsChat(t.poster_id,t.other_id)?yoodiAvatar():window.supportAvatar&&supportOwnsChat(t.poster_id,t.other_id,t.title)?supportAvatar():avatarCircle(otherName,null,'28px','12px')}
       <div class="conv-body">
         <div class="conv-top">
           <span class="conv-name">${esc(otherName)}${idvChip(t.other_id,true)}${unreadBadge}</span>
@@ -69,6 +70,7 @@ function safetyTipHtml(){
 }
 function closeChat(){
   if(window.yoodiOnClose)yoodiOnClose(); // js/yoodi.js
+  if(window.supportOnClose)supportOnClose(); // js/support-chat.js
   closeOv('chat-modal');
   activeChatConvId=null;
   const msgView=document.getElementById('app-messages');

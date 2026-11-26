@@ -922,6 +922,25 @@ body::before {
 .ac-inp:focus { border-color: var(--purple); }
 .ac-word { font-family: var(--mono); letter-spacing: 1px; text-transform: uppercase; }
 .ac-btns { display: flex; gap: 10px; }
+/* CONTACT SUPPORT (26 Nov 2026) */
+.sup-badge { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 100px; background: var(--orange); color: #fff; font-size: 11px; font-weight: 900; letter-spacing: 0; vertical-align: 1px; }
+.sup-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.sup-row:last-child { border-bottom: none; }
+.sup-row:hover .sup-name { color: var(--lime); }
+.sup-av { width: 30px; height: 30px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sup-av svg { width: 18px; height: 18px; }
+.sup-name { font-weight: 800; font-size: 14px; color: var(--text); }
+.sup-sub { font-size: 12px; color: var(--muted); }
+.sup-prev { font-size: 13px; color: var(--muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.sup-tag { font-family: var(--mono); font-size: 10px; letter-spacing: .5px; padding: 1px 6px; border-radius: 6px; border: 1px solid var(--border); color: var(--muted); margin-left: 6px; }
+.sup-back { background: none; border: none; color: var(--muted); font-family: var(--sans); font-size: 13px; font-weight: 800; cursor: pointer; padding: 10px 0; }
+.sup-back:hover { color: var(--text); }
+.sup-msgs { max-height: 420px; overflow-y: auto; padding: 8px 0 12px; }
+.sup-b { max-width: 78%; padding: 9px 13px; border-radius: 14px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; word-wrap: break-word; margin-bottom: 8px; }
+.sup-b.me { margin-left: auto; background: rgba(249,115,22,.16); border: 1px solid rgba(249,115,22,.35); color: var(--text); border-bottom-right-radius: 4px; }
+.sup-b.them { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+.sup-t { font-size: 10.5px; color: var(--muted); margin-top: 3px; text-align: right; }
+.sup-note { font-size: 12px; color: var(--muted); margin: 6px 0 10px; }
 .ac-btns button { flex: 1; padding: 13px; border-radius: 10px; font-family: var(--sans); font-size: 14px; font-weight: 900; cursor: pointer; }
 .ac-cancel { background: transparent; border: 1px solid var(--border); color: var(--muted); }
 .ac-go { border: none; color: #fff; background: var(--pink); }
@@ -1078,6 +1097,11 @@ body::before {
       <h3 class="lazy-h" style="cursor:pointer;user-select:none;margin-bottom:0" onclick="toggleConvList()">Live conversations <span class="lazy-hint" id="conv-hint" style="float:right;font-family:var(--mono);font-size:10px;letter-spacing:1px;opacity:.7">▸ TAP TO SHOW</span></h3>
       <div id="conv-rows" style="display:none;margin-top:12px"></div>
     </div>
+
+    <!-- CONTACT SUPPORT (26 Nov 2026) — members' "Yoodle support" chats (Yoodi → Contact support).
+         admin_support_inbox / admin_support_thread / admin_support_reply / admin_support_unread. No emails either way. -->
+    <div class="section-title lazy-h" onclick="toggleLazy('support')">CONTACT SUPPORT <span id="sup-count" class="sup-badge" style="display:none"></span> <span class="lazy-hint" id="lazy-hint-support">▸ TAP TO LOAD</span></div>
+    <div id="lazy-support" style="display:none"><div id="sup-wrap" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
     <!-- SEND NOTIFICATION (17 Nov 2026) — admin_send_notification(); shows in the app's notifications bell (in-app only, no push) -->
     <div class="section-title lazy-h" onclick="toggleLazy('notify')">SEND NOTIFICATION <span class="lazy-hint" id="lazy-hint-notify">▸ TAP TO SHOW</span></div>
@@ -1326,6 +1350,7 @@ function getSuspended(force) {
 function refreshAll() {
   getSuspended(true);
   loadStats();
+  loadSupportBadge();   // CONTACT SUPPORT unread count in its heading (26 Nov 2026)
   Object.keys(_lazyOpen).forEach(k => LAZY[k]());   // only sections that are open reload   // tap-to-load sections that are open reload too
 }
 
@@ -1333,7 +1358,7 @@ function refreshAll() {
 // Regions (+ admin-geo.js ≈300 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
 const LAZY = { regions: loadRegions, onboard: loadOnboardStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
-  reports: loadReports, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended, notify: nfCount };
+  reports: loadReports, support: loadSupport, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended, notify: nfCount };
 // After an admin action: reload a section only if it's open; a closed one reloads fresh the next time it's opened.
 function lazyReload(k) {
   if (_lazyOpen[k]) return LAZY[k]();
@@ -1384,7 +1409,7 @@ async function loadStats() {
     ] = await Promise.all([
       sb.from('profiles').select('*', { count: 'exact', head: true }),
       sb.from('profiles').select('id, visible_on_map, show_on_map').eq('visible_on_map', true),
-      sb.from('tasks').select('status, poster_id, type').neq('poster_id', EXCLUDED_POSTER).neq('type', 'admin_note'),
+      sb.from('tasks').select('status, poster_id, type').neq('poster_id', EXCLUDED_POSTER).not('type', 'in', '(admin_note,yoodi_chat,support_chat)'),   // chat threads aren't jobs (26 Nov 2026)
       sb.from('profiles')
         .select('created_at')
         .gte('created_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
@@ -2390,7 +2415,7 @@ async function loadRecentActivity() {
     const [{ data: jobs, error: jobErr }, { data: helpers2, error: helpErr }] = await Promise.all([
       sb.from('tasks')
         .select('id, title, description, price, status, address, created_at, poster_id, category')
-        .not('type', 'in', '(admin_note,agency_job,community_job)')   // agency jobs have their own section (Oct 2026); imported employer jobs (Nov 2026) aren't member activity
+        .not('type', 'in', '(admin_note,agency_job,community_job,yoodi_chat,support_chat)')   // agency jobs have their own section (Oct 2026); imported employer jobs (Nov 2026) aren't member activity; Yoodi chats (yoodi_chat, 23 Nov 2026) and Contact support chats (support_chat, 26 Nov 2026) aren't jobs
         .gte('created_at', cutoff)
         .order('created_at', { ascending: false })
         .limit(5),
@@ -2633,6 +2658,92 @@ async function sendAdminMsg() {
 
   btn.disabled = false;
   btn.textContent = 'Send Message';
+}
+
+// ── CONTACT SUPPORT (26 Nov 2026) ──
+// Members open a "Yoodle support" chat from Yoodi's "Contact support" button (yoodle.ca js/support-chat.js).
+// Admin reads and replies here as the Yoodle team account. No emails either way; the member gets a push unless
+// they're in the chat. Opening a thread marks it read for the team. If the member cleared the chat, the reply
+// starts a new support chat for them (admin_support_reply).
+const SUP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 9h8"/><path d="M8 13h6"/><path d="M14 18h-1l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v4.5"/><path d="M19 22v.01"/><path d="M19 19a2.003 2.003 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483"/></svg>';
+let _supOpen = null;   // { conv, name, email, cleared } while a thread is shown
+
+async function loadSupportBadge() {
+  const el = document.getElementById('sup-count');
+  if (!el) return;
+  const { data: n, error } = await sb.rpc('admin_support_unread');
+  if (error || !n) { el.style.display = 'none'; return; }
+  el.textContent = n + ' NEW'; el.style.display = '';
+}
+
+// LAZY.support and ↻ Refresh: reload whatever is showing (list or thread)
+function loadSupport() { return _supOpen ? openSupportThread(_supOpen.conv) : loadSupportInbox(); }
+
+async function loadSupportInbox() {
+  _supOpen = null;
+  const wrap = document.getElementById('sup-wrap');
+  wrap.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_support_inbox', { p_limit: 100 });
+  if (error) { wrap.innerHTML = `<div class="sup-note">❌ ${esc(error.message)}</div>`; return; }
+  window._supRows = data || [];
+  if (!_supRows.length) { wrap.innerHTML = '<div class="sup-note" style="padding:12px 0">No support messages yet.</div>'; loadSupportBadge(); return; }
+  wrap.innerHTML = _supRows.map((r, i) => {
+    const who = r.member_name ? esc(r.member_name) : '<i>Deleted member</i>';
+    const prev = (r.last_from_team ? 'You: ' : '') + (r.last_body || '');
+    return `<div class="sup-row" onclick="openSupportThread('${r.conversation_id}')">
+      <div class="sup-av">${SUP_ICON}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline">
+          <span class="sup-name">${who}${r.unread ? `<span class="sup-badge">${r.unread}</span>` : ''}${r.cleared ? '<span class="sup-tag">CLEARED</span>' : ''}</span>
+          <span class="sup-sub" style="flex-shrink:0">${timeAgo(r.last_at)}</span>
+        </div>
+        ${r.member_email ? `<div class="sup-sub">${esc(r.member_email)}</div>` : ''}
+        <div class="sup-prev" style="${r.unread ? 'color:var(--text);font-weight:800' : ''}">${esc(prev)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  loadSupportBadge();
+}
+
+async function openSupportThread(conv) {
+  const row = (window._supRows || []).find(r => r.conversation_id === conv) || {};
+  _supOpen = { conv, name: row.member_name || 'Deleted member', email: row.member_email || '', cleared: !!row.cleared };
+  const wrap = document.getElementById('sup-wrap');
+  wrap.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_support_thread', { p_conversation: conv });   // also marks it read
+  if (error) { wrap.innerHTML = `<button class="sup-back" onclick="loadSupportInbox()">‹ All support chats</button><div class="sup-note">❌ ${esc(error.message)}</div>`; return; }
+  const msgs = (data || []).map(m => `<div class="sup-b ${m.from_team ? 'me' : 'them'}">${esc(m.body || '')}<div class="sup-t">${m.from_team ? 'Yoodle team · ' : ''}${timeAgo(m.created_at)}</div></div>`).join('');
+  wrap.innerHTML = `<button class="sup-back" onclick="loadSupportInbox()">‹ All support chats</button>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">
+      <div class="sup-av">${SUP_ICON}</div>
+      <div><div class="sup-name">${esc(_supOpen.name)}</div>${_supOpen.email ? `<div class="sup-sub">${esc(_supOpen.email)}</div>` : ''}</div>
+    </div>
+    <div class="sup-msgs" id="sup-msgs">${msgs || '<div class="sup-note">No messages.</div>'}</div>
+    ${_supOpen.cleared ? '<div class="sup-note">They cleared this chat. Your reply starts a new support chat for them.</div>' : ''}
+    <textarea class="admin-msg-textarea" id="sup-reply" placeholder="Reply as Yoodle team…" maxlength="4000"></textarea>
+    <div class="sup-note">No email is sent. They get a push notification unless they're in the chat.</div>
+    <button class="btn-send-admin-msg" id="sup-send" onclick="sendSupportReply()">Send reply</button>`;
+  const box = document.getElementById('sup-msgs'); if (box) box.scrollTop = box.scrollHeight;
+  if (window._supRows) { const r = _supRows.find(x => x.conversation_id === conv); if (r) r.unread = 0; }
+  loadSupportBadge();
+}
+
+async function sendSupportReply() {
+  if (!_supOpen) return;
+  const ta = document.getElementById('sup-reply'), btn = document.getElementById('sup-send');
+  const body = (ta.value || '').trim();
+  if (!body) return adminToast('⚠️ Write a reply first');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  const { data: conv, error } = await sb.rpc('admin_support_reply', { p_conversation: _supOpen.conv, p_body: body });
+  btn.disabled = false; btn.textContent = 'Send reply';
+  if (error) return adminToast('❌ ' + error.message);
+  adminToast('✅ Reply sent to ' + _supOpen.name);
+  if (conv && conv !== _supOpen.conv) {   // the member had cleared the chat: the reply started a new one
+    await loadSupportInbox();
+    return openSupportThread(conv);
+  }
+  _supOpen.cleared = false;
+  openSupportThread(_supOpen.conv);
 }
 
 // ── SEND NOTIFICATION (admin_send_notification, 17 Nov 2026) ──

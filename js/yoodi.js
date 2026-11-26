@@ -144,6 +144,7 @@ async function yoodiOpen(opts){
 // Also called by index.html openChat() for a Yoodi chat (Messages list, push tap).
 async function yoodiOpenChat(convId,taskId,opts){
   opts=opts||{};
+  if(window.supportOnClose)supportOnClose(); // coming from the Contact support chat (js/support-chat.js)
   YOODI.active=true;YOODI.chips=!opts.text;   // quick buttons on every visit, until they type
   activeChatTaskId=taskId||null;activeChatPosterId=YOODI_ID;activeChatDoerId=YOODI_ID;
   activeChatConvId=convId||null;activeChatOtherName='Yoodi';activeChatSafetyTip=false;
@@ -191,7 +192,14 @@ function _ydChipsHtml(){
     `<button onclick="yoodiChip('I need help with ')">Post a job</button>`+
     `<button onclick="yoodiChip('Is $ fair for ')">Is my price fair?</button>`+
     `<button onclick="yoodiChip('Can you help me tune up my helper bio? I do ')">Tune up my bio</button>`+
-    `<button onclick="yoodiChip('Is Yoodle free?',true)">Is Yoodle free?</button></div>`;
+    `<button onclick="yoodiChip('Is Yoodle free?',true)">Is Yoodle free?</button>`+
+    `<button onclick="yoodiContactSupport()">Contact support</button></div>`;
+}
+// "Contact support" (26 Nov 2026): leaves Yoodi's chat for the member's own Yoodle support chat (js/support-chat.js).
+function yoodiContactSupport(){
+  YOODI.chips=false;
+  if(window.supportOpen){supportOpen();return;}
+  if(typeof toast==='function')toast('Email us at support@yoodle.ca');
 }
 function yoodiChip(text,send){
   YOODI.chips=false;var c=document.querySelector('#chat-messages .yd-chips-end');if(c)c.remove();
