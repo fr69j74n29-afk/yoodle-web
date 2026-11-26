@@ -121,11 +121,12 @@ function renderMapPins(){
     const idv=isIdVerified(p.profile_id)?'<span class="idv-tick" style="left:-5px;right:auto" title="ID checked by Stripe">✓</span>':'';
     const you=p.mine?`<span style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:#000;color:#fff;font-size:10px;font-weight:900;line-height:14px;padding:0 5px;border-radius:6px">You</span>`:'';
     // paid PRO (always_on_map): green like helpers + black border, thin orange outline (26 Nov 2026); free pros keep orange.
-    // When a Find a PRO pick matches a paid PRO, it turns orange (keeps the PRO label) and glows, like free pros (26 Nov 2026).
+    // When a Find a PRO pick matches a paid PRO: orange pin, trade emoji (like free pros), black border so it stands out, and it glows (26 Nov 2026).
     const _paid=!!p.always_on_map;
     const _pinCls=_match?'ps-pin-glow':(hsCat&&!p.mine?'hs-pin-dim':''); // fade paid PROs while Find a helper is on (own pin never dims)
-    const _pinLook=_paid&&!_match?'background:#5C8A6A;border:3px solid #111;box-shadow:0 0 0 1.5px #F58A07,0 2px 8px rgba(0,0,0,.25)':`background:${PRO_PIN};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25)`;
-    const html=`<div class="${_pinCls}" style="position:relative;width:38px;height:38px;border-radius:50%;${_pinLook};display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-size:${p.always_on_map?'11px;font-weight:900;color:#fff':'17px'};cursor:pointer" title="${esc(t.label||'Pro')}">${p.always_on_map?'<span style="display:block;line-height:1;letter-spacing:-.3px;transform:scaleX(.9);padding-top:1px">PRO</span>':t.emoji}${ver}${idv}${you}</div>`;
+    const _proLbl=_paid&&!_match; // "PRO" label only on the green pin; on a filter match the trade emoji shows instead
+    const _pinLook=_proLbl?'background:#5C8A6A;border:3px solid #111;box-shadow:0 0 0 1.5px #F58A07,0 2px 8px rgba(0,0,0,.25)':`background:${PRO_PIN};border:3px solid ${_paid?'#111':'#fff'};box-shadow:0 2px 8px rgba(0,0,0,.25)`;
+    const html=`<div class="${_pinCls}" style="position:relative;width:38px;height:38px;border-radius:50%;${_pinLook};display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-size:${_proLbl?'11px;font-weight:900;color:#fff':'17px'};cursor:pointer" title="${esc(t.label||'Pro')}">${_proLbl?'<span style="display:block;line-height:1;letter-spacing:-.3px;transform:scaleX(.9);padding-top:1px">PRO</span>':t.emoji}${ver}${idv}${you}</div>`;
     // same person also listed as a helper → nudge the pro pin so the two never sit exactly on top of each other
     const off=_helperAt.has(p.profile_id)?[24,-24]:[0,0];
     proMarkers.push(_htmlMarker(html,38,38,fLat,fLng,{z:p.mine?5:(_match?4:3),offset:off,onClick:()=>{logTap('pro',p.profile_id,'pin');openOtherProfile(p.profile_id,'pro');}}));
