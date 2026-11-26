@@ -169,6 +169,11 @@ async function swButtonsFor(taskId,convId,posterId,otherId){
     // Yoodi is for one-off help (Roman, 23 Nov): Clear closes the chat so the next question starts fresh.
     return(!isPoster&&task.status==='claimed')?[B('Clear','sw-grey',()=>swClearYoodi(convId))]:[];
   }
+  if(task.type==='support_chat'){
+    // Contact support (26 Nov): the member's Clear starts fresh, like Yoodi. The Yoodle team account gets no swipe action.
+    return(!isPoster&&task.status==='claimed')?[B('Clear','sw-grey',()=>swClearSupport(convId))]:[];
+  }
+  if(task.type==='direct')return[]; // friend chat (js/contacts.js): no job actions; remove the friend in Contacts
   if(task.type==='admin_note'){
     // Member: closes the chat (as before). Yoodle team account (poster): hides it from the team's list only; a newer message brings it back.
     return((isDoer&&task.status==='claimed')||isPoster)?[B('Hide','sw-grey',()=>swHideTeam(convId))]:[];
@@ -183,7 +188,7 @@ async function swButtonsFor(taskId,convId,posterId,otherId){
     if(isDoer)return[isHO?B('Decline','sw-bad',()=>cancelHelpOffer(taskId)):B('Withdraw','sw-bad',()=>chatUnclaim(taskId))];
     return[];
   }
-  if(task.status==='open'){
+  if(task.status==='open'||task.status==='paused'){ // paused job: same Decline / Withdraw
     if(isPoster&&otherId)return[B('Decline','sw-bad',()=>swDecline(convId,taskId,otherId))];
     if(!isPoster){
       const{data:app}=await sb.from('applications').select('id,status').eq('task_id',taskId).eq('applicant_id',pid).maybeSingle();
@@ -212,6 +217,16 @@ async function swClearYoodi(convId){
   const{error}=await sb.rpc('yoodi_clear_chat',{p_conversation:convId});
   if(error)return toast('❌ '+error.message);
   toast('Yoodi chat cleared');
+  loadMessages();refreshUnreadCount();
+}
+
+// Contact support "start fresh": support_clear_chat cancels + archives the member's support chat; messages stay
+// for admin (admin.html CONTACT SUPPORT). The next "Contact support" opens a blank chat; support_send creates the new one.
+async function swClearSupport(convId){
+  if(!sb||!me||!convId)return;
+  const{error}=await sb.rpc('support_clear_chat',{p_conversation:convId});
+  if(error)return toast('❌ '+error.message);
+  toast('Support chat cleared');
   loadMessages();refreshUnreadCount();
 }
 

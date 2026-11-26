@@ -45,14 +45,18 @@ body.theme-sage-dark #yoodi-fab .yd-dot{border-color:#1a1f1c}
 #yoodi-tip .x{position:absolute;top:6px;right:8px;border:none;background:none;color:var(--muted);font-size:17px;cursor:pointer;padding:2px 4px}
 #chat-modal.yoodi-chat #chat-more-wrap,#chat-modal.yoodi-chat #chat-actions{display:none!important}
 #chat-modal.yoodi-chat #chat-av{background:none!important;border:none!important;box-shadow:none!important;border-radius:0!important;
-  overflow:visible;cursor:default;width:38px!important;height:44px!important}
+  overflow:visible;cursor:default;pointer-events:none;width:38px!important;height:44px!important}
 #chat-modal.yoodi-chat #chat-av img,.yd-av img{width:100%;height:auto;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
 body.theme-sage-dark #chat-modal.yoodi-chat #chat-av img,body.theme-sage-dark .yd-av img{
   filter:drop-shadow(0 0 1px #fff) drop-shadow(0 2px 4px rgba(0,0,0,.5))}
 .yd-av{width:28px;height:34px;flex-shrink:0;display:flex;align-items:center}
-#chat-modal.yoodi-chat #chat-other{cursor:default}
+/* No iOS long-press image preview / drag on Yoodi's picture (Messages list, chat header, map button) */
+.yd-av img,#chat-modal.yoodi-chat #chat-av img,#yoodi-fab img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
+#chat-modal.yoodi-chat #chat-other{cursor:default;pointer-events:none} /* no tap-through to Yoodi's profile */
+.yd-beta{margin-left:6px;font-size:13px;font-weight:600;color:var(--btn-a);letter-spacing:.2px}
+.yd-beta::before{content:"·";margin-right:6px;color:var(--muted);font-weight:800}
 #chat-modal .yd-foot{display:none}
-#chat-modal.yoodi-chat .yd-foot{display:block;padding:0 16px 12px;font-size:12px;color:var(--muted);font-weight:700;text-align:center;background:var(--surface);flex-shrink:0}
+#chat-modal.yoodi-chat .yd-foot{display:block;padding:0 16px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:var(--muted);font-weight:700;text-align:center;background:var(--surface);flex-shrink:0}
 .yd-status{display:inline-flex;align-items:center;gap:5px}
 .yd-status i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#22C55E}
 .yd-status.off i{background:#9CA3AF}
@@ -140,14 +144,15 @@ async function yoodiOpen(opts){
 // Also called by index.html openChat() for a Yoodi chat (Messages list, push tap).
 async function yoodiOpenChat(convId,taskId,opts){
   opts=opts||{};
+  if(window.supportOnClose)supportOnClose(); // coming from the Contact support chat (js/support-chat.js)
   YOODI.active=true;YOODI.chips=!opts.text;   // quick buttons on every visit, until they type
   activeChatTaskId=taskId||null;activeChatPosterId=YOODI_ID;activeChatDoerId=YOODI_ID;
   activeChatConvId=convId||null;activeChatOtherName='Yoodi';activeChatSafetyTip=false;
   var modal=document.getElementById('chat-modal');modal.classList.add('yoodi-chat');
   if(!modal.querySelector('.yd-foot'))
     modal.querySelector('.modal-sheet').insertAdjacentHTML('beforeend',
-      `<div class="yd-foot">Yoodi is an AI helper and can make mistakes. Nothing is posted until you tap Post.</div>`);
-  document.getElementById('chat-title').textContent='Yoodi';
+      `<div class="yd-foot">Yoodi is still learning. Feedback is always welcome!</div>`);
+  document.getElementById('chat-title').innerHTML='Yoodi<span class="yd-beta">beta</span>';
   document.getElementById('chat-av').innerHTML='<img src="yoodi.png?v=20261123" alt="">';
   document.getElementById('chat-actions').style.display='none';
   var inp=document.getElementById('chat-input');inp.placeholder='Message Yoodi…';inp.maxLength=1000;
@@ -187,7 +192,14 @@ function _ydChipsHtml(){
     `<button onclick="yoodiChip('I need help with ')">Post a job</button>`+
     `<button onclick="yoodiChip('Is $ fair for ')">Is my price fair?</button>`+
     `<button onclick="yoodiChip('Can you help me tune up my helper bio? I do ')">Tune up my bio</button>`+
-    `<button onclick="yoodiChip('Is Yoodle free?',true)">Is Yoodle free?</button></div>`;
+    `<button onclick="yoodiChip('Is Yoodle free?',true)">Is Yoodle free?</button>`+
+    `<button onclick="yoodiContactSupport()">Contact support</button></div>`;
+}
+// "Contact support" (26 Nov 2026): leaves Yoodi's chat for the member's own Yoodle support chat (js/support-chat.js).
+function yoodiContactSupport(){
+  YOODI.chips=false;
+  if(window.supportOpen){supportOpen();return;}
+  if(typeof toast==='function')toast('Email us at support@yoodle.ca');
 }
 function yoodiChip(text,send){
   YOODI.chips=false;var c=document.querySelector('#chat-messages .yd-chips-end');if(c)c.remove();
