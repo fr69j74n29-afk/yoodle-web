@@ -10,7 +10,9 @@
 // One filter at a time: picking a pro trade clears the helper category and vice versa.
 // Tracking: log_search('pro:<trade>') for picks, log_tap('pro', …) for pin/card taps (filter = trade).
 let psTrade=null;
-function psMatch(p){return !!psTrade&&(p.trades||[]).includes(psTrade);}
+const PS_ALL='all';   // "All pros" row at the top of the trades list (25 Nov 2026): psTrade='all' matches every pro
+function psMatch(p){return !!psTrade&&(psTrade===PS_ALL||(p.trades||[]).includes(psTrade));}
+function psTradeInfo(){return psTrade===PS_ALL?{emoji:'🔧',label:'All pros'}:proTrade(psTrade);}
 function psList(){return (allPros||[]).filter(psMatch);}
 function psCounts(){const c={};(allPros||[]).forEach(p=>new Set(p.trades||[]).forEach(k=>{c[k]=(c[k]||0)+1;}));return c;}
 function psRenderGrid(){
@@ -19,7 +21,8 @@ function psRenderGrid(){
   const keys=Object.keys(c).sort((a,b)=>c[b]-c[a]||proTrade(a).label.localeCompare(proTrade(b).label));
   const n=(allPros||[]).length,sub=document.getElementById('ps-sub');
   if(sub)sub.textContent=n?`${n} approved ${n===1?'pro':'pros'} near you`:'Yoodle Pros';
-  el.innerHTML=keys.length?keys.map(k=>{const t=proTrade(k);
+  const all=keys.length?`<button class="hs-cat ps-cat${psTrade===PS_ALL?' on':''}" onclick="psPick('${PS_ALL}')"><span class="e">🔧</span><span class="t">All pros</span><span class="n">${n}</span></button>`:'';
+  el.innerHTML=keys.length?all+keys.map(k=>{const t=proTrade(k);
     return `<button class="hs-cat ps-cat${psTrade===k?' on':''}" onclick="psPick('${ysAttr(k)}')"><span class="e">${t.emoji}</span><span class="t">${esc(t.label)}</span><span class="n">${c[k]}</span></button>`;
   }).join(''):'<div class="ps-empty">No pros near you yet — check back soon.</div>';
 }
@@ -29,7 +32,7 @@ function psClose(){hsClose();}
 function psToggle(){hsToggle();}
 function psSetBtn(){
   const btn=document.getElementById('hs-btn'),lbl=document.getElementById('hs-label'),x=document.getElementById('hs-x');if(!btn)return;
-  if(psTrade){const t=proTrade(psTrade);btn.classList.add('on','pro-on');lbl.textContent=`${t.emoji} ${t.label}`;btn.title=t.label;x.style.display='inline-flex';}
+  if(psTrade){const t=psTradeInfo();btn.classList.add('on','pro-on');lbl.textContent=`${t.emoji} ${t.label}`;btn.title=t.label;x.style.display='inline-flex';}
   else if(!hsCat){btn.classList.remove('on','pro-on');lbl.textContent='Filter';btn.title='';x.style.display='none';}
 }
 function psPick(k){
@@ -37,11 +40,11 @@ function psPick(k){
   if(psTrade&&hsCat)hsPick(null); // one filter at a time: a pro pick clears the helper category
   psSetBtn();
   if(psTrade){
-    const list=psList(),t=proTrade(psTrade);
+    const list=psList(),t=psTradeInfo(),what=psTrade===PS_ALL?'':t.label+' ';
     if(_hsInList()){if(listTab!=='helpers')switchListTab('helpers');}
     else{if(!document.getElementById('app-map').classList.contains('active'))nav('map');psFit(list);}
     logSearch('pro:'+psTrade,list.length);
-    toast(list.length?`🔧 ${list.length} ${t.label} ${list.length===1?'pro':'pros'} on Yoodle`:`No ${t.label} pros on Yoodle yet`);
+    toast(list.length?`🔧 ${list.length} ${what}${list.length===1?'pro':'pros'} on Yoodle`:`No ${what}pros on Yoodle yet`);
   }
   renderMapPins();
   renderListTabContent();

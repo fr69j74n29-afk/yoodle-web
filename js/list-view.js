@@ -101,7 +101,7 @@ function renderListTabContent(){
   } else if(listPros){
     el.innerHTML=listPros.length
       ?`<div style="display:flex;flex-direction:column;gap:10px">${listPros.map(proListCard).join('')}</div>`
-      :emptyState('🔧',`No ${esc(proTrade(psTrade).label)} pros yet`,'Tap ✕ on the filter to see helpers again');
+      :emptyState('🔧',psTrade===PS_ALL?'No pros yet':`No ${esc(proTrade(psTrade).label)} pros yet`,'Tap ✕ on the filter to see helpers again');
   } else {
     if(!listHelpers.length){
       el.innerHTML=hsCat
