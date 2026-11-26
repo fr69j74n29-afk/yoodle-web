@@ -1181,6 +1181,10 @@ body::before {
     <div class="section-title lazy-h" onclick="toggleLazy('onboard')">HOW NEW MEMBERS JOINED — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-onboard">▸ TAP TO LOAD</span></div>
     <div id="lazy-onboard" style="display:none"><div id="onboard-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
+    <!-- LANDING PAGE → SIGN-IN (26 Nov 2026) — admin_landing_funnel() over landing_visits (js/landing-visits.js on the site) -->
+    <div class="section-title lazy-h" onclick="toggleLazy('landing')">LANDING PAGE → SIGN-IN — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-landing">▸ TAP TO LOAD</span></div>
+    <div id="lazy-landing" style="display:none"><div id="landing-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
+
     <!-- HELPER PAGE SHARING (share_events) -->
     <div class="section-title lazy-h" onclick="toggleLazy('share')">HELPER PAGE SHARING — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-share">▸ TAP TO LOAD</span></div>
     <div id="lazy-share" style="display:none"><div id="share-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
@@ -1357,7 +1361,7 @@ function refreshAll() {
 // ── TAP-TO-LOAD SECTIONS (15 Oct 2026) ──
 // Regions (+ admin-geo.js ≈300 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
-const LAZY = { regions: loadRegions, onboard: loadOnboardStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
+const LAZY = { regions: loadRegions, onboard: loadOnboardStats, landing: loadLandingStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
   reports: loadReports, support: loadSupport, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended, notify: nfCount };
 // After an admin action: reload a section only if it's open; a closed one reloads fresh the next time it's opened.
 function lazyReload(k) {
@@ -2258,6 +2262,38 @@ async function loadOnboardStats() {
   ].map(r => `<tr><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num helpers">${pct(r[1])}</td></tr>`).join('');
   el.innerHTML = `<table class="region-table"><thead><tr><th>Landing choice</th><th>New members</th><th>%</th></tr></thead><tbody>${rows}</tbody></table>
   <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">New accounts created in the last 30 days (demo accounts excluded). "Not recorded" = joined before tracking started (5 Oct 2026), or opened the email sign-in link on a different device/browser.</div>`;
+}
+
+// ── LANDING PAGE → SIGN-IN (admin-only RPC over landing_visits, 26 Nov 2026) ──
+// Visitors = browsers that saw the signed-out landing page (one per browser per Toronto day, bots filtered on the site).
+// New sign-ups = account created after the visit. Returning = existing member signing in.
+// New sign-up rate = new sign-ups ÷ (visitors − returning sign-ins).
+async function loadLandingStats() {
+  const el = document.getElementById('landing-stats');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_landing_funnel', { p_days: 30 });
+  if (error) {
+    el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`;
+    return;
+  }
+  const days = (data || []).map(r => {
+    const v = Number(r.visitors || 0), s = Number(r.signed_in || 0), n = Number(r.new_accounts || 0);
+    return { day: String(r.day), v, n, ret: Math.max(s - n, 0) };
+  });
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Toronto' });
+  const cut7 = new Date(new Date(today + 'T12:00:00').getTime() - 6 * 864e5).toISOString().slice(0, 10);
+  const sum = list => list.reduce((t, d) => ({ v: t.v + d.v, n: t.n + d.n, ret: t.ret + d.ret }), { v: 0, n: 0, ret: 0 });
+  const rate = t => (t.v - t.ret) > 0 ? (Math.round(t.n / (t.v - t.ret) * 1000) / 10) + '%' : '—';
+  const row = (label, t) => `<tr><td>${esc(label)}</td><td class="num">${t.v}</td><td class="num">${t.n}</td><td class="num">${t.ret}</td><td class="num helpers">${rate(t)}</td></tr>`;
+  const head = first => `<thead><tr><th>${first}</th><th>Visitors</th><th>New sign-ups</th><th>Returning</th><th>New rate</th></tr></thead>`;
+  const t7 = sum(days.filter(d => d.day >= cut7)), t30 = sum(days);
+  const daily = days.slice(0, 14).map(d => row(d.day.slice(5), d)).join('');
+  el.innerHTML = days.length ? `<table class="region-table">${head('Period')}<tbody>${row('Today', sum(days.filter(d => d.day === today)))}${row('Last 7 days', t7)}${row('Last 30 days', t30)}</tbody></table>
+  <div style="padding:14px 0 4px;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px">BY DAY — LAST 14 DAYS</div>
+  <table class="region-table">${head('Day')}<tbody>${daily}</tbody></table>
+  <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Visitors = browsers that saw the signed-out landing page (one per browser per day; crawlers and visits with no tap/scroll or under 3 s are not counted). New sign-ups = account created after the visit; Returning = existing member signing in. New rate = new sign-ups ÷ (visitors − returning). Members who look at the page without signing in still count as visitors, so the true new rate is a bit higher. Admins and tester@yoodle.ca are not counted as sign-ins. Tracking started 26 Nov 2026.</div>`
+  : `<div style="padding:14px 0;color:var(--muted);font-size:13px">No landing visits recorded yet. Tracking started 26 Nov 2026 and needs the site change (js/landing-visits.js) to be live.</div>`;
 }
 
 // ── HELPER PAGE SHARING (admin-only RPC over share_events) ──
