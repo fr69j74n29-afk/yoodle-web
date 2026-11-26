@@ -21,7 +21,7 @@ function jobCard(j,profile){
 const FEATURED_POSTER_ID='c89896db-b2ab-4c4c-88fa-650823e63303';
 
 function listCard(j,profile){
-  const color=isAgencyJob(j)?AGENCY_PIN:'#EF4444'; // same colours as the map pins: red neighbour job, blue agency job
+  const color=isAgencyJob(j)?AGENCY_PIN:'#DC2626'; // same colours as the map pins: red neighbour job, blue agency job
   const name=profile?.name||'Someone';
   const rating=profile?.rating?`★ ${profile.rating}`:'New';
   // show real distance only when GPS is known — map centre is not the user's position

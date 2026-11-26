@@ -54,6 +54,7 @@ body.theme-sage-dark #chat-modal.yoodi-chat #chat-av img,body.theme-sage-dark .y
 .yd-av img,#chat-modal.yoodi-chat #chat-av img,#yoodi-fab img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
 #chat-modal.yoodi-chat #chat-other{cursor:default;pointer-events:none} /* no tap-through to Yoodi's profile */
 .yd-beta{margin-left:6px;font-size:13px;font-weight:600;color:var(--btn-a);letter-spacing:.2px}
+.yd-beta::before{content:"·";margin-right:6px;color:var(--muted);font-weight:800}
 #chat-modal .yd-foot{display:none}
 #chat-modal.yoodi-chat .yd-foot{display:block;padding:0 16px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:var(--muted);font-weight:700;text-align:center;background:var(--surface);flex-shrink:0}
 .yd-status{display:inline-flex;align-items:center;gap:5px}

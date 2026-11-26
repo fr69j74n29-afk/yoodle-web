@@ -6,7 +6,7 @@ let helperMarkers=[];
 let myHelperPin=null,myJobPins=[],hpFocusAreaNext=false,myIsTester=false; // own helper pin: drawn for the helper themself; tap may open the area field
 let allBizListings=[], bizMarkers=[];
 // ── YOODLE PROS: pro listings from pro.yoodle.ca — orange pins, separate from helper pins ──
-const PRO_PIN='#EA6A12';
+const PRO_PIN='#F58A07';
 const PRO_TRADE_FALLBACK={plumber:{emoji:'🚰',label:'Plumber',lic:true},hvac:{emoji:'❄️',label:'HVAC',lic:true},electrician:{emoji:'⚡',label:'Electrician',lic:true}};
 let PRO_TRADES=null, allPros=[], proMarkers=[];
 var _lastJobsLoad=null; // {lat,lng,r}: map centre + ring radius of the last loadJobs() (small-pan skip)
@@ -15,7 +15,7 @@ function proNeedsLicence(arr){return (arr||[]).some(k=>!!proTrade(k).lic);} // p
 function proTradesText(arr){return (arr||[]).map(k=>{const t=proTrade(k);return t.emoji+' '+t.label;}).join(' · ');}
 
 // Job glow: non-agency job pins only
-const JOB_GLOW_SHADOW='0 0 0 3px rgba(239,68,68,.25),0 0 14px 4px rgba(239,68,68,.55)';
+const JOB_GLOW_SHADOW='0 0 0 3px rgba(220,38,38,.25),0 0 14px 4px rgba(220,38,38,.55)';
 let _jobGlowIntroDone=false;
 function jobIsNew(j){const t=Date.parse(j&&j.created_at);return !isNaN(t)&&Date.now()-t<48*3600e3;}
 function jobGlowClass(isNew){return isNew?'job-glow-new':(_jobGlowIntroDone?'':'job-glow-intro');}
@@ -33,7 +33,7 @@ function renderMapPins(){
   publicJobs.forEach(j=>{const k=(+j.lat).toFixed(4)+','+(+j.lng).toFixed(4);(_jGroups[k]=_jGroups[k]||[]).push(j);});
   Object.values(_jGroups).filter(g=>g.length>1).forEach(g=>{
     const allAgency=g.every(isAgencyJob);
-    const color=allAgency?AGENCY_PIN:'#EF4444';
+    const color=allAgency?AGENCY_PIN:'#DC2626';
     const[fLat,fLng]=g.every(isCommunityJob)?[+g[0].lat,+g[0].lng]:(g[0]._fuzzy||(g[0]._fuzzy=fuzzyCoords(g[0].lat,g[0].lng)));
     const _gNb=g.filter(j=>!isAgencyJob(j)); // neighbour jobs in this stack → glow
     const _gShadow=_gNb.length?JOB_GLOW_SHADOW:'0 2px 8px rgba(0,0,0,.15)';
@@ -45,7 +45,7 @@ function renderMapPins(){
   publicJobs.filter(j=>_jGroups[(+j.lat).toFixed(4)+','+(+j.lng).toFixed(4)].length===1).concat(myJobPins).forEach(job=>{
     const _mine=myJobPins.includes(job);
     const _ag=isAgencyJob(job);
-    const color=_ag?AGENCY_PIN:'#EF4444';
+    const color=_ag?AGENCY_PIN:'#DC2626';
     const emoji=_ag?'':(CAT_EMOJI[job.category]||ysEmoji(job.category)||'📋');
     const[fLat,fLng]=jobPinCoords(job);
     const icon=({ // was L.divIcon — same html/size/anchor, rendered by _htmlMarker

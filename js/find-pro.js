@@ -63,12 +63,12 @@ function proListCard(p){
   const ver=p.licence_verified_at?'<span style="font-size:11.5px;font-weight:800;color:#1F8E5A;margin-left:6px">✓ Verified licence</span>':'';
   let dist='';const oLat=gpsLat||userLat,oLng=gpsLng||userLng;
   if(oLat&&oLng&&p.lat&&p.lng){const d=haversineKm(oLat,oLng,p.lat,p.lng);dist=d<=1?'Less than 1 km away':`${d<100?d.toFixed(1):Math.round(d)} km away`;}
-  return `<div onclick="logTap('pro','${p.profile_id}','card');openOtherProfile('${p.profile_id}','pro')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid rgba(234,106,18,.45);display:flex;flex-direction:column;gap:6px;cursor:pointer">
+  return `<div onclick="logTap('pro','${p.profile_id}','card');openOtherProfile('${p.profile_id}','pro')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid rgba(245,138,7,.45);display:flex;flex-direction:column;gap:6px;cursor:pointer">
         <div style="display:flex;align-items:center;gap:12px">
           <div style="width:30px;height:30px;border-radius:50%;background:${PRO_PIN};display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">${t.emoji}</div>
           <div style="min-width:0;flex:1">
             <div style="font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(title)}${idvChip(p.profile_id,true)}</div>
-            <div style="font-size:13px;font-weight:800;color:#C4560B">${esc(proTradesText(p.trades))}${ver}</div>
+            <div style="font-size:13px;font-weight:800;color:#B45F06">${esc(proTradesText(p.trades))}${ver}</div>
           </div>
           <div style="font-size:13.5px;color:var(--muted);font-weight:800;flex-shrink:0">View ›</div>
         </div>

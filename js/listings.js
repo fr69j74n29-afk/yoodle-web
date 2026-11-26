@@ -44,7 +44,7 @@ function openBizListing(biz){
 // p_filter = Find-a-helper category active when a helper is tapped (only sent when one is on).
 // Agency jobs: tasks.type='agency_job' with tasks.url = the agency's apply link.
 // get_open_jobs_near doesn't return type, so a job with a url is treated as an agency job.
-const AGENCY_PIN='#2563EB'; // agency job bubbles (blue) — regular jobs stay red #EF4444
+const AGENCY_PIN='#2563EB'; // agency job bubbles (blue) — regular jobs stay red #DC2626
 function openJobStack(g){
   const place=(g[0].address||'').split(',')[0].trim();
   document.getElementById('stack-title').textContent=`${g.length} jobs${place?' in '+place:' here'}`;

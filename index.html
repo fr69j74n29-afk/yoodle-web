@@ -56,7 +56,7 @@
 <!-- Standard services (17 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
 <script src="js/home-services.js?v=20261121c" defer></script>
 <!-- Yoodi Live (23 Nov 2026): Yoodi, Yoodle's assistant, floating on the map; own file, classic deferred script; bump ?v= on every change -->
-<script src="js/yoodi.js?v=20261125a" defer></script>
+<script src="js/yoodi.js?v=20261125b" defer></script>
 <!-- Swipe actions on Messages rows (23 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
 <script src="js/swipe-actions.js?v=20261123c" defer></script>
 <style>
@@ -682,9 +682,9 @@ body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 .hs-btn.on{background:#F59E0B;border-color:#F59E0B;color:#1E2620}
 .hs-btn.on svg{color:#1E2620}
 /* ── ONE FILTER BUTTON (15 Nov 2026): "🔍 Filter", orange outline; widens to show the pick ── */
-.fs-btn{border-color:#EA6A12;background:var(--surface)}
-.fs-btn svg{color:#EA6A12}
-.fs-btn.on.pro-on{background:#EA6A12;border-color:#EA6A12;color:#fff}
+.fs-btn{border-color:#F58A07;background:var(--surface)}
+.fs-btn svg{color:#F58A07}
+.fs-btn.on.pro-on{background:#F58A07;border-color:#F58A07;color:#fff}
 .fs-btn.on.pro-on svg{color:#fff}
 .fs-back{border:none;background:none;padding:0 4px 0 0;font:900 15px 'Nunito',sans-serif;color:var(--muted);cursor:pointer}
 .fs-pane{display:none}.fs-pane.on{display:block}
@@ -694,7 +694,7 @@ body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 .fs-choice b{display:block;font-size:16px;font-weight:900}
 .fs-choice small{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-top:2px}
 .fs-choice.help{border-color:rgba(245,158,11,.55)}
-.fs-choice.pro{border-color:rgba(234,106,18,.55)}
+.fs-choice.pro{border-color:rgba(245,138,7,.55)}
 .fs-ready{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .fs-fast{margin-top:14px;padding:12px;border-radius:14px;border:1.5px dashed rgba(245,184,46,.6);background:rgba(245,184,46,.06)}
 .fs-fast b{display:block;font-size:15px;font-weight:900;color:var(--text)}
@@ -705,12 +705,12 @@ body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 .fs-ready .hs-cat{border-color:rgba(245,184,46,.6);background:rgba(245,184,46,.08)}
 .fs-ready .hs-cat.on{border-color:#F59E0B;background:rgba(245,158,11,.16)}
 .fs-sep{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:2px 0 8px}
-.fs-become{display:block;width:100%;margin-top:14px;padding:12px 4px 2px;border:none;border-top:1px dashed var(--border);background:none;font:800 14px 'Nunito',sans-serif;color:#C4560B;cursor:pointer;text-align:center}
-body.theme-sage-dark .fs-become{color:#EA6A12}
+.fs-become{display:block;width:100%;margin-top:14px;padding:12px 4px 2px;border:none;border-top:1px dashed var(--border);background:none;font:800 14px 'Nunito',sans-serif;color:#B45F06;cursor:pointer;text-align:center}
+body.theme-sage-dark .fs-become{color:#F58A07}
 .fs-become-box p{font-size:14.5px;font-weight:700;line-height:1.5;color:var(--text);margin:4px 0 14px}
 .fs-become-box .row{display:flex;gap:8px}
 .fs-become-box .row button{flex:1;padding:12px;border-radius:12px;font:800 14.5px 'Nunito',sans-serif;cursor:pointer}
-.fs-go{border:0;background:#EA6A12;color:#fff}
+.fs-go{border:0;background:#F58A07;color:#fff}
 .fs-cancel{border:1px solid var(--border);background:transparent;color:var(--muted)}
 .hs-x{margin-left:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.14);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
 .hs-ov{display:none;position:absolute;inset:0;z-index:150;background:rgba(20,30,24,.28)}
@@ -734,22 +734,22 @@ body.theme-sage-dark .fs-become{color:#EA6A12}
 @keyframes hsGlow{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.75),0 0 12px 3px rgba(245,158,11,.55)}50%{box-shadow:0 0 0 9px rgba(245,158,11,0),0 0 20px 7px rgba(245,158,11,.75)}}
 .hs-pin-dim{opacity:.3}
 @media (prefers-reduced-motion:reduce){.hs-pin-glow{animation:none;box-shadow:0 0 14px 5px rgba(245,158,11,.7)}}
-/* ── FIND A PRO (Oct 2026) — colours copied from pro.yoodle.ca: --accent #EA6A12, --accent-d #C4560B, black top bar ── */
-.ps-btn{background:#000;border-color:#EA6A12;color:#EA6A12}
-.ps-btn svg{color:#EA6A12}
+/* ── FIND A PRO (Oct 2026) — colours copied from pro.yoodle.ca: --accent #EA6A12, --accent-d #C4560B, black top bar; app now uses a yellower orange #F58A07 / #B45F06 so it never looks like the red job pins (25 Nov 2026) ── */
+.ps-btn{background:#000;border-color:#F58A07;color:#F58A07}
+.ps-btn svg{color:#F58A07}
 .ps-btn #ps-label{font-weight:900;letter-spacing:.5px}
-.ps-btn.on{background:#EA6A12;border-color:#EA6A12;color:#fff}
+.ps-btn.on{background:#F58A07;border-color:#F58A07;color:#fff}
 .ps-btn.on svg{color:#fff}
 .ps-pop .hs-grid{grid-template-columns:1fr}
-.ps-pop .hs-head b{color:#C4560B}
-body.theme-sage-dark .ps-pop .hs-head b{color:#EA6A12}
-.ps-cat .n{color:#C4560B;background:rgba(234,106,18,.12)}
-body.theme-sage-dark .ps-cat .n{color:#EA6A12}
-.ps-cat.on{border-color:#EA6A12;background:rgba(234,106,18,.10)}
+.ps-pop .hs-head b{color:#B45F06}
+body.theme-sage-dark .ps-pop .hs-head b{color:#F58A07}
+.ps-cat .n{color:#B45F06;background:rgba(245,138,7,.12)}
+body.theme-sage-dark .ps-cat .n{color:#F58A07}
+.ps-cat.on{border-color:#F58A07;background:rgba(245,138,7,.10)}
 .ps-empty{grid-column:1/-1;font-size:13.5px;font-weight:700;color:var(--muted);padding:6px 2px}
 .ps-pin-glow{animation:psGlow 1.6s ease-in-out infinite}
-@keyframes psGlow{0%,100%{box-shadow:0 0 0 0 rgba(234,106,18,.75),0 0 12px 3px rgba(234,106,18,.55)}50%{box-shadow:0 0 0 9px rgba(234,106,18,0),0 0 20px 7px rgba(234,106,18,.75)}}
-@media (prefers-reduced-motion:reduce){.ps-pin-glow{animation:none;box-shadow:0 0 14px 5px rgba(234,106,18,.7)}}
+@keyframes psGlow{0%,100%{box-shadow:0 0 0 0 rgba(245,138,7,.75),0 0 12px 3px rgba(245,138,7,.55)}50%{box-shadow:0 0 0 9px rgba(245,138,7,0),0 0 20px 7px rgba(245,138,7,.75)}}
+@media (prefers-reduced-motion:reduce){.ps-pin-glow{animation:none;box-shadow:0 0 14px 5px rgba(245,138,7,.7)}}
 /* map legend (replaces the count card): static colours, no numbers */
 .map-legend{background:rgba(255,255,255,.93);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid var(--border);border-radius:16px;padding:10px 14px;display:flex;flex-direction:column;gap:6px;box-shadow:0 4px 16px rgba(0,0,0,.1)}
 body.theme-sage-dark .map-legend{background:rgba(20,26,22,.93)}
@@ -767,7 +767,7 @@ body.theme-sage-dark .map-idv-cta .mic-av,body.theme-sage-dark .map-idv-cta .idv
    others pulse 3x on the first map render then settle. Agency pins don't glow. */
 .job-glow-new{animation:jobGlow 1.6s ease-in-out infinite}
 .job-glow-intro{animation:jobGlow 1.6s ease-in-out 3}
-@keyframes jobGlow{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.75),0 0 12px 3px rgba(239,68,68,.55)}50%{box-shadow:0 0 0 9px rgba(239,68,68,0),0 0 20px 7px rgba(239,68,68,.75)}}
+@keyframes jobGlow{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.75),0 0 12px 3px rgba(220,38,38,.55)}50%{box-shadow:0 0 0 9px rgba(220,38,38,0),0 0 20px 7px rgba(220,38,38,.75)}}
 @media (prefers-reduced-motion:reduce){.job-glow-new,.job-glow-intro{animation:none}}
 .top-bar{gap:10px}
 .top-right{min-width:0}
@@ -978,10 +978,10 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <div id="map-counts" style="position:absolute;top:24px;left:16px;z-index:10;pointer-events:none">
         <div class="map-legend" aria-label="Map legend">
           <div class="ml-h" id="map-radius-corner">WITHIN — KM</div>
-          <div><i style="background:#EF4444"></i>Need help</div>
+          <div><i style="background:#DC2626"></i>Need help</div>
           <div><i style="background:#2563EB"></i>Job listings</div>
           <div><i style="background:#5C8A6A"></i>Offering help</div>
-          <div><i style="background:#EA6A12"></i>Pro worker</div>
+          <div><i style="background:#F58A07"></i>Pro worker</div>
         </div>
       </div>
       <!-- Stay safe card — top right: shows the ✓ tick verified pins have; tap → Profile → ID verification (13 Nov 2026) -->
@@ -1712,10 +1712,10 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/theme.js?v=20261125a"></script>
 <script src="js/contact.js?v=20261125a"></script>
 <script src="js/find-helper.js?v=20261125a"></script>
-<script src="js/find-pro.js?v=20261125a"></script>
+<script src="js/find-pro.js?v=20261125c"></script>
 <script src="js/location.js?v=20261125a"></script>
-<script src="js/map-pins.js?v=20261125b"></script>
-<script src="js/listings.js?v=20261125a"></script>
+<script src="js/map-pins.js?v=20261125c"></script>
+<script src="js/listings.js?v=20261125c"></script>
 <script src="js/analytics.js?v=20261125a"></script>
 <script src="js/view-counter.js?v=20261125a"></script>
 <script src="js/map-data.js?v=20261125a"></script>
@@ -1733,7 +1733,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/session.js?v=20261125a"></script>
 <script src="js/push-web.js?v=20261125a"></script>
 <script src="js/realtime.js?v=20261125a"></script>
-<script src="js/job-detail.js?v=20261125a"></script>
+<script src="js/job-detail.js?v=20261125c"></script>
 <script src="js/job-post.js?v=20261125a"></script>
 <script src="js/my-jobs.js?v=20261125a"></script>
 <script src="js/job-edit.js?v=20261125a"></script>
