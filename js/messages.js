@@ -7,7 +7,8 @@ async function loadMessages(){
   if(!sb||!me){el.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see messages');return;}
   const pid=myProfileId||me.id;
 
-  const{data,error}=await sb.rpc('get_conversations',{user_id:pid});
+  const[{data,error}]=await Promise.all([sb.rpc('get_conversations',{user_id:pid}),window.ctFetch?ctFetch():null]);
+  const directIds=window.ctDirectConvIds?ctDirectConvIds():new Set(); // friend chats (js/contacts.js)
   if(error){el.innerHTML=emptyState('😕','Error loading messages',error.message);return;}
   if(!data?.length){el.innerHTML=emptyState('💬','No conversations yet','Express interest in a job to start messaging');return;}
 
@@ -17,6 +18,8 @@ async function loadMessages(){
   el.innerHTML=data.map(t=>{
     const isPoster=t.poster_id===pid;
     const otherName=t.other_name||'Someone';
+    const isDirect=directIds.has(t.conversation_id);
+    const title=isDirect?otherName:t.title; // friend chat: no job title
     const otherRating=t.other_rating;
     const cat=(t.category||'other').toLowerCase();
     const preview=t.last_msg_body?esc(t.last_msg_body).slice(0,60):'Tap to open chat';
@@ -31,14 +34,14 @@ async function loadMessages(){
       else if(window.supportOwnsChat&&supportOwnsChat(t.poster_id,t.other_id,t.title)) statusTag=''; // Contact support (js/support-chat.js)
       else if(t.app_status==='assigned'||t.task_status==='claimed') statusTag=`<span style="font-size:11.5px;color:var(--teal);font-weight:800;margin-left:6px">Assigned</span>`;
     }
-    return `<div class="conv-row" style="${rowBg}" data-conv="${t.conversation_id}" data-task="${t.task_id}" data-poster="${t.poster_id}" data-other="${t.other_id||''}" onclick="openChat('${t.task_id}','${esc(t.title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
+    return `<div class="conv-row" style="${rowBg}" data-conv="${t.conversation_id}" data-task="${t.task_id}" data-poster="${t.poster_id}" data-other="${t.other_id||''}" onclick="openChat('${t.task_id}','${esc(title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
       ${window.yoodiAvatar&&yoodiOwnsChat(t.poster_id,t.other_id)?yoodiAvatar():window.supportAvatar&&supportOwnsChat(t.poster_id,t.other_id,t.title)?supportAvatar():avatarCircle(otherName,null,'28px','12px')}
       <div class="conv-body">
         <div class="conv-top">
           <span class="conv-name">${esc(otherName)}${idvChip(t.other_id,true)}${unreadBadge}</span>
           <span class="conv-time" style="${isUnread?'color:var(--pink);font-weight:800':''}">${msgTime}</span>
         </div>
-        <div class="conv-title" style="display:flex;align-items:center;gap:4px">${esc(t.title)}${statusTag}</div>
+        <div class="conv-title" style="display:flex;align-items:center;gap:4px">${isDirect?'👥 Contact':esc(t.title)}${isDirect?'':statusTag}</div>
         <div class="conv-preview" style="${isUnread?'color:var(--text);font-weight:800':'color:#666'}">${preview}</div>
       </div>
     </div>`;

@@ -173,6 +173,7 @@ async function swButtonsFor(taskId,convId,posterId,otherId){
     // Contact support (26 Nov): the member's Clear starts fresh, like Yoodi. The Yoodle team account gets no swipe action.
     return(!isPoster&&task.status==='claimed')?[B('Clear','sw-grey',()=>swClearSupport(convId))]:[];
   }
+  if(task.type==='direct')return[]; // friend chat (js/contacts.js): no job actions; remove the friend in Contacts
   if(task.type==='admin_note'){
     // Member: closes the chat (as before). Yoodle team account (poster): hides it from the team's list only; a newer message brings it back.
     return((isDoer&&task.status==='claimed')||isPoster)?[B('Hide','sw-grey',()=>swHideTeam(convId))]:[];

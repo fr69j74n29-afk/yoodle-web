@@ -53,6 +53,7 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
   // Contact support thread seen by the Yoodle team account itself: no job buttons, no safety card
   if(task.type==='support_chat')return;
 
+  if(task.type==='direct')return; // friend chat (js/contacts.js): no job buttons, no safety card
   const isPoster=task.poster_id===pid;
   const isDoer=task.doer_id===pid;
   const isHO=isHelperContact(task);
