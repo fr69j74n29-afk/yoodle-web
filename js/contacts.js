@@ -350,12 +350,14 @@ async function ctSendOffer(f){
   await ctFetch();ctOpenChat(o.other);
 }
 // Offer card in the chat bubble (message written by offer_create): text without the link + a button
-const CT_OFFER_RE=/^📋 Job offer:[\s\S]*?https:\/\/yoodle\.ca\/\?task_id=([0-9a-f-]{36})/;
+const CT_OFFER_RE=/^(?:📋 Job offer:|✏️ Job offer updated:)[\s\S]*?https:\/\/yoodle\.ca\/\?task_id=([0-9a-f-]{36})/;
 function ctOfferBubble(m,isMe){
   const b=m.body||'',x=b.match(CT_OFFER_RE);
   if(!x)return linkify(esc(b));
-  const text=b.replace(/\s*Open it to accept or decline: https:\/\/\S+/,'');
-  return esc(text).replace(/\n/g,'<br>')+`<button type="button" class="ct-offer-btn" onclick="ctOpenJobById('${x[1]}')">${isMe?'View your offer':'View offer'} ›</button>`;
+  const text=b.replace(/\s*Open it to (?:accept or decline|see the changes): https:\/\/\S+/,'');
+  const view=`<button type="button" class="ct-offer-btn" onclick="ctOpenJobById('${x[1]}')">${isMe?'View your offer':'View offer'} ›</button>`;
+  const edit=isMe?`<button type="button" class="ct-offer-btn" onclick="closeChat();openEditModal('${x[1]}')">✏️ Edit offer</button>`:'';
+  return esc(text).replace(/\n/g,'<br>')+view+edit;
 }
 async function offerAccept(j){
   const{data,error}=await sb.rpc('offer_accept',{p_task:j.id});
@@ -377,4 +379,28 @@ async function offerMakePublic(id){
   if(window.loadJobs)loadJobs();
   if(document.getElementById('app-activity')?.classList.contains('active')&&window.loadMyJobs)loadMyJobs();
   else if(window.loadMyJobs)loadMyJobs();
+}
+
+// ── Send a private job to a contact (Activity: "Send to a contact" / "Send to someone else") ──
+let ctPickTask=null;
+async function ctPickContact(taskId,currentId){
+  ctPickTask=taskId;
+  const el=document.getElementById('ct-pick-list');if(!el)return;
+  el.innerHTML=spin();openOv('ct-pick-modal');
+  await ctFetch();
+  const list=ctRows.filter(r=>r.status==='accepted'&&r.other_id!==currentId);
+  el.innerHTML=list.length?list.map(r=>`<div class="ct-row tap" onclick="ctSendOfferTo('${r.other_id}',this)">${avatarCircle(r.other_name,null,'34px','14px',true,r.avatar_color||'#5C8A6A')}
+      <div class="ct-name">${esc(r.other_name)}<span class="ct-meta">${ctMeta(r)}</span></div><span style="color:var(--btn-a);font-weight:800;font-size:14px">Send ›</span></div>`).join('')
+    :`<div class="ct-note">No other contacts yet. Add people in Messages → Contacts.</div>`;
+}
+async function ctSendOfferTo(otherId,row){
+  if(!ctPickTask||!sb)return;
+  if(row)row.style.opacity='.5';
+  const{error}=await sb.rpc('offer_send',{p_task:ctPickTask,p_other:otherId});
+  if(error){if(row)row.style.opacity='';return toast('❌ '+error.message);}
+  const r=ctRows.find(x=>x.other_id===otherId);
+  closeOv('ct-pick-modal');toast(`📋 Offer sent to ${r?r.other_name:'your contact'}`);
+  ctPickTask=null;
+  if(window.loadMyJobs)loadMyJobs();
+  if(window.loadJobs)loadJobs();
 }

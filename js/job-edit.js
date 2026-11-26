@@ -71,6 +71,7 @@ async function saveEdit(){
   if(!saved||!saved.length)return toast('❌ Could not save changes — please try again');
   closeOv('edit-modal');
   window._editRenew=null;
+  if(sb)sb.rpc('offer_updated',{p_task:jobId}).then(()=>{},()=>{}); // private offer out with a contact: "✏️ Job offer updated" in your chat (no-op otherwise)
   if(_rn)showRenewNote('✅ Job updated — it\'s up for neighbours until '+new Date(upd.expires_at||_rn.exp).toLocaleDateString('en-CA',{month:'short',day:'numeric'})+'.');
   else toast(upd.expires_at?'✅ Job updated — it stays up until '+jobExpiryShort(new Date(upd.expires_at))+'.':'✅ Job updated!');
   loadMyJobs();loadJobs();

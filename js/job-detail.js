@@ -128,6 +128,8 @@ async function openJob(j){
     if(isPoster){
       btn.textContent='Make public';
       btn.onclick=()=>tapConfirm(btn,'Tap again to make it public',()=>offerMakePublic(j.id));
+      unclaimBtn.innerHTML='✏️ Edit offer';unclaimBtn.style.display='block';
+      unclaimBtn.onclick=()=>{closeOv('modal');openEditModal(j.id);};
     } else {
       btn.textContent='Accept job';
       btn.onclick=()=>tapConfirm(btn,'Tap again to accept',()=>offerAccept(j));

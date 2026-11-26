@@ -109,7 +109,7 @@ async function loadMyJobs(){
 
     const gpsTag=j.status==='open'?(j.location_verified?` · <span style="color:var(--lime);font-size:12.5px;font-weight:800">GPS</span>`:` · <span style="color:var(--yellow);font-size:12.5px;font-weight:800">⚠️ Unverified</span>`):'';
     let statusBadge;
-    if(j.status==='offered') statusBadge=`<span style="color:var(--purple);font-size:13.5px;font-weight:800">🔒 Private offer to ${esc(doerNames[j.private_for]||'your contact')}</span>`;
+    if(j.status==='offered') statusBadge=`<span style="color:var(--purple);font-size:13.5px;font-weight:800">${j.private_for?`🔒 Private offer to ${esc(doerNames[j.private_for]||'your contact')}`:'🔒 Private · not sent to anyone'}</span>`;
     else if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:13.5px;font-weight:800">Active</span>`;
     else if(j.status==='paused') statusBadge=`<span style="color:var(--yellow);font-size:13.5px;font-weight:800">Paused${daysLeft!==null&&daysLeft>0?` · ends in ${daysLeft}d`:''}</span>`;
     else if(j.status==='expired') statusBadge=`<span style="color:var(--muted);font-size:13.5px;font-weight:800">Expired${j.expires_at?' '+new Date(j.expires_at).toLocaleDateString('en-CA',{month:'short',day:'numeric'}):''}</span>`;
@@ -157,13 +157,24 @@ async function loadMyJobs(){
         <button data-act="archive" data-id="${esc(j.id)}" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046">Archive</button>
       </div>`;
     } else if(j.status==='offered'){
-      // Private offer (js/contacts.js): after a decline, or 3 days with no answer, suggest making it public (Roman's plan)
-      const who=esc(doerNames[j.private_for]||'your contact');
-      const stale=!!j.offer_declined_at||Date.now()-Date.parse(j.created_at)>3*864e5;
-      actionBtn=`<div style="margin-top:8px;font-size:13.5px;color:var(--text2)">${j.offer_declined_at?`${who} can't take it.`:stale?`No answer from ${who} yet.`:`Waiting for ${who} to accept. Only the two of you can see it.`}${stale?' <strong>Make this job public?</strong>':''}</div>
+      // Private job (js/contacts.js): out with a contact, or (after an unclaim) not sent to anyone. Only the poster
+      // (and the contact it was sent to) can see it. Edit keeps it private; Send to a contact; Make public; Remove.
+      const sentTo=j.private_for?esc(doerNames[j.private_for]||'your contact'):null;
+      const stale=sentTo&&(!!j.offer_declined_at||Date.now()-Date.parse(j.offered_at||j.created_at)>3*864e5);
+      cardMenu=`<div class="card-menu-wrap">
+        <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-${j.id}')" aria-label="More options">⋮</button>
+        <div class="card-menu-drop" id="cm-${j.id}">
+          <button onclick="event.stopPropagation();closeAllCardMenus();openEditModal('${j.id}')">Edit (stays private)</button>
+          <div class="menu-divider"></div>
+          <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}')">Remove</button>
+        </div>
+      </div>`;
+      const note=!sentTo?'Only you can see this job. Send it to a contact, make it public, or remove it.'
+        :j.offer_declined_at?`${sentTo} can't take it.`:stale?`No answer from ${sentTo} yet.`:`Waiting for ${sentTo} to accept. Only the two of you can see it.`;
+      actionBtn=`<div style="margin-top:8px;font-size:13.5px;color:var(--text2)">${note}${stale?' <strong>Send it to someone else, or make it public?</strong>':''}</div>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button onclick="event.stopPropagation();tapConfirm(this,'Tap again to make it public',()=>offerMakePublic('${j.id}'))" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff">Make public</button>
-        <button onclick="event.stopPropagation();openCancelConfirm('${j.id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046">Cancel offer</button>
+        <button onclick="event.stopPropagation();ctPickContact('${j.id}','${j.private_for||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:${sentTo?'var(--surface2)':'linear-gradient(135deg,var(--btn-a),var(--btn-b))'};border:${sentTo?'1.5px solid var(--border)':'none'};color:${sentTo?'var(--text)':'#fff'}">${sentTo?'Send to someone else':'Send to a contact'}</button>
+        <button onclick="event.stopPropagation();tapConfirm(this,'Tap again to make it public',()=>offerMakePublic('${j.id}'))" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:${sentTo?'linear-gradient(135deg,var(--btn-a),var(--btn-b))':'var(--surface2)'};border:${sentTo?'none':'1.5px solid var(--border)'};color:${sentTo?'#fff':'var(--text)'}">Make public</button>
       </div>`;
     } else if(j.status==='claimed'){
       const doerName=doerNames[j.doer_id]||'Helper';
