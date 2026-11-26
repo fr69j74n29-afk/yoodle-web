@@ -62,7 +62,7 @@
 <!-- Landing visitors → sign-in rate (26 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
 <script src="js/landing-visits.js?v=20261126a" defer></script>
 <!-- Swipe actions on Messages rows (23 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
-<script src="js/swipe-actions.js?v=20261126b" defer></script>
+<script src="js/swipe-actions.js?v=20261126c" defer></script>
 <style>
 :root{
   --purple:#5C8A6A;--lime:#2E7D52;--pink:#3D6B50;
@@ -1140,7 +1140,13 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
           <span class="nt-badge" id="nt-badge"></span>
         </button>
       </div>
+      <!-- Chats | Contacts tabs (26 Nov 2026): Contacts = friend requests by email + friend chats (js/contacts.js) -->
+      <div class="msg-tabs" role="tablist">
+        <button id="msg-tab-chats" class="on" type="button" role="tab" onclick="msgTab('chats')">Chats</button>
+        <button id="msg-tab-contacts" type="button" role="tab" onclick="msgTab('contacts')">Contacts <span class="ct-badge" id="ct-badge"></span></button>
+      </div>
       <div id="conversations-list"><div class="loading"><div class="spinner"></div></div></div>
+      <div id="contacts-pane" style="display:none"></div>
     </div>
   </div>
 
@@ -1755,7 +1761,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/auth.js?v=20261125a"></script>
 <script src="js/settings.js?v=20261125a"></script>
 <script src="js/tutor-link.js?v=20261125a"></script>
-<script src="js/notifications.js?v=20261125a"></script>
+<script src="js/notifications.js?v=20261126a"></script>
 <script src="js/session.js?v=20261126a"></script>
 <script src="js/push-web.js?v=20261125a"></script>
 <script src="js/realtime.js?v=20261125a"></script>
@@ -1766,7 +1772,8 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/job-edit.js?v=20261126a"></script>
 <script src="js/profile.js?v=20261125a"></script>
 <script src="js/messages.js?v=20261126a"></script>
-<script src="js/chat.js?v=20261126b"></script>
+<script src="js/contacts.js?v=20261126a"></script>
+<script src="js/chat.js?v=20261126c"></script>
 <script src="js/reactions.js?v=20261125a"></script>
 <script src="js/id-verification.js?v=20261125a"></script>
 <script src="js/ready-to-work.js?v=20261126a"></script>

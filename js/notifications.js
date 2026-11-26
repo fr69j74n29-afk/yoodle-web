@@ -9,7 +9,7 @@
 
 let _notifs=[];
 const NT_LINK_OK=/^https:\/\/([a-z0-9-]+\.)*yoodle\.ca(\/|$)/i;
-const NT_EMOJI={'invite:tutor_profile':'📚',test:'🧪',announcement:'📣'};
+const NT_EMOJI={'invite:tutor_profile':'📚',test:'🧪',announcement:'📣',friend_request:'👥'};
 async function loadNotifications(){
   if(!sb||!me)return;
   try{
