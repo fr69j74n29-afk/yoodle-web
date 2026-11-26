@@ -9,6 +9,20 @@ const IS_STAGING=location.pathname.startsWith('/staging/');
 const AUTH_RETURN=IS_STAGING?location.origin+'/staging/':location.origin; // live: unchanged (origin)
 // STAGING badge: position:absolute inside body (not fixed): iOS Safari treats fixed elements on the top edge specially (toolbar tinting / page under the bars) (26 Nov 2026)
 if(IS_STAGING)document.addEventListener('DOMContentLoaded',()=>{const b=document.createElement('div');b.textContent='STAGING';b.setAttribute('aria-hidden','true');b.style.cssText='position:absolute;top:max(6px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:99999;background:#DC2626;color:#fff;font:900 10.5px/1 Nunito,sans-serif;letter-spacing:1px;padding:4px 8px;border-radius:6px;pointer-events:none';document.body.appendChild(b);});
+// Viewport diagnostics (26 Nov 2026, temporary): staging only, and only with ?vp=1 in the address. Shows the sizes
+// iPhone Safari uses, to find why the app is taller than the space between Safari's bars. Remove once fixed.
+if(IS_STAGING&&/[?&]vp=1\b/.test(location.search))document.addEventListener('DOMContentLoaded',()=>{
+  const probe=document.createElement('div');probe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';document.body.appendChild(probe);
+  const t=document.createElement('pre');t.style.cssText='position:fixed;left:6px;top:40%;z-index:100000;margin:0;padding:6px 8px;background:rgba(0,0,0,.82);color:#7CFC9B;font:11px/1.35 ui-monospace,monospace;border-radius:8px;pointer-events:none;white-space:pre';document.body.appendChild(t);
+  const first={};const R=e=>{if(!e)return'-';const r=e.getBoundingClientRect();return Math.round(r.top)+'..'+Math.round(r.bottom);};
+  const f=()=>{const de=document.documentElement,b=document.body,vv=window.visualViewport,cs=getComputedStyle(probe);
+    const v={innerH:innerHeight,vvH:vv?Math.round(vv.height):'-',vvTop:vv?Math.round(vv.offsetTop):'-',htmlClientH:de.clientHeight,docScrollH:de.scrollHeight,scrollY:Math.round(scrollY),
+      body:R(b),bodyCssH:getComputedStyle(b).height,main:R(document.getElementById('view-main')),auth:R(document.getElementById('view-auth')),nav:R(document.querySelector('.bottom-nav')),
+      safeT:cs.paddingTop,safeB:cs.paddingBottom,screenH:screen.height,dpr:devicePixelRatio};
+    if(!first.innerH)Object.assign(first,{innerH:v.innerH,vvH:v.vvH,docScrollH:v.docScrollH,body:v.body});
+    t.textContent=Object.entries(v).map(([k,x])=>k+': '+x).join('\n')+'\n— at load —\n'+Object.entries(first).map(([k,x])=>k+': '+x).join('\n');};
+  f();setInterval(f,500);addEventListener('scroll',f,{passive:true});
+});
 const SUPABASE_ANON = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
 
 const CAT_COLOR = {
