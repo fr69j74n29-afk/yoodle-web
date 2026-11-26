@@ -1,4 +1,4 @@
-// My jobs: list, renew, remove, cancel, card menus.
+// My jobs: list, renew, pause, archive, remove, cancel, card menus.
 // Part of the app's main code (split out of index.html, 25 Nov 2026). Classic script, same global scope as the
 // other js/ files: see js/README.md for the load order and how to add code.
 
@@ -9,10 +9,10 @@ async function loadMyJobs(){
   const pid=myProfileId||me.id;
   const expSince=new Date(Date.now()-30*24*60*60*1000).toISOString();
   const[postedRes,appRes,hoRes,_vs]=await Promise.all([
-    // open/claimed + jobs that expired in the last 30 days (so the poster can still see applicants and renew)
-    sb.from('tasks').select('*').eq('poster_id',pid).or(`status.in.(open,claimed),and(status.eq.expired,expires_at.gte.${expSince})`).neq('type','admin_note').order('created_at',{ascending:false}),
+    // open/paused/claimed + jobs that expired in the last 30 days (so the poster can still see applicants, renew or archive)
+    sb.from('tasks').select('*').eq('poster_id',pid).or(`status.in.(open,paused,claimed),and(status.eq.expired,expires_at.gte.${expSince})`).neq('type','admin_note').order('created_at',{ascending:false}),
     // applications by this user with task details
-    sb.from('applications').select('id,status,created_at,tasks!inner(*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color))').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','claimed']).order('created_at',{ascending:false}),
+    sb.from('applications').select('id,status,created_at,tasks!inner(*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color))').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','paused','claimed']).order('created_at',{ascending:false}),
     // help_offer tasks where I'm the doer
     sb.from('tasks').select('*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color)').eq('doer_id',pid).eq('type','help_offer').in('status',['claimed']).order('created_at',{ascending:false}),
     loadViewStats() // views per posted job (also refreshes the top-bar badge)
@@ -32,7 +32,7 @@ async function loadMyJobs(){
   let doerNames={};
   let applicantCounts={};
   const claimedJobs=posted.filter(j=>j.status==='claimed'&&j.doer_id);
-  const openJobs=posted.filter(j=>j.status==='open'||j.status==='expired');
+  const openJobs=posted.filter(j=>j.status==='open'||j.status==='paused'||j.status==='expired');
   await Promise.all([
     claimedJobs.length?sb.from('profiles').select('id,name').in('id',[...new Set(claimedJobs.map(j=>j.doer_id))]).then(({data:doerData})=>{(doerData||[]).forEach(p=>doerNames[p.id]=p.name);}):null,
     openJobs.length?sb.from('applications').select('task_id').eq('status','pending').in('task_id',openJobs.map(j=>j.id)).then(({data:appData})=>{(appData||[]).forEach(a=>{applicantCounts[a.task_id]=(applicantCounts[a.task_id]||0)+1;});}):null
@@ -48,7 +48,7 @@ async function loadMyJobs(){
     const color=CAT_COLOR[cat]||'#3D6B50';
     let appBadge,actionBtn='',appMenu='';
     if(app.status==='pending'){
-      appBadge=`<span style="color:var(--yellow);font-size:13.5px;font-weight:800">Pending</span>`;
+      appBadge=`<span style="color:var(--yellow);font-size:13.5px;font-weight:800">Pending${j.status==='paused'?' · paused by poster':''}</span>`;
       appMenu=`<div class="card-menu-wrap">
         <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-app-${app.id}')" aria-label="More options">⋮</button>
         <div class="card-menu-drop" id="cm-app-${app.id}">
@@ -110,6 +110,7 @@ async function loadMyJobs(){
     const gpsTag=j.status==='open'?(j.location_verified?` · <span style="color:var(--lime);font-size:12.5px;font-weight:800">GPS</span>`:` · <span style="color:var(--yellow);font-size:12.5px;font-weight:800">⚠️ Unverified</span>`):'';
     let statusBadge;
     if(j.status==='claimed') statusBadge=`<span style="color:var(--teal);font-size:13.5px;font-weight:800">Active</span>`;
+    else if(j.status==='paused') statusBadge=`<span style="color:var(--yellow);font-size:13.5px;font-weight:800">Paused${daysLeft!==null&&daysLeft>0?` · ends in ${daysLeft}d`:''}</span>`;
     else if(j.status==='expired') statusBadge=`<span style="color:var(--muted);font-size:13.5px;font-weight:800">Expired${j.expires_at?' '+new Date(j.expires_at).toLocaleDateString('en-CA',{month:'short',day:'numeric'}):''}</span>`;
     else statusBadge=`<span style="color:var(--lime);font-size:13.5px;font-weight:800">Open${daysLeft!==null?` · ${daysLeft}d left`:''}${gpsTag}</span>`;
 
@@ -119,25 +120,40 @@ async function loadMyJobs(){
       const appCount=applicantCounts[j.id]||0;
       const appBadge=appCount>0?`<div style="margin-top:8px;padding:8px 12px;background:rgba(92,138,106,.08);border:1.5px solid rgba(92,138,106,.20);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between">
         <span style="font-size:14px;font-weight:800;color:var(--purple)">${appCount} interested</span>
-        <button onclick="event.stopPropagation();openApplicants('${j.id}','${esc(j.title)}')" style="padding:6px 14px;border-radius:100px;background:var(--btn-a);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">Review →</button>
+        <span style="display:flex;gap:6px">
+          <button data-act="pause" data-id="${esc(j.id)}" style="padding:6px 12px;border-radius:100px;background:transparent;border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">⏸ Pause</button>
+          <button onclick="event.stopPropagation();openApplicants('${j.id}','${esc(j.title)}')" style="padding:6px 14px;border-radius:100px;background:var(--btn-a);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">Review →</button>
+        </span>
       </div>`:'';
       cardMenu=`<div class="card-menu-wrap">
         <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-${j.id}')" aria-label="More options">⋮</button>
         <div class="card-menu-drop" id="cm-${j.id}">
           <button onclick="event.stopPropagation();closeAllCardMenus();openEditModal('${j.id}')">Edit</button>
+          ${appCount>0?`<button onclick="event.stopPropagation();tapConfirm(this,'Tap again to pause',()=>{closeAllCardMenus();pauseJob('${j.id}');})">Pause</button>`:''}
           <div class="menu-divider"></div>
           <button class="destructive" onclick="event.stopPropagation();closeAllCardMenus();openCancelConfirm('${j.id}')">Cancel Job</button>
         </div>
       </div>`;
       actionBtn=appBadge;
-    } else if(j.status==='expired'){
-      // Expired: no map pin. Renew puts it back up for 14 days; Review still shows who was interested.
+    } else if(j.status==='paused'||j.status==='expired'){
+      // Paused: off the map, chats stay open, clock keeps running. Expired: off the map.
+      // Both: Renew (pick an end date) · Review (if anyone's interested) · Archive (tap again) — Archive = cancelled, leaves Activity.
       // data- attributes + one delegated listener (see bindMyJobsActions) — no inline onclick strings.
       const appCount=applicantCounts[j.id]||0;
-      actionBtn=`<div style="margin-top:8px;font-size:13.5px;color:var(--text2)">Not on the map any more.${appCount>0?` <strong style="color:var(--purple)">${appCount} interested</strong> — renew to chat with them.`:''}</div>
+      const paused=j.status==='paused';
+      const archiveMenu=`<button class="destructive" onclick="event.stopPropagation();tapConfirm(this,'Tap again to archive',()=>{closeAllCardMenus();archiveJob('${j.id}');})">Archive</button>`;
+      cardMenu=`<div class="card-menu-wrap">
+        <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'cm-${j.id}')" aria-label="More options">⋮</button>
+        <div class="card-menu-drop" id="cm-${j.id}">
+          ${paused?`<button onclick="event.stopPropagation();closeAllCardMenus();openEditModal('${j.id}')">Edit</button><div class="menu-divider"></div>`:''}
+          ${archiveMenu}
+        </div>
+      </div>`;
+      actionBtn=`<div style="margin-top:8px;font-size:13.5px;color:var(--text2)">${paused?'Paused — not on the map. Chats stay open.':'Not on the map any more.'}${appCount>0?` <strong style="color:var(--purple)">${appCount} interested</strong>${paused?'':' — renew to chat with them.'}`:''}</div>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button data-act="renew" data-id="${esc(j.id)}" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">🔄 Renew 14 days</button>
-        ${appCount>0?`<button data-act="review" data-id="${esc(j.id)}" data-title="${esc(j.title||'')}" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Review →</button>`:''}
+        <button data-act="renew" data-id="${esc(j.id)}" data-chosen="${j.end_date_chosen?1:0}" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff">🔄 Renew</button>
+        ${appCount>0?`<button data-act="review" data-id="${esc(j.id)}" data-title="${esc(j.title||'')}" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:var(--surface2);border:1.5px solid var(--border);color:var(--text)">Review →</button>`:''}
+        <button data-act="archive" data-id="${esc(j.id)}" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046">Archive</button>
       </div>`;
     } else if(j.status==='claimed'){
       const doerName=doerNames[j.doer_id]||'Helper';
@@ -150,6 +166,7 @@ async function loadMyJobs(){
         </div>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
           <button onclick="event.stopPropagation();tapConfirm(this,'Tap again to complete',()=>chatComplete('${j.id}','${j.doer_id}'))" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">✅ Complete</button>
+          <button onclick="event.stopPropagation();tapConfirm(this,'Tap again to cancel',()=>cancelHelpOffer('${j.id}'))" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:transparent;border:1.5px solid rgba(220,80,70,.25);color:#DC5046">Cancel</button>
         </div>`;
       } else {
         cardMenu=`<div class="card-menu-wrap">
@@ -172,7 +189,7 @@ async function loadMyJobs(){
       </div>
       <div class="jc-top"><div class="jc-title">${esc(j.title)}</div><div class="jc-budget">$${j.price??'?'}</div></div>
       <div class="jc-desc">${esc(j.description||'')}</div>
-      ${(j.status==='open'||j.status==='expired')&&jobViews[j.id]!=null?`<div class="jc-views">${EYE_SVG}${jobViews[j.id]} ${jobViews[j.id]===1?'view':'views'}</div>`:''}
+      ${(j.status==='open'||j.status==='paused'||j.status==='expired')&&jobViews[j.id]!=null?`<div class="jc-views">${EYE_SVG}${jobViews[j.id]} ${jobViews[j.id]===1?'view':'views'}</div>`:''}
       ${actionBtn}
     </div>`;
   }).join('');
@@ -184,7 +201,8 @@ async function loadMyJobs(){
     ||emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.');
 }
 
-// One delegated click listener for Activity card buttons that use data-act (expired cards: Renew / Review).
+// One delegated click listener for Activity card buttons that use data-act
+// (open: Pause · paused/expired: Renew / Review / Archive). Pause and Archive need a second tap (tapConfirm).
 function bindMyJobsActions(g){
   if(!g||g._myJobsBound)return;
   g._myJobsBound=true;
@@ -193,17 +211,38 @@ function bindMyJobsActions(g){
     if(!b||!g.contains(b))return;
     e.stopPropagation();
     const id=b.dataset.id;
-    if(b.dataset.act==='renew'){b.disabled=true;renewJob(id).finally(()=>{b.disabled=false;});}
+    if(b.dataset.act==='renew')openRenewSheet(id,b.dataset.chosen==='1');
     else if(b.dataset.act==='review')openApplicants(id,b.dataset.title||'');
+    else if(b.dataset.act==='pause')tapConfirm(b,'Tap again',()=>pauseJob(id));
+    else if(b.dataset.act==='archive')tapConfirm(b,'Tap again',()=>archiveJob(id));
   });
 }
 
-async function renewJob(jobId){
+// until/chosen: from the Renew sheet (js/job-expiry.js); default 2 weeks. Works for expired and paused jobs.
+async function renewJob(jobId,until,chosen){
   if(!sb||!me)return;
-  const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
-  const{error}=await sb.from('tasks').update({expires_at:expiresAt,status:'open',expired_push_at:null}).eq('id',jobId).eq('poster_id',myProfileId||me.id);
+  const d=until||new Date(Date.now()+14*24*60*60*1000);
+  const{error}=await sb.from('tasks').update({...jobExpiryFields(d,chosen),status:'open',expired_push_at:null}).eq('id',jobId).eq('poster_id',myProfileId||me.id);
   if(error)return toast('❌ '+error.message);
-  toast('🔄 Job renewed for 14 days!');loadMyJobs();loadJobs();
+  toast('🔄 Your job is back up until '+jobExpiryShort(d)+'.');loadMyJobs();loadJobs();
+}
+
+// Pause: off the map, applicants and chats stay; the end date keeps running (expire_and_notify expires paused jobs too).
+async function pauseJob(jobId){
+  if(!sb||!me)return;
+  const{data,error}=await sb.from('tasks').update({status:'paused'}).eq('id',jobId).eq('poster_id',myProfileId||me.id).eq('status','open').select('id');
+  if(error)return toast('❌ '+error.message);
+  if(!data||!data.length)return toast('This job can\u2019t be paused any more');
+  toast('⏸ Job paused — off the map. Renew when you want it back.');loadMyJobs();loadJobs();
+}
+
+// Archive an expired or paused job: closes it (status 'cancelled', same as Cancel Job) so it leaves Activity.
+async function archiveJob(jobId){
+  if(!sb||!me)return;
+  const{data,error}=await sb.from('tasks').update({status:'cancelled'}).eq('id',jobId).eq('poster_id',myProfileId||me.id).in('status',['expired','paused']).select('id');
+  if(error)return toast('❌ '+error.message);
+  if(!data||!data.length)return toast('❌ Could not archive — please try again');
+  toast('🗂️ Job archived.');loadMyJobs();loadJobs();
 }
 
 // One-tap renew from the expiry reminder email / expired push.
@@ -219,6 +258,11 @@ async function handleRenewLink(token){
         ?`✅ "${data.title}" is back up for neighbours until ${until}.`
         :`✅ You're listed as a helper until ${until}.`);
       if(me){loadJobs();if(typeof loadMyJobs==='function')loadMyJobs();}
+    }else if(data.reason==='pick_date'&&data.task_id){
+      // The poster picked an end date for this job → open Edit so they pick a new one (renew_by_token doesn't renew it).
+      try{localStorage.setItem('yoodle_job_land',JSON.stringify({e:data.task_id,ts:Date.now()}));}catch(e){}
+      if(me)handleEmailJobLanding();
+      else showRenewNote('Sign in to pick a new end date for your job.');
     }else if(data.reason==='closed'){
       showRenewNote('This job is already closed, so it can\'t be renewed. You can post a new one any time.');
     }else{

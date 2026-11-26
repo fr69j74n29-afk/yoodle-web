@@ -183,7 +183,7 @@ async function swButtonsFor(taskId,convId,posterId,otherId){
     if(isDoer)return[isHO?B('Decline','sw-bad',()=>cancelHelpOffer(taskId)):B('Withdraw','sw-bad',()=>chatUnclaim(taskId))];
     return[];
   }
-  if(task.status==='open'){
+  if(task.status==='open'||task.status==='paused'){ // paused job: same Decline / Withdraw
     if(isPoster&&otherId)return[B('Decline','sw-bad',()=>swDecline(convId,taskId,otherId))];
     if(!isPoster){
       const{data:app}=await sb.from('applications').select('id,status').eq('task_id',taskId).eq('applicant_id',pid).maybeSingle();

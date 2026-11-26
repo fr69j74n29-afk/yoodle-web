@@ -98,14 +98,15 @@ async function postJob(){
   if(jobGpsPending)return toast('⚠️ Please confirm your GPS address first');
   if(!jobLocSet||!gpsLat||!gpsLng)return toast('⚠️ Please select an address from the suggestions or use GPS');
   if(!sb||!me){toast('🚀 Job posted! (demo mode)');resetPost();nav('browse');return;}
+  const until=jobExpiryValue('p-exp'); // "How long should your job stay up?" (js/job-expiry.js): 2 weeks or a picked day
+  if(!until)return toast('Pick the last day for your job');
   const btn=document.getElementById('post-btn');btn.disabled=true;btn.textContent='Posting…';
-  const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
-  const{error}=await sb.from('tasks').insert({poster_id:myProfileId||me.id,title,description:desc,category:cat,price:budget?parseFloat(budget):0,address:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open',expires_at:expiresAt,show_on_map:true}); // jobs always pinned on the map
+  const{error}=await sb.from('tasks').insert({poster_id:myProfileId||me.id,title,description:desc,category:cat,price:budget?parseFloat(budget):0,address:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open',...jobExpiryFields(until,jobExpiryPicked('p-exp')),show_on_map:true}); // jobs always pinned on the map
   btn.disabled=false;btn.textContent='Post Job';
   if(error)return toast('❌ '+error.message);
   // Non-helpers: the job's area becomes their home base (~1 km). Helpers keep their helper address.
   if(!myHomeHasAddr)sb.from('profiles').update({helper_lat:Math.round(gpsLat*100)/100,helper_lng:Math.round(gpsLng*100)/100}).eq('id',myProfileId||me.id).then(()=>{},()=>{});
-  toast('🎉 Job posted! Expires in 14 days.');resetPost();nav('browse');
+  toast('🎉 Job posted! It stays up until '+jobExpiryShort(until)+'.');resetPost();nav('browse');
 }
 
 function resetPost(){
@@ -113,6 +114,7 @@ function resetPost(){
   jobGpsPending=null;document.getElementById('p-gps-confirm').style.display='none';
   ['p-title','p-desc','p-budget','p-cat'].forEach(id=>document.getElementById(id).value='');
   ysRenderPostCats();
+  jobExpiryRender('p-exp');
   const loc=document.getElementById('p-loc');loc.value='';loc.placeholder='Start typing your address…';
   const st=document.getElementById('loc-status');st.textContent='Type an address and select from suggestions, or tap GPS';st.className='loc-status';
   document.getElementById('gps-btn').innerHTML=ICO.nav+'GPS';

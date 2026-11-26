@@ -130,7 +130,7 @@ async function openJob(j){
       btn.textContent='Message Poster';
       btn.onclick=()=>{closeOv('modal');nav('messages');};
     }
-  } else if(j.status==='open'){
+  } else if(j.status==='open'||j.status==='paused'){
     if(isPoster){
       btn.textContent='Review Applicants';
       btn.onclick=()=>openApplicants(j.id,j.title);
@@ -145,6 +145,8 @@ async function openJob(j){
               btn.onclick=()=>tapConfirm(btn,'Tap again to withdraw',()=>withdrawApplication(data.id));
             } else if(data&&data.status==='assigned'){
               btn.textContent='You are assigned!';btn.disabled=true;
+            } else if(j.status==='paused'){
+              btn.textContent='Paused — not taking new interest';btn.disabled=true;
             } else {
               btn.textContent="I'm Interested";btn.disabled=false;
               btn.onclick=()=>applyForJob(j.id,j.poster_id,j.title);
@@ -216,6 +218,14 @@ async function applyForJob(taskId,posterId,jobTitle){
   const pid=myProfileId||me.id;
   const btn=document.getElementById('m-action');
   btn.textContent='Applied';btn.disabled=true;
+
+  // The sheet may show an old copy (map loaded before the poster paused/closed the job) → check the job is still open
+  const{data:cur}=await sb.from('tasks').select('status').eq('id',taskId).maybeSingle();
+  if(!cur||cur.status!=='open'){
+    btn.textContent=cur?.status==='paused'?'Paused — not taking new interest':'No longer available';
+    toast(cur?.status==='paused'?'⏸ This job is paused right now':'This job is no longer available');
+    loadJobs();return;
+  }
 
   // upsert application
   const{error}=await sb.from('applications').upsert(

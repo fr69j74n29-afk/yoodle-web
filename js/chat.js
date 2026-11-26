@@ -67,7 +67,7 @@ async function openChat(taskId,title,otherName,posterId,otherId,otherRating,conv
       btns+=isHO?cancelHOBtn:withdrawBtn;
     }
     if(btns){actionsEl.innerHTML=btns;actionsEl.style.display='flex';}
-  } else if(task.status==='open'&&!isPoster){
+  } else if((task.status==='open'||task.status==='paused')&&!isPoster){ // paused: applicant can still withdraw
     const{data:app}=await sb.from('applications').select('id,status').eq('task_id',taskId).eq('applicant_id',pid).maybeSingle();
     if(app&&app.status==='pending'){
       actionsEl.innerHTML=withdrawBtn;

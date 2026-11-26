@@ -24,7 +24,7 @@ function selectEditLocSuggestion(i){
 
 async function openEditModal(jobId){
   window._editRenew=null;
-  const{data:j,error}=await sb.from('tasks').select('title,description,price,address').eq('id',jobId).maybeSingle();
+  const{data:j,error}=await sb.from('tasks').select('title,description,price,address,expires_at,end_date_chosen').eq('id',jobId).maybeSingle();
   if(error||!j)return toast('❌ Could not load job');
   document.getElementById('edit-job-id').value=jobId;
   document.getElementById('edit-title').value=j.title||'';
@@ -34,6 +34,7 @@ async function openEditModal(jobId){
   document.getElementById('edit-loc').value=j.address||'';
   const st=document.getElementById('edit-loc-status');
   st.textContent='To move the pin, type the new address and pick it from the suggestions';st.className='loc-status';
+  jobExpiryRender('edit-exp',{keep:j.expires_at,pick:!!j.end_date_chosen}); // "Keep current date" while it's up; ended + picked date → "Pick an end date" open
   openOv('edit-modal');
 }
 
@@ -49,11 +50,20 @@ async function saveEdit(){
     if(!editLat||!editLng)return toast('⚠️ Please select the new address from the suggestions');
     upd.address=document.getElementById('edit-loc').value.trim();upd.lat=editLat;upd.lng=editLng;upd.location_verified=false;
   }
-  // Opened from the expiry email: saving also keeps the job up 14 more days (never shortens it)
+  // New end date (js/job-expiry.js). Status is not changed here (a paused job stays paused).
+  if(jobExpiryChanged('edit-exp')){
+    const d=jobExpiryValue('edit-exp');
+    if(!d)return toast('Pick the last day for your job');
+    Object.assign(upd,jobExpiryFields(d,jobExpiryPicked('edit-exp')),{expired_push_at:null});
+  }
+  // Opened from the expiry email: saving also puts the job back up — 14 more days unless a date was picked (never shortens it)
   const _rn=window._editRenew&&window._editRenew.id===jobId?window._editRenew:null;
   if(_rn){
-    const t14=Date.now()+14*24*60*60*1000, cur=_rn.exp?new Date(_rn.exp).getTime():0;
-    upd.expires_at=new Date(Math.max(t14,cur)).toISOString();upd.status='open';
+    if(!upd.expires_at){
+      const t14=Date.now()+14*24*60*60*1000, cur=_rn.exp?new Date(_rn.exp).getTime():0;
+      upd.expires_at=new Date(Math.max(t14,cur)).toISOString();
+    }
+    upd.status='open';
   }
   const{data:saved,error}=await sb.from('tasks').update(upd).eq('id',jobId).eq('poster_id',myProfileId||me.id).select('id');
   if(error)return toast('❌ '+error.message);
@@ -61,6 +71,6 @@ async function saveEdit(){
   closeOv('edit-modal');
   window._editRenew=null;
   if(_rn)showRenewNote('✅ Job updated — it\'s up for neighbours until '+new Date(upd.expires_at).toLocaleDateString('en-CA',{month:'short',day:'numeric'})+'.');
-  else toast('✅ Job updated!');
+  else toast(upd.expires_at?'✅ Job updated — it stays up until '+jobExpiryShort(new Date(upd.expires_at))+'.':'✅ Job updated!');
   loadMyJobs();loadJobs();
 }

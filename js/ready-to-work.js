@@ -182,7 +182,7 @@ async function handleEmailJobLanding(){
   const{data:j,error}=await sb.from('tasks').select('id,poster_id,status,type,expires_at').eq('id',d.e).maybeSingle();
   if(error||!j)return toast('This job is no longer available');
   if(j.poster_id!==(myProfileId||me.id))return showRenewNote('This job was posted from a different account — sign in with that one to edit it.');
-  if((j.type||'job')!=='job'||(j.status!=='open'&&j.status!=='expired'))return showRenewNote('This job is already closed. You can post a new one any time.');
+  if((j.type||'job')!=='job'||(j.status!=='open'&&j.status!=='paused'&&j.status!=='expired'))return showRenewNote('This job is already closed. You can post a new one any time.');
   nav('myjobs');
   setTimeout(async()=>{
     await openEditModal(j.id);
