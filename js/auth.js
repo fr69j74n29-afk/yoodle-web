@@ -71,4 +71,5 @@ function resetEmailCode(){
 function oneSignalLogout(){
   try{if(oneSignalReady&&window.OneSignalDeferred)window.OneSignalDeferred.push(async(os)=>{try{await os.logout();}catch(e){}});}catch(e){}
 }
-async function signOut(){oneSignalLogout();if(sb)await sb.auth.signOut();else showAuthScreen();}
+async function signOut(){oneSignalLogout();if(window.ctReset)ctReset(); // Contacts tab (js/contacts.js)
+  if(sb)await sb.auth.signOut();else showAuthScreen();}

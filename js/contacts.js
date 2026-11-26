@@ -56,16 +56,23 @@ function msgTab(tab){
 
 // get_friends(); also used by loadMessages() to label friend chats in the Chats list.
 async function ctFetch(){
-  if(!sb||!me)return ctRows=[];
+  if(!sb||!me){ctRows=[];ctSetBadge();return ctRows;}
   const{data,error}=await sb.rpc('get_friends');
   if(error){console.warn('contacts',error);return ctRows;}
   ctRows=data||[];
   ctSetBadge();
+  if(ctTabNow==='contacts')ctRender(); // keep the visible list in step (e.g. after switching accounts)
   return ctRows;
 }
 function ctSetBadge(){
   const n=ctRows.filter(r=>r.status==='pending'&&r.incoming).length,b=document.getElementById('ct-badge');
   if(b){b.textContent=n;b.classList.toggle('show',n>0);}
+}
+// Sign-out (js/auth.js): forget this account's contacts and go back to Chats
+function ctReset(){
+  ctRows=[];ctSetBadge();
+  const pane=document.getElementById('contacts-pane');if(pane)pane.innerHTML='';
+  msgTab('chats');
 }
 // conversation ids of friend chats (for the Chats list)
 function ctDirectConvIds(){return new Set(ctRows.filter(r=>r.conversation_id).map(r=>r.conversation_id));}
