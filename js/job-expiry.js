@@ -3,9 +3,12 @@
 // Edit adds "Keep {date}" while the job is still up. Helpers never see the date — it only decides when the job leaves the map.
 // Picking a date sets tasks.end_date_chosen = true → renew email/push/link opens Edit to pick a new date instead of one-tap 14 days.
 // No library needed (native <input type="date">; min/max are clamped here because iOS Safari doesn't enforce them).
+// iOS shows an EMPTY date field as a blank box (and its picker jumps to the min day), so "Pick an end date"
+// always pre-fills a starting day (JOB_PICK_DEFAULT_DAYS) that the poster then changes.
 
 const JOB_MAX_DAYS=14;
-const JOB_REMIND_MIN_DAYS=7; // shorter runs skip the "expires soon" email (send_expiry_reminders)
+const JOB_REMIND_MIN_DAYS=7;
+const JOB_PICK_DEFAULT_DAYS=7; // starting day shown when "Pick an end date" opens // shorter runs skip the "expires soon" email (send_expiry_reminders)
 const _jx={}; // per picker: {sel:'d14'|'pick'|'keep', date:Date|null, keep:Date|null}
 
 function _jxEnd(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate(),23,59,0,0);}
@@ -26,10 +29,10 @@ function jobExpiryRender(id,opts){
       ${chip('d14','2 weeks')}
       ${chip('pick','Pick an end date')}
     </div>
-    <input type="date" class="form-inp jx-date" id="${id}-date" style="display:none;margin-top:8px"
+    <input type="date" class="form-inp jx-date" id="${id}-date" style="display:none;margin-top:8px;min-height:46px;text-align:left;-webkit-appearance:none;appearance:none"
       min="${_jxYmd(_jxAddDays(1))}" max="${_jxYmd(_jxAddDays(JOB_MAX_DAYS))}" onchange="jobExpiryDate('${id}',this.value)">
     <div class="jx-note" id="${id}-note"></div>`;
-  if(_jx[id].sel==='pick')document.getElementById(id+'-date').style.display='block';
+  if(_jx[id].sel==='pick')_jxOpenDate(id);
   _jxPaint(id);
 }
 
@@ -37,9 +40,16 @@ function jobExpiryPick(id,k){
   const s=_jx[id];if(!s)return;
   s.sel=k;
   const inp=document.getElementById(id+'-date');
-  if(k==='pick'){inp.style.display='block';try{inp.showPicker&&inp.showPicker();}catch(e){}}
+  if(k==='pick')_jxOpenDate(id);
   else inp.style.display='none';
   _jxPaint(id);
+}
+// Show the date field with a day already in it (never blank on iOS).
+function _jxOpenDate(id){
+  const s=_jx[id],inp=document.getElementById(id+'-date');if(!s||!inp)return;
+  if(!s.date)s.date=_jxAddDays(JOB_PICK_DEFAULT_DAYS);
+  inp.value=_jxYmd(s.date);
+  inp.style.display='block';
 }
 function jobExpiryDate(id,v){
   const s=_jx[id];if(!s)return;
@@ -55,7 +65,7 @@ function _jxPaint(id){
   const s=_jx[id],el=document.getElementById(id);if(!s||!el)return;
   el.querySelectorAll('.jx-chip').forEach(b=>b.classList.toggle('on',b.dataset.k===s.sel));
   const d=jobExpiryValue(id),note=document.getElementById(id+'-note');
-  if(note)note.innerHTML=d?`📅 Comes off the map after <strong>${_jxLabel(d)}</strong>`:'Pick a day — up to 2 weeks from today';
+  if(note)note.innerHTML=d?`📅 Comes off the map after <strong>${_jxLabel(d)}</strong>${s.sel==='pick'?' — tap the date to change it':''}`:'Pick a day — up to 2 weeks from today';
 }
 
 // Chosen end Date, or null ("Pick an end date" with no day yet).
