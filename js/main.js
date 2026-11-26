@@ -84,6 +84,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // (showApp() is ≈24 API calls + a map recentre).
   sb.auth.getSession().then(({data:{session}})=>{
     if(session)return _startApp(session);
+    if(window.trackLandingVisit)trackLandingVisit(); // landing visitors → sign-in rate (js/landing-visits.js)
     // Signed out and came from the expiry email: edit → ask to sign in; post → open the guest post form
     try{
       const d=JSON.parse(localStorage.getItem('yoodle_job_land')||'null');

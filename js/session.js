@@ -62,6 +62,7 @@ async function showApp(){
   if(window._readyLand)handleReadyLanding();
   handleEmailJobLanding();
   recordOnboardPath();
+  if(window.linkLandingVisit)linkLandingVisit(); // landing visitors → sign-in rate (js/landing-visits.js)
   logActive();
   loadPoints();
   loadNotifications(); // bell count in the top bar
