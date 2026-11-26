@@ -7,7 +7,7 @@
 //    push already work. This file only changes how that screen looks and sends for a support chat.
 //  * Messages go through public.support_send() (signed-in members, 20/hour, 2000 characters; it creates the
 //    member's support chat on the first message). Thread = tasks row type 'support_chat', title 'Yoodle support',
-//    poster = Yoodle team account, doer = member.
+//    poster = the support@yoodle.ca account (shown as "Yoodle support"), doer = member.
 //  * No emails either way (trigger trg_stamp_quiet_thread_no_email). The team's replies push, but not while the
 //    member is in the chat.
 //  * Swipe-left "Clear" (js/swipe-actions.js) starts fresh, like Yoodi; old messages stay for admin.
@@ -17,7 +17,7 @@
 // Loaded as a classic deferred script (NOT a module). index.html / js files call it through guarded hooks
 // (if(window.supportX)…). If this file fails to load, the app works as before, without Contact support.
 
-var SUPPORT_TEAM_ID='917f7ed1-3789-4432-b5e8-435b24b33aca';   // public.support_team_id()
+var SUPPORT_TEAM_ID='7b9f8ba7-da35-4b75-9619-4c44879a900a';   // public.support_team_id() = support@yoodle.ca (26 Nov 2026)
 var SUPPORT_TITLE='Yoodle support';                             // tasks.title set by support_send / admin_support_reply
 var SUPPORT={active:false,MAX:2000};
 var SUPPORT_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 9h8"/><path d="M8 13h6"/><path d="M14 18h-1l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v4.5"/><path d="M19 22v.01"/><path d="M19 19a2.003 2.003 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483"/></svg>';
