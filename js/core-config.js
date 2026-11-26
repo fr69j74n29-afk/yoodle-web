@@ -7,7 +7,8 @@ const SUPABASE_URL  = 'https://pyzugtltkbpcxvokdmps.supabase.co';
 // Same database as the live site. On staging: sign-in returns to /staging/, no push signup, and a STAGING label shows.
 const IS_STAGING=location.pathname.startsWith('/staging/');
 const AUTH_RETURN=IS_STAGING?location.origin+'/staging/':location.origin; // live: unchanged (origin)
-if(IS_STAGING)document.addEventListener('DOMContentLoaded',()=>{const b=document.createElement('div');b.textContent='STAGING';b.setAttribute('aria-hidden','true');b.style.cssText='position:fixed;top:max(6px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:99999;background:#DC2626;color:#fff;font:900 10.5px/1 Nunito,sans-serif;letter-spacing:1px;padding:4px 8px;border-radius:6px;pointer-events:none';document.body.appendChild(b);});
+// STAGING badge: position:absolute inside body (not fixed): iOS Safari treats fixed elements on the top edge specially (toolbar tinting / page under the bars) (26 Nov 2026)
+if(IS_STAGING)document.addEventListener('DOMContentLoaded',()=>{const b=document.createElement('div');b.textContent='STAGING';b.setAttribute('aria-hidden','true');b.style.cssText='position:absolute;top:max(6px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:99999;background:#DC2626;color:#fff;font:900 10.5px/1 Nunito,sans-serif;letter-spacing:1px;padding:4px 8px;border-radius:6px;pointer-events:none';document.body.appendChild(b);});
 const SUPABASE_ANON = 'sb_publishable_9qnjqRwusYBArg79bBv81w_kauJZPBZ';
 
 const CAT_COLOR = {
