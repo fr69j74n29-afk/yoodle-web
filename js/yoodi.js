@@ -45,14 +45,17 @@ body.theme-sage-dark #yoodi-fab .yd-dot{border-color:#1a1f1c}
 #yoodi-tip .x{position:absolute;top:6px;right:8px;border:none;background:none;color:var(--muted);font-size:17px;cursor:pointer;padding:2px 4px}
 #chat-modal.yoodi-chat #chat-more-wrap,#chat-modal.yoodi-chat #chat-actions{display:none!important}
 #chat-modal.yoodi-chat #chat-av{background:none!important;border:none!important;box-shadow:none!important;border-radius:0!important;
-  overflow:visible;cursor:default;width:38px!important;height:44px!important}
+  overflow:visible;cursor:default;pointer-events:none;width:38px!important;height:44px!important}
 #chat-modal.yoodi-chat #chat-av img,.yd-av img{width:100%;height:auto;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
 body.theme-sage-dark #chat-modal.yoodi-chat #chat-av img,body.theme-sage-dark .yd-av img{
   filter:drop-shadow(0 0 1px #fff) drop-shadow(0 2px 4px rgba(0,0,0,.5))}
 .yd-av{width:28px;height:34px;flex-shrink:0;display:flex;align-items:center}
-#chat-modal.yoodi-chat #chat-other{cursor:default}
+/* No iOS long-press image preview / drag on Yoodi's picture (Messages list, chat header, map button) */
+.yd-av img,#chat-modal.yoodi-chat #chat-av img,#yoodi-fab img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
+#chat-modal.yoodi-chat #chat-other{cursor:default;pointer-events:none} /* no tap-through to Yoodi's profile */
+.yd-beta{margin-left:6px;font-size:13px;font-weight:600;color:var(--btn-a);letter-spacing:.2px}
 #chat-modal .yd-foot{display:none}
-#chat-modal.yoodi-chat .yd-foot{display:block;padding:0 16px 12px;font-size:12px;color:var(--muted);font-weight:700;text-align:center;background:var(--surface);flex-shrink:0}
+#chat-modal.yoodi-chat .yd-foot{display:block;padding:0 16px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:var(--muted);font-weight:700;text-align:center;background:var(--surface);flex-shrink:0}
 .yd-status{display:inline-flex;align-items:center;gap:5px}
 .yd-status i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#22C55E}
 .yd-status.off i{background:#9CA3AF}
@@ -146,8 +149,8 @@ async function yoodiOpenChat(convId,taskId,opts){
   var modal=document.getElementById('chat-modal');modal.classList.add('yoodi-chat');
   if(!modal.querySelector('.yd-foot'))
     modal.querySelector('.modal-sheet').insertAdjacentHTML('beforeend',
-      `<div class="yd-foot">Yoodi is an AI helper and can make mistakes. Nothing is posted until you tap Post.</div>`);
-  document.getElementById('chat-title').textContent='Yoodi';
+      `<div class="yd-foot">Yoodi is still learning. Feedback is always welcome!</div>`);
+  document.getElementById('chat-title').innerHTML='Yoodi<span class="yd-beta">beta</span>';
   document.getElementById('chat-av').innerHTML='<img src="yoodi.png?v=20261123" alt="">';
   document.getElementById('chat-actions').style.display='none';
   var inp=document.getElementById('chat-input');inp.placeholder='Message Yoodi…';inp.maxLength=1000;
@@ -209,7 +212,7 @@ function yoodiMsgHtml(m,isMe){
     last=match.index+match[0].length;
   }
   html+=linkify(esc(body.slice(last)));
-  return `<div style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div class="yd-b" style="max-width:80%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--btn-a)':'var(--surface2)'};color:${isMe?'#fff':'var(--text)'};font-size:14px;font-weight:600;line-height:1.4">${html.trim()}<div style="font-size:11.5px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
+  return `<div data-mid="${esc(m.id)}" data-me="${isMe?1:0}" style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div class="yd-b" style="max-width:80%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--btn-a)':'var(--surface2)'};color:${isMe?'#fff':'var(--text)'};font-size:14px;font-weight:600;line-height:1.4">${html.trim()}<div style="font-size:11.5px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
 }
 
 // index.html loadChatMessages(), after drawing: intro on top, "thinking" / "resting" at the bottom.
