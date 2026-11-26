@@ -101,12 +101,13 @@ async function openChatFromNotification(taskId,convId){
   }
   nav('messages');
   const{data:conv}=await sb.from('conversations')
-    .select('id,poster_id,applicant_id,tasks(title)')
+    .select('id,poster_id,applicant_id,tasks(title,type)')
     .eq('id',convId).single();
   if(!conv)return;
   const isPoster=conv.poster_id===pid;
   const otherId=isPoster?conv.applicant_id:conv.poster_id;
   if(!otherId)return;
   const{data:other}=await sb.from('profiles').select('name,rating').eq('id',otherId).single();
-  openChat(taskId,conv.tasks?.title||'Job',other?.name||'User',conv.poster_id,otherId,other?.rating||'',convId);
+  const isDirect=conv.tasks?.type==='direct'; // friend chat (js/contacts.js): the friend's name, not the hidden task's title
+  openChat(taskId,isDirect?(other?.name||'Contact'):(conv.tasks?.title||'Job'),other?.name||'User',conv.poster_id,otherId,other?.rating||'',convId);
 }

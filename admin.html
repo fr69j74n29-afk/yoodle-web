@@ -1413,7 +1413,7 @@ async function loadStats() {
     ] = await Promise.all([
       sb.from('profiles').select('*', { count: 'exact', head: true }),
       sb.from('profiles').select('id, visible_on_map, show_on_map').eq('visible_on_map', true),
-      sb.from('tasks').select('status, poster_id, type').neq('poster_id', EXCLUDED_POSTER).not('type', 'in', '(admin_note,yoodi_chat,support_chat)'),   // chat threads aren't jobs (26 Nov 2026)
+      sb.from('tasks').select('status, poster_id, type').neq('poster_id', EXCLUDED_POSTER).not('type', 'in', '(admin_note,yoodi_chat,support_chat,direct)'),   // chat threads aren't jobs (26 Nov 2026)
       sb.from('profiles')
         .select('created_at')
         .gte('created_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
@@ -1657,7 +1657,7 @@ async function loadRegions() {
     if (!window.YoodleGeo) throw new Error('admin-geo.js not loaded');
     const [{ data: profiles, error: pErr }, { data: tasks, error: tErr }] = await Promise.all([
       sb.from('profiles').select('id, visible_on_map, helper_lat, helper_lng, last_lat, last_lng'),
-      sb.from('tasks').select('poster_id, lat, lng, created_at').not('lat', 'is', null).neq('type', 'admin_note').order('created_at', { ascending: false })
+      sb.from('tasks').select('poster_id, lat, lng, created_at').not('lat', 'is', null).not('type', 'in', '(admin_note,yoodi_chat,support_chat,direct)').order('created_at', { ascending: false })
     ]);
     if (pErr) throw pErr;
     if (tErr) throw tErr;
@@ -2451,7 +2451,7 @@ async function loadRecentActivity() {
     const [{ data: jobs, error: jobErr }, { data: helpers2, error: helpErr }] = await Promise.all([
       sb.from('tasks')
         .select('id, title, description, price, status, address, created_at, poster_id, category')
-        .not('type', 'in', '(admin_note,agency_job,community_job,yoodi_chat,support_chat)')   // agency jobs have their own section (Oct 2026); imported employer jobs (Nov 2026) aren't member activity; Yoodi chats (yoodi_chat, 23 Nov 2026) and Contact support chats (support_chat, 26 Nov 2026) aren't jobs
+        .not('type', 'in', '(admin_note,agency_job,community_job,yoodi_chat,support_chat,direct)')   // agency jobs have their own section (Oct 2026); imported employer jobs (Nov 2026) aren't member activity; Yoodi chats (yoodi_chat, 23 Nov 2026) and Contact support chats (support_chat, 26 Nov 2026) aren't jobs
         .gte('created_at', cutoff)
         .order('created_at', { ascending: false })
         .limit(5),

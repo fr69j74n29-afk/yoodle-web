@@ -59,7 +59,8 @@ async function saveEdit(){
   // Opened from the expiry email: saving also puts the job back up — 14 more days unless a date was picked (never shortens it)
   const _rn=window._editRenew&&window._editRenew.id===jobId?window._editRenew:null;
   if(_rn){
-    if(!upd.expires_at){
+    const kept=typeof _jx!=='undefined'&&_jx['edit-exp']&&_jx['edit-exp'].sel==='keep'; // "Keep current date" (only offered while the job is still up)
+    if(!upd.expires_at&&!kept){
       const t14=Date.now()+14*24*60*60*1000, cur=_rn.exp?new Date(_rn.exp).getTime():0;
       upd.expires_at=new Date(Math.max(t14,cur)).toISOString();
     }
@@ -70,7 +71,7 @@ async function saveEdit(){
   if(!saved||!saved.length)return toast('❌ Could not save changes — please try again');
   closeOv('edit-modal');
   window._editRenew=null;
-  if(_rn)showRenewNote('✅ Job updated — it\'s up for neighbours until '+new Date(upd.expires_at).toLocaleDateString('en-CA',{month:'short',day:'numeric'})+'.');
+  if(_rn)showRenewNote('✅ Job updated — it\'s up for neighbours until '+new Date(upd.expires_at||_rn.exp).toLocaleDateString('en-CA',{month:'short',day:'numeric'})+'.');
   else toast(upd.expires_at?'✅ Job updated — it stays up until '+jobExpiryShort(new Date(upd.expires_at))+'.':'✅ Job updated!');
   loadMyJobs();loadJobs();
 }

@@ -10,7 +10,7 @@ async function loadMyJobs(){
   const expSince=new Date(Date.now()-30*24*60*60*1000).toISOString();
   const[postedRes,appRes,hoRes,_vs]=await Promise.all([
     // open/paused/claimed + jobs that expired in the last 30 days (so the poster can still see applicants, renew or archive)
-    sb.from('tasks').select('*').eq('poster_id',pid).or(`status.in.(open,paused,claimed),and(status.eq.expired,expires_at.gte.${expSince})`).neq('type','admin_note').order('created_at',{ascending:false}),
+    sb.from('tasks').select('*').eq('poster_id',pid).or(`status.in.(open,paused,claimed),and(status.eq.expired,expires_at.gte.${expSince})`).not('type','in','(admin_note,direct,support_chat,yoodi_chat)').order('created_at',{ascending:false}), // chat threads aren't jobs
     // applications by this user with task details
     sb.from('applications').select('id,status,created_at,tasks!inner(*,profiles!tasks_poster_id_fkey(id,name,rating,avatar_color))').eq('applicant_id',pid).in('status',['pending','assigned']).in('tasks.status',['open','paused','claimed']).order('created_at',{ascending:false}),
     // help_offer tasks where I'm the doer
