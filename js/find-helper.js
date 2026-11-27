@@ -65,8 +65,9 @@ function hsRenderGrid(){
 }
 function _hsInList(){return document.getElementById('app-list')?.classList.contains('active');}
 function fsStep(s){
-  ['start','help','pro','become','svc'].forEach(x=>document.getElementById('fs-'+x)?.classList.toggle('on',x===s));
+  ['start','help','pro','become','svc','suggest'].forEach(x=>document.getElementById('fs-'+x)?.classList.toggle('on',x===s));
   if(s==='svc'&&window.hsvcFilterGrid)hsvcFilterGrid(); // 💲 Fixed-price services (js/home-services.js)
+  if(s==='suggest'&&window.hsvcSuggestOpen)hsvcSuggestOpen(); // "Missing a service? Suggest one →" (js/home-services.js, 27 Nov 2026)
   if(s==='help')hsRenderGrid();
   if(s==='pro')psRenderGrid();
   if(s==='become'){const g=document.getElementById('fs-go');if(g){g.disabled=false;g.textContent='Continue';}}

@@ -412,9 +412,43 @@ function hsvcFilterMarkup(){
   var pane=document.createElement('div');pane.className='fs-pane';pane.id='fs-svc';
   pane.innerHTML='<div class="hs-head"><b><button class="fs-back" onclick="fsStep(\'start\')" aria-label="Back">‹</button>Fixed-price services</b>'+
     '<button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>'+
-    '<div class="hs-sub">Helpers near you who list their prices</div><div id="fs-svc-grid" class="hs-grid" style="margin-top:12px"></div>';
+    '<div class="hs-sub">Helpers near you who list their prices</div><div id="fs-svc-grid" class="hs-grid" style="margin-top:12px"></div>'+
+    '<button class="fs-become fs-sugg-link" onclick="fsStep(\'suggest\')">Missing a service? Suggest one →</button>';
   var pp=document.getElementById('fs-pro');
   if(pp)pp.insertAdjacentElement('afterend',pane);else{var pop=document.getElementById('fs-pop');if(pop)pop.appendChild(pane);}
+  hsvcSuggestMarkup(pane);
+}
+// ── "Missing a service? Suggest one →" (27 Nov 2026) ──
+// Link at the bottom of the services submenu → #fs-suggest pane (one text box, max 80 chars) → one insert into
+// service_suggestions (user_id + created_at filled by the database; admin.html: SERVICE SUGGESTIONS). Internal use:
+// no server checks or limits (Roman). The thank-you shows right away; the insert runs in the background.
+function hsvcSuggestMarkup(after){
+  if(document.getElementById('fs-suggest'))return;
+  var pane=document.createElement('div');pane.className='fs-pane fs-become-box';pane.id='fs-suggest';
+  pane.innerHTML='<div class="hs-head"><b><button class="fs-back" onclick="fsStep(\'svc\')" aria-label="Back">‹</button>Suggest a service</b>'+
+    '<button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>'+
+    '<p>What fixed-price service should Yoodle add?</p>'+
+    '<input id="fs-sugg-in" class="fs-sugg-in" type="text" maxlength="80" autocomplete="off" enterkeyhint="send" placeholder="e.g. Pressure washing" '+
+    'onkeydown="if(event.key===\'Enter\'){event.preventDefault();hsvcSuggestSend();}">'+
+    '<div class="row"><button class="fs-cancel" onclick="fsStep(\'svc\')">Cancel</button>'+
+    '<button class="fs-go fs-sugg-go" id="fs-sugg-go" onclick="hsvcSuggestSend()">Send</button></div>';
+  after.insertAdjacentElement('afterend',pane);
+}
+// called by fsStep('suggest') (js/find-helper.js): clear the box and focus it
+function hsvcSuggestOpen(){
+  var i=document.getElementById('fs-sugg-in');
+  if(i)i.value='';
+  if(i)setTimeout(function(){try{i.focus();}catch(e){}},60);
+}
+function hsvcSuggestSend(){
+  var i=document.getElementById('fs-sugg-in');
+  var t=(i&&i.value||'').replace(/\s+/g,' ').trim();
+  if(!t){if(i)i.focus();return;}
+  if(typeof sb==='undefined'||!sb||typeof me==='undefined'||!me){toast('Please sign in to send a suggestion.');return;}
+  sb.from('service_suggestions').insert({text:t.slice(0,80)})
+    .then(function(r){if(r&&r.error)console.warn('[hsvc] suggest',r.error.message);},function(e){console.warn('[hsvc] suggest',e&&e.message||e);});
+  toast('✨ Thanks! We got your suggestion.');
+  fsStep('svc');
 }
 function hsvcFilterGrid(){
   var el=document.getElementById('fs-svc-grid');if(!el)return;
@@ -446,4 +480,8 @@ async function hsvcFilterSync(){
   // bright "$" badge (the 💲 emoji rendered thin and faded next to the colour emojis — Roman, 21 Nov 2026)
   // services submenu: one service per line (Roman, 21 Nov 2026)
   '\n#fs-svc-grid{grid-template-columns:1fr}#fs-svc-grid .hs-cat{padding:13px 14px}#fs-svc-grid .hs-cat .e{font-size:22px}'+
+  // suggest a service (27 Nov 2026): green link like the "$" choice; input 16px so iPhone Safari doesn't zoom
+  '\n.fs-sugg-link{color:#1E7E45}body.theme-sage-dark .fs-sugg-link{color:#4CC985}'+
+  '\n.fs-sugg-in{display:block;width:100%;box-sizing:border-box;margin:0 0 12px;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font:700 16px \'Nunito\',sans-serif}'+
+  '\n.fs-sugg-in:focus{outline:none;border-color:#22A45D}.fs-go.fs-sugg-go{background:#22A45D}'+
   '\n.hsvc-dol{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin:0 2px;border-radius:50%;background:#22A45D;color:#fff;font:900 20px/1 \'Nunito\',sans-serif;box-shadow:0 2px 8px rgba(34,164,93,.4)}';})();
