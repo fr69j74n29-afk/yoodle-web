@@ -1136,16 +1136,16 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
           <div style="flex:1;min-width:0"><div class="pf-t">Push notifications</div><div id="notif-tip-body" class="pf-d"></div></div></div>
       </div>
       <!-- Invite neighbours card removed 17 Nov 2026 (referral links and openReferralModal still work) -->
-      <!-- Contact support / send feedback (27 Nov 2026): js/feedback.js → admin console FEEDBACK & SUPPORT -->
+      <!-- Contact support / send feedback (27 Nov 2026): js/feedback.js → the member's Yoodle support chat → admin console CONTACT SUPPORT -->
       <div id="fb-card" class="pf-card fb-card">
         <div class="fb-t">💬 Contact support or send feedback</div>
-        <div class="fb-d">Goes straight to the Yoodle team. We read every message.</div>
+        <div class="fb-d">Goes straight to the Yoodle team. Our reply shows up in Messages.</div>
         <div class="fb-box">
           <textarea id="fb-text" maxlength="2000" rows="3" aria-label="Message to the Yoodle team" oninput="fbInput()"
             placeholder="e.g. My job isn't showing on the map, or: it would be great to filter jobs by price."></textarea>
           <button id="fb-send" class="fb-send" type="button" onclick="fbSend()" aria-label="Send to the Yoodle team" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button>
         </div>
-        <div id="fb-ok" class="fb-ok">✅ Sent. Thanks for helping us make Yoodle better!</div>
+        <div id="fb-ok" class="fb-ok">✅ Sent. We'll reply in Messages → Yoodle support.</div>
       </div>
       <button class="btn-so" onclick="signOut()">Sign out</button>
     </div>
@@ -1819,7 +1819,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/ratings.js?v=20261125a"></script>
 <script src="js/push-prompts.js?v=20261125a"></script>
 <script src="js/referrals.js?v=20261125a"></script>
-<script src="js/feedback.js?v=20261127a"></script>
+<script src="js/feedback.js?v=20261127b"></script>
 <script src="js/main.js?v=20261126a"></script>
 
 </body>
