@@ -450,6 +450,15 @@ body::before {
 .ks-btn.kill { background: #DC2626; }
 .ks-btn.revive { background: #16A34A; }
 .ks-note { color: var(--muted); font-size: 13px; }
+.fb-row { padding: 12px 0; border-top: 1px solid var(--border); }
+.fb-row:first-child { border-top: none; }
+.fb-row.done { opacity: .55; }
+.fb-meta { font-size: 13px; }
+.fb-meta a { color: var(--lime); }
+.fb-meta span { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.fb-body { margin: 8px 0; font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.fb-foot { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.fb-foot small { color: var(--muted); font-size: 11.5px; }
 .section-title.lazy-h .lazy-hint { float: right; font-size: 11px; font-weight: 700; letter-spacing: .5px; color: var(--muted); }
 .section-title.lazy-h:hover { color: var(--lime); }
 /* Section headings (31 Oct 2026, Roman: Space Mono 10px was impossible to read) → Nunito 14px, full-contrast text */
@@ -1116,6 +1125,13 @@ body::before {
     <div class="section-title">KILL SWITCHES</div>
     <div class="breakdown-card" id="ks-wrap" style="margin-bottom:28px"><div class="ks-note">Loading…</div></div>
 
+    <!-- FEEDBACK & SUPPORT (27 Nov 2026) — the Profile page box (js/feedback.js → send_feedback()). One-way: members
+         can't see replies here; to answer, use their email. admin_feedback / admin_feedback_new / admin_feedback_done. -->
+    <div class="section-title lazy-h" onclick="toggleLazy('feedback')">FEEDBACK &amp; SUPPORT <span id="fb-count" class="sup-badge" style="display:none"></span> <span class="lazy-hint" id="lazy-hint-feedback">▸ TAP TO LOAD</span></div>
+    <div id="lazy-feedback" style="display:none"><div class="breakdown-card" style="padding:8px 20px;margin-bottom:28px">
+      <div style="display:flex;justify-content:flex-end;gap:12px;padding:6px 0"><label style="font-size:12.5px;color:var(--muted);cursor:pointer"><input type="checkbox" id="fb-show-done" onchange="loadFeedback()"> Show done</label></div>
+      <div id="fb-wrap"></div></div></div>
+
     <!-- CONTACT SUPPORT (26 Nov 2026) — members' "Yoodle support" chats (Yoodi → Contact support).
          admin_support_inbox / admin_support_thread / admin_support_reply / admin_support_unread. No emails either way. -->
     <div class="section-title lazy-h" onclick="toggleLazy('support')">CONTACT SUPPORT <span id="sup-count" class="sup-badge" style="display:none"></span> <span class="lazy-hint" id="lazy-hint-support">▸ TAP TO LOAD</span></div>
@@ -1382,13 +1398,14 @@ function refreshAll() {
   loadStats();
   loadSupportBadge();   // CONTACT SUPPORT unread count in its heading (26 Nov 2026)
   loadKillSwitches();   // KILL SWITCHES (27 Nov 2026)
+  loadFeedbackBadge();  // FEEDBACK & SUPPORT new count in its heading (27 Nov 2026)
   Object.keys(_lazyOpen).forEach(k => LAZY[k]());   // only sections that are open reload   // tap-to-load sections that are open reload too
 }
 
 // ── TAP-TO-LOAD SECTIONS (15 Oct 2026) ──
 // Regions (+ admin-geo.js ≈300 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
-const LAZY = { regions: loadRegions, onboard: loadOnboardStats, landing: loadLandingStats, webhits: loadWebHitsStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats, sugg: loadServiceSuggestions,
+const LAZY = { feedback: loadFeedback, regions: loadRegions, onboard: loadOnboardStats, landing: loadLandingStats, webhits: loadWebHitsStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats, sugg: loadServiceSuggestions,
   reports: loadReports, support: loadSupport, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended, notify: nfCount };
 // After an admin action: reload a section only if it's open; a closed one reloads fresh the next time it's opened.
 function lazyReload(k) {
@@ -2795,6 +2812,38 @@ async function sendAdminMsg() {
 // starts a new support chat for them (admin_support_reply).
 const SUP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 9h8"/><path d="M8 13h6"/><path d="M14 18h-1l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v4.5"/><path d="M19 22v.01"/><path d="M19 19a2.003 2.003 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483"/></svg>';
 let _supOpen = null;   // { conv, name, email, cleared } while a thread is shown
+
+// ── FEEDBACK & SUPPORT (27 Nov 2026) ── the Profile page box. New ones first; "Done" hides them (Show done brings them back).
+async function loadFeedbackBadge() {
+  const el = document.getElementById('fb-count'); if (!el) return;
+  const { data: n, error } = await sb.rpc('admin_feedback_new');
+  if (error || !n) { el.style.display = 'none'; return; }
+  el.textContent = n + ' NEW'; el.style.display = '';
+}
+async function loadFeedback() {
+  const wrap = document.getElementById('fb-wrap'); if (!wrap) return;
+  wrap.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_feedback', { p_limit: 200, p_include_done: !!document.getElementById('fb-show-done')?.checked });
+  if (error) { wrap.innerHTML = '<div class="ks-note" style="padding:12px 0">Could not load: ' + escAttr(error.message) + '</div>'; return; }
+  if (!data || !data.length) { wrap.innerHTML = '<div class="ks-note" style="padding:12px 0">No new messages. 🎉</div>'; loadFeedbackBadge(); return; }
+  wrap.innerHTML = data.map(f => {
+    const c = f.context || {}, when = new Date(f.created_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    const where = [c.app === 'ios' ? 'iPhone app' : c.app === 'web' ? 'website' : '', c.site === 'staging' ? 'staging' : ''].filter(Boolean).join(' · ');
+    return `<div class="fb-row${f.done_at ? ' done' : ''}">
+      <div class="fb-meta"><b>${escAttr(f.name || 'Member')}</b>${f.email ? ` · <a href="mailto:${escAttr(f.email)}?subject=${encodeURIComponent('Your Yoodle feedback')}">${escAttr(f.email)}</a>` : ''}
+        <span>${escAttr(when)}${where ? ' · ' + escAttr(where) : ''}</span></div>
+      <div class="fb-body">${escAttr(f.body)}</div>
+      <div class="fb-foot">${f.done_at ? `<small>Done${f.done_by ? ' by ' + escAttr(f.done_by) : ''}</small>` : ''}
+        <button class="ks-btn ${f.done_at ? 'revive' : 'kill'}" style="padding:6px 12px;font-size:12.5px;${f.done_at ? '' : 'background:#16A34A'}" onclick="markFeedback('${f.id}', ${!f.done_at})">${f.done_at ? 'Mark as new' : '✓ Done'}</button></div>
+    </div>`;
+  }).join('');
+  loadFeedbackBadge();
+}
+async function markFeedback(id, done) {
+  const { error } = await sb.rpc('admin_feedback_done', { p_id: id, p_done: done });
+  if (error) { alert('Could not update: ' + error.message); return; }
+  loadFeedback();
+}
 
 // ── KILL SWITCHES (27 Nov 2026) ──
 const KS_INFO = {
