@@ -1189,6 +1189,10 @@ body::before {
     <div class="section-title lazy-h" onclick="toggleLazy('webhits')">WEB HITS — PRO &amp; HELPER PAGES <span class="lazy-hint" id="lazy-hint-webhits">▸ TAP TO LOAD</span></div>
     <div id="lazy-webhits" style="display:none"><div id="webhits-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
+    <!-- TOP REFERRING SITES (27 Nov 2026) — admin_top_referrers(days) over landing_visits + web_hits views -->
+    <div class="section-title lazy-h" onclick="toggleLazy('referrers')">TOP REFERRING SITES — LANDING, PRO &amp; HELPER PAGES <span class="lazy-hint" id="lazy-hint-referrers">▸ TAP TO LOAD</span></div>
+    <div id="lazy-referrers" style="display:none"><div id="referrers-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
+
     <!-- HELPER PAGE SHARING (share_events) -->
     <div class="section-title lazy-h" onclick="toggleLazy('share')">HELPER PAGE SHARING — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-share">▸ TAP TO LOAD</span></div>
     <div id="lazy-share" style="display:none"><div id="share-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
@@ -1365,7 +1369,7 @@ function refreshAll() {
 // ── TAP-TO-LOAD SECTIONS (15 Oct 2026) ──
 // Regions (+ admin-geo.js ≈300 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
-const LAZY = { regions: loadRegions, onboard: loadOnboardStats, landing: loadLandingStats, webhits: loadWebHitsStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
+const LAZY = { regions: loadRegions, onboard: loadOnboardStats, landing: loadLandingStats, webhits: loadWebHitsStats, referrers: loadReferrerStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
   reports: loadReports, support: loadSupport, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended, notify: nfCount };
 // After an admin action: reload a section only if it's open; a closed one reloads fresh the next time it's opened.
 function lazyReload(k) {
@@ -2319,6 +2323,41 @@ async function loadWebHitsStats() {
   }).join('');
   el.innerHTML = `<table class="region-table"><thead><tr><th>Period</th><th>Pages</th><th>Views</th><th>Visitors</th><th>Contact taps</th><th>Sign-ins</th><th>New sign-ups</th></tr></thead><tbody>${rows}</tbody></table>
   <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Views = visits to the public pro and helper pages (same browser on the same page counted once per 30 min; crawlers and visits with no tap/scroll or under 3 s are not counted; own page, admins and tester@yoodle.ca skipped). Contact taps = Message / Contact button taps. Sign-ins = visitors who then signed in within 7 days (needs the landing-page tracking live on the site); New sign-ups = of those, new accounts. Map and card taps in the app are counted separately. Tracking started 26 Nov 2026.</div>`;
+}
+
+// ── TOP REFERRING SITES (admin-only RPC over landing_visits + web_hits views, 27 Nov 2026) ──
+// One table per page type (landing / pro / helper), top 10 sites each. Period switch: 7 / 30 / 90 days.
+let _refDays = 30;
+async function loadReferrerStats(days) {
+  if (days) _refDays = days;
+  const el = document.getElementById('referrers-stats');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_top_referrers', { p_days: _refDays });
+  if (error) {
+    el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`;
+    return;
+  }
+  const btn = d => `<button onclick="loadReferrerStats(${d})" style="font:inherit;font-size:12px;font-weight:800;padding:4px 10px;margin-right:6px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:${d === _refDays ? 'var(--purple)' : 'var(--surface2)'};color:var(--text)">${d} days</button>`;
+  const groups = [['landing', 'Landing page (yoodle.ca)', 'Visits'], ['pro', 'Pro pages (/pros/…)', 'Views'], ['helper', 'Helper pages (/helpers/{id})', 'Views']];
+  const table = ([key, label, viewsLabel]) => {
+    const list = (data || []).filter(r => r.source === key);
+    const total = list.reduce((t, r) => t + Number(r.visitors || 0), 0);
+    const top = list.slice(0, 10);
+    const rest = list.slice(10);
+    const pct = v => total ? Math.round(v / total * 100) + '%' : '—';
+    const row = (site, r) => `<tr><td>${esc(site)}</td><td class="num">${Number(r.visitors || 0)}</td><td class="num">${pct(Number(r.visitors || 0))}</td><td class="num">${Number(r.views || 0)}</td><td class="num">${Number(r.signed_in || 0)}</td><td class="num helpers">${Number(r.new_accounts || 0)}</td></tr>`;
+    let body = top.map(r => row(r.site, r)).join('');
+    if (rest.length) {
+      const o = rest.reduce((t, r) => ({ visitors: t.visitors + Number(r.visitors || 0), views: t.views + Number(r.views || 0), signed_in: t.signed_in + Number(r.signed_in || 0), new_accounts: t.new_accounts + Number(r.new_accounts || 0) }), { visitors: 0, views: 0, signed_in: 0, new_accounts: 0 });
+      body += row(`Other (${rest.length} sites)`, o);
+    }
+    return `<div style="padding:14px 0 4px;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px">${esc(label.toUpperCase())}</div>` +
+      (list.length ? `<table class="region-table"><thead><tr><th>Referring site</th><th>Visitors</th><th>Share</th><th>${viewsLabel}</th><th>Sign-ins</th><th>New sign-ups</th></tr></thead><tbody>${body}</tbody></table>`
+                   : `<div style="padding:6px 0 10px;color:var(--muted);font-size:13px">No visits in this period.</div>`);
+  };
+  el.innerHTML = `<div style="padding:8px 0 4px">${btn(7)}${btn(30)}${btn(90)}</div>` + groups.map(table).join('') +
+  `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Referring site = the site the visitor came from (site only, never the full link). Facebook/Google app and link hosts (l., lm., m., www.) are folded together. "utm: …" = no referrer but the link carried a utm_source tag. "(direct / none)" = typed in, bookmark, app or a site that hides its referrer (many apps and texts do). accounts.google.com is usually the Google sign-in coming back, not a real source. Share = this site's visitors ÷ all visitors to that page type. Sign-ins / New sign-ups = linked within 7 days (needs the landing-page tracking live on the site). Same filters as the cards above (crawlers, own page, admins and tester skipped). Tracking started 26 Nov 2026.</div>`;
 }
 
 // ── HELPER PAGE SHARING (admin-only RPC over share_events) ──
