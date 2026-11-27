@@ -181,7 +181,7 @@ function hsvcBuildScreen(){
   v.innerHTML='<div class="myjobs-inner" style="padding-bottom:40px">'+
     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">'+
       '<button onclick="hsvcBack()" aria-label="Back" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>'+
-      '<div class="section-h" style="margin-bottom:0">Standard services</div></div>'+
+      '<div class="section-h" style="margin-bottom:0">My Fixed-Price Services</div></div>'+
     '<div id="hsvc-settings"></div>'+
     '<button class="btn-primary" id="hsvc-save-btn" onclick="hsvcSaveClick()" style="display:none">Save services</button>'+
   '</div>';
@@ -218,18 +218,29 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 // Profile tab button (active, paused and expired helper cards). "NEW" label until opened once on this device.
 function hsvcProfileBtn(){
   var seen=false;try{seen=localStorage.getItem('yoodle_hsvc_seen')==='1';}catch(e){}
-  return '<button onclick="hsvcGoSettings()" class="pf-btn sec">Standard services'+(seen?'':' <span style="font-size:11px;font-weight:800;color:#fff;background:var(--lime);border-radius:100px;padding:2px 7px;margin-left:4px;vertical-align:1px">NEW</span>')+' ›</button>';
+  return '<button onclick="hsvcGoSettings()" class="pf-btn sec">My Fixed-Price Services'+(seen?'':' <span style="font-size:11px;font-weight:800;color:#fff;background:var(--lime);border-radius:100px;padding:2px 7px;margin-left:4px;vertical-align:1px">NEW</span>')+' ›</button>';
 }
 function hsvcGoSettings(from){
   try{localStorage.setItem('yoodle_hsvc_seen','1');}catch(e){}
-  document.querySelectorAll('.pf-btn').forEach(function(b){if(/Standard services/.test(b.textContent)){var n=b.querySelector('span');if(n)n.remove();}});
+  document.querySelectorAll('.pf-btn').forEach(function(b){if(/My Fixed-Price Services/.test(b.textContent)){var n=b.querySelector('span');if(n)n.remove();}});
   hsvcBuildScreen();
   HSVC.from=from||'profile';
   nav('services');
   try{window.scrollTo(0,0);}catch(e){}
   hsvcOpenSettings();
 }
-function hsvcBack(){nav(HSVC.from==='helper'?'helper':'profile');}
+function hsvcBack(){nav(HSVC.from==='helper'?'helper':HSVC.from==='post'?'post':'profile');}
+// + screen card (27 Nov 2026): "My Fixed-Price Services" for anyone with a helper profile (active, paused or expired).
+// Called from updateForkHelperCard() with the profile it already loaded; null/no helper address = no card.
+function hsvcForkCard(prof){
+  var el=document.getElementById('fork-svc-card');if(!el)return;
+  if(!prof||!prof.helper_address){el.innerHTML='';return;}
+  el.innerHTML='<button onclick="hsvcGoSettings(\'post\')" style="width:100%;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;margin-top:16px;border-radius:16px;border:1.5px solid rgba(34,164,93,.35);background:rgba(34,164,93,.05);cursor:pointer;text-align:left;font-family:\'Nunito\',sans-serif">'+
+    '<div style="width:52px;height:52px;border-radius:14px;background:#22A45D;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font:900 26px/1 \'Nunito\',sans-serif">$</div>'+
+    '<div style="flex:1;min-width:0"><div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">My Fixed-Price Services</div>'+
+    '<div style="font-size:14px;font-weight:700;color:var(--muted)">Set prices neighbours can book</div></div>'+
+    '<span style="font-size:20px;color:#22A45D;font-weight:800;flex-shrink:0">›</span></button>';
+}
 function hsvcGate(html,btn,to){
   var box=document.getElementById('hsvc-settings'),sv=document.getElementById('hsvc-save-btn');
   if(sv)sv.style.display='none';
@@ -249,7 +260,7 @@ async function hsvcOpenSettings(){
   ]);
   var cats=res[0],own=res[1],prof=res[2]&&res[2].data;
   if(own.error||!cats.length){hsvcGate('Could not load services right now. Please try again in a minute.');return;}
-  if(!prof||!prof.helper_address){hsvcGate('Standard services are part of your helper profile. Set up your helper profile first, then come back here to add fixed prices.','Set up helper profile ›','helper');return;}
+  if(!prof||!prof.helper_address){hsvcGate('Fixed-price services are part of your helper profile. Set up your helper profile first, then come back here to add fixed prices.','Set up helper profile ›','helper');return;}
   HSVC.locked=typeof hpIsVagueText==='function'?hpIsVagueText(prof.helper_address):false;
   HSVC.paused=!prof.visible_on_map;
   HSVC.mine=own.data||[];
@@ -258,7 +269,7 @@ async function hsvcOpenSettings(){
     '<div class="sub">Set fixed prices so homeowners near you can book you directly. Leave a price empty if you don\'t offer that option.</div>'+
     (prof.visible_on_map?'':'<div class="hsvc-note">⏸️ Your helper listing is paused or expired, so neighbours can\'t see these services until you resume it.<br><button class="btn-primary" style="margin-top:10px" onclick="hsvcResume()">Resume listing ›</button></div>')+
     '<div class="hsvc-req">🔒 Uses your helper address to match you with homeowners nearby. It\'s never shown.</div>'+
-    '<div class="hsvc-lock">📍 Your helper location is only a city. Add your street address to offer standard services.<br><button class="btn-primary" style="margin-top:10px" onclick="nav(\'helper\')">Add street address ›</button></div>'+
+    '<div class="hsvc-lock">📍 Your helper location is only a city. Add your street address to offer fixed-price services.<br><button class="btn-primary" style="margin-top:10px" onclick="nav(\'helper\')">Add street address ›</button></div>'+
     '<div class="hsvc-cards">'+cats.map(function(c){
       var rows=mine.filter(function(r){return r.service_key===c.key;});
       var on=rows.some(function(r){return r.active;});
