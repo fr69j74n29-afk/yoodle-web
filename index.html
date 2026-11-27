@@ -697,8 +697,7 @@ body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 /* ── ONE FILTER BUTTON (15 Nov 2026): "🔍 Filter", orange outline; widens to show the pick ── */
 .fs-btn{border-color:#F58A07;background:var(--surface)}
 .fs-btn svg{color:#F58A07}
-.fs-btn.on.pro-on{background:#F58A07;border-color:#F58A07;color:#fff}
-.fs-btn.on.pro-on svg{color:#fff}
+/* Pro pick uses the same amber button as helpers and services (27 Nov 2026 — Roman; was orange #F58A07 + white text via .pro-on) */
 .fs-back{border:none;background:none;padding:0 4px 0 0;font:900 15px 'Nunito',sans-serif;color:var(--muted);cursor:pointer}
 .fs-pane{display:none}.fs-pane.on{display:block}
 .fs-choice{display:flex;align-items:center;gap:12px;width:100%;padding:16px 14px;margin-bottom:10px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);font-family:'Nunito',sans-serif;text-align:left;cursor:pointer;color:var(--text)}
@@ -725,7 +724,9 @@ body.theme-sage-dark .fs-become{color:#F58A07}
 .fs-become-box .row button{flex:1;padding:12px;border-radius:12px;font:800 14.5px 'Nunito',sans-serif;cursor:pointer}
 .fs-go{border:0;background:#F58A07;color:#fff}
 .fs-cancel{border:1px solid var(--border);background:transparent;color:var(--muted)}
-.hs-x{margin-left:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.14);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.hs-x{margin-left:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.14);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;position:relative}
+/* ✕ tap area 44×44 px (Apple minimum), icon unchanged — taps near the ✕ clear the filter instead of opening the menu (27 Nov 2026) */
+.hs-x::before{content:'';position:absolute;inset:-12px;border-radius:50%}
 .hs-ov{display:none;position:absolute;inset:0;z-index:150;background:rgba(20,30,24,.28)}
 .hs-ov.open{display:block}
 .hs-pop{position:absolute;top:calc(var(--sat) + 64px);right:12px;width:min(380px,calc(100% - 24px));max-height:calc(100% - var(--sat) - 150px);overflow-y:auto;background:var(--surface);border:1.5px solid var(--border);border-radius:18px;box-shadow:0 12px 34px rgba(0,0,0,.22);padding:14px;animation:hsIn .16s ease-out}
