@@ -690,6 +690,7 @@ body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 /* ── FIND A HELPER ── */
 .hs-btn{display:flex;align-items:center;gap:6px;height:38px;padding:0 13px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;max-width:210px;transition:transform .15s}
 .hs-btn:active{transform:scale(.96)}
+.hs-btn.nav-hide{display:none}
 .hs-btn svg{width:16px;height:16px;flex-shrink:0;color:var(--purple)}
 .hs-btn #hs-label,.hs-btn #ps-label{overflow:hidden;text-overflow:ellipsis}
 .hs-btn.on{background:#F59E0B;border-color:#F59E0B;color:#1E2620}
@@ -913,12 +914,13 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   <div class="top-bar">
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
     <div class="top-right">
-      <button class="vw-btn" id="vw-btn" onclick="openViewPanel()" aria-label="Views of your helper profile"><span id="vw-ic" aria-hidden="true"></span><span id="vw-n">0</span></button>
       <button class="hs-btn fs-btn" id="hs-btn" onclick="hsToggle()" aria-label="Filter the map: helpers or professionals">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <span id="hs-label">Filter</span>
         <span id="hs-x" class="hs-x" style="display:none" onclick="event.stopPropagation();fsClear()" aria-label="Clear filter">✕</span>
       </button>
+      <!-- order (27 Nov 2026, Rhea): Filter · views · light/dark. Filter shows on Browse (map and list) only: js/navigation.js -->
+      <button class="vw-btn" id="vw-btn" onclick="openViewPanel()" aria-label="Views of your helper profile"><span id="vw-ic" aria-hidden="true"></span><span id="vw-n">0</span></button>
       <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Switch light/dark mode" title="Switch light/dark mode">
         <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -1775,7 +1777,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/home-base.js?v=20261125a"></script>
 <script src="js/report-block.js?v=20261125a"></script>
 <script src="js/other-profile.js?v=20261127r"></script>
-<script src="js/navigation.js?v=20261127t"></script>
+<script src="js/navigation.js?v=20261127x"></script>
 <script src="js/landing.js?v=20261125a"></script>
 <script src="js/auth.js?v=20261127t"></script>
 <script src="js/settings.js?v=20261125a"></script>

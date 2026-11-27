@@ -31,6 +31,9 @@ function nav(view) {
     if(navBtn)navBtn.classList.add('active');
   }
 
+  // Filter button: Browse (map and list) only (Rhea, 27 Nov 2026)
+  document.getElementById('hs-btn')?.classList.toggle('nav-hide',!(view==='browse'||view==='map'||view==='list'));
+
   // close any open modals when navigating
   document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
   if(view==='map'||(view==='browse'&&browseMode==='map')){setTimeout(()=>{
