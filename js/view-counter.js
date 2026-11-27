@@ -45,18 +45,19 @@ function openViewPanel(){
 // ── YOODLE SHIELD (26 Nov 2026) ── my_view_stats().shield = messages sent to me by members suspended right now.
 // Those chats are already hidden from Messages by get_conversations; this badge just tells the member about it.
 // Shown only when 1+. Hover (computer) = title tooltip; tap = small popup (reuses the views popup).
-function _shieldText(n){return `Yoodle Shield: ${n} ${n===1?'message':'messages'} held for review`;}
-const SHIELD_NOTE='When Yoodle holds a member\'s account for review, their messages are hidden from your mailbox for your protection.';
+function _shieldText(n){return `${n} ${n===1?'message':'messages'} held by Yoodle Shield`;}
+const SHIELD_NOTE='When Yoodle puts a member\'s account under review, their messages are held out of your mailbox for your protection.';
 function renderShieldBadge(){
   const b=document.getElementById('sh-btn');if(!b)return;
   const n=+(myViewStats?.shield||0);
   b.classList.toggle('on',n>0);
   if(n>0){document.getElementById('sh-n').textContent=n;document.getElementById('sh-ic').innerHTML=SHIELD_SVG;b.title=_shieldText(n)+'. '+SHIELD_NOTE;b.setAttribute('aria-label',_shieldText(n));}
 }
-function openShieldPanel(){
-  const n=+(myViewStats?.shield||0);if(!n)return;
+// fromLink=true: opened from a push/email link to a held chat (js/messages.js), shown even if the count isn't loaded yet.
+function openShieldPanel(fromLink){
+  const n=+(myViewStats?.shield||0);if(!n&&!fromLink)return;
   const t=document.getElementById('vw-ttl');t.innerHTML=SHIELD_SVG+'Yoodle Shield';t.classList.add('sh');
-  document.getElementById('vw-body').innerHTML=`<div class="vw-big"><b>${n}</b> ${n===1?'message':'messages'} held for review.</div><div class="vw-note">${SHIELD_NOTE}</div>`;
+  document.getElementById('vw-body').innerHTML=(fromLink?`<div class="vw-big">This message is held by Yoodle Shield.</div>`:`<div class="vw-big"><b>${n}</b> ${n===1?'message':'messages'} held by Yoodle Shield.</div>`)+`<div class="vw-note">${SHIELD_NOTE}</div>`;
   document.querySelector('#vw-ov .hs-pop')?.setAttribute('aria-label','Yoodle Shield');
   document.getElementById('vw-ov').classList.add('open');
 }
