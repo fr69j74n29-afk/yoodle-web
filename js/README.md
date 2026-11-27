@@ -19,6 +19,7 @@ Since 25 Nov 2026 the app's main code lives here, one file per feature, instead 
 - **Don't add new top-level code that runs at load** unless it has to; prefer calling it from `main.js` / `showApp()`. If you do, make sure everything it uses is in an earlier file.
 - **Keep files flat in `js/`.** The deploy (`.github/workflows/deploy.yml`) minifies `js/*.js`, not subfolders. Top-level names are kept by the minifier, so calls by name keep working.
 - Each file starts with a one-line description; keep it accurate.
+- **Text boxes (`input`, `textarea`, `select`) use at least `font-size:16px`**, including in the `font:` shorthand. Smaller text makes iPhone Safari zoom the page when the box is tapped, and the page stays zoomed under Safari's bars. Don't fix it with `maximum-scale=1` in the viewport tag: that blocks pinch-zoom for people who need it.
 
 ## Next steps (planned, not done yet)
 

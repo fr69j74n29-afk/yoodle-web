@@ -73,6 +73,7 @@ function safetyTipHtml(){
 }
 function closeChat(){
   if(window.yoodiOnClose)yoodiOnClose(); // js/yoodi.js
+  if(window.ctChatReset)ctChatReset(); // js/contacts.js
   if(window.supportOnClose)supportOnClose(); // js/support-chat.js
   closeOv('chat-modal');
   activeChatConvId=null;
@@ -94,7 +95,7 @@ async function openChatFromNotification(taskId,convId){
     if(mine&&mine[0]){convId=mine[0].id;}
     else{
       const{data:job}=await sb.from('tasks').select('*').eq('id',taskId).maybeSingle();
-      if(job&&job.status==='open')openJob(job);
+      if(job&&(job.status==='open'||job.status==='offered'))openJob(job); // offered: a private offer to/from a contact (only the two can read it)
       else toast('This job is no longer available');
       return;
     }
@@ -107,6 +108,10 @@ async function openChatFromNotification(taskId,convId){
   const isPoster=conv.poster_id===pid;
   const otherId=isPoster?conv.applicant_id:conv.poster_id;
   if(!otherId)return;
+  // Yoodle Shield (26 Nov 2026): a push / email link to a chat with a member who is suspended now opens the
+  // Shield popup instead of the chat (the inbox already hides it; this closes the deep-link way in).
+  const{data:held}=await sb.rpc('my_suspended_contacts');
+  if((held||[]).some(r=>(typeof r==='string'?r:r?.my_suspended_contacts)===otherId)){if(window.openShieldPanel)openShieldPanel(true);return;}
   const{data:other}=await sb.from('profiles').select('name,rating').eq('id',otherId).single();
   const isDirect=conv.tasks?.type==='direct'; // friend chat (js/contacts.js): the friend's name, not the hidden task's title
   openChat(taskId,isDirect?(other?.name||'Contact'):(conv.tasks?.title||'Job'),other?.name||'User',conv.poster_id,otherId,other?.rating||'',convId);

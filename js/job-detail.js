@@ -86,6 +86,8 @@ async function openJob(j){
   document.getElementById('m-report').style.display=(me&&!isPoster)?'block':'none';
   const btn=document.getElementById('m-action');const unclaimBtn=document.getElementById('m-unclaim');
   tapConfirmReset(btn);tapConfirmReset(unclaimBtn);
+  if(!unclaimBtn._orig){unclaimBtn._orig=unclaimBtn.onclick;unclaimBtn._origHtml=unclaimBtn.innerHTML;} // offers reuse it as Decline
+  unclaimBtn.onclick=unclaimBtn._orig;unclaimBtn.innerHTML=unclaimBtn._origHtml;
   // "N people have applied" — counts everyone who ever applied (get_applied_count); hidden at 0 and on agency jobs
   const appliedEl=document.getElementById('m-applied');appliedEl.style.display='none';
   if(sb&&!_agency&&j.id){
@@ -119,8 +121,29 @@ async function openJob(j){
     } else {
       btn.textContent='No longer available';btn.disabled=true;
     }
+  } else if(j.status==='offered'){
+    // Private job offer between contacts (js/contacts.js): only the poster and private_for can read it
+    _an.textContent=isPoster?'🔒 Private offer: only you and your contact can see this job. Make it public to let anyone apply.':'🔒 A private job offer for you. Only the two of you can see it.';
+    _an.style.display='block';
+    if(isPoster){
+      btn.textContent='Make public';
+      btn.onclick=()=>tapConfirm(btn,'Tap again to make it public',()=>offerMakePublic(j.id));
+      unclaimBtn.innerHTML='✏️ Edit offer';unclaimBtn.style.display='block';
+      unclaimBtn.onclick=()=>{closeOv('modal');openEditModal(j.id);};
+    } else {
+      btn.textContent='Accept job';
+      btn.onclick=()=>tapConfirm(btn,'Tap again to accept',()=>offerAccept(j));
+      unclaimBtn.innerHTML='Decline';unclaimBtn.style.display='block';
+      unclaimBtn.onclick=()=>tapConfirm(unclaimBtn,'Tap again to decline',()=>offerDecline(j.id));
+    }
   } else if(j.status==='completed'){
     btn.textContent='Job Completed';btn.disabled=true;
+  } else if(j.status==='cancelled'){
+    // opened from a chat card or a contact's "Connected on" note (poster and contact see the same)
+    _an.textContent=(j.from_offer||j.private_for)?'🚫 This job offer was cancelled.':'🚫 This job was cancelled.';_an.style.display='block';
+    btn.textContent='Job cancelled';btn.disabled=true;btn.onclick=null;
+  } else if(j.status==='expired'){
+    btn.textContent='No longer available';btn.disabled=true;btn.onclick=null;
   } else if(j.status==='claimed'){
     if(isPoster){
       btn.textContent='Mark Complete';
