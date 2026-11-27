@@ -4,9 +4,10 @@
 
 async function loadMyJobs(){
 // Activity: one list — jobs I posted + jobs I'm helping with
-  const g=document.getElementById('my-grid');g.innerHTML=spin();
-  if(!sb||!me){g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
+  const g=document.getElementById('my-grid');
+  if(!sb||!me){g._tabHtml=null;g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
   const pid=myProfileId||me.id;
+  tabBegin('myjobs',g); // last list stays on screen while this reloads (js/core-state.js)
   const expSince=new Date(Date.now()-30*24*60*60*1000).toISOString();
   const[postedRes,appRes,hoRes,_vs]=await Promise.all([
     // open/paused/claimed + jobs that expired in the last 30 days (so the poster can still see applicants, renew or archive)
@@ -19,7 +20,7 @@ async function loadMyJobs(){
   ]);
   const jobViews=_vs?.jobs||{};
   const err=postedRes.error||appRes.error;
-  if(err){g.innerHTML=emptyState('😕','Error',err.message);return;}
+  if(err){tabError('myjobs',g,emptyState('😕','Error',esc(err.message)));return;}
   if(hoRes.error)console.warn('help_offer query error:',hoRes.error.message);
   const posted=(postedRes.data||[])
     .filter(j=>j.status!=='expired'||((j.type||'job')==='job'&&!isAgencyJob(j)))
@@ -27,7 +28,7 @@ async function loadMyJobs(){
     .sort((a,b)=>(a.status==='expired')-(b.status==='expired'));
   const apps=appRes.data||[], helpOfferTasks=hoRes.data||[];
 
-  if(!posted.length&&!apps.length&&!helpOfferTasks.length){g.innerHTML=emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.');return;}
+  if(!posted.length&&!apps.length&&!helpOfferTasks.length){tabShow('myjobs',g,emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.'));return;}
 
   // posted jobs: doer names and applicant counts
   let doerNames={};
@@ -218,9 +219,9 @@ async function loadMyJobs(){
 
   const helpingCards=appCards+hoCards;
   bindMyJobsActions(g);
-  g.innerHTML=(postedCards?`<div class="act-h">Jobs you posted</div>`+postedCards:'')
+  tabShow('myjobs',g,(postedCards?`<div class="act-h">Jobs you posted</div>`+postedCards:'')
     +(helpingCards?`<div class="act-h">Jobs you're helping with</div>`+helpingCards:'')
-    ||emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.');
+    ||emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.')); // redraw only if changed
 }
 
 // One delegated click listener for Activity card buttons that use data-act

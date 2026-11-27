@@ -107,7 +107,7 @@ async function postJob(){
   if(error)return toast('❌ '+error.message);
   // Non-helpers: the job's area becomes their home base (~1 km). Helpers keep their helper address.
   if(!myHomeHasAddr)sb.from('profiles').update({helper_lat:Math.round(gpsLat*100)/100,helper_lng:Math.round(gpsLng*100)/100}).eq('id',myProfileId||me.id).then(()=>{},()=>{});
-  toast('🎉 Job posted! It stays up until '+jobExpiryShort(until)+'.');resetPost();nav('browse');
+  toast('🎉 Job posted! It stays up until '+jobExpiryShort(until)+'.');tabDirty('myjobs');resetPost();nav('browse');
 }
 
 function resetPost(){

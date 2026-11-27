@@ -3,13 +3,15 @@
 // other js/ files: see js/README.md for the load order and how to add code.
 
 async function loadMessages(){
-  const el=document.getElementById('conversations-list');el.innerHTML=spin();
-  if(!sb||!me){el.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see messages');return;}
+  const el=document.getElementById('conversations-list');
+  if(!sb||!me){el._tabHtml=null;el.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see messages');return;}
   const pid=myProfileId||me.id;
+  tabBegin('messages',el); // last list stays on screen while this reloads (js/core-state.js)
 
   let{data,error}=await sb.rpc('get_conversations',{user_id:pid});
-  if(error){el.innerHTML=emptyState('😕','Error loading messages',error.message);return;}
+  if(error){tabError('messages',el,emptyState('😕','Error loading messages',esc(error.message)));return;}
   data=data||[];
+  tabCache.messages.sig=tabConvSig(data); // refreshUnreadCount() compares against this (js/core-state.js)
   // nav dot from the same data, every chat counted (contact chats too). Set before the "no chats" return, or a stale dot stays on.
   _setMessageBadge(data.some(c=>c.has_unread));
 
@@ -23,9 +25,9 @@ async function loadMessages(){
   }
   if(window.ctSetChats)ctSetChats(data.filter(isDirect)); // last message + unread for each contact, and the Contacts tab dot
   data=data.filter(t=>!isDirect(t));
-  if(!data.length){el.innerHTML=emptyState('💬','No conversations yet',window.ctSetChats?'Express interest in a job to start messaging. Chats with your contacts are under Contacts.':'Express interest in a job to start messaging');return;}
+  if(!data.length){tabShow('messages',el,emptyState('💬','No conversations yet',window.ctSetChats?'Express interest in a job to start messaging. Chats with your contacts are under Contacts.':'Express interest in a job to start messaging'));return;}
 
-  el.innerHTML=data.map(t=>{
+  const html=data.map(t=>{
     const isPoster=t.poster_id===pid;
     const otherName=t.other_name||'Someone';
     const title=t.title;
@@ -55,7 +57,7 @@ async function loadMessages(){
       </div>
     </div>`;
   }).join('');
-  if(window.swInit)swInit(el); // swipe-left actions (js/swipe-actions.js)
+  if(tabShow('messages',el,html)&&window.swInit)swInit(el); // redraw only if changed; swipe-left actions (js/swipe-actions.js)
 }
 
 let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null, activeChatConvId=null;

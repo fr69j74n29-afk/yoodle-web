@@ -26,6 +26,7 @@ async function refreshUnreadCount(){
   const{data}=await sb.rpc('get_conversations',{user_id:pid});
   const hasAny=(data||[]).some(c=>c.has_unread);
   _setMessageBadge(hasAny);
+  if(data&&tabConvSig(data)!==tabCache.messages.sig)tabDirty('messages'); // Messages list is out of date: reload on the next visit
 }
 function clearMessageBadge(){_setMessageBadge(false);}
 
@@ -92,6 +93,7 @@ function subscribeToMessages(){
           .then(()=>refreshUnreadCount());
         loadChatMessages(true);
       } else {
+        tabDirty('messages'); // a new message: the next Messages visit reloads (js/core-state.js)
         refreshUnreadCount();
         const msgView=document.getElementById('app-messages');
         if(msgView?.classList.contains('active'))loadMessages();

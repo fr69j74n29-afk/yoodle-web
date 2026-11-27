@@ -363,7 +363,7 @@ async function ctSendOffer(f){
     p_expires_at:f.until.toISOString(),p_end_date_chosen:jobExpiryPicked('p-exp')});
   btn.disabled=false;btn.textContent='Send private offer';
   if(error)return toast('❌ '+error.message);
-  toast(`📋 Offer sent to ${o.name}`);
+  toast(`📋 Offer sent to ${o.name}`);tabDirty(); // new offer in Activity, offer card in the chat
   resetPost();nav('messages');
   await ctFetch();ctOpenChat(o.other);
 }
@@ -399,7 +399,7 @@ async function ctOfferEdit(id){
 async function offerAccept(j){
   const{data,error}=await sb.rpc('offer_accept',{p_task:j.id});
   if(error)return toast('❌ '+error.message);
-  closeOv('modal');toast('🎉 Job accepted. Agree the details in the chat.');
+  closeOv('modal');toast('🎉 Job accepted. Agree the details in the chat.');tabDirty(); // new job chat + Activity card
   if(window.loadJobs)loadJobs();
   nav('messages');
   if(data&&data.conversation_id)openChat(data.task_id,data.title||j.title,window._mPosterName||'Poster',data.poster_id,data.poster_id,'',data.conversation_id);
@@ -407,7 +407,7 @@ async function offerAccept(j){
 async function offerDecline(id){
   const{error}=await sb.rpc('offer_decline',{p_task:id});
   if(error)return toast('❌ '+error.message);
-  closeOv('modal');toast('Offer declined');
+  closeOv('modal');toast('Offer declined');tabDirty();
 }
 async function offerMakePublic(id){
   const{error}=await sb.rpc('offer_make_public',{p_task:id});

@@ -236,7 +236,7 @@ async function jobAction(){
     }
     await sb.from('applications').update({status:'rejected'}).eq('task_id',activeJob.id).eq('status','pending');
     closeOv('modal');
-    toast('🗑️ Job cancelled');loadJobs();
+    toast('🗑️ Job cancelled');loadJobs();tabDirty(); // Activity and Messages reload on the next visit
   }
 }
 
@@ -286,7 +286,7 @@ async function applyForJob(taskId,posterId,jobTitle){
   document.getElementById('applied-chat-btn').dataset.posterRating=activeJob?.profiles?.rating||'';
   document.getElementById('applied-withdraw-btn').dataset.taskId=taskId;
   openOv('applied-modal');
-  toast('🙋 Interest expressed!');
+  toast('🙋 Interest expressed!');tabDirty(); // new chat + "helping with" card
   loadJobs();
 }
 
