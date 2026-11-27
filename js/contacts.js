@@ -65,6 +65,7 @@ button.ct-src:hover{color:var(--text)}
 .ct-pn-edit input{flex:1;min-width:0;padding:6px 10px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font:700 16px 'Nunito',sans-serif}
 .chat-connect{padding:7px 12px;border-radius:100px;border:1.5px solid var(--btn-a);background:transparent;color:var(--btn-a);font:800 13px 'Nunito',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .chat-connect:disabled{opacity:.6;border-color:var(--border);color:var(--muted);cursor:default}
+.ct-offer-gone{margin-top:8px;padding:8px 12px;border-radius:10px;border:1.5px dashed currentColor;opacity:.75;font:800 13.5px 'Nunito',sans-serif;text-align:center}
 .ct-offer-btn{display:block;width:100%;margin-top:8px;padding:8px 12px;border-radius:10px;border:1.5px solid currentColor;background:transparent;color:inherit;font:800 13.5px 'Nunito',sans-serif;cursor:pointer}
 .p-offer{margin:4px 0 14px;padding:12px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--purple);background:rgba(92,138,106,.08);font-size:13.5px;font-weight:700;line-height:1.45;color:var(--text)}
 .ct-note{font-size:13.5px;color:var(--muted);font-weight:700;text-align:center;padding:18px 10px;line-height:1.45}`;
@@ -264,6 +265,7 @@ async function ctOpenJobById(id,isOffer){
   if(!sb||!id)return;
   const{data}=await sb.from('tasks').select('*').eq('id',id).maybeSingle();
   if(!data)return toast(isOffer?'This offer is no longer available':'That job is no longer available');
+  if(isOffer&&data.status==='cancelled')return toast('🚫 This job offer was cancelled');
   openJob({...data,category:(data.category||'other').toLowerCase()});
 }
 
@@ -274,7 +276,7 @@ function ctChatReset(){
   const b=document.getElementById('chat-connect');if(b){b.style.display='none';b.disabled=false;tapConfirmReset(b);}
 }
 function ctChatTask(task,otherId){ctChat.task=task;ctChat.other=otherId;ctConnectEval();}
-function ctChatMsgs(data){ctChat.msgs=data||[];ctConnectEval();}
+function ctChatMsgs(data){ctChat.msgs=data||[];ctConnectEval();ctOfferCardsState();}
 async function ctConnectEval(){
   const b=document.getElementById('chat-connect');if(!b||!me)return;
   const t=ctChat.task,msgs=ctChat.msgs,other=ctChat.other;
@@ -358,7 +360,19 @@ function ctOfferBubble(m,isMe){
   const text=b.replace(/\s*Open it to (?:accept or decline|see the changes): https:\/\/\S+/,'');
   const view=`<button type="button" class="ct-offer-btn" onclick="ctOpenJobById('${x[1]}',true)">${isMe?'View your offer':'View offer'} ›</button>`;
   const edit=isMe?`<button type="button" class="ct-offer-btn" onclick="ctOfferEdit('${x[1]}')">✏️ Edit offer</button>`:'';
-  return esc(text).replace(/\n/g,'<br>')+view+edit;
+  return esc(text).replace(/\n/g,'<br>')+`<div class="ct-offer-acts" data-offer="${x[1]}">${view}${edit}</div>`;
+}
+// After a chat is drawn: cards of offers that were cancelled (or have ended) can't be opened any more
+async function ctOfferCardsState(){
+  const boxes=[...document.querySelectorAll('#chat-messages .ct-offer-acts[data-offer]')];if(!boxes.length||!sb)return;
+  const ids=[...new Set(boxes.map(b=>b.dataset.offer))];
+  const{data}=await sb.from('tasks').select('id,status').in('id',ids);
+  const st={};(data||[]).forEach(t=>st[t.id]=t.status);
+  boxes.forEach(b=>{
+    const s=st[b.dataset.offer];
+    const label=s==='cancelled'?'🚫 Job cancelled':(s==='expired'||!s)?'No longer available':null;
+    if(label)b.innerHTML=`<div class="ct-offer-gone">${label}</div>`;
+  });
 }
 // Edit from the chat card: only while it's still an offer or an accepted job
 async function ctOfferEdit(id){
