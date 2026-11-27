@@ -2308,7 +2308,7 @@ async function loadLandingStats() {
 // Visits to public pro pages (yoodle.ca/pros/{trade}/{business}) and helper pages (yoodle.ca/helpers/{id}).
 // 27 Nov 2026: also the /jobs list ('jobs') and job pages /jobs/{id} ('job').
 // Totals only for now (Roman). Kept separate from map/card taps.
-const WEBHIT_PAGES = { pro: 'Pro pages', helper: 'Helper pages', jobs: 'Jobs list (/jobs)', job: 'Job pages (/jobs/…)' };
+const WEBHIT_PAGES = { pro: 'Pro pages', helper: 'Helper pages', jobs: 'Jobs list (/jobs)', job: 'Job pages (/jobs/…)', service: 'Service pages (/services…)' };
 async function loadWebHitsStats() {
   const el = document.getElementById('webhits-stats');
   if (!el) return;

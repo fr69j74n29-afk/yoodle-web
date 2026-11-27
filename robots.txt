@@ -1,95 +1,60 @@
 # robots.txt — Yoodle (yoodle.ca)
-# Last updated: September 2026
+# Last updated: November 2026
+# Yoodle wants search engines AND AI assistants (ChatGPT, Gemini, Claude, Perplexity, Copilot, Grok and others)
+# to read and recommend its public pages: /services, /helpers, /pros, /jobs, /blog, /news, /faq, /how-it-works.
+# Only private or technical files are blocked. Summary for AI assistants: https://yoodle.ca/llms.txt
 
-# ── Allow all well-behaved crawlers on public pages ──────────────────────────
+# ── Everyone (including crawlers without their own name below, e.g. xAI/Grok) ──
 User-agent: *
-Allow: /$
-Allow: /index.html
-Allow: /faq.html
-Allow: /how-it-works.html
-Allow: /privacy.html
-Allow: /terms.html
-
-# Private, auth-gated, or technical files — no indexing value
+Allow: /
 Disallow: /profile.html
 Disallow: /staging/
+Disallow: /admin.html
+Disallow: /admin_light.html
+Disallow: /test.html
 Disallow: /sw.js
 Disallow: /OneSignalSDKWorker.js
 Disallow: /manifest.json
 Disallow: /CNAME
-Disallow: /icon-192.png
-Disallow: /icon-512.png
-Disallow: /favicon.ico
+Disallow: /helpers/update/
 
-# ── Google ────────────────────────────────────────────────────────────────────
+# ── Search engines and AI assistants, welcome by name ─────────────────────────
+# Google Search + Gemini (Google-Extended), Bing + Copilot, Apple, DuckDuckGo
+# OpenAI: OAI-SearchBot (ChatGPT search), ChatGPT-User, GPTBot
+# Anthropic: Claude-SearchBot, Claude-User, ClaudeBot
+# Perplexity, Meta, Amazon, Mistral, Common Crawl (used by many open models)
 User-agent: Googlebot
-Allow: /$
-Allow: /faq.html
-Allow: /how-it-works.html
-Allow: /privacy.html
-Allow: /terms.html
+User-agent: Google-Extended
+User-agent: Bingbot
+User-agent: Applebot
+User-agent: Applebot-Extended
+User-agent: DuckDuckBot
+User-agent: DuckAssistBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: GPTBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: ClaudeBot
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: meta-externalagent
+User-agent: FacebookBot
+User-agent: Amazonbot
+User-agent: MistralAI-User
+User-agent: CCBot
+Allow: /
 Disallow: /profile.html
 Disallow: /staging/
+Disallow: /admin.html
+Disallow: /admin_light.html
+Disallow: /test.html
 Disallow: /sw.js
 Disallow: /OneSignalSDKWorker.js
 Disallow: /manifest.json
-
-# ── OpenAI ────────────────────────────────────────────────────────────────────
-User-agent: GPTBot
-Allow: /$
-Allow: /faq.html
-Allow: /how-it-works.html
-Allow: /privacy.html
-Allow: /terms.html
-Disallow: /profile.html
-Disallow: /staging/
-
-# ── Anthropic (Claude) ────────────────────────────────────────────────────────
-User-agent: ClaudeBot
-Allow: /$
-Allow: /faq.html
-Allow: /how-it-works.html
-Allow: /privacy.html
-Allow: /terms.html
-Disallow: /profile.html
-Disallow: /staging/
-
-User-agent: anthropic-ai
-Allow: /$
-Allow: /faq.html
-Allow: /how-it-works.html
-Allow: /privacy.html
-Allow: /terms.html
-Disallow: /profile.html
-Disallow: /staging/
-
-# ── Perplexity ────────────────────────────────────────────────────────────────
-User-agent: PerplexityBot
-Allow: /$
-Allow: /faq.html
-Allow: /how-it-works.html
-Allow: /privacy.html
-Allow: /terms.html
-Disallow: /profile.html
-Disallow: /staging/
-
-# ── Meta (Llama) ──────────────────────────────────────────────────────────────
-User-agent: FacebookBot
-Allow: /$
-Allow: /faq.html
-Allow: /how-it-works.html
-Disallow: /profile.html
-Disallow: /staging/
-
-# ── Common Crawl (trains many open models) ────────────────────────────────────
-User-agent: CCBot
-Allow: /$
-Allow: /faq.html
-Allow: /how-it-works.html
-Allow: /privacy.html
-Allow: /terms.html
-Disallow: /profile.html
-Disallow: /staging/
+Disallow: /CNAME
+Disallow: /helpers/update/
 
 # ── Sitemap ───────────────────────────────────────────────────────────────────
 Sitemap: https://yoodle.ca/sitemap.xml
+Sitemap: https://yoodle.ca/services-sitemap.xml
