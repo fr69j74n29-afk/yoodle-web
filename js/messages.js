@@ -11,6 +11,7 @@ async function loadMessages(){
   let{data,error}=await sb.rpc('get_conversations',{user_id:pid});
   if(error){tabError('messages',el,emptyState('😕','Error loading messages',esc(error.message)));return;}
   data=data||[];
+  if(window.YOODI&&YOODI.disabled)data=data.filter(t=>t.task_type!=='yoodi_chat'); // Yoodi switched off by an admin (js/yoodi.js)
   tabCache.messages.sig=tabConvSig(data); // refreshUnreadCount() compares against this (js/core-state.js)
   // nav dot from the same data, every chat counted (contact chats too). Set before the "no chats" return, or a stale dot stays on.
   _setMessageBadge(data.some(c=>c.has_unread));

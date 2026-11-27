@@ -19,7 +19,8 @@
 // If this file fails to load, the app works exactly as before, just without Yoodi.
 
 var YOODI_ID='149e5443-528f-4106-871b-890d7fe1f93b';
-var YOODI={active:false,online:null,chips:false,checkedAt:0,lastMsgs:[],waitTimer:null,pollTimer:null,
+var YOODI={active:false,online:null,disabled:false,   // disabled: admin kill switch (feature_flags 'yoodi', migration 20261127_005)
+  chips:false,checkedAt:0,lastMsgs:[],waitTimer:null,pollTimer:null,
   DRAFT_KEY:'yoodi_draft_land',BIO_KEY:'yoodi_bio_pending',
   THINK_S:90};          // after this long without a reply, the "thinking" bubble says it's taking longer
 // Links in Yoodi's replies that become buttons: her drafts, and helper / Pro profiles (?helper=<id>[&s=pro])
@@ -37,6 +38,11 @@ body.theme-sage-dark #yoodi-fab img{
 #yoodi-fab .yd-dot{position:absolute;top:4px;right:6px;width:14px;height:14px;border-radius:50%;background:#22C55E;border:2.5px solid #fff}
 body.theme-sage-dark #yoodi-fab .yd-dot{border-color:#1a1f1c}
 #yoodi-fab.off{filter:grayscale(1);opacity:.8}
+/* kill switch on: Yoodi and her shortcuts are hidden; Contact support takes her spot on the map */
+body.yoodi-off #yoodi-fab,body.yoodi-off .yd-ask{display:none!important}
+#yd-support-fab{display:none;position:absolute;left:10px;bottom:46px;z-index:11;padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);
+  background:var(--surface);color:var(--text);font:800 13.5px 'Nunito',sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+body.yoodi-off #yd-support-fab{display:block}
 #yoodi-fab.off .yd-dot{background:#9CA3AF}
 #chat-modal.yoodi-chat #chat-more-wrap,#chat-modal.yoodi-chat #chat-actions{display:none!important}
 #chat-modal.yoodi-chat #chat-av{background:none!important;border:none!important;box-shadow:none!important;border-radius:0!important;
@@ -91,7 +97,8 @@ async function yoodiCheckOnline(force){
   if(!_ydReady())return YOODI.online;
   if(!force&&Date.now()-YOODI.checkedAt<60000)return YOODI.online;
   YOODI.checkedAt=Date.now();
-  try{const{data,error}=await sb.rpc('yoodi_online');if(!error)YOODI.online=data===true;}catch(e){}
+  try{const{data,error}=await sb.rpc('yoodi_online');
+    if(!error){_ydSetDisabled(data===null);YOODI.online=data===true;}}catch(e){} // null = switched off by an admin
   _ydPaintOnline();
   return YOODI.online;
 }
@@ -104,12 +111,22 @@ function _ydPaintOnline(){
   }
 }
 
+// Admin kill switch: hide her everywhere (map, shortcuts, her chat in Messages); Contact support in her place.
+function _ydSetDisabled(off){
+  if(YOODI.disabled===off)return;
+  YOODI.disabled=off;document.body.classList.toggle('yoodi-off',off);
+  if(off&&YOODI.active){if(typeof closeChat==='function')closeChat();toast('Yoodi is taking a break right now');}
+  if(typeof tabDirty==='function')tabDirty('messages');   // her chat leaves / comes back to the Chats list
+  if(document.getElementById('app-messages')?.classList.contains('active')&&typeof loadMessages==='function')loadMessages();
+}
+
 // ---------- floating Yoodi ----------
 function _ydMountFab(){
   if(document.getElementById('yoodi-fab'))return;
   var host=document.querySelector('#app-map > div');if(!host)return;
   host.insertAdjacentHTML('beforeend',
-    `<button id="yoodi-fab" onclick="yoodiFabTap()" aria-label="Chat with Yoodi, Yoodle's assistant"><img src="yoodi.png?v=20261123" alt=""><span class="yd-dot"></span></button>`);
+    `<button id="yoodi-fab" onclick="yoodiFabTap()" aria-label="Chat with Yoodi, Yoodle's assistant"><img src="yoodi.png?v=20261123" alt=""><span class="yd-dot"></span></button>`+
+    (window.supportOpen?`<button id="yd-support-fab" type="button" onclick="supportOpen()">💬 Contact support</button>`:''));
 }
 function yoodiFabTap(){yoodiOpen();}
 
@@ -118,6 +135,7 @@ function yoodiFabTap(){yoodiOpen();}
 async function yoodiOpen(opts){
   opts=opts||{};
   if(!_ydReady()){if(typeof toast==='function')toast('Sign in to chat with Yoodi');return;}
+  if(YOODI.disabled){toast('Yoodi is taking a break right now');return;}
   var pid=_ydPid(),conv=null;
   try{
     var r=await sb.from('conversations').select('id,task_id').eq('poster_id',YOODI_ID).eq('applicant_id',pid)
@@ -130,6 +148,7 @@ async function yoodiOpen(opts){
 // Also called by index.html openChat() for a Yoodi chat (Messages list, push tap).
 async function yoodiOpenChat(convId,taskId,opts){
   opts=opts||{};
+  if(YOODI.disabled){toast('Yoodi is taking a break right now');return;} // kill switch (push tap, old link)
   if(window.supportOnClose)supportOnClose(); // coming from the Contact support chat (js/support-chat.js)
   YOODI.active=true;YOODI.chips=!opts.text;   // quick buttons on every visit, until they type
   activeChatTaskId=taskId||null;activeChatPosterId=YOODI_ID;activeChatDoerId=YOODI_ID;
@@ -327,11 +346,13 @@ function yoodiAskBio(){yoodiOpen({text:'Can you help me tune up my helper bio? I
 // ---------- start ----------
 // index.html showApp(), once signed in
 async function yoodiInit(){
+  await yoodiCheckOnline(true);     // first: if an admin switched her off, she never flashes up
   _ydMountFab();_ydMountShortcuts();
-  yoodiCheckOnline(true);
   if(!YOODI.pollTimer)YOODI.pollTimer=setInterval(function(){
     if(document.visibilityState==='visible'&&document.getElementById('app-map')?.classList.contains('active'))yoodiCheckOnline();
   },5*60*1000);
+  if(!YOODI.visHook){YOODI.visHook=true;document.addEventListener('visibilitychange',function(){   // back in the app: kill switch / online
+    if(document.visibilityState==='visible'&&_ydReady())yoodiCheckOnline();});}
   var dl=_ydGet(YOODI.DRAFT_KEY);
   if(dl){_ydSet(YOODI.DRAFT_KEY,null);if(Date.now()-(dl.ts||0)<24*60*60*1000)yoodiTakeDraft(dl.id);}
 }
