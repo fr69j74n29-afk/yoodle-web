@@ -138,6 +138,12 @@ async function openJob(j){
     }
   } else if(j.status==='completed'){
     btn.textContent='Job Completed';btn.disabled=true;
+  } else if(j.status==='cancelled'){
+    // opened from a chat card or a contact's "Connected on" note (poster and contact see the same)
+    _an.textContent=(j.from_offer||j.private_for)?'🚫 This job offer was cancelled.':'🚫 This job was cancelled.';_an.style.display='block';
+    btn.textContent='Job cancelled';btn.disabled=true;btn.onclick=null;
+  } else if(j.status==='expired'){
+    btn.textContent='No longer available';btn.disabled=true;btn.onclick=null;
   } else if(j.status==='claimed'){
     if(isPoster){
       btn.textContent='Mark Complete';

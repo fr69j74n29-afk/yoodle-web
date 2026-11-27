@@ -103,7 +103,7 @@ async function loadChatMessages(quiet){
     const isMe=m.sender_id===pid||m.sender_id===me.id;
     const yh=window.yoodiMsgHtml?yoodiMsgHtml(m,isMe):null;if(yh)return yh; // Yoodi chat bubbles (js/yoodi.js)
     const sh=window.supportMsgHtml?supportMsgHtml(m,isMe):null;if(sh)return sh; // Contact support bubbles (js/support-chat.js)
-    const isSys=m.body?.startsWith('✅')||m.body?.startsWith('↩️')||m.body?.startsWith('🎉')||m.body?.startsWith('Thanks for');
+    const isSys=m.body?.startsWith('✅')||m.body?.startsWith('↩️')||m.body?.startsWith('🚫')||m.body?.startsWith('🎉')||m.body?.startsWith('Thanks for');
     if(isSys&&!isMe)return`<div style="text-align:center;margin:10px 0"><span style="font-size:13.5px;color:var(--muted);font-weight:700;background:var(--surface2);padding:5px 14px;border-radius:100px">${linkify(esc(m.body||''))}</span></div>`;
     return`<div data-mid="${esc(m.id)}" data-me="${isMe?1:0}" style="display:flex;justify-content:${isMe?'flex-end':'flex-start'};margin-bottom:10px"><div style="max-width:75%;padding:10px 14px;border-radius:${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};background:${isMe?'var(--btn-a)':'var(--surface2)'};color:${isMe?'#fff':'var(--text)'};font-size:14px;font-weight:600;line-height:1.4">${window.ctOfferBubble?ctOfferBubble(m,isMe):linkify(esc(m.body||''))}<div style="font-size:11.5px;opacity:.6;margin-top:4px;text-align:right">${timeAgo(m.created_at)}</div></div></div>`;
   }).join('');

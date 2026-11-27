@@ -259,10 +259,10 @@ async function ctSaveNote(otherId){
   if(error)return toast('❌ '+error.message);
   ctNoteEdit=null;await ctFetch();ctRender();
 }
-async function ctOpenJobById(id){
+async function ctOpenJobById(id,isOffer){
   if(!sb||!id)return;
   const{data}=await sb.from('tasks').select('*').eq('id',id).maybeSingle();
-  if(!data)return toast('That job is no longer available');
+  if(!data)return toast(isOffer?'This offer is no longer available':'That job is no longer available');
   openJob({...data,category:(data.category||'other').toLowerCase()});
 }
 
@@ -355,9 +355,16 @@ function ctOfferBubble(m,isMe){
   const b=m.body||'',x=b.match(CT_OFFER_RE);
   if(!x)return linkify(esc(b));
   const text=b.replace(/\s*Open it to (?:accept or decline|see the changes): https:\/\/\S+/,'');
-  const view=`<button type="button" class="ct-offer-btn" onclick="ctOpenJobById('${x[1]}')">${isMe?'View your offer':'View offer'} ›</button>`;
-  const edit=isMe?`<button type="button" class="ct-offer-btn" onclick="closeChat();openEditModal('${x[1]}')">✏️ Edit offer</button>`:'';
+  const view=`<button type="button" class="ct-offer-btn" onclick="ctOpenJobById('${x[1]}',true)">${isMe?'View your offer':'View offer'} ›</button>`;
+  const edit=isMe?`<button type="button" class="ct-offer-btn" onclick="ctOfferEdit('${x[1]}')">✏️ Edit offer</button>`:'';
   return esc(text).replace(/\n/g,'<br>')+view+edit;
+}
+// Edit from the chat card: only while it's still an offer or an accepted job
+async function ctOfferEdit(id){
+  const{data}=await sb.from('tasks').select('status').eq('id',id).maybeSingle();
+  if(!data||data.status==='cancelled')return toast('This offer was cancelled');
+  if(data.status==='completed'||data.status==='expired')return toast('This job can no longer be edited');
+  closeChat();openEditModal(id);
 }
 async function offerAccept(j){
   const{data,error}=await sb.rpc('offer_accept',{p_task:j.id});
