@@ -40,9 +40,13 @@ body.theme-sage-dark #yoodi-fab .yd-dot{border-color:#1a1f1c}
 #yoodi-fab.off{filter:grayscale(1);opacity:.8}
 /* kill switch on: Yoodi and her shortcuts are hidden; Contact support takes her spot on the map */
 body.yoodi-off #yoodi-fab,body.yoodi-off .yd-ask{display:none!important}
-#yd-support-fab{display:none;position:absolute;left:10px;bottom:46px;z-index:11;padding:10px 14px;border-radius:100px;border:1.5px solid var(--border);
-  background:var(--surface);color:var(--text);font:800 13.5px 'Nunito',sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.25)}
-body.yoodi-off #yd-support-fab{display:block}
+#yd-support-fab{display:none;position:absolute;left:14px;bottom:44px;z-index:11;width:56px;height:56px;padding:0;border-radius:50%;
+  border:2.5px solid #fff;background:var(--orange);cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.3);
+  align-items:center;justify-content:center;transition:transform .15s;-webkit-tap-highlight-color:transparent}
+#yd-support-fab:active{transform:scale(.94)}
+#yd-support-fab svg{width:28px;height:28px;display:block;pointer-events:none}
+body.theme-sage-dark #yd-support-fab{border-color:#1a1f1c;box-shadow:0 0 0 1px #fff,0 4px 8px rgba(0,0,0,.6)}
+body.yoodi-off #yd-support-fab{display:flex}   /* 27 Nov (Roman): icon instead of text, same as the support avatar in Messages */
 #yoodi-fab.off .yd-dot{background:#9CA3AF}
 #chat-modal.yoodi-chat #chat-more-wrap,#chat-modal.yoodi-chat #chat-actions{display:none!important}
 #chat-modal.yoodi-chat #chat-av{background:none!important;border:none!important;box-shadow:none!important;border-radius:0!important;
@@ -126,7 +130,7 @@ function _ydMountFab(){
   var host=document.querySelector('#app-map > div');if(!host)return;
   host.insertAdjacentHTML('beforeend',
     `<button id="yoodi-fab" onclick="yoodiFabTap()" aria-label="Chat with Yoodi, Yoodle's assistant"><img src="yoodi.png?v=20261123" alt=""><span class="yd-dot"></span></button>`+
-    (window.supportOpen?`<button id="yd-support-fab" type="button" onclick="supportOpen()">💬 Contact support</button>`:''));
+    (window.supportOpen?`<button id="yd-support-fab" type="button" onclick="supportOpen()" aria-label="Contact support" title="Contact support">${window.SUPPORT_ICON||'💬'}</button>`:''));
 }
 function yoodiFabTap(){yoodiOpen();}
 
