@@ -1185,6 +1185,10 @@ body::before {
     <div class="section-title lazy-h" onclick="toggleLazy('landing')">LANDING PAGE → SIGN-IN — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-landing">▸ TAP TO LOAD</span></div>
     <div id="lazy-landing" style="display:none"><div id="landing-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
+    <!-- WEB HITS (26 Nov 2026) — admin_web_hits_totals() over web_hits (beacon on yoodle.ca/pros/… and /helpers/{id} pages, job-pages v61) -->
+    <div class="section-title lazy-h" onclick="toggleLazy('webhits')">WEB HITS — PRO &amp; HELPER PAGES <span class="lazy-hint" id="lazy-hint-webhits">▸ TAP TO LOAD</span></div>
+    <div id="lazy-webhits" style="display:none"><div id="webhits-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
+
     <!-- HELPER PAGE SHARING (share_events) -->
     <div class="section-title lazy-h" onclick="toggleLazy('share')">HELPER PAGE SHARING — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-share">▸ TAP TO LOAD</span></div>
     <div id="lazy-share" style="display:none"><div id="share-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
@@ -1361,7 +1365,7 @@ function refreshAll() {
 // ── TAP-TO-LOAD SECTIONS (15 Oct 2026) ──
 // Regions (+ admin-geo.js ≈300 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
-const LAZY = { regions: loadRegions, onboard: loadOnboardStats, landing: loadLandingStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
+const LAZY = { regions: loadRegions, onboard: loadOnboardStats, landing: loadLandingStats, webhits: loadWebHitsStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
   reports: loadReports, support: loadSupport, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended, notify: nfCount };
 // After an admin action: reload a section only if it's open; a closed one reloads fresh the next time it's opened.
 function lazyReload(k) {
@@ -2294,6 +2298,27 @@ async function loadLandingStats() {
   <table class="region-table">${head('Day')}<tbody>${daily}</tbody></table>
   <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Visitors = browsers that saw the signed-out landing page (one per browser per day; crawlers and visits with no tap/scroll or under 3 s are not counted). New sign-ups = account created after the visit; Returning = existing member signing in. New rate = new sign-ups ÷ (visitors − returning). Members who look at the page without signing in still count as visitors, so the true new rate is a bit higher. Admins and tester@yoodle.ca are not counted as sign-ins. Tracking started 26 Nov 2026.</div>`
   : `<div style="padding:14px 0;color:var(--muted);font-size:13px">No landing visits recorded yet. Tracking started 26 Nov 2026 and needs the site change (js/landing-visits.js) to be live.</div>`;
+}
+
+// ── WEB HITS (admin-only RPC over web_hits, 26 Nov 2026) ──
+// Visits to public pro pages (yoodle.ca/pros/{trade}/{business}) and helper pages (yoodle.ca/helpers/{id}).
+// Totals only for now (Roman). Kept separate from map/card taps.
+async function loadWebHitsStats() {
+  const el = document.getElementById('webhits-stats');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_web_hits_totals');
+  if (error) {
+    el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`;
+    return;
+  }
+  let last = '';
+  const rows = (data || []).map(r => {
+    const first = r.period !== last; last = r.period;
+    return `<tr${first ? ' style="border-top:2px solid var(--border)"' : ''}><td>${first ? esc(r.period) : ''}</td><td>${r.page === 'pro' ? 'Pro pages' : 'Helper pages'}</td><td class="num">${Number(r.views || 0)}</td><td class="num">${Number(r.visitors || 0)}</td><td class="num">${Number(r.contact_taps || 0)}</td><td class="num">${Number(r.signed_in || 0)}</td><td class="num helpers">${Number(r.new_accounts || 0)}</td></tr>`;
+  }).join('');
+  el.innerHTML = `<table class="region-table"><thead><tr><th>Period</th><th>Pages</th><th>Views</th><th>Visitors</th><th>Contact taps</th><th>Sign-ins</th><th>New sign-ups</th></tr></thead><tbody>${rows}</tbody></table>
+  <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Views = visits to the public pro and helper pages (same browser on the same page counted once per 30 min; crawlers and visits with no tap/scroll or under 3 s are not counted; own page, admins and tester@yoodle.ca skipped). Contact taps = Message / Contact button taps. Sign-ins = visitors who then signed in within 7 days (needs the landing-page tracking live on the site); New sign-ups = of those, new accounts. Map and card taps in the app are counted separately. Tracking started 26 Nov 2026.</div>`;
 }
 
 // ── HELPER PAGE SHARING (admin-only RPC over share_events) ──
