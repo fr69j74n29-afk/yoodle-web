@@ -15,10 +15,10 @@ function switchSheetTab(tab){
   const jobBtn=document.getElementById('sheet-tab-jobs');
   const helperBtn=document.getElementById('sheet-tab-helpers');
   if(tab==='jobs'){
-    jobBtn.style.background='var(--surface)';jobBtn.style.color='var(--text)';
+    jobBtn.style.background='#000';jobBtn.style.color='#fff';
     helperBtn.style.background='transparent';helperBtn.style.color='var(--muted)';
   } else {
-    helperBtn.style.background='var(--surface)';helperBtn.style.color='var(--text)';
+    helperBtn.style.background='#000';helperBtn.style.color='#fff';
     jobBtn.style.background='transparent';jobBtn.style.color='var(--muted)';
   }
   renderSheetContent();
@@ -66,10 +66,10 @@ function switchListTab(tab){
   const helpBtn=document.getElementById('list-tab-helpers');
   if(!jobBtn)return;
   if(tab==='jobs'){
-    jobBtn.style.background='var(--surface)';jobBtn.style.color='var(--text)';
+    jobBtn.style.background='#000';jobBtn.style.color='#fff';
     helpBtn.style.background='transparent';helpBtn.style.color='var(--muted)';
   } else {
-    helpBtn.style.background='var(--surface)';helpBtn.style.color='var(--text)';
+    helpBtn.style.background='#000';helpBtn.style.color='#fff';
     jobBtn.style.background='transparent';jobBtn.style.color='var(--muted)';
   }
   renderListTabContent();
