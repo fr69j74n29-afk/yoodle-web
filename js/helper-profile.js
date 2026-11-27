@@ -16,12 +16,14 @@ async function updateForkHelperCard(){
   // Not signed in — show default tappable card
   if(!sb||!me){
     el.innerHTML=forkHelperCardNew();
+    if(window.hsvcForkCard)hsvcForkCard(null);
     return;
   }
 
   const{data:prof}=await sb.from('profiles')
     .select('visible_on_map,helper_address,helper_categories,helper_expires_at')
     .eq('id',myProfileId||me.id).maybeSingle();
+  if(window.hsvcForkCard)hsvcForkCard(prof); // + screen "My Fixed-Price Services" card (home-services.js)
 
   if(!prof||(!prof.helper_address&&!(prof.helper_categories||[]).length)){
     // Never set up
