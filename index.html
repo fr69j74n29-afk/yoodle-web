@@ -294,7 +294,12 @@ body.theme-sage-dark .theme-btn .ic-moon{display:none}
 .nt-badge{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#DC2626;color:#fff;font:800 10.5px/17px 'Nunito',sans-serif;text-align:center;display:none}
 .nt-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .nt-close{width:34px;height:34px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:15px;cursor:pointer;flex-shrink:0}
-.nt-row{display:flex;gap:12px;width:100%;padding:12px 4px;border:none;border-bottom:1px solid var(--border);background:none;color:var(--text);text-align:left;font-family:'Nunito',sans-serif;cursor:pointer}
+.nt-row{display:flex;align-items:flex-start;gap:6px;width:100%;border-bottom:1px solid var(--border)}
+.nt-main{display:flex;gap:12px;flex:1;min-width:0;padding:12px 4px;border:none;background:none;color:var(--text);text-align:left;font-family:'Nunito',sans-serif;cursor:pointer}
+.nt-acts{display:flex;gap:2px;padding-top:8px;flex-shrink:0}
+.nt-act{width:36px;height:36px;border-radius:50%;border:none;background:none;font-size:16px;cursor:pointer;opacity:.45;filter:grayscale(1)}
+.nt-act.on{opacity:1;filter:none;background:var(--surface2)}
+.nt-act:active{transform:scale(.9)}
 .nt-row .e{font-size:20px;width:26px;text-align:center;flex-shrink:0}
 .nt-row .nt-txt{min-width:0;flex:1}
 .nt-row b{display:block;font-size:14.5px;font-weight:800}
@@ -1782,7 +1787,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/auth.js?v=20261127t"></script>
 <script src="js/settings.js?v=20261125a"></script>
 <script src="js/tutor-link.js?v=20261125a"></script>
-<script src="js/notifications.js?v=20261126b"></script>
+<script src="js/notifications.js?v=20261127y"></script>
 <script src="js/session.js?v=20261126a"></script>
 <script src="js/push-web.js?v=20261125a"></script>
 <script src="js/realtime.js?v=20261127v"></script>
