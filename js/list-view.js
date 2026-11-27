@@ -15,11 +15,11 @@ function switchSheetTab(tab){
   const jobBtn=document.getElementById('sheet-tab-jobs');
   const helperBtn=document.getElementById('sheet-tab-helpers');
   if(tab==='jobs'){
-    jobBtn.style.background='#000';jobBtn.style.color='#fff';
-    helperBtn.style.background='transparent';helperBtn.style.color='var(--muted)';
+    jobBtn.style.background='#000';jobBtn.style.color='#fff';jobBtn.style.border='1.5px solid var(--lime)';
+    helperBtn.style.background='transparent';helperBtn.style.color='var(--muted)';helperBtn.style.border='1.5px solid transparent';
   } else {
-    helperBtn.style.background='#000';helperBtn.style.color='#fff';
-    jobBtn.style.background='transparent';jobBtn.style.color='var(--muted)';
+    helperBtn.style.background='#000';helperBtn.style.color='#fff';helperBtn.style.border='1.5px solid var(--lime)';
+    jobBtn.style.background='transparent';jobBtn.style.color='var(--muted)';jobBtn.style.border='1.5px solid transparent';
   }
   renderSheetContent();
 }
@@ -66,11 +66,11 @@ function switchListTab(tab){
   const helpBtn=document.getElementById('list-tab-helpers');
   if(!jobBtn)return;
   if(tab==='jobs'){
-    jobBtn.style.background='#000';jobBtn.style.color='#fff';
-    helpBtn.style.background='transparent';helpBtn.style.color='var(--muted)';
+    jobBtn.style.background='#000';jobBtn.style.color='#fff';jobBtn.style.border='1.5px solid var(--lime)';
+    helpBtn.style.background='transparent';helpBtn.style.color='var(--muted)';helpBtn.style.border='1.5px solid transparent';
   } else {
-    helpBtn.style.background='#000';helpBtn.style.color='#fff';
-    jobBtn.style.background='transparent';jobBtn.style.color='var(--muted)';
+    helpBtn.style.background='#000';helpBtn.style.color='#fff';helpBtn.style.border='1.5px solid var(--lime)';
+    jobBtn.style.background='transparent';jobBtn.style.color='var(--muted)';jobBtn.style.border='1.5px solid transparent';
   }
   renderListTabContent();
 }
