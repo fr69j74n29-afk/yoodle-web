@@ -229,18 +229,7 @@ function hsvcGoSettings(from){
   try{window.scrollTo(0,0);}catch(e){}
   hsvcOpenSettings();
 }
-function hsvcBack(){nav(HSVC.from==='helper'?'helper':HSVC.from==='post'?'post':'profile');}
-// + screen card (27 Nov 2026): "My Fixed-Price Services" for anyone with a helper profile (active, paused or expired).
-// Called from updateForkHelperCard() with the profile it already loaded; null/no helper address = no card.
-function hsvcForkCard(prof){
-  var el=document.getElementById('fork-svc-card');if(!el)return;
-  if(!prof||!prof.helper_address){el.innerHTML='';return;}
-  el.innerHTML='<button onclick="hsvcGoSettings(\'post\')" style="width:100%;min-height:95px;display:flex;align-items:center;gap:16px;padding:20px;margin-top:16px;border-radius:16px;border:1.5px solid rgba(34,164,93,.35);background:rgba(34,164,93,.05);cursor:pointer;text-align:left;font-family:\'Nunito\',sans-serif">'+
-    '<div style="width:52px;height:52px;border-radius:14px;background:#22A45D;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font:900 26px/1 \'Nunito\',sans-serif">$</div>'+
-    '<div style="flex:1;min-width:0"><div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px">My Fixed-Price Services</div>'+
-    '<div style="font-size:14px;font-weight:700;color:var(--muted)">Set prices neighbours can book</div></div>'+
-    '<span style="font-size:20px;color:#22A45D;font-weight:800;flex-shrink:0">›</span></button>';
-}
+function hsvcBack(){nav(HSVC.from==='helper'?'helper':'profile');}
 function hsvcGate(html,btn,to){
   var box=document.getElementById('hsvc-settings'),sv=document.getElementById('hsvc-save-btn');
   if(sv)sv.style.display='none';
