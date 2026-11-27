@@ -405,6 +405,7 @@ html:not(.ml-css) #map>*{visibility:hidden} /* until maplibre-gl.css has applied
 .list-card{background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px}
 .list-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--jc,var(--purple))}
 .list-card:active{transform:scale(.98)}
+body.theme-sage-dark .list-card{background:#000} /* dark mode: job tiles black like the selected Jobs / Helpers toggle (27 Nov 2026) */
 .lc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
 .lc-cat{font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--jc,var(--purple));display:flex;align-items:center;gap:4px;flex-shrink:0}
 .lc-budget{font-size:17px;font-weight:800;color:var(--lime);white-space:nowrap;flex-shrink:0}
