@@ -108,6 +108,10 @@ async function openChatFromNotification(taskId,convId){
   const isPoster=conv.poster_id===pid;
   const otherId=isPoster?conv.applicant_id:conv.poster_id;
   if(!otherId)return;
+  // Yoodle Shield (26 Nov 2026): a push / email link to a chat with a member who is suspended now opens the
+  // Shield popup instead of the chat (the inbox already hides it; this closes the deep-link way in).
+  const{data:held}=await sb.rpc('my_suspended_contacts');
+  if((held||[]).some(r=>(typeof r==='string'?r:r?.my_suspended_contacts)===otherId)){if(window.openShieldPanel)openShieldPanel(true);return;}
   const{data:other}=await sb.from('profiles').select('name,rating').eq('id',otherId).single();
   const isDirect=conv.tasks?.type==='direct'; // friend chat (js/contacts.js): the friend's name, not the hidden task's title
   openChat(taskId,isDirect?(other?.name||'Contact'):(conv.tasks?.title||'Job'),other?.name||'User',conv.poster_id,otherId,other?.rating||'',convId);
