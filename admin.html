@@ -2496,9 +2496,16 @@ async function loadServiceSuggestions() {
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:4px;font-size:12.5px;color:var(--muted)">
         <span>${esc(r.name || 'Deleted member')} · ${esc(when(r.created_at))}</span>
         <span style="flex:1"></span>
-        ${r.status !== 'added' ? btn(r.id, 'added', '✓ Added') : ''}${r.status !== 'dismissed' ? btn(r.id, 'dismissed', 'Dismiss') : ''}${r.status !== 'new' ? btn(r.id, 'new', 'Undo') : ''}
+        ${r.status !== 'added' ? btn(r.id, 'added', '✓ Added') : ''}${r.status !== 'dismissed' ? btn(r.id, 'dismissed', 'Dismiss') : ''}${r.status !== 'new' ? btn(r.id, 'new', 'Undo') : ''}<button onclick="deleteServiceSuggestion(${Number(r.id)})" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(220,80,70,.5);background:transparent;color:#DC5046;font-size:12px;font-weight:700;cursor:pointer">Delete</button>
       </div></div>`).join('')
-    + `<div style="padding:10px 0 4px;font-size:12px;color:var(--muted);line-height:1.5">From "Missing a service? Suggest one →" at the bottom of Filter → Fixed-price services. Each one is saved with the member and date/time. Mark ✓ Added once the service is in service_catalog. TEST = tester/demo accounts (not counted).</div>`;
+    + `<div style="padding:10px 0 4px;font-size:12px;color:var(--muted);line-height:1.5">From "Missing a service? Suggest one →" at the bottom of Filter → Fixed-price services. Each one is saved with the member and date/time. Mark ✓ Added once the service is in service_catalog. Dismiss greys it out and keeps it; Delete removes it for good. TEST = tester/demo accounts (not counted).</div>`;
+}
+// Delete = gone for good (admin_service_suggestion_delete), after a confirm. Dismiss keeps the row (greyed out).
+async function deleteServiceSuggestion(id) {
+  if (!confirm('Delete this suggestion for good? This can\'t be undone.')) return;
+  const { error } = await sb.rpc('admin_service_suggestion_delete', { p_id: id });
+  if (error) { alert('Could not delete: ' + error.message); return; }
+  loadServiceSuggestions();
 }
 async function setServiceSuggestion(id, status) {
   const { error } = await sb.rpc('admin_service_suggestion_set', { p_id: id, p_status: status });
