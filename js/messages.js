@@ -7,25 +7,28 @@ async function loadMessages(){
   if(!sb||!me){el.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see messages');return;}
   const pid=myProfileId||me.id;
 
-  let[{data,error}]=await Promise.all([sb.rpc('get_conversations',{user_id:pid}),window.ctFetch?ctFetch():null]);
-  const directIds=window.ctDirectConvIds?ctDirectConvIds():new Set(); // friend chats (js/contacts.js)
+  let{data,error}=await sb.rpc('get_conversations',{user_id:pid});
   if(error){el.innerHTML=emptyState('😕','Error loading messages',error.message);return;}
-  if(!window.ctFetch&&data?.length){
-    // js/contacts.js isn't loaded (Contacts held back on the live site): leave out contact chats, which would show as a job called "Message"
-    const{data:dt}=await sb.from('tasks').select('id').eq('type','direct').in('id',[...new Set(data.map(t=>t.task_id))]);
-    const hide=new Set((dt||[]).map(r=>r.id));
-    if(hide.size)data=data.filter(t=>!hide.has(t.task_id));
-  }
-  if(!data?.length){el.innerHTML=emptyState('💬','No conversations yet','Express interest in a job to start messaging');return;}
-
-  // update nav dot from same data — no extra query needed
+  data=data||[];
+  // nav dot from the same data, every chat counted (contact chats too). Set before the "no chats" return, or a stale dot stays on.
   _setMessageBadge(data.some(c=>c.has_unread));
+
+  // Contact chats (task_type 'direct') aren't in Chats: they're shown in the Contacts tab (js/contacts.js), which
+  // loads its friend list only when tapped (Rhea, 27 Nov; idea board #9). task_type comes from get_conversations
+  // (migration 20261127_002); until that's applied, one small tasks lookup tells them apart.
+  let isDirect=t=>t.task_type==='direct';
+  if(data.length&&!('task_type' in data[0])){
+    const{data:dt}=await sb.from('tasks').select('id').eq('type','direct').in('id',[...new Set(data.map(t=>t.task_id))]);
+    const ids=new Set((dt||[]).map(r=>r.id));isDirect=t=>ids.has(t.task_id);
+  }
+  if(window.ctSetChats)ctSetChats(data.filter(isDirect)); // last message + unread for each contact, and the Contacts tab dot
+  data=data.filter(t=>!isDirect(t));
+  if(!data.length){el.innerHTML=emptyState('💬','No conversations yet',window.ctSetChats?'Express interest in a job to start messaging. Chats with your contacts are under Contacts.':'Express interest in a job to start messaging');return;}
 
   el.innerHTML=data.map(t=>{
     const isPoster=t.poster_id===pid;
     const otherName=t.other_name||'Someone';
-    const isDirect=directIds.has(t.conversation_id);
-    const title=isDirect?otherName:t.title; // friend chat: no job title
+    const title=t.title;
     const otherRating=t.other_rating;
     const cat=(t.category||'other').toLowerCase();
     const preview=t.last_msg_body?esc(t.last_msg_body).slice(0,60):'Tap to open chat';
@@ -47,7 +50,7 @@ async function loadMessages(){
           <span class="conv-name">${esc(otherName)}${idvChip(t.other_id,true)}${unreadBadge}</span>
           <span class="conv-time" style="${isUnread?'color:var(--pink);font-weight:800':''}">${msgTime}</span>
         </div>
-        <div class="conv-title" style="display:flex;align-items:center;gap:4px">${isDirect?'👥 Contact':esc(t.title)}${isDirect?'':statusTag}</div>
+        <div class="conv-title" style="display:flex;align-items:center;gap:4px">${esc(t.title)}${statusTag}</div>
         <div class="conv-preview" style="${isUnread?'color:var(--text);font-weight:800':'color:#666'}">${preview}</div>
       </div>
     </div>`;

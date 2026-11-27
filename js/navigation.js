@@ -47,7 +47,7 @@ function nav(view) {
   if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
   if(view==='post'){updateForkHelperCard();updateForkIdvCard();}
   if(view==='postjob')resetPost();
-  if(view==='messages'){loadMessages().then(()=>refreshUnreadCount());}
+  if(view==='messages'){loadMessages();} // loadMessages() sets the unread dot from the same data (idea board #9: no second get_conversations)
   if(view==='profile')loadProfile();
   if(view==='helper')openHelperScreen();
   updateNotifNudge();

@@ -26,6 +26,8 @@ let ctInvites=[];         // my open email invites (people not on Yoodle yet)
 let ctInviteAsk=null;     // email waiting for the "Invite them?" confirmation
 let ctLoaded=false;       // get_friends() has run for this account
 let ctNoteEdit=null;      // contact whose private note is being edited
+let ctChats={};           // other_id -> that contact's chat row from get_conversations (loadMessages, js/messages.js)
+let ctFetchedAt=0;        // when get_friends() last ran (the Contacts tab reloads it if older than a minute)
 const CT_EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 (function ctCss(){
@@ -45,6 +47,10 @@ const CT_EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 .ct-row.tap{cursor:pointer}
 .ct-row.tap:active{transform:scale(.98)}
 .ct-name{flex:1;min-width:0;font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ct-row.unread{background:rgba(236,72,153,.08);border-color:rgba(236,72,153,.3)}
+.ct-last{display:block;font-size:13px;font-weight:700;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ct-row.unread .ct-last{color:var(--text);font-weight:800}
+.ct-new{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;background:var(--pink);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.5px;vertical-align:middle}
 .ct-name small{display:block;font-size:12.5px;font-weight:700;color:var(--muted)}
 .ct-btn{padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0;white-space:nowrap}
 .ct-btn.go{background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff}
@@ -82,30 +88,36 @@ function msgTab(tab){
   if(ctTabNow==='contacts')ctLoad();
 }
 
-// get_friends(); also used by loadMessages() to label friend chats in the Chats list.
+// get_friends() + my open invites. Runs only from the Contacts tab and contact actions (not on every Messages visit).
 async function ctFetch(){
   if(!sb||!me){ctRows=[];ctSetBadge();return ctRows;}
   const[{data,error},inv]=await Promise.all([sb.rpc('get_friends'),
     sb.from('friend_invites').select('id,email,created_at').is('claimed_at',null).order('created_at',{ascending:false})]);
   if(!inv.error)ctInvites=inv.data||[];
   if(error){console.warn('contacts',error);return ctRows;}
-  ctRows=data||[];ctLoaded=true;
+  ctRows=data||[];ctLoaded=true;ctFetchedAt=Date.now();
   ctSetBadge();
   if(ctTabNow==='contacts')ctRender(); // keep the visible list in step (e.g. after switching accounts)
   return ctRows;
 }
+// Contact chats from get_conversations (loadMessages). They're not in the Chats list: shown here with their last message.
+function ctSetChats(rows){
+  ctChats={};
+  (rows||[]).forEach(t=>{if(t.other_id&&!ctChats[t.other_id])ctChats[t.other_id]=t;}); // newest first: keep the latest
+  ctSetBadge();
+  if(ctTabNow==='contacts'&&ctLoaded)ctRender();
+}
+// Tab badge: requests waiting for me + contact chats with unread messages
 function ctSetBadge(){
-  const n=ctRows.filter(r=>r.status==='pending'&&r.incoming).length,b=document.getElementById('ct-badge');
+  const n=ctRows.filter(r=>r.status==='pending'&&r.incoming).length+Object.values(ctChats).filter(t=>t.has_unread).length,b=document.getElementById('ct-badge');
   if(b){b.textContent=n;b.classList.toggle('show',n>0);}
 }
 // Sign-out (js/auth.js): forget this account's contacts and go back to Chats
 function ctReset(){
-  ctRows=[];ctInvites=[];ctInviteAsk=null;ctLoaded=false;ctNoteEdit=null;ctSetBadge();
+  ctRows=[];ctInvites=[];ctInviteAsk=null;ctLoaded=false;ctFetchedAt=0;ctNoteEdit=null;ctChats={};ctSetBadge();
   const pane=document.getElementById('contacts-pane');if(pane)pane.innerHTML='';
   msgTab('chats');
 }
-// conversation ids of friend chats (for the Chats list)
-function ctDirectConvIds(){return new Set(ctRows.filter(r=>r.conversation_id).map(r=>r.conversation_id));}
 
 async function ctLoad(){
   const pane=document.getElementById('contacts-pane');if(!pane)return;
@@ -117,7 +129,8 @@ async function ctLoad(){
           oninput="ctRender()" onkeydown="if(event.key==='Enter'){event.preventDefault();ctAddFromBox();}">
       </div><div id="ct-list">${spin()}</div>`;
   }
-  await ctFetch();
+  if(ctLoaded)ctRender();                                   // show what we have straight away
+  if(!ctLoaded||Date.now()-ctFetchedAt>60000)await ctFetch(); // fresh on each tap, unless loaded in the last minute
   ctRender();
 }
 
@@ -126,7 +139,8 @@ function ctRender(){
   const q=(document.getElementById('ct-q')?.value||'').trim(),ql=q.toLowerCase();
   const match=r=>!ql||(r.other_name||'').toLowerCase().includes(ql);
   const incoming=ctRows.filter(r=>r.status==='pending'&&r.incoming&&match(r));
-  const friends=ctRows.filter(r=>r.status==='accepted'&&match(r));
+  const lastAt=r=>Date.parse(ctChats[r.other_id]?.last_msg_created_at||0)||0;
+  const friends=ctRows.filter(r=>r.status==='accepted'&&match(r)).sort((a,b)=>lastAt(b)-lastAt(a)); // latest chat first (stable: then by name)
   const sent=ctRows.filter(r=>r.status==='pending'&&!r.incoming&&match(r));
   const invited=ctInvites.filter(i=>!ql||i.email.includes(ql));
   const av=r=>avatarCircle(r.other_name,null,'34px','14px',true,r.avatar_color||'#5C8A6A');
@@ -143,9 +157,10 @@ function ctRender(){
       <button class="ct-btn go" type="button" onclick="ctRespond('${r.friendship_id}',true,this)">Accept</button></div>`).join('');
   }
   if(friends.length){
-    h+=`<div class="ct-h">Contacts</div>`+friends.map(r=>`<div class="ct-row tap" onclick="ctOpenChat('${r.other_id}')">${av(r)}
-      <div class="ct-name">${esc(r.other_name)}${idvChip(r.other_id,true)}<span class="ct-meta">${ctMeta(r)}</span>${ctSourceHtml(r)}${ctNoteHtml(r)}</div>
-      <button class="ct-btn" type="button" onclick="event.stopPropagation();tapConfirm(this,'Tap again to remove',()=>ctRemove('${r.other_id}'))">Remove</button></div>`).join('');
+    h+=`<div class="ct-h">Contacts</div>`+friends.map(r=>{const c=ctChats[r.other_id],un=!!c?.has_unread;
+      return`<div class="ct-row tap${un?' unread':''}" onclick="ctOpenChat('${r.other_id}')">${av(r)}
+      <div class="ct-name">${esc(r.other_name)}${idvChip(r.other_id,true)}${un?'<span class="ct-new">NEW</span>':''}${c&&c.last_msg_body?`<span class="ct-last">${esc(c.last_msg_body).slice(0,60)} · ${timeAgo(c.last_msg_created_at)}</span>`:''}<span class="ct-meta">${ctMeta(r)}</span>${ctSourceHtml(r)}${ctNoteHtml(r)}</div>
+      <button class="ct-btn" type="button" onclick="event.stopPropagation();tapConfirm(this,'Tap again to remove',()=>ctRemove('${r.other_id}'))">Remove</button></div>`;}).join('');
   }
   if(sent.length||invited.length){
     h+=`<div class="ct-h">Sent</div>`+invited.map(i=>`<div class="ct-row">${avatarCircle(i.email,null,'34px','14px',true,'#9CA3AF')}
