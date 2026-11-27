@@ -1185,12 +1185,12 @@ body::before {
     <div class="section-title lazy-h" onclick="toggleLazy('landing')">LANDING PAGE → SIGN-IN — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-landing">▸ TAP TO LOAD</span></div>
     <div id="lazy-landing" style="display:none"><div id="landing-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
-    <!-- WEB HITS (26 Nov 2026) — admin_web_hits_totals() over web_hits (beacon on yoodle.ca/pros/… and /helpers/{id} pages, job-pages v61) -->
-    <div class="section-title lazy-h" onclick="toggleLazy('webhits')">WEB HITS — PRO &amp; HELPER PAGES <span class="lazy-hint" id="lazy-hint-webhits">▸ TAP TO LOAD</span></div>
+    <!-- WEB HITS (26 Nov 2026; jobs pages added 27 Nov) — admin_web_hits_totals() over web_hits (beacon on yoodle.ca/pros/…, /helpers/{id}, /jobs and /jobs/{id} pages, job-pages v63) -->
+    <div class="section-title lazy-h" onclick="toggleLazy('webhits')">WEB HITS — PRO, HELPER &amp; JOB PAGES <span class="lazy-hint" id="lazy-hint-webhits">▸ TAP TO LOAD</span></div>
     <div id="lazy-webhits" style="display:none"><div id="webhits-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
     <!-- TOP REFERRING SITES (27 Nov 2026) — admin_top_referrers(days) over landing_visits + web_hits views -->
-    <div class="section-title lazy-h" onclick="toggleLazy('referrers')">TOP REFERRING SITES — LANDING, PRO &amp; HELPER PAGES <span class="lazy-hint" id="lazy-hint-referrers">▸ TAP TO LOAD</span></div>
+    <div class="section-title lazy-h" onclick="toggleLazy('referrers')">TOP REFERRING SITES — LANDING, PRO, HELPER &amp; JOB PAGES <span class="lazy-hint" id="lazy-hint-referrers">▸ TAP TO LOAD</span></div>
     <div id="lazy-referrers" style="display:none"><div id="referrers-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
     <!-- HELPER PAGE SHARING (share_events) -->
@@ -2306,7 +2306,9 @@ async function loadLandingStats() {
 
 // ── WEB HITS (admin-only RPC over web_hits, 26 Nov 2026) ──
 // Visits to public pro pages (yoodle.ca/pros/{trade}/{business}) and helper pages (yoodle.ca/helpers/{id}).
+// 27 Nov 2026: also the /jobs list ('jobs') and job pages /jobs/{id} ('job').
 // Totals only for now (Roman). Kept separate from map/card taps.
+const WEBHIT_PAGES = { pro: 'Pro pages', helper: 'Helper pages', jobs: 'Jobs list (/jobs)', job: 'Job pages (/jobs/…)' };
 async function loadWebHitsStats() {
   const el = document.getElementById('webhits-stats');
   if (!el) return;
@@ -2319,14 +2321,14 @@ async function loadWebHitsStats() {
   let last = '';
   const rows = (data || []).map(r => {
     const first = r.period !== last; last = r.period;
-    return `<tr${first ? ' style="border-top:2px solid var(--border)"' : ''}><td>${first ? esc(r.period) : ''}</td><td>${r.page === 'pro' ? 'Pro pages' : 'Helper pages'}</td><td class="num">${Number(r.views || 0)}</td><td class="num">${Number(r.visitors || 0)}</td><td class="num">${Number(r.contact_taps || 0)}</td><td class="num">${Number(r.signed_in || 0)}</td><td class="num helpers">${Number(r.new_accounts || 0)}</td></tr>`;
+    return `<tr${first ? ' style="border-top:2px solid var(--border)"' : ''}><td>${first ? esc(r.period) : ''}</td><td>${esc(WEBHIT_PAGES[r.page] || r.page)}</td><td class="num">${Number(r.views || 0)}</td><td class="num">${Number(r.visitors || 0)}</td><td class="num">${Number(r.contact_taps || 0)}</td><td class="num">${Number(r.signed_in || 0)}</td><td class="num helpers">${Number(r.new_accounts || 0)}</td></tr>`;
   }).join('');
   el.innerHTML = `<table class="region-table"><thead><tr><th>Period</th><th>Pages</th><th>Views</th><th>Visitors</th><th>Contact taps</th><th>Sign-ins</th><th>New sign-ups</th></tr></thead><tbody>${rows}</tbody></table>
-  <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Views = visits to the public pro and helper pages (same browser on the same page counted once per 30 min; crawlers and visits with no tap/scroll or under 3 s are not counted; own page, admins and tester@yoodle.ca skipped). Contact taps = Message / Contact button taps. Sign-ins = visitors who then signed in within 7 days (needs the landing-page tracking live on the site); New sign-ups = of those, new accounts. Map and card taps in the app are counted separately. Tracking started 26 Nov 2026.</div>`;
+  <div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Views = visits to the public pro, helper and job pages (same browser on the same page counted once per 30 min; crawlers and visits with no tap/scroll or under 3 s are not counted; own page or own job, admins and tester@yoodle.ca skipped). Contact taps = Message / Contact button taps (on job pages: the Apply on Yoodle / Sign in free button). Sign-ins = visitors who then signed in within 7 days (needs the landing-page tracking live on the site); New sign-ups = of those, new accounts. Map and card taps in the app are counted separately. Tracking started 26 Nov 2026 (job pages 27 Nov 2026).</div>`;
 }
 
 // ── TOP REFERRING SITES (admin-only RPC over landing_visits + web_hits views, 27 Nov 2026) ──
-// One table per page type (landing / pro / helper), top 10 sites each. Period switch: 7 / 30 / 90 days.
+// One table per page type (landing / pro / helper / jobs list / job pages), top 10 sites each. Period switch: 7 / 30 / 90 days.
 let _refDays = 30;
 async function loadReferrerStats(days) {
   if (days) _refDays = days;
@@ -2339,7 +2341,7 @@ async function loadReferrerStats(days) {
     return;
   }
   const btn = d => `<button onclick="loadReferrerStats(${d})" style="font:inherit;font-size:12px;font-weight:800;padding:4px 10px;margin-right:6px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:${d === _refDays ? 'var(--purple)' : 'var(--surface2)'};color:var(--text)">${d} days</button>`;
-  const groups = [['landing', 'Landing page (yoodle.ca)', 'Visits'], ['pro', 'Pro pages (/pros/…)', 'Views'], ['helper', 'Helper pages (/helpers/{id})', 'Views']];
+  const groups = [['landing', 'Landing page (yoodle.ca)', 'Visits'], ['pro', 'Pro pages (/pros/…)', 'Views'], ['helper', 'Helper pages (/helpers/{id})', 'Views'], ['jobs', 'Jobs list (/jobs)', 'Views'], ['job', 'Job pages (/jobs/{id})', 'Views']];
   const table = ([key, label, viewsLabel]) => {
     const list = (data || []).filter(r => r.source === key);
     const total = list.reduce((t, r) => t + Number(r.visitors || 0), 0);
@@ -2357,7 +2359,7 @@ async function loadReferrerStats(days) {
                    : `<div style="padding:6px 0 10px;color:var(--muted);font-size:13px">No visits in this period.</div>`);
   };
   el.innerHTML = `<div style="padding:8px 0 4px">${btn(7)}${btn(30)}${btn(90)}</div>` + groups.map(table).join('') +
-  `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Referring site = the site the visitor came from (site only, never the full link). Facebook/Google app and link hosts (l., lm., m., www.) are folded together. "utm: …" = no referrer but the link carried a utm_source tag. "(direct / none)" = typed in, bookmark, app or a site that hides its referrer (many apps and texts do). accounts.google.com is usually the Google sign-in coming back, not a real source. Share = this site's visitors ÷ all visitors to that page type. Sign-ins / New sign-ups = linked within 7 days (needs the landing-page tracking live on the site). Same filters as the cards above (crawlers, own page, admins and tester skipped). Tracking started 26 Nov 2026.</div>`;
+  `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Referring site = the site the visitor came from (site only, never the full link). Facebook/Google app and link hosts (l., lm., m., www.) are folded together. "utm: …" = no referrer but the link carried a utm_source tag. "(direct / none)" = typed in, bookmark, app or a site that hides its referrer (many apps and texts do). accounts.google.com is usually the Google sign-in coming back, not a real source. Share = this site's visitors ÷ all visitors to that page type. Sign-ins / New sign-ups = linked within 7 days (needs the landing-page tracking live on the site). Same filters as the cards above (crawlers, own page, admins and tester skipped). Tracking started 26 Nov 2026 (job pages 27 Nov 2026).</div>`;
 }
 
 // ── HELPER PAGE SHARING (admin-only RPC over share_events) ──
@@ -2473,13 +2475,30 @@ async function loadProTapStats() {
 }
 
 // ── AGENCY JOBS (admin-only RPC over agency_events) ──
+// 27 Nov 2026: + "Visits by channel" from admin_agency_visits(source, from, to): website job pages (web_hits) vs the app (agency_events).
+const AGENCY_SOURCES = [['alliance', 'Alliance Employment Services']]; // agency_sources.id → name
+async function agencyVisitsTable() {
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Toronto' });
+  const from = new Date(Date.parse(today + 'T12:00:00Z') - 29 * 864e5).toISOString().slice(0, 10);
+  const results = await Promise.all(AGENCY_SOURCES.map(([id]) => sb.rpc('admin_agency_visits', { p_source: id, p_from: from, p_to: today })));
+  return AGENCY_SOURCES.map(([id, name], i) => {
+    const { data, error } = results[i];
+    const head = `<div style="padding:14px 0 4px;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px">${esc(name.toUpperCase())} — VISITS BY CHANNEL, LAST 30 DAYS</div>`;
+    if (error) return head + `<div style="padding:6px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`;
+    const list = data || [];
+    const t = list.reduce((a, r) => ({ views: a.views + Number(r.views || 0), apply: a.apply + Number(r.apply_taps || 0) }), { views: 0, apply: 0 });
+    const rows = list.map(r => `<tr><td>${esc(r.channel)}</td><td class="num">${Number(r.views || 0)}</td><td class="num helpers">${Number(r.visitors || 0)}</td><td class="num">${Number(r.apply_taps || 0)}</td><td class="num">${Number(r.jobs_viewed || 0)}</td></tr>`).join('');
+    return head + `<table class="region-table"><thead><tr><th>Channel</th><th>Views</th><th>Visitors</th><th>Apply taps</th><th>Jobs viewed</th></tr></thead><tbody>${rows}<tr style="border-top:2px solid var(--border);font-weight:800"><td>Total</td><td class="num">${t.views}</td><td class="num">—</td><td class="num">${t.apply}</td><td class="num">—</td></tr></tbody></table>`;
+  }).join('');
+}
 async function loadAgencyStats() {
   const el = document.getElementById('agency-stats');
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
-  const [{ data, error }, { data: runs }] = await Promise.all([
+  const [{ data, error }, { data: runs }, visitsHtml] = await Promise.all([
     sb.rpc('admin_agency_totals', { p_days: 30 }),
-    sb.rpc('admin_agency_sync_last')
+    sb.rpc('admin_agency_sync_last'),
+    agencyVisitsTable().catch(e => `<div style="padding:6px 0;color:var(--muted);font-size:13px">Could not load visits by channel: ${esc(e.message || String(e))}</div>`)
   ]);
   const r0 = runs && runs[0];
   const syncLine = r0 ? `<div style="padding:4px 0 8px;font-size:12.5px;color:${r0.error ? '#DC5046' : 'var(--muted)'}">Last sync ${esc(new Date(r0.ran_at).toLocaleString('en-CA', { timeZone: 'America/Toronto', dateStyle: 'medium', timeStyle: 'short' }))}: ${r0.error ? 'FAILED — ' + esc(r0.error) : `${Number(r0.found)} on site · +${Number(r0.inserted)} new · ${Number(r0.updated)} updated · ${Number(r0.reopened)} reopened · ${Number(r0.closed)} closed${(r0.skipped || []).length ? ' · ' + r0.skipped.length + ' skipped (' + esc(r0.skipped.map(x => x.title + ': ' + x.reason).join('; ')) + ')' : ''}`}</div>` : '';
@@ -2488,7 +2507,9 @@ async function loadAgencyStats() {
   // One row per agency (Roman, 9 Oct): totals + distinct people from admin_agency_totals()
   const rows = data.map(r => `<tr><td>${esc(r.agency || 'Agency')}</td><td class="num">${Number(r.open_jobs)}</td><td class="num">${Number(r.opens)}</td><td class="num helpers">${Number(r.open_people)}</td><td class="num">${Number(r.applies)}</td><td class="num helpers">${Number(r.apply_people)}</td></tr>`).join('');
   el.innerHTML = syncLine + `<table class="region-table"><thead><tr><th>Agency</th><th>Open jobs</th><th>Opens</th><th>People</th><th>Apply taps</th><th>People</th></tr></thead><tbody>${rows}</tbody></table>`
-    + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Totals per agency, last 30 days. Opens = job cards opened (pin, list, shared link). Apply taps = taps on the Apply button that open the agency's site — whether they finished applying there is only known to the agency. Signed-out visitors are counted per browser. Admin, demo and test accounts are excluded; repeats by the same person on the same job within 10 minutes count once. People = different people (each counted once per agency, even across several jobs).</div>`;
+    + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Totals per agency, last 30 days. Opens = job cards opened (pin, list, shared link). Apply taps = taps on the Apply button that open the agency's site — whether they finished applying there is only known to the agency. Signed-out visitors are counted per browser. Admin, demo and test accounts are excluded; repeats by the same person on the same job within 10 minutes count once. People = different people (each counted once per agency, even across several jobs).</div>`
+    + visitsHtml
+    + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Visits by channel: Website = the agency's job pages on yoodle.ca/jobs/… (counted from 27 Nov 2026; crawlers, admins and tester skipped; same browser on the same job once per 30 min). In the Yoodle app = job cards opened on the map or list (same as Opens above). Apply taps on the website = the Apply on Yoodle / Sign in free button. Total views adds both channels; visitors are not added because one person can use both.</div>`;
 }
 
 // ── FIND A HELPER SEARCHES (admin-only RPC over search_events + tap_events.filter_category) ──
