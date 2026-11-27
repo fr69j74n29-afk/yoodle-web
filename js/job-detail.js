@@ -127,14 +127,14 @@ async function openJob(j){
     _an.style.display='block';
     if(isPoster){
       btn.textContent='Make public';
-      btn.onclick=()=>tapConfirm(btn,'Tap again to make it public',()=>offerMakePublic(j.id));
+      btn.onclick=()=>tapConfirm(btn,'Tap again to make it public',()=>{if(window.offerMakePublic)offerMakePublic(j.id);});
       unclaimBtn.innerHTML='✏️ Edit offer';unclaimBtn.style.display='block';
       unclaimBtn.onclick=()=>{closeOv('modal');openEditModal(j.id);};
     } else {
       btn.textContent='Accept job';
-      btn.onclick=()=>tapConfirm(btn,'Tap again to accept',()=>offerAccept(j));
+      btn.onclick=()=>tapConfirm(btn,'Tap again to accept',()=>{if(window.offerAccept)offerAccept(j);});
       unclaimBtn.innerHTML='Decline';unclaimBtn.style.display='block';
-      unclaimBtn.onclick=()=>tapConfirm(unclaimBtn,'Tap again to decline',()=>offerDecline(j.id));
+      unclaimBtn.onclick=()=>tapConfirm(unclaimBtn,'Tap again to decline',()=>{if(window.offerDecline)offerDecline(j.id);});
     }
   } else if(j.status==='completed'){
     btn.textContent='Job Completed';btn.disabled=true;

@@ -100,7 +100,7 @@ async function postJob(){
   if(!sb||!me){toast('🚀 Job posted! (demo mode)');resetPost();nav('browse');return;}
   const until=jobExpiryValue('p-exp'); // "How long should your job stay up?" (js/job-expiry.js): 2 weeks or a picked day
   if(!until)return toast('Pick the last day for your job');
-  if(postOffer)return ctSendOffer({title,desc,cat,budget,loc,until}); // private offer to a contact (js/contacts.js)
+  if(typeof postOffer!=='undefined'&&postOffer&&window.ctSendOffer)return ctSendOffer({title,desc,cat,budget,loc,until}); // private offer to a contact (js/contacts.js)
   const btn=document.getElementById('post-btn');btn.disabled=true;btn.textContent='Posting…';
   const{error}=await sb.from('tasks').insert({poster_id:myProfileId||me.id,title,description:desc,category:cat,price:budget?parseFloat(budget):0,address:loc,location_verified:locVerified,lat:gpsLat||null,lng:gpsLng||null,status:'open',...jobExpiryFields(until,jobExpiryPicked('p-exp')),show_on_map:true}); // jobs always pinned on the map
   btn.disabled=false;btn.textContent='Post Job';
