@@ -1213,6 +1213,10 @@ body::before {
     <div class="section-title lazy-h" onclick="toggleLazy('search')">FIND A HELPER — MOST SEARCHED — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-search">▸ TAP TO LOAD</span></div>
     <div id="lazy-search" style="display:none"><div id="search-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
+    <!-- SERVICE SUGGESTIONS (27 Nov 2026) — "Missing a service? Suggest one →" in the app's Fixed-price services filter; table service_suggestions -->
+    <div class="section-title lazy-h" onclick="toggleLazy('sugg')">SERVICE SUGGESTIONS <span id="sugg-count" style="opacity:.8"></span> <span class="lazy-hint" id="lazy-hint-sugg">▸ TAP TO LOAD</span></div>
+    <div id="lazy-sugg" style="display:none"><div id="sugg-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
+
     <!-- RECENT ACTIVITY -->
     <div class="section-title lazy-h" onclick="toggleLazy('activity')">RECENT ACTIVITY — LAST 48 HOURS <span class="lazy-hint" id="lazy-hint-activity">▸ TAP TO LOAD</span></div>
     <div id="lazy-activity" style="display:none">
@@ -1365,7 +1369,7 @@ function refreshAll() {
 // ── TAP-TO-LOAD SECTIONS (15 Oct 2026) ──
 // Regions (+ admin-geo.js ≈300 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
-const LAZY = { regions: loadRegions, onboard: loadOnboardStats, landing: loadLandingStats, webhits: loadWebHitsStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
+const LAZY = { regions: loadRegions, onboard: loadOnboardStats, landing: loadLandingStats, webhits: loadWebHitsStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats, sugg: loadServiceSuggestions,
   reports: loadReports, support: loadSupport, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended, notify: nfCount };
 // After an admin action: reload a section only if it's open; a closed one reloads fresh the next time it's opened.
 function lazyReload(k) {
@@ -2465,6 +2469,41 @@ async function loadSearchStats() {
   const rows = data.map(r => `<tr><td>${esc((r.emoji ? r.emoji + ' ' : '') + (r.category || '—'))}</td><td class="num">${Number(r.searches)}</td><td class="num helpers">${Number(r.people)}</td><td class="num">${Number(r.no_helpers)}</td><td class="num">${Number(r.helper_taps)}</td></tr>`).join('');
   el.innerHTML = `<table class="region-table"><thead><tr><th>Category</th><th>Searches</th><th>People</th><th>0 nearby</th><th>Taps after</th></tr></thead><tbody>${rows}</tbody></table>`
     + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Category picks in the map's Find a helper button by signed-in members. Admin and demo accounts are excluded; the same person picking the same category again within 10 minutes counts once. 0 nearby = searches with no matching helper inside their radius (unmet demand). Taps after = helper pins/cards tapped while that category was on.</div>`;
+}
+
+// ── SERVICE SUGGESTIONS (27 Nov 2026) ── admin_service_suggestions() newest first; status new / added / dismissed
+// via admin_service_suggestion_set(). MOST ASKED groups the same wording (case-insensitive), skipping tests and dismissed.
+async function loadServiceSuggestions() {
+  const el = document.getElementById('sugg-list'), cnt = document.getElementById('sugg-count');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_service_suggestions', { p_limit: 500 });
+  if (error) { el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`; return; }
+  const rows = data || [], real = rows.filter(r => !r.is_tester), fresh = real.filter(r => r.status === 'new');
+  if (cnt) cnt.textContent = rows.length ? `· ${fresh.length} new · ${real.length} total` : '';
+  if (!rows.length) { el.innerHTML = `<div style="padding:10px 0;color:var(--muted);font-size:13px">No suggestions yet.</div>`; return; }
+  const grp = {};
+  real.filter(r => r.status !== 'dismissed').forEach(r => { const k = r.text.trim().toLowerCase(); (grp[k] = grp[k] || { t: r.text, n: 0 }).n++; });
+  const top = Object.values(grp).filter(g => g.n > 1).sort((a, b) => b.n - a.n).slice(0, 8);
+  const topHtml = top.length ? `<div style="padding:10px 0 6px;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.4px">MOST ASKED</div>`
+    + top.map(g => `<div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid var(--border);font-size:14px"><span style="flex:1;font-weight:700">${esc(g.t)}</span><span>${g.n}×</span></div>`).join('')
+    + `<div style="padding:14px 0 6px;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.4px">ALL — NEWEST FIRST</div>` : '';
+  const when = d => new Date(d).toLocaleString('en-CA', { timeZone: 'America/Toronto', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const tag = (txt, bg, fg) => `<span style="margin-left:6px;font-size:11px;font-weight:800;border-radius:100px;padding:1px 8px;background:${bg};color:${fg}">${txt}</span>`;
+  const btn = (id, st, label) => `<button onclick="setServiceSuggestion(${Number(id)},'${st}')" style="padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;font-weight:700;cursor:pointer">${label}</button>`;
+  el.innerHTML = topHtml + rows.map(r => `<div style="padding:9px 0;border-top:1px solid var(--border);${r.status === 'dismissed' ? 'opacity:.45' : ''}">
+      <div style="font-size:14.5px;font-weight:700">${esc(r.text)}${r.status === 'added' ? tag('✓ ADDED', '#22A45D', '#fff') : ''}${r.is_tester ? tag('TEST', 'rgba(0,0,0,.12)', 'var(--muted)') : ''}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:4px;font-size:12.5px;color:var(--muted)">
+        <span>${esc(r.name || 'Deleted member')} · ${esc(when(r.created_at))}</span>
+        <span style="flex:1"></span>
+        ${r.status !== 'added' ? btn(r.id, 'added', '✓ Added') : ''}${r.status !== 'dismissed' ? btn(r.id, 'dismissed', 'Dismiss') : ''}${r.status !== 'new' ? btn(r.id, 'new', 'Undo') : ''}
+      </div></div>`).join('')
+    + `<div style="padding:10px 0 4px;font-size:12px;color:var(--muted);line-height:1.5">From "Missing a service? Suggest one →" at the bottom of Filter → Fixed-price services. Each one is saved with the member and date/time. Mark ✓ Added once the service is in service_catalog. TEST = tester/demo accounts (not counted).</div>`;
+}
+async function setServiceSuggestion(id, status) {
+  const { error } = await sb.rpc('admin_service_suggestion_set', { p_id: id, p_status: status });
+  if (error) { alert('Could not update: ' + error.message); return; }
+  loadServiceSuggestions();
 }
 
 async function loadRecentActivity() {
