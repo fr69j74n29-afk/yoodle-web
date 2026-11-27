@@ -1,6 +1,6 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- Contact support / send feedback from the Profile page — 27 Nov 2026 (Rhea).
--- App: js/feedback.js (box at the bottom of Profile). Admin console: "FEEDBACK & SUPPORT" (admin.html).
+-- Feedback & suggestions from the Profile page — 27 Nov 2026 (Rhea). One-way; support stays a two-way chat.
+-- App: js/feedback.js (box at the bottom of Profile). Admin console: "FEEDBACK & SUGGESTIONS" (admin.html).
 --
 -- One-way: a member types a message and sends it; it lands in the admin console (no chat, no email). Each one
 -- keeps a little context (which app / site, page) to help us reproduce problems. The team marks them done.
