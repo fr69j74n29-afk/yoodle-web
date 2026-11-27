@@ -1056,7 +1056,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <button onclick="nav('post')" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>
         <div class="section-h" style="margin-bottom:0">Post a Job</div>
       </div>
-      <div id="p-offer" class="p-offer" style="display:none"></div><!-- private job offer to a contact (js/contacts.js) -->
       <input type="hidden" id="p-cat" value="">
       <div class="form-g"><label class="form-lbl">Category</label><div id="p-cat-grid" class="ys-pcats"></div></div>
       <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="p-title" type="text" placeholder="e.g. Help me move a couch"></div>
@@ -1146,13 +1145,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         </button>
         </div>
       </div>
-      <!-- Chats | Contacts tabs (26 Nov 2026): Contacts = friend requests by email + friend chats (js/contacts.js) -->
-      <div class="msg-tabs" role="tablist">
-        <button id="msg-tab-chats" class="on" type="button" role="tab" onclick="msgTab('chats')">Chats</button>
-        <button id="msg-tab-contacts" type="button" role="tab" onclick="msgTab('contacts')">Contacts <span class="ct-badge" id="ct-badge"></span></button>
-      </div>
       <div id="conversations-list"><div class="loading"><div class="spinner"></div></div></div>
-      <div id="contacts-pane" style="display:none"></div>
     </div>
   </div>
 
@@ -1275,7 +1268,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="chat-title">—</div>
         <div style="font-size:13.5px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer" id="chat-other" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)">—<span style="font-size:11.5px;opacity:.5">›</span></div>
       </div>
-      <button id="chat-connect" class="chat-connect" type="button" style="display:none" onclick="ctConnectTap(this)"></button><!-- Connect (js/contacts.js) -->
       <div class="card-menu-wrap" id="chat-more-wrap">
         <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'chat-menu')" aria-label="More options" style="width:40px;height:40px;font-size:22px">⋮</button>
         <div class="card-menu-drop" id="chat-menu" style="top:44px">
@@ -1407,17 +1399,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 </div>
 
 <!-- RENEW SHEET (Activity: expired / paused job → pick the new end date, js/job-expiry.js) -->
-<!-- SEND A PRIVATE JOB TO A CONTACT (js/contacts.js ctPickContact) -->
-<div class="modal-ov" id="ct-pick-modal" onclick="if(event.target.id==='ct-pick-modal')closeOv('ct-pick-modal')">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-title" style="margin-bottom:6px">Send to a contact</div>
-    <div style="font-size:14px;color:var(--muted);margin-bottom:14px;line-height:1.5">Only you and the contact you pick can see this job. They can accept or decline it.</div>
-    <div id="ct-pick-list"></div>
-    <button onclick="closeOv('ct-pick-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:6px">Cancel</button>
-  </div>
-</div>
-
 <div class="modal-ov" id="renew-modal" onclick="if(event.target.id==='renew-modal')closeOv('renew-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -1790,7 +1771,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/job-edit.js?v=20261126p"></script>
 <script src="js/profile.js?v=20261125a"></script>
 <script src="js/messages.js?v=20261126p"></script>
-<script src="js/contacts.js?v=20261127a"></script>
 <script src="js/chat.js?v=20261126r2"></script>
 <script src="js/reactions.js?v=20261125a"></script>
 <script src="js/id-verification.js?v=20261125a"></script>
