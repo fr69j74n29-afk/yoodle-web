@@ -37,7 +37,7 @@ const CT_EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 .ct-badge{display:none;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--pink);color:#fff;font-size:11px;font-weight:900;line-height:18px}
 .ct-badge.show{display:inline-block}
 .ct-search{position:relative;margin-bottom:14px}
-.ct-search input{width:100%;box-sizing:border-box;padding:12px 14px 12px 38px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;outline:none}
+.ct-search input{width:100%;box-sizing:border-box;padding:12px 14px 12px 38px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:16px;font-weight:700;outline:none}
 .ct-search input:focus{border-color:var(--btn-a)}
 .ct-search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--muted)}
 .ct-h{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:16px 2px 8px}
@@ -61,7 +61,8 @@ button.ct-src:hover{color:var(--text)}
 .ct-pn{display:block;margin-top:3px;padding:0;border:none;background:none;text-align:left;font:700 12.5px 'Nunito',sans-serif;color:var(--btn-a);cursor:pointer;white-space:normal}
 .ct-pn.has{color:var(--text2)}
 .ct-pn-edit{display:flex;gap:6px;margin-top:6px}
-.ct-pn-edit input{flex:1;min-width:0;padding:7px 10px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font:700 13.5px 'Nunito',sans-serif}
+/* text boxes: 16px or more, or iPhone Safari zooms the page on tap and leaves it under its bars (Roman, 26 Nov) */
+.ct-pn-edit input{flex:1;min-width:0;padding:6px 10px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font:700 16px 'Nunito',sans-serif}
 .chat-connect{padding:7px 12px;border-radius:100px;border:1.5px solid var(--btn-a);background:transparent;color:var(--btn-a);font:800 13px 'Nunito',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .chat-connect:disabled{opacity:.6;border-color:var(--border);color:var(--muted);cursor:default}
 .ct-offer-btn{display:block;width:100%;margin-top:8px;padding:8px 12px;border-radius:10px;border:1.5px solid currentColor;background:transparent;color:inherit;font:800 13.5px 'Nunito',sans-serif;cursor:pointer}
