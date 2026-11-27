@@ -405,7 +405,9 @@ html:not(.ml-css) #map>*{visibility:hidden} /* until maplibre-gl.css has applied
 .list-card{background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px}
 .list-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--jc,var(--purple))}
 .list-card:active{transform:scale(.98)}
-body.theme-sage-dark .list-card{background:#000} /* dark mode: job tiles black like the selected Jobs / Helpers toggle (27 Nov 2026) */
+/* dark mode (27 Nov 2026): list view page grey like the top bar, job / helper / pro tiles black like the selected toggle */
+body.theme-sage-dark #app-list{background:var(--surface)}
+body.theme-sage-dark .list-card,body.theme-sage-dark .list-tile{background:#000!important}
 .lc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
 .lc-cat{font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--jc,var(--purple));display:flex;align-items:center;gap:4px;flex-shrink:0}
 .lc-budget{font-size:17px;font-weight:800;color:var(--lime);white-space:nowrap;flex-shrink:0}
@@ -1783,14 +1785,14 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/theme.js?v=20261125a"></script>
 <script src="js/contact.js?v=20261125a"></script>
 <script src="js/find-helper.js?v=20261127d"></script>
-<script src="js/find-pro.js?v=20261125e"></script>
+<script src="js/find-pro.js?v=20261127a"></script>
 <script src="js/location.js?v=20261125a"></script>
 <script src="js/map-pins.js?v=20261126o"></script>
 <script src="js/listings.js?v=20261125c"></script>
 <script src="js/analytics.js?v=20261125a"></script>
 <script src="js/view-counter.js?v=20261126b"></script>
 <script src="js/map-data.js?v=20261127r"></script>
-<script src="js/list-view.js?v=20261127b"></script>
+<script src="js/list-view.js?v=20261127c"></script>
 <script src="js/account-checks.js?v=20261125a"></script>
 <script src="js/home-base.js?v=20261125a"></script>
 <script src="js/report-block.js?v=20261125a"></script>

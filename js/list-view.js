@@ -41,7 +41,7 @@ function helperCard(h){
       const cats=(h.helper_categories||[]).slice(0,4).map(c=>`<span style="font-size:11.5px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:2px 8px;white-space:nowrap">${c}</span>`).join('');
       const rateLabel=h.helper_rate_type==='free'||!h.helper_rate?'Free':
         `$${h.helper_rate}${h.helper_rate_type==='hourly'?'/hr':h.helper_rate_type==='daily'?'/day':' flat'}`;
-      return `<div onclick="logTap('helper','${h.id}','card');openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
+      return `<div class="list-tile" onclick="logTap('helper','${h.id}','card');openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
         <div style="display:flex;align-items:center;gap:12px">
           ${avatarCircle(name,h.avatar_color,'28px','12px')}
           <div style="min-width:0;flex:1">
@@ -121,7 +121,7 @@ function renderListTabContent(){
       const rateLabel=h.helper_rate_type==='free'||!h.helper_rate?'Free':`$${h.helper_rate}${h.helper_rate_type==='hourly'?'/hr':h.helper_rate_type==='daily'?'/day':' flat'}`;
       let distLabel='';
       if(gpsLat&&gpsLng&&h.last_lat&&h.last_lng){const d=haversineKm(gpsLat,gpsLng,h.last_lat,h.last_lng);distLabel=d<=1?'Less than 1 km away':`${d.toFixed(1)} km away`;}
-      return `<div onclick="logTap('helper','${h.id}','card');openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
+      return `<div class="list-tile" onclick="logTap('helper','${h.id}','card');openOtherProfile('${h.id}')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:8px;cursor:pointer">
         <div style="display:flex;align-items:center;gap:12px">
           ${avatarCircle(name,h.avatar_color,'28px','12px')}
           <div style="min-width:0;flex:1">
