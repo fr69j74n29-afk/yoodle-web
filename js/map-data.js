@@ -90,7 +90,7 @@ async function loadJobs() {
     // Pro listings + trades (same round trip)
     fetchPros(userLat,userLng,mapLoadKm),
     // own open jobs (29 Oct 2026) — get_open_jobs_near excludes me; drawn on the map only (not in list/counts)
-    pid?sb.from('tasks').select('id,poster_id,title,description,price,category,lat,lng,address,status,doer_id,claimer_id,expires_at,location_verified,completed_at,created_at,show_on_map,url,type').eq('poster_id',pid).in('status',['open','offered']).eq('show_on_map',true).limit(50):Promise.resolve({data:null})
+    pid?sb.from('tasks').select('id,poster_id,title,description,price,category,lat,lng,address,status,doer_id,claimer_id,expires_at,location_verified,completed_at,created_at,show_on_map,url,type').eq('poster_id',pid).in('status',window.ctFetch?['open','offered']:['open']).eq('show_on_map',true).limit(50):Promise.resolve({data:null})
   ]);
   const _mp=_meRes?.data;
   myIsTester=!!_mp?.is_tester; // test accounts (profiles.is_tester) are only shown to other test accounts
@@ -98,7 +98,7 @@ async function loadJobs() {
   // own pin: same rule as other helpers' pins — active listing (not paused) with a location
   myHelperPin=(_mp&&_mp.visible_on_map&&_mp.show_on_map&&_mp.last_lat&&_mp.last_lng)?_mp:null;
   // private offers made TO me (js/contacts.js): only private_for can read them (RLS). Drawn like my own pins.
-  if(pid)sb.from('tasks').select('*').eq('private_for',pid).eq('status','offered').limit(20).then(({data})=>{
+  if(pid&&window.ctFetch)sb.from('tasks').select('*').eq('private_for',pid).eq('status','offered').limit(20).then(({data})=>{
     offerPins=(data||[]).filter(j=>j.lat&&j.lng).map(j=>({...j,category:(j.category||'other').toLowerCase()}));
     if(offerPins.length)renderMapPins();
   },()=>{});

@@ -14,6 +14,8 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 function spin(){return'<div class="loading"><div class="spinner"></div></div>';}
 function emptyState(ico,t,d){return`<div class="empty"><div class="empty-ico">${ico}</div><div class="empty-t">${t}</div><div class="empty-d">${d}</div></div>`;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+// For a value inside a quoted JS string in an inline handler: onclick="f('${escJs(name)}')". esc() alone isn't enough there (O'Brien ends the string).
+function escJs(s){return esc(String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n'));}
 function linkify(s){return s.replace(/(https?:\/\/[^\s<&]+(?:&amp;[^\s<&]+)*|www\.[^\s<&]+(?:&amp;[^\s<&]+)*)/gi,function(url){const href=url.startsWith('www.')?'https://'+url:url;return'<a href="'+href+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;word-break:break-all">'+url+'</a>';});}
 // Avatar standard: black fill, white border, white initial — everywhere except map pins.
 // Signature unchanged for call-site compatibility; color/border params are intentionally ignored.

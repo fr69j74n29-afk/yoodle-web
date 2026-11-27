@@ -7,9 +7,15 @@ async function loadMessages(){
   if(!sb||!me){el.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see messages');return;}
   const pid=myProfileId||me.id;
 
-  const[{data,error}]=await Promise.all([sb.rpc('get_conversations',{user_id:pid}),window.ctFetch?ctFetch():null]);
+  let[{data,error}]=await Promise.all([sb.rpc('get_conversations',{user_id:pid}),window.ctFetch?ctFetch():null]);
   const directIds=window.ctDirectConvIds?ctDirectConvIds():new Set(); // friend chats (js/contacts.js)
   if(error){el.innerHTML=emptyState('😕','Error loading messages',error.message);return;}
+  if(!window.ctFetch&&data?.length){
+    // js/contacts.js isn't loaded (Contacts held back on the live site): leave out contact chats, which would show as a job called "Message"
+    const{data:dt}=await sb.from('tasks').select('id').eq('type','direct').in('id',[...new Set(data.map(t=>t.task_id))]);
+    const hide=new Set((dt||[]).map(r=>r.id));
+    if(hide.size)data=data.filter(t=>!hide.has(t.task_id));
+  }
   if(!data?.length){el.innerHTML=emptyState('💬','No conversations yet','Express interest in a job to start messaging');return;}
 
   // update nav dot from same data — no extra query needed
@@ -34,7 +40,7 @@ async function loadMessages(){
       else if(window.supportOwnsChat&&supportOwnsChat(t.poster_id,t.other_id,t.title)) statusTag=''; // Contact support (js/support-chat.js)
       else if(t.app_status==='assigned'||t.task_status==='claimed') statusTag=`<span style="font-size:11.5px;color:var(--teal);font-weight:800;margin-left:6px">Assigned</span>`;
     }
-    return `<div class="conv-row" style="${rowBg}" data-conv="${t.conversation_id}" data-task="${t.task_id}" data-poster="${t.poster_id}" data-other="${t.other_id||''}" onclick="openChat('${t.task_id}','${esc(title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
+    return `<div class="conv-row" style="${rowBg}" data-conv="${t.conversation_id}" data-task="${t.task_id}" data-poster="${t.poster_id}" data-other="${t.other_id||''}" onclick="openChat('${t.task_id}','${escJs(title)}','${escJs(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
       ${window.yoodiAvatar&&yoodiOwnsChat(t.poster_id,t.other_id)?yoodiAvatar():window.supportAvatar&&supportOwnsChat(t.poster_id,t.other_id,t.title)?supportAvatar():avatarCircle(otherName,null,'28px','12px')}
       <div class="conv-body">
         <div class="conv-top">

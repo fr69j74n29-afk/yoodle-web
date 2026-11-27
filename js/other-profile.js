@@ -56,7 +56,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
         :'<span style="font-size:12.5px;font-weight:800;color:var(--muted);background:rgba(127,127,127,.12);border-radius:100px;padding:3px 10px">ID not verified</span>'}</div>
       ${_pro.bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(_pro.bio)}</div>`:''}
       <div style="font-size:13px;color:var(--muted)">📍 ${area?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(area)}" target="_blank" rel="noopener" style="color:inherit">${esc(area)}</a>`:'Address not set'}<br>Travels up to ${Number(_pro.service_radius_km)||25} km</div>
-      ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Pro')}',true)" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:${PRO_PIN};border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Pro</button>`:''}
+      ${!isMe?`<button onclick="openContactModal('${userId}','${escJs(prof.name||'Pro')}',true)" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:${PRO_PIN};border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Pro</button>`:''}
     </div>`;
   })():'';
   const proMode=mode==='pro'&&_proLive;
@@ -102,7 +102,7 @@ async function openOtherProfile(userId, mode){ // mode 'pro' = Pro card only (pr
         ${cats.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${cats.map(c=>`<span style="font-size:12.5px;font-weight:800;color:var(--purple);background:rgba(92,138,106,.08);border:1px solid rgba(92,138,106,.18);border-radius:100px;padding:3px 10px">${c}</span>`).join('')}</div>`:''}
         ${prof.helper_bio?`<div class="op-bio-text" style="margin-bottom:10px">${esc(prof.helper_bio)}</div>`:''}
         <div class="op-rate" style="font-size:14px;font-weight:800;color:var(--lime)">${rateLabel}</div>
-        ${!isMe?`<button onclick="openContactModal('${userId}','${esc(prof.name||'Helper')}')" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Helper</button>`:''}
+        ${!isMe?`<button onclick="openContactModal('${userId}','${escJs(prof.name||'Helper')}')" style="width:100%;margin-top:16px;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer">Contact Helper</button>`:''}
       </div>`;
     })():''}
 `;

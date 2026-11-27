@@ -23,6 +23,7 @@ async function loadMyJobs(){
   if(hoRes.error)console.warn('help_offer query error:',hoRes.error.message);
   const posted=(postedRes.data||[])
     .filter(j=>j.status!=='expired'||((j.type||'job')==='job'&&!isAgencyJob(j)))
+    .filter(j=>j.status!=='offered'||window.ctPickContact) // private offers need js/contacts.js (held back on the live site)
     .sort((a,b)=>(a.status==='expired')-(b.status==='expired'));
   const apps=appRes.data||[], helpOfferTasks=hoRes.data||[];
 
@@ -64,7 +65,7 @@ async function loadMyJobs(){
         </div>
       </div>`;
       actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-        <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+        <button onclick="event.stopPropagation();openChat('${j.id}','${escJs(j.title)}','${escJs(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
       </div>`;
     }
     return `<div class="job-card" style="--jc:${color};cursor:default;overflow:visible">
@@ -95,7 +96,7 @@ async function loadMyJobs(){
       <div class="jc-top"><div class="jc-title">${esc(j.title)}</div></div>
       <div class="jc-desc">${esc(j.description||'')}</div>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+        <button onclick="event.stopPropagation();openChat('${j.id}','${escJs(j.title)}','${escJs(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
       </div>
     </div>`;
   }).join('');
@@ -123,7 +124,7 @@ async function loadMyJobs(){
         <span style="font-size:14px;font-weight:800;color:var(--purple)">${appCount} interested</span>
         <span style="display:flex;gap:6px">
           <button data-act="pause" data-id="${esc(j.id)}" style="padding:6px 12px;border-radius:100px;background:transparent;border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">⏸ Pause</button>
-          <button onclick="event.stopPropagation();openApplicants('${j.id}','${esc(j.title)}')" style="padding:6px 14px;border-radius:100px;background:var(--btn-a);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">Review →</button>
+          <button onclick="event.stopPropagation();openApplicants('${j.id}','${escJs(j.title)}')" style="padding:6px 14px;border-radius:100px;background:var(--btn-a);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">Review →</button>
         </span>
       </div>`:'';
       cardMenu=`<div class="card-menu-wrap">
@@ -197,7 +198,7 @@ async function loadMyJobs(){
           </div>
         </div>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${escJs(j.title)}','${escJs(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
           <button onclick="event.stopPropagation();tapConfirm(this,'Tap again to complete',()=>chatComplete('${j.id}','${j.doer_id}'))" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">✅ Complete</button>
         </div>`;
       }

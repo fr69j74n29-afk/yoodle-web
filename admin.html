@@ -1719,6 +1719,8 @@ function adminToast(msg) {
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escAttr(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+// Inside a quoted JS string in an inline handler: onclick="f('${escJsAttr(name)}')". &#39; is decoded before the JS runs, so escAttr alone lets O'Brien end the string.
+function escJsAttr(s) { return escAttr(String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n')); }
 
 function timeAgo(d) {
   const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -2228,7 +2230,7 @@ async function loadConvOverview() {
       <div style="color:var(--muted)">${esc(r.job || '—')} · ${esc(r.job_status || '')} · ${r.msgs} msg${r.msgs === 1 ? '' : 's'} · last <span title="${r.last_msg ? escAttr(timeAgo(r.last_msg)) : ''}">${esc(last)}</span></div>
       ${hist ? `<div style="margin-top:6px;padding:6px 10px;background:var(--surface2);border-radius:8px">${hist}</div>` : ''}
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
-        ${r.task_id && ['open', 'claimed'].includes(r.job_status) ? `<button class="btn-admin-msg btn-admin-danger" onclick="adminCancelJob('${r.task_id}','${escAttr(r.job || 'this job')}')">✕ Cancel job</button>` : ''}
+        ${r.task_id && ['open', 'claimed'].includes(r.job_status) ? `<button class="btn-admin-msg btn-admin-danger" onclick="adminCancelJob('${r.task_id}','${escJsAttr(r.job || 'this job')}')">✕ Cancel job</button>` : ''}
         ${convSuspendBtn(r.poster_id, r.poster, 'poster', suspendedIds)}
         ${convSuspendBtn(r.helper_id, r.helper, 'helper', suspendedIds)}
       </div>
@@ -2527,8 +2529,8 @@ async function loadRecentActivity() {
           <div class="ac-footer">
             <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${j.address ? '📍 ' + esc(j.address) : ''}</span>
             <span style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end">
-              <button class="btn-admin-msg" onclick="openAdminMsg('job','${j.poster_id}','${escAttr(poster.name || 'User')}','${j.id}','${escAttr(j.title || '')}')">💬 Message Poster</button>
-              ${['open', 'claimed'].includes(statusClass) ? `<button class="btn-admin-msg btn-admin-danger" onclick="adminCancelJob('${j.id}','${escAttr(j.title || 'this job')}')">✕ Cancel job</button>` : ''}
+              <button class="btn-admin-msg" onclick="openAdminMsg('job','${j.poster_id}','${escJsAttr(poster.name || 'User')}','${j.id}','${escJsAttr(j.title || '')}')">💬 Message Poster</button>
+              ${['open', 'claimed'].includes(statusClass) ? `<button class="btn-admin-msg btn-admin-danger" onclick="adminCancelJob('${j.id}','${escJsAttr(j.title || 'this job')}')">✕ Cancel job</button>` : ''}
               ${suspendBtn(j.poster_id, suspendedIds)}
             </span>
           </div>
@@ -2557,7 +2559,7 @@ async function loadRecentActivity() {
               </div>
             </div>
             <span style="display:flex;flex-direction:column;gap:6px">
-              <button class="btn-admin-msg" onclick="openAdminMsg('helper','${h.id}','${escAttr(h.name || 'Helper')}','','')">💬 Message</button>
+              <button class="btn-admin-msg" onclick="openAdminMsg('helper','${h.id}','${escJsAttr(h.name || 'Helper')}','','')">💬 Message</button>
               ${suspendBtn(h.id, suspendedIds)}
             </span>
           </div>

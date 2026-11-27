@@ -121,6 +121,10 @@ async function openJob(j){
     } else {
       btn.textContent='No longer available';btn.disabled=true;
     }
+  } else if(j.status==='offered'&&!window.offerAccept){
+    // js/contacts.js isn't loaded (Contacts held back on the live site): nothing here would work
+    _an.textContent='🔒 A private job offer. Private offers aren’t available in this version of Yoodle yet.';_an.style.display='block';
+    btn.textContent='Not available yet';btn.disabled=true;btn.onclick=null;
   } else if(j.status==='offered'){
     // Private job offer between contacts (js/contacts.js): only the poster and private_for can read it
     _an.textContent=isPoster?'🔒 Private offer: only you and your contact can see this job. Make it public to let anyone apply.':'🔒 A private job offer for you. Only the two of you can see it.';
@@ -371,8 +375,8 @@ async function openApplicants(taskId,taskTitle){
       </div>
       ${bio}
       <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="openChatWithApplicant('${taskId}','${esc(name)}','${app.applicant_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
-        <button onclick="assignApplicant('${taskId}','${app.id}','${app.applicant_id}','${esc(name)}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">✅ Assign</button>
+        <button onclick="openChatWithApplicant('${taskId}','${escJs(name)}','${app.applicant_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+        <button onclick="assignApplicant('${taskId}','${app.id}','${app.applicant_id}','${escJs(name)}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">✅ Assign</button>
       </div>
     </div>`;
   }).join('');
