@@ -100,6 +100,10 @@ async function ctFetch(){
   if(ctTabNow==='contacts')ctRender(); // keep the visible list in step (e.g. after switching accounts)
   return ctRows;
 }
+// A contact request or accept arrived (live notification, js/realtime.js): reload the list now, so it shows
+// without a reload (and the tab badge counts it). ctStale(): reload on the next tap instead.
+function ctRefresh(){ctFetchedAt=0;if(sb&&me)ctFetch();}
+function ctStale(){ctFetchedAt=0;}
 // Contact chats from get_conversations (loadMessages). They're not in the Chats list: shown here with their last message.
 function ctSetChats(rows){
   ctChats={};

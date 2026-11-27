@@ -99,6 +99,8 @@ function subscribeToMessages(){
         if(msgView?.classList.contains('active'))loadMessages();
       }
     }
+  }).on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'profile_id=eq.'+(myProfileId||me.id)},payload=>{
+    _onNewNotification(payload.new||{}); // live notifications (migration 20261127_003)
   }).subscribe(status=>{
     if(ch!==realtimeChannel)return; // old channel closing after a resubscribe — ignore
     if(status==='SUBSCRIBED'){_rtRetry=0;return;}
@@ -121,6 +123,16 @@ function _catchUpMessages(){
     loadChatMessages(true);
     sb.rpc('mark_conversation_read',{p_conversation_id:activeChatConvId,p_user_id:pid}).then(()=>refreshUnreadCount(),()=>{});
   }
-  if(document.getElementById('app-messages')?.classList.contains('active'))loadMessages();
+  if(document.getElementById('app-messages')?.classList.contains('active')){loadMessages();if(window.ctRefresh)ctRefresh();} // requests missed while the live link was down
+  else if(window.ctStale)ctStale();
+}
+// A new notification arrived live: bell count; contact requests / accepts also update Contacts and Messages.
+function _onNewNotification(n){
+  if(window.loadNotifications)loadNotifications();
+  if(/^friend/.test(n.kind||'')){
+    if(window.ctRefresh)ctRefresh();                // Contacts list + tab badge (js/contacts.js)
+    tabDirty('messages');                           // an accepted request starts a contact chat
+    if(document.getElementById('app-messages')?.classList.contains('active'))loadMessages();
+  }
 }
 function _onOnline(){if(me&&sb){subscribeToMessages();_catchUpMessages();}}
