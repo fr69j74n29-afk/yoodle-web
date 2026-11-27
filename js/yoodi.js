@@ -20,7 +20,7 @@
 
 var YOODI_ID='149e5443-528f-4106-871b-890d7fe1f93b';
 var YOODI={active:false,online:null,chips:false,checkedAt:0,lastMsgs:[],waitTimer:null,pollTimer:null,
-  TIP_KEY:'yoodi_tip_seen_v1',DRAFT_KEY:'yoodi_draft_land',BIO_KEY:'yoodi_bio_pending',
+  DRAFT_KEY:'yoodi_draft_land',BIO_KEY:'yoodi_bio_pending',
   THINK_S:90};          // after this long without a reply, the "thinking" bubble says it's taking longer
 // Links in Yoodi's replies that become buttons: her drafts, and helper / Pro profiles (?helper=<id>[&s=pro])
 var YOODI_LINK_RE=/https:\/\/yoodle\.ca\/\?(?:yoodi_draft=([0-9a-f-]{36})|helper=([0-9a-f-]{36})(&s=pro)?)/gi;
@@ -38,11 +38,6 @@ body.theme-sage-dark #yoodi-fab img{
 body.theme-sage-dark #yoodi-fab .yd-dot{border-color:#1a1f1c}
 #yoodi-fab.off{filter:grayscale(1);opacity:.8}
 #yoodi-fab.off .yd-dot{background:#9CA3AF}
-#yoodi-tip{position:absolute;right:80px;bottom:84px;z-index:11;max-width:220px;background:var(--surface);color:var(--text);
-  border:1.5px solid var(--border);border-radius:16px 16px 4px 16px;padding:12px 30px 12px 14px;box-shadow:0 6px 18px rgba(0,0,0,.18);
-  font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;line-height:1.35;cursor:pointer}
-#yoodi-tip b{display:block;font-size:15.5px;font-weight:800;margin-bottom:2px}
-#yoodi-tip .x{position:absolute;top:6px;right:8px;border:none;background:none;color:var(--muted);font-size:17px;cursor:pointer;padding:2px 4px}
 #chat-modal.yoodi-chat #chat-more-wrap,#chat-modal.yoodi-chat #chat-actions{display:none!important}
 #chat-modal.yoodi-chat #chat-av{background:none!important;border:none!important;box-shadow:none!important;border-radius:0!important;
   overflow:visible;cursor:default;pointer-events:none;width:38px!important;height:44px!important}
@@ -109,23 +104,14 @@ function _ydPaintOnline(){
   }
 }
 
-// ---------- floating Yoodi + first-time tip ----------
+// ---------- floating Yoodi ----------
 function _ydMountFab(){
   if(document.getElementById('yoodi-fab'))return;
   var host=document.querySelector('#app-map > div');if(!host)return;
   host.insertAdjacentHTML('beforeend',
     `<button id="yoodi-fab" onclick="yoodiFabTap()" aria-label="Chat with Yoodi, Yoodle's assistant"><img src="yoodi.png?v=20261123" alt=""><span class="yd-dot"></span></button>`);
-  if(!_ydGet(YOODI.TIP_KEY))setTimeout(_ydShowTip,4000);
 }
-function _ydShowTip(){
-  if(_ydGet(YOODI.TIP_KEY)||document.getElementById('yoodi-tip'))return;
-  var host=document.querySelector('#app-map > div');if(!host)return;
-  host.insertAdjacentHTML('beforeend',
-    `<div id="yoodi-tip" onclick="yoodiFabTap()"><b>Need a hand? 👋</b>Post a job, check a price or polish your bio.`+
-    `<button class="x" onclick="event.stopPropagation();yoodiHideTip()" aria-label="Close">✕</button></div>`);
-}
-function yoodiHideTip(){_ydSet(YOODI.TIP_KEY,1);var t=document.getElementById('yoodi-tip');if(t)t.remove();}
-function yoodiFabTap(){yoodiHideTip();yoodiOpen();}
+function yoodiFabTap(){yoodiOpen();}
 
 // ---------- open the chat ----------
 // opts.text: put this in the reply box (member reviews and sends).
