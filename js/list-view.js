@@ -97,7 +97,7 @@ function renderListTabContent(){
 
   if(listTab==='jobs'){
     if(!sheetJobs.length){el.innerHTML=emptyState('🌱','No jobs in this area','Move the map or try a larger radius');return;}
-    el.innerHTML=`<div class="jobs-grid">${sheetJobs.map(j=>listCard(j,j.profiles)).join('')}</div>`;
+    el.innerHTML=`<div class="jobs-grid" style="padding-top:0;gap:10px">${sheetJobs.map(j=>listCard(j,j.profiles)).join('')}</div>`; // same spacing as the Helpers tab (.jobs-grid's 16px top is for Activity)
   } else if(listPros){
     el.innerHTML=listPros.length
       ?`<div style="display:flex;flex-direction:column;gap:10px">${listPros.map(proListCard).join('')}</div>`
