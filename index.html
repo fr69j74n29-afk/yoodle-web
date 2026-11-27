@@ -276,10 +276,8 @@ body.theme-sage-dark .le{color:#E0C45A}
 .vw-btn svg{width:19px;height:19px;display:block}
 .vw-ttl{display:flex;align-items:center;gap:7px}.vw-ttl svg{width:19px;height:19px}
 .vw-btn:active{transform:scale(.94)}
-/* Yoodle Shield badge (26 Nov 2026): same pill as views, shown only when 1+ messages are held */
+/* Yoodle Shield badge (26 Nov 2026): same pill as views, shown only when 1+ messages are held. Lives in the Messages header, left of the bell */
 .sh-btn{color:var(--teal)}.vw-ttl.sh svg{color:var(--teal)}
-@media (max-width:380px){.top-right:has(.sh-btn.on){gap:6px}.top-right:has(.sh-btn.on) .vw-btn{padding:0 8px;gap:3px}}
-@media (max-width:350px){.sh-btn #sh-n{display:none}}
 .vw-big{font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-top:10px}
 .vw-big b{font-size:22px;font-weight:900}
 .vw-note{font-size:13px;font-weight:700;color:var(--muted);line-height:1.5;margin-top:6px}
@@ -914,7 +912,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   <div class="top-bar">
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
     <div class="top-right">
-      <button class="vw-btn sh-btn" id="sh-btn" onclick="openShieldPanel()" aria-label="Yoodle Shield: messages held for review"><span id="sh-ic" aria-hidden="true"></span><span id="sh-n">0</span></button>
       <button class="vw-btn" id="vw-btn" onclick="openViewPanel()" aria-label="Views of your helper profile"><span id="vw-ic" aria-hidden="true"></span><span id="vw-n">0</span></button>
       <button class="hs-btn fs-btn" id="hs-btn" onclick="hsToggle()" aria-label="Filter the map: helpers or professionals">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -1141,10 +1138,13 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <!-- Notifications bell (17 Nov 2026): moved here from the top bar; unread notifications also light the Messages tab dot -->
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
         <div class="section-h" style="margin-bottom:0">Messages</div>
+        <div style="display:flex;align-items:center;gap:8px">
+        <button class="vw-btn sh-btn" id="sh-btn" onclick="openShieldPanel()" aria-label="Yoodle Shield: messages held for review"><span id="sh-ic" aria-hidden="true"></span><span id="sh-n">0</span></button>
         <button class="theme-btn nt-btn" id="nt-btn" onclick="openNotifications()" aria-label="Notifications" title="Notifications">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <span class="nt-badge" id="nt-badge"></span>
         </button>
+        </div>
       </div>
       <!-- Chats | Contacts tabs (26 Nov 2026): Contacts = friend requests by email + friend chats (js/contacts.js) -->
       <div class="msg-tabs" role="tablist">
