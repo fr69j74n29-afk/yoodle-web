@@ -26,6 +26,8 @@ let ctInvites=[];         // my open email invites (people not on Yoodle yet)
 let ctInviteAsk=null;     // email waiting for the "Invite them?" confirmation
 let ctLoaded=false;       // get_friends() has run for this account
 let ctNoteEdit=null;      // contact whose private note is being edited
+let ctChats={};           // other_id -> that contact's chat row from get_conversations (loadMessages, js/messages.js)
+let ctFetchedAt=0;        // when get_friends() last ran (the Contacts tab reloads it if older than a minute)
 const CT_EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 (function ctCss(){
@@ -45,6 +47,10 @@ const CT_EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 .ct-row.tap{cursor:pointer}
 .ct-row.tap:active{transform:scale(.98)}
 .ct-name{flex:1;min-width:0;font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ct-row.unread{background:rgba(236,72,153,.08);border-color:rgba(236,72,153,.3)}
+.ct-last{display:block;font-size:13px;font-weight:700;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ct-row.unread .ct-last{color:var(--text);font-weight:800}
+.ct-new{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:100px;background:var(--pink);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.5px;vertical-align:middle}
 .ct-name small{display:block;font-size:12.5px;font-weight:700;color:var(--muted)}
 .ct-btn{padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0;white-space:nowrap}
 .ct-btn.go{background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff}
@@ -65,6 +71,7 @@ button.ct-src:hover{color:var(--text)}
 .ct-pn-edit input{flex:1;min-width:0;padding:6px 10px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font:700 16px 'Nunito',sans-serif}
 .chat-connect{padding:7px 12px;border-radius:100px;border:1.5px solid var(--btn-a);background:transparent;color:var(--btn-a);font:800 13px 'Nunito',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .chat-connect:disabled{opacity:.6;border-color:var(--border);color:var(--muted);cursor:default}
+.ct-offer-gone{margin-top:8px;padding:8px 12px;border-radius:10px;border:1.5px dashed currentColor;opacity:.75;font:800 13.5px 'Nunito',sans-serif;text-align:center}
 .ct-offer-btn{display:block;width:100%;margin-top:8px;padding:8px 12px;border-radius:10px;border:1.5px solid currentColor;background:transparent;color:inherit;font:800 13.5px 'Nunito',sans-serif;cursor:pointer}
 .p-offer{margin:4px 0 14px;padding:12px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--purple);background:rgba(92,138,106,.08);font-size:13.5px;font-weight:700;line-height:1.45;color:var(--text)}
 .ct-note{font-size:13.5px;color:var(--muted);font-weight:700;text-align:center;padding:18px 10px;line-height:1.45}`;
@@ -81,30 +88,40 @@ function msgTab(tab){
   if(ctTabNow==='contacts')ctLoad();
 }
 
-// get_friends(); also used by loadMessages() to label friend chats in the Chats list.
+// get_friends() + my open invites. Runs only from the Contacts tab and contact actions (not on every Messages visit).
 async function ctFetch(){
   if(!sb||!me){ctRows=[];ctSetBadge();return ctRows;}
   const[{data,error},inv]=await Promise.all([sb.rpc('get_friends'),
     sb.from('friend_invites').select('id,email,created_at').is('claimed_at',null).order('created_at',{ascending:false})]);
   if(!inv.error)ctInvites=inv.data||[];
   if(error){console.warn('contacts',error);return ctRows;}
-  ctRows=data||[];ctLoaded=true;
+  ctRows=data||[];ctLoaded=true;ctFetchedAt=Date.now();
   ctSetBadge();
   if(ctTabNow==='contacts')ctRender(); // keep the visible list in step (e.g. after switching accounts)
   return ctRows;
 }
+// A contact request or accept arrived (live notification, js/realtime.js): reload the list now, so it shows
+// without a reload (and the tab badge counts it). ctStale(): reload on the next tap instead.
+function ctRefresh(){ctFetchedAt=0;if(sb&&me)ctFetch();}
+function ctStale(){ctFetchedAt=0;}
+// Contact chats from get_conversations (loadMessages). They're not in the Chats list: shown here with their last message.
+function ctSetChats(rows){
+  ctChats={};
+  (rows||[]).forEach(t=>{if(t.other_id&&!ctChats[t.other_id])ctChats[t.other_id]=t;}); // newest first: keep the latest
+  ctSetBadge();
+  if(ctTabNow==='contacts'&&ctLoaded)ctRender();
+}
+// Tab badge: requests waiting for me + contact chats with unread messages
 function ctSetBadge(){
-  const n=ctRows.filter(r=>r.status==='pending'&&r.incoming).length,b=document.getElementById('ct-badge');
+  const n=ctRows.filter(r=>r.status==='pending'&&r.incoming).length+Object.values(ctChats).filter(t=>t.has_unread).length,b=document.getElementById('ct-badge');
   if(b){b.textContent=n;b.classList.toggle('show',n>0);}
 }
 // Sign-out (js/auth.js): forget this account's contacts and go back to Chats
 function ctReset(){
-  ctRows=[];ctInvites=[];ctInviteAsk=null;ctLoaded=false;ctNoteEdit=null;ctSetBadge();
+  ctRows=[];ctInvites=[];ctInviteAsk=null;ctLoaded=false;ctFetchedAt=0;ctNoteEdit=null;ctChats={};ctSetBadge();
   const pane=document.getElementById('contacts-pane');if(pane)pane.innerHTML='';
   msgTab('chats');
 }
-// conversation ids of friend chats (for the Chats list)
-function ctDirectConvIds(){return new Set(ctRows.filter(r=>r.conversation_id).map(r=>r.conversation_id));}
 
 async function ctLoad(){
   const pane=document.getElementById('contacts-pane');if(!pane)return;
@@ -116,7 +133,8 @@ async function ctLoad(){
           oninput="ctRender()" onkeydown="if(event.key==='Enter'){event.preventDefault();ctAddFromBox();}">
       </div><div id="ct-list">${spin()}</div>`;
   }
-  await ctFetch();
+  if(ctLoaded)ctRender();                                   // show what we have straight away
+  if(!ctLoaded||Date.now()-ctFetchedAt>60000)await ctFetch(); // fresh on each tap, unless loaded in the last minute
   ctRender();
 }
 
@@ -125,7 +143,8 @@ function ctRender(){
   const q=(document.getElementById('ct-q')?.value||'').trim(),ql=q.toLowerCase();
   const match=r=>!ql||(r.other_name||'').toLowerCase().includes(ql);
   const incoming=ctRows.filter(r=>r.status==='pending'&&r.incoming&&match(r));
-  const friends=ctRows.filter(r=>r.status==='accepted'&&match(r));
+  const lastAt=r=>Date.parse(ctChats[r.other_id]?.last_msg_created_at||0)||0;
+  const friends=ctRows.filter(r=>r.status==='accepted'&&match(r)).sort((a,b)=>lastAt(b)-lastAt(a)); // latest chat first (stable: then by name)
   const sent=ctRows.filter(r=>r.status==='pending'&&!r.incoming&&match(r));
   const invited=ctInvites.filter(i=>!ql||i.email.includes(ql));
   const av=r=>avatarCircle(r.other_name,null,'34px','14px',true,r.avatar_color||'#5C8A6A');
@@ -142,9 +161,10 @@ function ctRender(){
       <button class="ct-btn go" type="button" onclick="ctRespond('${r.friendship_id}',true,this)">Accept</button></div>`).join('');
   }
   if(friends.length){
-    h+=`<div class="ct-h">Contacts</div>`+friends.map(r=>`<div class="ct-row tap" onclick="ctOpenChat('${r.other_id}')">${av(r)}
-      <div class="ct-name">${esc(r.other_name)}${idvChip(r.other_id,true)}<span class="ct-meta">${ctMeta(r)}</span>${ctSourceHtml(r)}${ctNoteHtml(r)}</div>
-      <button class="ct-btn" type="button" onclick="event.stopPropagation();tapConfirm(this,'Tap again to remove',()=>ctRemove('${r.other_id}'))">Remove</button></div>`).join('');
+    h+=`<div class="ct-h">Contacts</div>`+friends.map(r=>{const c=ctChats[r.other_id],un=!!c?.has_unread;
+      return`<div class="ct-row tap${un?' unread':''}" onclick="ctOpenChat('${r.other_id}')">${av(r)}
+      <div class="ct-name">${esc(r.other_name)}${idvChip(r.other_id,true)}${un?'<span class="ct-new">NEW</span>':''}${c&&c.last_msg_body?`<span class="ct-last">${esc(c.last_msg_body).slice(0,60)} · ${timeAgo(c.last_msg_created_at)}</span>`:''}<span class="ct-meta">${ctMeta(r)}</span>${ctSourceHtml(r)}${ctNoteHtml(r)}</div>
+      <button class="ct-btn" type="button" onclick="event.stopPropagation();tapConfirm(this,'Tap again to remove',()=>ctRemove('${r.other_id}'))">Remove</button></div>`;}).join('');
   }
   if(sent.length||invited.length){
     h+=`<div class="ct-h">Sent</div>`+invited.map(i=>`<div class="ct-row">${avatarCircle(i.email,null,'34px','14px',true,'#9CA3AF')}
@@ -264,6 +284,7 @@ async function ctOpenJobById(id,isOffer){
   if(!sb||!id)return;
   const{data}=await sb.from('tasks').select('*').eq('id',id).maybeSingle();
   if(!data)return toast(isOffer?'This offer is no longer available':'That job is no longer available');
+  if(isOffer&&data.status==='cancelled')return toast('🚫 This job offer was cancelled');
   openJob({...data,category:(data.category||'other').toLowerCase()});
 }
 
@@ -274,7 +295,7 @@ function ctChatReset(){
   const b=document.getElementById('chat-connect');if(b){b.style.display='none';b.disabled=false;tapConfirmReset(b);}
 }
 function ctChatTask(task,otherId){ctChat.task=task;ctChat.other=otherId;ctConnectEval();}
-function ctChatMsgs(data){ctChat.msgs=data||[];ctConnectEval();}
+function ctChatMsgs(data){ctChat.msgs=data||[];ctConnectEval();ctOfferCardsState();}
 async function ctConnectEval(){
   const b=document.getElementById('chat-connect');if(!b||!me)return;
   const t=ctChat.task,msgs=ctChat.msgs,other=ctChat.other;
@@ -346,7 +367,7 @@ async function ctSendOffer(f){
     p_expires_at:f.until.toISOString(),p_end_date_chosen:jobExpiryPicked('p-exp')});
   btn.disabled=false;btn.textContent='Send private offer';
   if(error)return toast('❌ '+error.message);
-  toast(`📋 Offer sent to ${o.name}`);
+  toast(`📋 Offer sent to ${o.name}`);tabDirty(); // new offer in Activity, offer card in the chat
   resetPost();nav('messages');
   await ctFetch();ctOpenChat(o.other);
 }
@@ -358,7 +379,19 @@ function ctOfferBubble(m,isMe){
   const text=b.replace(/\s*Open it to (?:accept or decline|see the changes): https:\/\/\S+/,'');
   const view=`<button type="button" class="ct-offer-btn" onclick="ctOpenJobById('${x[1]}',true)">${isMe?'View your offer':'View offer'} ›</button>`;
   const edit=isMe?`<button type="button" class="ct-offer-btn" onclick="ctOfferEdit('${x[1]}')">✏️ Edit offer</button>`:'';
-  return esc(text).replace(/\n/g,'<br>')+view+edit;
+  return esc(text).replace(/\n/g,'<br>')+`<div class="ct-offer-acts" data-offer="${x[1]}">${view}${edit}</div>`;
+}
+// After a chat is drawn: cards of offers that were cancelled (or have ended) can't be opened any more
+async function ctOfferCardsState(){
+  const boxes=[...document.querySelectorAll('#chat-messages .ct-offer-acts[data-offer]')];if(!boxes.length||!sb)return;
+  const ids=[...new Set(boxes.map(b=>b.dataset.offer))];
+  const{data}=await sb.from('tasks').select('id,status').in('id',ids);
+  const st={};(data||[]).forEach(t=>st[t.id]=t.status);
+  boxes.forEach(b=>{
+    const s=st[b.dataset.offer];
+    const label=s==='cancelled'?'🚫 Job cancelled':(s==='expired'||!s)?'No longer available':null;
+    if(label)b.innerHTML=`<div class="ct-offer-gone">${label}</div>`;
+  });
 }
 // Edit from the chat card: only while it's still an offer or an accepted job
 async function ctOfferEdit(id){
@@ -370,7 +403,7 @@ async function ctOfferEdit(id){
 async function offerAccept(j){
   const{data,error}=await sb.rpc('offer_accept',{p_task:j.id});
   if(error)return toast('❌ '+error.message);
-  closeOv('modal');toast('🎉 Job accepted. Agree the details in the chat.');
+  closeOv('modal');toast('🎉 Job accepted. Agree the details in the chat.');tabDirty(); // new job chat + Activity card
   if(window.loadJobs)loadJobs();
   nav('messages');
   if(data&&data.conversation_id)openChat(data.task_id,data.title||j.title,window._mPosterName||'Poster',data.poster_id,data.poster_id,'',data.conversation_id);
@@ -378,7 +411,7 @@ async function offerAccept(j){
 async function offerDecline(id){
   const{error}=await sb.rpc('offer_decline',{p_task:id});
   if(error)return toast('❌ '+error.message);
-  closeOv('modal');toast('Offer declined');
+  closeOv('modal');toast('Offer declined');tabDirty();
 }
 async function offerMakePublic(id){
   const{error}=await sb.rpc('offer_make_public',{p_task:id});

@@ -189,7 +189,7 @@ async function claimFromChat(taskId){
   const pid=myProfileId||me.id;
   const{error}=await sb.from('tasks').update({status:'claimed',doer_id:pid}).eq('id',taskId);
   if(error)return toast('❌ '+error.message);
-  toast('🎉 Job claimed!');
+  toast('🎉 Job claimed!');tabDirty('myjobs');
   // refresh action buttons
   const{data:task}=await sb.from('tasks').select('status,poster_id,doer_id').eq('id',taskId).single();
   const actionsEl=document.getElementById('chat-actions');

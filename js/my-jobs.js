@@ -4,9 +4,10 @@
 
 async function loadMyJobs(){
 // Activity: one list — jobs I posted + jobs I'm helping with
-  const g=document.getElementById('my-grid');g.innerHTML=spin();
-  if(!sb||!me){g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
+  const g=document.getElementById('my-grid');
+  if(!sb||!me){g._tabHtml=null;g.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see your jobs');return;}
   const pid=myProfileId||me.id;
+  tabBegin('myjobs',g); // last list stays on screen while this reloads (js/core-state.js)
   const expSince=new Date(Date.now()-30*24*60*60*1000).toISOString();
   const[postedRes,appRes,hoRes,_vs]=await Promise.all([
     // open/paused/claimed + jobs that expired in the last 30 days (so the poster can still see applicants, renew or archive)
@@ -19,14 +20,15 @@ async function loadMyJobs(){
   ]);
   const jobViews=_vs?.jobs||{};
   const err=postedRes.error||appRes.error;
-  if(err){g.innerHTML=emptyState('😕','Error',err.message);return;}
+  if(err){tabError('myjobs',g,emptyState('😕','Error',esc(err.message)));return;}
   if(hoRes.error)console.warn('help_offer query error:',hoRes.error.message);
   const posted=(postedRes.data||[])
     .filter(j=>j.status!=='expired'||((j.type||'job')==='job'&&!isAgencyJob(j)))
+    .filter(j=>j.status!=='offered'||window.ctPickContact) // private offers need js/contacts.js (held back on the live site)
     .sort((a,b)=>(a.status==='expired')-(b.status==='expired'));
   const apps=appRes.data||[], helpOfferTasks=hoRes.data||[];
 
-  if(!posted.length&&!apps.length&&!helpOfferTasks.length){g.innerHTML=emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.');return;}
+  if(!posted.length&&!apps.length&&!helpOfferTasks.length){tabShow('myjobs',g,emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.'));return;}
 
   // posted jobs: doer names and applicant counts
   let doerNames={};
@@ -64,7 +66,7 @@ async function loadMyJobs(){
         </div>
       </div>`;
       actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-        <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+        <button onclick="event.stopPropagation();openChat('${j.id}','${escJs(j.title)}','${escJs(j.profiles?.name||'Poster')}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
       </div>`;
     }
     return `<div class="job-card" style="--jc:${color};cursor:default;overflow:visible">
@@ -95,7 +97,7 @@ async function loadMyJobs(){
       <div class="jc-top"><div class="jc-title">${esc(j.title)}</div></div>
       <div class="jc-desc">${esc(j.description||'')}</div>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+        <button onclick="event.stopPropagation();openChat('${j.id}','${escJs(j.title)}','${escJs(posterName)}','${j.poster_id}','${j.poster_id}','${j.profiles?.rating||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
       </div>
     </div>`;
   }).join('');
@@ -123,7 +125,7 @@ async function loadMyJobs(){
         <span style="font-size:14px;font-weight:800;color:var(--purple)">${appCount} interested</span>
         <span style="display:flex;gap:6px">
           <button data-act="pause" data-id="${esc(j.id)}" style="padding:6px 12px;border-radius:100px;background:transparent;border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">⏸ Pause</button>
-          <button onclick="event.stopPropagation();openApplicants('${j.id}','${esc(j.title)}')" style="padding:6px 14px;border-radius:100px;background:var(--btn-a);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">Review →</button>
+          <button onclick="event.stopPropagation();openApplicants('${j.id}','${escJs(j.title)}')" style="padding:6px 14px;border-radius:100px;background:var(--btn-a);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">Review →</button>
         </span>
       </div>`:'';
       cardMenu=`<div class="card-menu-wrap">
@@ -173,8 +175,8 @@ async function loadMyJobs(){
         :j.offer_declined_at?`${sentTo} can't take it.`:stale?`No answer from ${sentTo} yet.`:`Waiting for ${sentTo} to accept. Only the two of you can see it.`;
       actionBtn=`<div style="margin-top:8px;font-size:13.5px;color:var(--text2)">${note}${stale?' <strong>Send it to someone else, or make it public?</strong>':''}</div>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button onclick="event.stopPropagation();ctPickContact('${j.id}','${j.private_for||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:${sentTo?'var(--surface2)':'linear-gradient(135deg,var(--btn-a),var(--btn-b))'};border:${sentTo?'1.5px solid var(--border)':'none'};color:${sentTo?'var(--text)':'#fff'}">${sentTo?'Send to someone else':'Send to a contact'}</button>
-        <button onclick="event.stopPropagation();tapConfirm(this,'Tap again to make it public',()=>offerMakePublic('${j.id}'))" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:${sentTo?'linear-gradient(135deg,var(--btn-a),var(--btn-b))':'var(--surface2)'};border:${sentTo?'none':'1.5px solid var(--border)'};color:${sentTo?'#fff':'var(--text)'}">Make public</button>
+        <button onclick="event.stopPropagation();if(window.ctPickContact)ctPickContact('${j.id}','${j.private_for||''}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:${sentTo?'var(--surface2)':'linear-gradient(135deg,var(--btn-a),var(--btn-b))'};border:${sentTo?'1.5px solid var(--border)':'none'};color:${sentTo?'var(--text)':'#fff'}">${sentTo?'Send to someone else':'Send to a contact'}</button>
+        <button onclick="event.stopPropagation();tapConfirm(this,'Tap again to make it public',()=>{if(window.offerMakePublic)offerMakePublic('${j.id}');})" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:${sentTo?'linear-gradient(135deg,var(--btn-a),var(--btn-b))':'var(--surface2)'};border:${sentTo?'none':'1.5px solid var(--border)'};color:${sentTo?'#fff':'var(--text)'}">Make public</button>
       </div>`;
     } else if(j.status==='claimed'){
       const doerName=doerNames[j.doer_id]||'Helper';
@@ -197,7 +199,7 @@ async function loadMyJobs(){
           </div>
         </div>`;
         actionBtn=`<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="event.stopPropagation();openChat('${j.id}','${esc(j.title)}','${esc(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+          <button onclick="event.stopPropagation();openChat('${j.id}','${escJs(j.title)}','${escJs(doerName)}','${j.poster_id}','${j.doer_id}')" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
           <button onclick="event.stopPropagation();tapConfirm(this,'Tap again to complete',()=>chatComplete('${j.id}','${j.doer_id}'))" style="flex:1;padding:11px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">✅ Complete</button>
         </div>`;
       }
@@ -217,9 +219,9 @@ async function loadMyJobs(){
 
   const helpingCards=appCards+hoCards;
   bindMyJobsActions(g);
-  g.innerHTML=(postedCards?`<div class="act-h">Jobs you posted</div>`+postedCards:'')
+  tabShow('myjobs',g,(postedCards?`<div class="act-h">Jobs you posted</div>`+postedCards:'')
     +(helpingCards?`<div class="act-h">Jobs you're helping with</div>`+helpingCards:'')
-    ||emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.');
+    ||emptyState('📋','Nothing here yet','Post a job, or browse the map to find one to help with.')); // redraw only if changed
 }
 
 // One delegated click listener for Activity card buttons that use data-act

@@ -2,7 +2,7 @@
 // Part of the app's main code (split out of index.html, 25 Nov 2026). Classic script, same global scope as the
 // other js/ files: see js/README.md for the load order and how to add code.
 
-function showAuthScreen(){_notifs=[];renderNotifBadge();closeOv('nt-sheet');myViewStats=null;renderViewBadge();closeViewPanel();document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';}
+function showAuthScreen(){_notifs=[];renderNotifBadge();closeOv('nt-sheet');myViewStats=null;renderViewBadge();closeViewPanel();document.getElementById('view-auth').style.display='flex';document.getElementById('view-main').style.display='none';document.documentElement.classList.add('on-landing');}
 
 let _appStartedFor=null;
 function _startApp(session){
@@ -12,7 +12,7 @@ function _startApp(session){
   showApp();
 }
 async function showApp(){
-  document.getElementById('view-auth').style.display='none';
+  document.getElementById('view-auth').style.display='none';document.documentElement.classList.remove('on-landing');
   const m=document.getElementById('view-main');m.style.display='flex';m.style.flexDirection='column';
   // Container just became visible — Leaflet needs to recalc tile positions.
   // The start-up loadJobs() below waits for this resize + radius sync, so it runs once with the right ring size.

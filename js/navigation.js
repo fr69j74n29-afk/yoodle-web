@@ -31,6 +31,9 @@ function nav(view) {
     if(navBtn)navBtn.classList.add('active');
   }
 
+  // Filter button: Browse (map and list) only (Rhea, 27 Nov 2026)
+  document.getElementById('hs-btn')?.classList.toggle('nav-hide',!(view==='browse'||view==='map'||view==='list'));
+
   // close any open modals when navigating
   document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
   if(view==='map'||(view==='browse'&&browseMode==='map')){setTimeout(()=>{
@@ -44,10 +47,10 @@ function nav(view) {
     if(gpsLat&&gpsLng)updateGpsDot();
     updateCircleOverlay();updateRadiusCounts();updateNotifNudge();
   },100);}
-  if(view==='myjobs'){loadMyJobs();loadPendingRatings();}
+  if(view==='myjobs'&&!tabFresh('myjobs')){loadMyJobs();loadPendingRatings();} // shown straight away; reload unless loaded in the last minute (js/core-state.js)
   if(view==='post'){updateForkHelperCard();updateForkIdvCard();}
   if(view==='postjob')resetPost();
-  if(view==='messages'){loadMessages().then(()=>refreshUnreadCount());}
+  if(view==='messages'&&!tabFresh('messages')){loadMessages();} // loadMessages() sets the unread dot from the same data (idea board #9: no second get_conversations)
   if(view==='profile')loadProfile();
   if(view==='helper')openHelperScreen();
   updateNotifNudge();
