@@ -163,8 +163,10 @@ function _gmActionsHtml(title,inMap){
 
 // ── Step 4: landing page preview map (27 Nov 2026) ──
 // Short Toronto map on the signed-out landing page: above "What would you like to do?" on phones, beside it on desktop (≥ 900 px, CSS).
-// Never leaves the GTA. At the starting view: zoom only (a one-finger swipe scrolls the page); once zoomed in the map can be dragged.
-// Pinch / double-tap zoom around the centre; desktop: + / − buttons and the mouse wheel scrolls the page. Started after the landing text is on screen. Runs once.
+// Never leaves the GTA. Opens 2 zoom levels in (Roman, 28 Nov) and can be moved straight away:
+// desktop: drag with the mouse, + / − buttons, the mouse wheel scrolls the page;
+// phone: one finger scrolls the page, two fingers move / pinch-zoom the map (MapLibre cooperativeGestures — shows "Use two fingers to move the map").
+// Started after the landing text is on screen. Runs once.
 let _gmPreviewMap=null;
 function guestPreviewInit(){
   const box=document.getElementById('ga-map'), canvas=document.getElementById('ga-map-canvas');
@@ -176,20 +178,16 @@ function guestPreviewInit(){
     _gmPreviewMap=new maplibregl.Map({
       container:'ga-map-canvas',
       style:(typeof OFM_STYLE!=='undefined'&&OFM_STYLE['sage-light'])||'https://tiles.openfreemap.org/styles/positron', // always light (Roman, 27 Nov): matches the light landing page
-      center:[-79.42,43.71], zoom:desktop?9.3:8.9, minZoom:8.6, maxZoom:13,
+      center:[-79.42,43.71], zoom:desktop?11.3:10.9, minZoom:8.6, maxZoom:13,
       maxBounds:[[-80.25,43.25],[-78.75,44.20]],
-      dragPan:false, dragRotate:false, pitchWithRotate:false, touchPitch:false, scrollZoom:false, keyboard:false,
+      dragPan:true, cooperativeGestures:!desktop, dragRotate:false, pitchWithRotate:false, touchPitch:false, scrollZoom:false, keyboard:false,
       attributionControl:false
     });
-    _gmPreviewMap.touchZoomRotate.enable({around:'center'});
     _gmPreviewMap.touchZoomRotate.disableRotation();
     _gmPreviewMap.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>'}),'bottom-right');
     if(desktop)_gmPreviewMap.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
     _gmPreviewMap.on('click',()=>{guestCloseTiles();document.getElementById('ga-map-actions')?.classList.remove('open');}); // tap the map (not a pin) → close tiles / sheet
-    // 3. Move the map only once zoomed in (Roman, 27 Nov): at the starting view a swipe still scrolls the page; zoomed in, drag to look around (still inside the GTA box).
-    const z0=_gmPreviewMap.getZoom();
-    _gmPreviewMap.on('zoomend',()=>{if(_gmPreviewMap.getZoom()>z0+0.25)_gmPreviewMap.dragPan.enable();else _gmPreviewMap.dragPan.disable();});
-    // The map credit folds into the (i) button on the member map once you drag; guests can't drag, so fold it on load.
+    // Fold the map credit into the (i) button on load (it would cover the bottom line otherwise).
     _gmPreviewMap.on('load',()=>{const a=box.querySelector('.maplibregl-ctrl-attrib');if(a){a.classList.remove('maplibregl-compact-show');a.removeAttribute('open');}});
     guestMapLoad().then(rows=>{
       document.querySelectorAll('#ga-map [data-gt]').forEach(el=>{el.textContent=gT(el.dataset.gt,el.textContent);});
