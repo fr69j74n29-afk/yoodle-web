@@ -4,8 +4,8 @@
   "description": "Odd Jobs. Real People. Help Each Other.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0A0A0A",
-  "theme_color": "#9B59D4",
+  "background_color": "#EEF2EC",
+  "theme_color": "#EEF2EC",
   "orientation": "portrait",
   "icons": [
     {
