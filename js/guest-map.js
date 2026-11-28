@@ -155,6 +155,8 @@ function guestPreviewInit(){
     _gmPreviewMap.touchZoomRotate.disableRotation();
     _gmPreviewMap.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>'}),'bottom-right');
     if(desktop)_gmPreviewMap.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    // The map credit folds into the (i) button on the member map once you drag; guests can't drag, so fold it on load.
+    _gmPreviewMap.on('load',()=>{const a=box.querySelector('.maplibregl-ctrl-attrib');if(a){a.classList.remove('maplibregl-compact-show');a.removeAttribute('open');}});
     guestMapLoad().then(rows=>{
       document.querySelectorAll('#ga-map [data-gt]').forEach(el=>{el.textContent=gT(el.dataset.gt,el.textContent);});
       guestDrawPins(_gmPreviewMap,rows);

@@ -206,11 +206,11 @@ body.theme-sage-dark .le{color:#E0C45A}
 /* Guest map preview (iOS/landing redesign step 4, 27 Nov 2026): short Toronto map on the signed-out landing page */
 .ga-map{position:relative;height:400px;margin:0 0 22px;border-radius:18px;overflow:hidden;background:#0C110E;border:1px solid var(--border)}
 .ga-map[hidden]{display:none}
-#ga-map-canvas{position:absolute;inset:0}
-.ga-map-legend{position:absolute;left:10px;top:10px;z-index:2;padding:8px 10px;border-radius:12px;background:rgba(17,23,19,.92);border:1px solid #2A332D;color:#F0EFEA;font:800 12px 'Nunito',sans-serif;display:flex;flex-direction:column;gap:4px;pointer-events:none}
+#ga-map-canvas{position:absolute;inset:0;overflow:hidden}
+.ga-map-legend{position:absolute;left:10px;top:10px;z-index:30;padding:8px 10px;border-radius:12px;background:rgba(17,23,19,.92);border:1px solid #2A332D;color:#F0EFEA;font:800 12px 'Nunito',sans-serif;display:flex;flex-direction:column;gap:4px;pointer-events:none}
 .ga-map-legend span{display:flex;align-items:center;gap:7px}
 .ga-map-legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
-.ga-map-line{position:absolute;left:10px;right:10px;bottom:10px;z-index:2;padding:8px 12px;border-radius:12px;background:rgba(13,18,15,.92);border:1px solid #2A332D;color:#F0EFEA;font:800 13px 'Nunito',sans-serif;pointer-events:none}
+.ga-map-line{position:absolute;left:10px;right:10px;bottom:10px;z-index:30;padding:8px 12px;border-radius:12px;background:rgba(13,18,15,.92);border:1px solid #2A332D;color:#F0EFEA;font:800 13px 'Nunito',sans-serif;pointer-events:none}
 .ga-map .maplibregl-ctrl-bottom-right{bottom:44px}
 @media(min-width:900px){
   #view-auth .ga-wrap{max-width:1180px}
@@ -1821,7 +1821,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/other-profile.js?v=20261127r"></script>
 <script src="js/navigation.js?v=20261127x"></script>
 <script src="js/landing.js?v=20261125a"></script>
-<script src="js/guest-map.js?v=20261127b"></script>
+<script src="js/guest-map.js?v=20261127c"></script>
 <script src="js/auth.js?v=20261127t"></script>
 <script src="js/settings.js?v=20261125a"></script>
 <script src="js/tutor-link.js?v=20261125a"></script>
