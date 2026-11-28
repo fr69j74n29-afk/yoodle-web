@@ -11,8 +11,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Yoodle — Find Local Help for Odd Jobs Near You | Free Neighbourhood App</title>
-<meta name="description" content="Yoodle connects neighbours for odd jobs and local help — lawn care, moving, cleaning, dog walking, and more. Free to post, free to apply. No agency, no fees. Real people helping each other.">
+<title>Yoodle — Local Help, Odd Jobs &amp; Home Services Near You</title>
+<meta name="description" content="Free app for neighbours in Canada and the US: post odd jobs, hire local help, compare fixed-price home services or find a licensed pro. No fees, no agencies.">
 <meta name="keywords" content="odd jobs near me, hire local help, neighbourhood jobs, find someone to help, hire someone for a day, local task app, community work, small business help, yard work help, snow shovelling, handyman near me">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://yoodle.ca/">
@@ -30,12 +30,12 @@
   "@type": "WebApplication",
   "name": "Yoodle",
   "url": "https://yoodle.ca",
-  "description": "Yoodle is a free neighbourhood app connecting people who need help with local odd jobs to trusted people nearby who want to earn money.",
+  "description": "Yoodle is a free neighbourhood app in Canada and the United States connecting people who need help with odd jobs, home services and home repairs to neighbours and licensed local pros.",
   "applicationCategory": "LifestyleApplication",
   "operatingSystem": "Any",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CAD" },
-  "areaServed": { "@type": "Country", "name": "Canada" },
-  "keywords": "odd jobs, local help, neighbourhood tasks, hire local, community work, earn money local"
+  "areaServed": [ { "@type": "Country", "name": "Canada" }, { "@type": "Country", "name": "United States" } ],
+  "keywords": "odd jobs, local help, home services, home repair, neighbourhood tasks, hire local, community work, earn money local"
 }
 </script>
 <!-- Libraries load with defer: they download while the page paints and run (in order) before DOMContentLoaded,
@@ -902,12 +902,14 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       </button>
 
       <div class="ga-alt">Already on Yoodle? <a onclick="openAuthSheet('signin')">Sign in</a></div>
-      <div class="auth-legal">By continuing you agree to Yoodle's <a href="/terms">Terms of Use</a> and <a href="/privacy">Privacy Policy</a>. No spam, ever.<br><a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a> · <a href="/news">News</a> · <a href="/blog">Blog</a> · <a href="/pros">Find a pro</a> · <a href="/ambassadors">Ambassadors</a></div>
+      <div class="auth-legal">By continuing you agree to Yoodle's <a href="/terms">Terms of Use</a> and <a href="/privacy">Privacy Policy</a>. No spam, ever.<br><a href="/how-it-works">How it works</a> · <a href="/services">Home services</a> · <a href="/faq">FAQ</a> · <a href="/news">News</a> · <a href="/blog">Blog</a> · <a href="/pros">Find a pro</a> · <a href="/ambassadors">Ambassadors</a></div>
       <!-- What Yoodle is: plain text for visitors and for Google's sign-in (OAuth) branding review -->
       <section class="ga-about" aria-labelledby="ga-about-h">
         <h2 id="ga-about-h">What is Yoodle?</h2>
-        <p>Yoodle is a free app that connects neighbours in Canada for odd jobs and local help. Post a task — yard work, moving help, cleaning, snow shovelling and more — and people nearby offer to help. Or set up a helper profile and find paid work close to home.</p>
-        <p>You sign in to Yoodle with Google or with a code sent to your email, so you can post jobs, message neighbours and get updates. Posting and applying for jobs is always free, and Yoodle never sells your data. See our <a href="/privacy">Privacy Policy</a>.</p>
+        <p>Yoodle is a free app that connects neighbours in Canada and the United States for odd jobs and local help. Post a task — lawn care, house cleaning, moving help, snow removal, handyman jobs and more — and people nearby offer to help. Or set up a helper profile and find paid work close to home.</p>
+        <p>Neighbours also offer fixed-price home services such as gutter cleaning, window cleaning and driveway snow removal, so you can compare prices from people near you and hire someone without asking for quotes.</p>
+        <p>When a home repair needs a licensed trade, Yoodle Pros connects you with local plumbers, electricians, HVAC technicians and more. You can check their licence and ID badges and message them for free.</p>
+        <p>You sign in to Yoodle with Google, with Apple in the Yoodle iPhone app, or with a code sent to your email, so you can post jobs, message neighbours and get updates. Posting and applying for jobs is always free, and Yoodle never sells your data. See our <a href="/privacy">Privacy Policy</a>.</p>
       </section>
 
       <!-- GUEST POST FORM (inside the landing: desktop shows it in the left column, next to the map) -->
