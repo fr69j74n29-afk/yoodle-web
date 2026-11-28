@@ -226,6 +226,16 @@ body.theme-sage-dark .le{color:#E0C45A}
 #view-auth .lc-desc{color:var(--muted)}
 html.on-landing,html.on-landing body{background:#EEF2EC} /* landing screen up: light base behind Safari's see-through bars (was the app's black → black strip after the phone was idle) */
 #ga-landing[hidden],#ga-post[hidden]{display:none!important} /* desktop grid (display:grid) was overriding hidden → Post a job form showed below the landing page */
+#ga-landing.ga-posting>*:not(#ga-post):not(.ga-sheet){display:none!important} /* Post a job open: only the form (phone: map hidden too, as before) */
+.ga-sheet-back{display:none}
+@media(min-width:900px){ /* desktop: the job form and sign-in take the left column, the map stays on the right (Roman, 27 Nov) */
+  #ga-landing.ga-posting>#ga-map:not([hidden]){display:block!important}
+  #ga-landing.ga-signing>*:not(.ga-sheet):not(#ga-map){display:none!important}
+  #ga-landing>.ga-sheet{display:none;position:static;transform:none;opacity:1;pointer-events:auto;transition:none;width:auto;max-width:440px;max-height:none;overflow:visible;border-radius:20px;padding:22px 24px 24px;box-shadow:0 10px 40px rgba(30,38,32,.10);border:1px solid var(--border)}
+  #ga-landing>.ga-sheet.open{display:block;transform:none}
+  #ga-landing>.ga-sheet .ga-grab{display:none}
+  #ga-landing>.ga-sheet .ga-sheet-back{display:block}
+}
 #view-auth{overflow-x:hidden;overflow-x:clip} /* the decorative glow (::after, right:-80px) made the page 80px wider than phones → sideways shift */
 .ga-map-actions{display:none}
 #ga-map .maplibregl-control-container>div{z-index:30} /* zoom +/- and map credit above the pins (pins 10-20), under the tiles panel (40) and sheet (50) */
@@ -899,18 +909,18 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <p>Yoodle is a free app that connects neighbours in Canada for odd jobs and local help. Post a task — yard work, moving help, cleaning, snow shovelling and more — and people nearby offer to help. Or set up a helper profile and find paid work close to home.</p>
         <p>You sign in to Yoodle with Google or with a code sent to your email, so you can post jobs, message neighbours and get updates. Posting and applying for jobs is always free, and Yoodle never sells your data. See our <a href="/privacy">Privacy Policy</a>.</p>
       </section>
-    </div>
 
-    <!-- GUEST POST FORM -->
-    <div class="ga-page" id="ga-post" hidden>
-      <button class="ga-back" onclick="closeGuestPost()">← Back</button>
-      <div class="ga-post-h">Post a job</div>
-      <div class="ga-post-sub">Free, always. Takes about a minute.</div>
-      <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="g-title" type="text" maxlength="120" placeholder="e.g. Help me move a couch"></div>
-      <div class="form-g"><label class="form-lbl">Description</label><textarea class="form-ta" id="g-desc" placeholder="Describe what needs doing, when, any requirements…"></textarea></div>
-      <div class="form-g"><label class="form-lbl">Budget (CAD $)</label><input class="form-inp" id="g-budget" type="number" min="0" inputmode="decimal" placeholder="e.g. 50"></div>
-      <div class="ga-loc-note">📍 You'll pin your location right after signing in — your exact address is never shown publicly.</div>
-      <button class="ga-cta" style="margin-top:0" onclick="saveGuestPost()">Continue</button>
+      <!-- GUEST POST FORM (inside the landing: desktop shows it in the left column, next to the map) -->
+      <div class="ga-page" id="ga-post" hidden>
+        <button class="ga-back" onclick="closeGuestPost()">← Back</button>
+        <div class="ga-post-h">Post a job</div>
+        <div class="ga-post-sub">Free, always. Takes about a minute.</div>
+        <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="g-title" type="text" maxlength="120" placeholder="e.g. Help me move a couch"></div>
+        <div class="form-g"><label class="form-lbl">Description</label><textarea class="form-ta" id="g-desc" placeholder="Describe what needs doing, when, any requirements…"></textarea></div>
+        <div class="form-g"><label class="form-lbl">Budget (CAD $)</label><input class="form-inp" id="g-budget" type="number" min="0" inputmode="decimal" placeholder="e.g. 50"></div>
+        <div class="ga-loc-note">📍 You'll pin your location right after signing in — your exact address is never shown publicly.</div>
+        <button class="ga-cta" style="margin-top:0" onclick="saveGuestPost()">Continue</button>
+      </div>
     </div>
   </div>
 
@@ -918,6 +928,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   <div class="ga-dim" id="ga-dim" onclick="closeAuthSheet()"></div>
   <div class="ga-sheet" id="ga-sheet" role="dialog" aria-modal="true" aria-labelledby="ga-sheet-h">
     <div class="ga-grab"></div>
+    <button class="ga-back ga-sheet-back" type="button" onclick="closeAuthSheet()">← Back</button>
     <h3 id="ga-sheet-h">Welcome back</h3>
     <div class="ga-sheet-p" id="ga-sheet-p">Sign in to Yoodle — no passwords needed.</div>
     <div class="ga-draft" id="ga-draft" style="display:none">
@@ -1844,7 +1855,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/report-block.js?v=20261125a"></script>
 <script src="js/other-profile.js?v=20261127r"></script>
 <script src="js/navigation.js?v=20261127x"></script>
-<script src="js/landing.js?v=20261125a"></script>
+<script src="js/landing.js?v=20261127a"></script>
 <script src="js/guest-map.js?v=20261127e"></script>
 <script src="js/auth.js?v=20261127t"></script>
 <script src="js/settings.js?v=20261125a"></script>
