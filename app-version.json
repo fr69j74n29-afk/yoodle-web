@@ -2,5 +2,9 @@
   "min": "1.0",
   "latest": "1.0",
   "message": "",
+  "store": {
+    "ios": "",
+    "android": "https://play.google.com/store/apps/details?id=ca.yoodle.app"
+  },
   "bundle": null
 }
