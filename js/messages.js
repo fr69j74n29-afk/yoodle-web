@@ -3,23 +3,35 @@
 // other js/ files: see js/README.md for the load order and how to add code.
 
 async function loadMessages(){
-  const el=document.getElementById('conversations-list');el.innerHTML=spin();
-  if(!sb||!me){el.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see messages');return;}
+  const el=document.getElementById('conversations-list');
+  if(!sb||!me){el._tabHtml=null;el.innerHTML=emptyState('🔌','Connect Supabase','Add credentials to see messages');return;}
   const pid=myProfileId||me.id;
+  tabBegin('messages',el); // last list stays on screen while this reloads (js/core-state.js)
 
-  const[{data,error}]=await Promise.all([sb.rpc('get_conversations',{user_id:pid}),window.ctFetch?ctFetch():null]);
-  const directIds=window.ctDirectConvIds?ctDirectConvIds():new Set(); // friend chats (js/contacts.js)
-  if(error){el.innerHTML=emptyState('😕','Error loading messages',error.message);return;}
-  if(!data?.length){el.innerHTML=emptyState('💬','No conversations yet','Express interest in a job to start messaging');return;}
-
-  // update nav dot from same data — no extra query needed
+  let{data,error}=await sb.rpc('get_conversations',{user_id:pid});
+  if(error){tabError('messages',el,emptyState('😕','Error loading messages',esc(error.message)));return;}
+  data=data||[];
+  if(window.YOODI&&YOODI.disabled)data=data.filter(t=>t.task_type!=='yoodi_chat'); // Yoodi switched off by an admin (js/yoodi.js)
+  tabCache.messages.sig=tabConvSig(data); // refreshUnreadCount() compares against this (js/core-state.js)
+  // nav dot from the same data, every chat counted (contact chats too). Set before the "no chats" return, or a stale dot stays on.
   _setMessageBadge(data.some(c=>c.has_unread));
 
-  el.innerHTML=data.map(t=>{
+  // Contact chats (task_type 'direct') aren't in Chats: they're shown in the Contacts tab (js/contacts.js), which
+  // loads its friend list only when tapped (Rhea, 27 Nov; idea board #9). task_type comes from get_conversations
+  // (migration 20261127_002); until that's applied, one small tasks lookup tells them apart.
+  let isDirect=t=>t.task_type==='direct';
+  if(data.length&&!('task_type' in data[0])){
+    const{data:dt}=await sb.from('tasks').select('id').eq('type','direct').in('id',[...new Set(data.map(t=>t.task_id))]);
+    const ids=new Set((dt||[]).map(r=>r.id));isDirect=t=>ids.has(t.task_id);
+  }
+  if(window.ctSetChats)ctSetChats(data.filter(isDirect)); // last message + unread for each contact, and the Contacts tab dot
+  data=data.filter(t=>!isDirect(t));
+  if(!data.length){tabShow('messages',el,emptyState('💬','No conversations yet',window.ctSetChats?'Express interest in a job to start messaging. Chats with your contacts are under Contacts.':'Express interest in a job to start messaging'));return;}
+
+  const html=data.map(t=>{
     const isPoster=t.poster_id===pid;
     const otherName=t.other_name||'Someone';
-    const isDirect=directIds.has(t.conversation_id);
-    const title=isDirect?otherName:t.title; // friend chat: no job title
+    const title=t.title;
     const otherRating=t.other_rating;
     const cat=(t.category||'other').toLowerCase();
     const preview=t.last_msg_body?esc(t.last_msg_body).slice(0,60):'Tap to open chat';
@@ -34,19 +46,19 @@ async function loadMessages(){
       else if(window.supportOwnsChat&&supportOwnsChat(t.poster_id,t.other_id,t.title)) statusTag=''; // Contact support (js/support-chat.js)
       else if(t.app_status==='assigned'||t.task_status==='claimed') statusTag=`<span style="font-size:11.5px;color:var(--teal);font-weight:800;margin-left:6px">Assigned</span>`;
     }
-    return `<div class="conv-row" style="${rowBg}" data-conv="${t.conversation_id}" data-task="${t.task_id}" data-poster="${t.poster_id}" data-other="${t.other_id||''}" onclick="openChat('${t.task_id}','${esc(title)}','${esc(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
+    return `<div class="conv-row" style="${rowBg}" data-conv="${t.conversation_id}" data-task="${t.task_id}" data-poster="${t.poster_id}" data-other="${t.other_id||''}" onclick="openChat('${t.task_id}','${escJs(title)}','${escJs(otherName)}','${t.poster_id}','${t.other_id||''}','${otherRating||''}','${t.conversation_id}')">
       ${window.yoodiAvatar&&yoodiOwnsChat(t.poster_id,t.other_id)?yoodiAvatar():window.supportAvatar&&supportOwnsChat(t.poster_id,t.other_id,t.title)?supportAvatar():avatarCircle(otherName,null,'28px','12px')}
       <div class="conv-body">
         <div class="conv-top">
           <span class="conv-name">${esc(otherName)}${idvChip(t.other_id,true)}${unreadBadge}</span>
           <span class="conv-time" style="${isUnread?'color:var(--pink);font-weight:800':''}">${msgTime}</span>
         </div>
-        <div class="conv-title" style="display:flex;align-items:center;gap:4px">${isDirect?'👥 Contact':esc(t.title)}${isDirect?'':statusTag}</div>
+        <div class="conv-title" style="display:flex;align-items:center;gap:4px">${esc(t.title)}${statusTag}</div>
         <div class="conv-preview" style="${isUnread?'color:var(--text);font-weight:800':'color:#666'}">${preview}</div>
       </div>
     </div>`;
   }).join('');
-  if(window.swInit)swInit(el); // swipe-left actions (js/swipe-actions.js)
+  if(tabShow('messages',el,html)&&window.swInit)swInit(el); // redraw only if changed; swipe-left actions (js/swipe-actions.js)
 }
 
 let activeChatTaskId=null, activeChatPosterId=null, activeChatDoerId=null, activeChatConvId=null;

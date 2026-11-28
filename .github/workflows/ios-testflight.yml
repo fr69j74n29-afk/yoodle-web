@@ -70,6 +70,13 @@ jobs:
       - name: Install Capacitor
         run: npm ci
 
+      # Live updates for this build are made for the plugins recorded in mobile/native-release.json (app-bundle.yml).
+      # If plugins or the app version changed, record them first: node scripts/native-fingerprint.mjs record (and commit).
+      - name: Check mobile/native-release.json matches this build
+        env:
+          VERSION: ${{ inputs.version }}
+        run: node scripts/native-fingerprint.mjs check ${VERSION:+--version "$VERSION"}
+
       - name: Build web bundle and sync into the iOS project
         run: |
           npm run build:www

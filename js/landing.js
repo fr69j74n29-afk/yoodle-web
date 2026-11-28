@@ -9,14 +9,14 @@ function _readGuestDraft(){try{return JSON.parse(localStorage.getItem(GUEST_DRAF
 function openGuestPost(){
   const d=_readGuestDraft();
   if(d){document.getElementById('g-title').value=d.title||'';document.getElementById('g-desc').value=d.desc||'';document.getElementById('g-budget').value=d.budget||'';}
-  document.getElementById('ga-landing').hidden=true;
+  document.getElementById('ga-landing').classList.add('ga-posting'); // hides the landing text (phone: and the map); desktop keeps the map
   document.getElementById('ga-post').hidden=false;
   document.getElementById('view-auth').scrollTop=0;
   setTimeout(()=>document.getElementById('g-title').focus(),60);
 }
 function closeGuestPost(){
   document.getElementById('ga-post').hidden=true;
-  document.getElementById('ga-landing').hidden=false;
+  document.getElementById('ga-landing').classList.remove('ga-posting');
   document.getElementById('view-auth').scrollTop=0;
 }
 function saveGuestPost(){
@@ -56,12 +56,27 @@ function openAuthSheet(mode){
     h.textContent='Welcome back';
     p.textContent='Sign in to Yoodle — no passwords needed.';
   }
+  // Desktop: sign-in takes the left column in place of the landing text / job form; the map stays (Roman, 27 Nov).
+  // Phone: bottom sheet over a dimmed page, as before.
+  const sheet=document.getElementById('ga-sheet'),landing=document.getElementById('ga-landing');
+  if(landing&&window.matchMedia('(min-width:900px)').matches){
+    if(sheet.parentElement!==landing)landing.appendChild(sheet);
+    landing.classList.add('ga-signing');
+    openOv('ga-sheet');
+    document.getElementById('view-auth').scrollTop=0;
+    return;
+  }
+  _gaSheetHome();
   openOv('ga-dim');
   openOv('ga-sheet');
 }
+// Put the sheet back in its own place (after #ga-dim) for the phone bottom sheet.
+function _gaSheetHome(){const sheet=document.getElementById('ga-sheet'),dim=document.getElementById('ga-dim');if(sheet&&dim&&sheet.previousElementSibling!==dim)dim.after(sheet);}
 function closeAuthSheet(){
   closeOv('ga-dim');
   closeOv('ga-sheet');
+  document.getElementById('ga-landing')?.classList.remove('ga-signing'); // desktop: back to the landing text or the job form
+  _gaSheetHome();
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAuthSheet();});
 function restoreGuestDraft(){

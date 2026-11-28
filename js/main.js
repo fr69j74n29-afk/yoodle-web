@@ -91,6 +91,7 @@ window.addEventListener('DOMContentLoaded', () => {
   sb.auth.getSession().then(({data:{session}})=>{
     if(session)return _startApp(session);
     if(window.trackLandingVisit)trackLandingVisit(); // landing visitors → sign-in rate (js/landing-visits.js)
+    if(window.guestPreviewInit)guestPreviewInit(); // guest map preview on the landing page (js/guest-map.js)
     // Signed out and came from the expiry email: edit → ask to sign in; post → open the guest post form
     try{
       const d=JSON.parse(localStorage.getItem('yoodle_job_land')||'null');
@@ -100,6 +101,6 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   sb.auth.onAuthStateChange((_e,session)=>{
     if(session)_startApp(session);
-    else{me=null;_appStartedFor=null;showAuthScreen();}
+    else{me=null;_appStartedFor=null;showAuthScreen();if(window.guestPreviewInit)guestPreviewInit();}
   });
 });

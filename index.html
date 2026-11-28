@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- yoodle v001 — map: MapLibre GL JS + OpenFreeMap -->
-<html lang="en">
+<html lang="en" class="on-landing">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -11,8 +11,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Yoodle — Find Local Help for Odd Jobs Near You | Free Neighbourhood App</title>
-<meta name="description" content="Yoodle connects neighbours for odd jobs and local help — lawn care, moving, cleaning, dog walking, and more. Free to post, free to apply. No agency, no fees. Real people helping each other.">
+<title>Yoodle — Local Help, Odd Jobs &amp; Home Services Near You</title>
+<meta name="description" content="Free app for neighbours in Canada and the US: post odd jobs, hire local help, compare fixed-price home services or find a licensed pro. No fees, no agencies.">
 <meta name="keywords" content="odd jobs near me, hire local help, neighbourhood jobs, find someone to help, hire someone for a day, local task app, community work, small business help, yard work help, snow shovelling, handyman near me">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://yoodle.ca/">
@@ -30,12 +30,12 @@
   "@type": "WebApplication",
   "name": "Yoodle",
   "url": "https://yoodle.ca",
-  "description": "Yoodle is a free neighbourhood app connecting people who need help with local odd jobs to trusted people nearby who want to earn money.",
+  "description": "Yoodle is a free neighbourhood app in Canada and the United States connecting people who need help with odd jobs, home services and home repairs to neighbours and licensed local pros.",
   "applicationCategory": "LifestyleApplication",
   "operatingSystem": "Any",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CAD" },
-  "areaServed": { "@type": "Country", "name": "Canada" },
-  "keywords": "odd jobs, local help, neighbourhood tasks, hire local, community work, earn money local"
+  "areaServed": [ { "@type": "Country", "name": "Canada" }, { "@type": "Country", "name": "United States" } ],
+  "keywords": "odd jobs, local help, home services, home repair, neighbourhood tasks, hire local, community work, earn money local"
 }
 </script>
 <!-- Libraries load with defer: they download while the page paints and run (in order) before DOMContentLoaded,
@@ -48,6 +48,8 @@
 <noscript><link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"></noscript>
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js" defer></script>
 <link rel="manifest" href="/manifest.json">
+<link rel="icon" href="favicon.ico?v=20261127" sizes="48x48">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=20261127">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <!-- Fonts CSS without blocking the first paint (display=swap: fallback font first, then Nunito / Fredoka One) -->
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -55,11 +57,11 @@
 <!-- OneSignal web push: website only. The app uses the native OneSignal SDK (js/native-push.js); Capacitor sets window.Capacitor before this runs -->
 <script>if(!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())){var _os=document.createElement('script');_os.src='https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';_os.defer=true;document.head.appendChild(_os);}</script>
 <!-- Standard services (17 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
-<script src="js/home-services.js?v=20261121c" defer></script>
-<script src="js/native-app.js?v=20261120a" defer></script>
+<script src="js/home-services.js?v=20261127d" defer></script>
+<script src="js/native-app.js?v=20261128b" defer></script>
 <script src="js/native-push.js?v=20261125a" defer></script>
 <!-- Yoodi Live (23 Nov 2026): Yoodi, Yoodle's assistant, floating on the map; own file, classic deferred script; bump ?v= on every change -->
-<script src="js/yoodi.js?v=20261126b" defer></script>
+<script src="js/yoodi.js?v=20261127b" defer></script>
 <!-- Contact support chat (26 Nov 2026): opened from Yoodi's "Contact support" button; own file, classic deferred script; bump ?v= on every change -->
 <script src="js/support-chat.js?v=20261126b" defer></script>
 <!-- Landing visitors → sign-in rate (26 Nov 2026): own file, classic deferred script; bump ?v= on every change -->
@@ -186,6 +188,7 @@ body.theme-sage-dark .btn-apple{background:#fff;color:#000}
 .ga-wrap{width:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;flex:1 0 auto;position:relative;z-index:1;padding:calc(var(--sat) + 14px) 22px calc(var(--sab) + 24px)}
 .ga-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
 .ga-wm{font-size:34px}
+.ga-nav{display:none} /* desktop only: header links (Roman, 28 Nov) */
 .ga-pill{background:var(--sage-soft);color:var(--pink);border:none;border-radius:999px;padding:9px 18px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
 .ga-pill:active{transform:scale(.96)}
 .ga-page{display:flex;flex-direction:column}
@@ -210,6 +213,59 @@ body.theme-sage-dark .btn-apple{background:#fff;color:#000}
 .ga-alt a{color:var(--purple);font-weight:800;cursor:pointer;text-decoration:none}
 #view-auth .auth-legal{margin-top:22px}
 #ga-landing{padding-top:18px}
+/* Guest map preview (iOS/landing redesign step 4, 27 Nov 2026): short Toronto map on the signed-out landing page */
+.ga-map{position:relative;height:400px;margin:0 0 22px;border-radius:18px;overflow:hidden;background:#F2F3EF;border:1px solid var(--border)}
+.ga-map[hidden]{display:none}
+#ga-map-canvas{position:absolute;inset:0;overflow:hidden}
+.ga-map-legend{position:absolute;left:10px;top:10px;z-index:30;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.95);border:1px solid var(--border);color:var(--text);font:800 12px 'Nunito',sans-serif;display:flex;flex-direction:column;gap:4px;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ga-map-legend span{display:flex;align-items:center;gap:7px}
+.ga-map-legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.ga-map-line{position:absolute;left:10px;right:10px;bottom:10px;z-index:30;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.95);border:1px solid var(--border);color:var(--text);font:800 13px 'Nunito',sans-serif;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.ga-map .maplibregl-ctrl-bottom-right{bottom:44px}
+/* Guest tiles (pin tap): phone = light bottom sheet; desktop = panel inside the map, right side */
+.ga-tiles-dim{position:fixed;inset:0;background:rgba(20,30,25,.45);z-index:1000;display:none}
+.ga-tiles{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:480px;max-height:70dvh;overflow-y:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:10px 16px calc(var(--sab) + 18px);z-index:1001;display:none;box-shadow:0 -8px 30px rgba(0,0,0,.18)}
+.ga-tiles.open,.ga-tiles-dim.open{display:block}
+.ga-tiles-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 12px}
+.ga-tiles-t{font-size:20px;font-weight:900}
+.ga-tiles-x{width:36px;height:36px;border-radius:18px;border:1px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;flex-shrink:0}
+.ga-tiles-list{display:flex;flex-direction:column;gap:10px}
+#view-auth .list-card,#view-auth .list-tile{background:var(--surface)!important;color:var(--text)}
+#view-auth .lc-desc{color:var(--muted)}
+html.on-landing,html.on-landing body{background:#EEF2EC} /* landing screen up: light base behind Safari's see-through bars (was the app's black → black strip after the phone was idle) */
+#ga-landing[hidden],#ga-post[hidden]{display:none!important} /* desktop grid (display:grid) was overriding hidden → Post a job form showed below the landing page */
+#ga-landing.ga-posting>*:not(#ga-post):not(.ga-sheet){display:none!important} /* Post a job open: only the form (phone: map hidden too, as before) */
+.ga-sheet-back{display:none}
+@media(min-width:900px){ /* desktop: the job form and sign-in take the left column, the map stays on the right (Roman, 27 Nov) */
+  #ga-landing.ga-posting>#ga-map:not([hidden]){display:block!important}
+  #ga-landing.ga-signing>*:not(.ga-sheet):not(#ga-map){display:none!important}
+  #ga-landing>.ga-sheet{display:none;position:static;transform:none;opacity:1;pointer-events:auto;transition:none;width:auto;max-width:440px;max-height:none;overflow:visible;border-radius:20px;padding:22px 24px 24px;box-shadow:0 10px 40px rgba(30,38,32,.10);border:1px solid var(--border)}
+  #ga-landing>.ga-sheet.open{display:block;transform:none}
+  #ga-landing>.ga-sheet .ga-grab{display:none}
+  #ga-landing>.ga-sheet .ga-sheet-back{display:block}
+  #ga-landing>.ga-sheet .ga-x{display:none} /* desktop: the sheet sits in the left column with "← Back" instead */
+}
+#view-auth{overflow-x:hidden;overflow-x:clip} /* the decorative glow (::after, right:-80px) made the page 80px wider than phones → sideways shift */
+.ga-map-actions{display:none}
+#ga-map .maplibregl-control-container>div{z-index:30} /* zoom +/- and map credit above the pins (pins 10-20), under the tiles panel (40) and sheet (50) */
+@media(min-width:900px){
+  #view-auth .ga-wrap{max-width:1180px}
+  #ga-landing{display:grid;grid-template-columns:440px 1fr;column-gap:48px;align-items:start}
+  #ga-landing>*{grid-column:1}
+  #ga-landing>.ga-map{grid-column:2;grid-row:1 / span 12;height:620px;margin:0;position:sticky;top:24px}
+  #ga-post{max-width:440px}
+  .ga-tiles{position:absolute;left:auto;right:12px;top:12px;bottom:12px;transform:none;width:360px;max-width:none;max-height:none;border-radius:16px;padding:12px 14px;z-index:40}
+  .ga-tiles-dim{display:none!important}
+  .ga-map-actions{position:absolute;left:12px;right:12px;bottom:12px;z-index:50;background:var(--bg);border-radius:16px;padding:12px 14px 4px;box-shadow:0 8px 30px rgba(0,0,0,.18)}
+  .ga-map-actions.open{display:block}
+  .ga-map-actions .ga-choice{min-height:64px;padding:12px 16px;margin-bottom:10px}
+  /* Desktop polish (Roman, 28 Nov): full-width footer under both columns, "What is Yoodle?" left-aligned, header links */
+  #ga-landing>.auth-legal{grid-column:1 / -1;grid-row:13;max-width:none;width:100%;margin-top:40px;padding-top:18px;border-top:1px solid var(--border)}
+  #ga-landing>.ga-about{text-align:left;margin:24px 0 0;max-width:none}
+  .ga-nav{display:flex;align-items:center;gap:24px;margin-left:auto;margin-right:22px}
+  .ga-nav a{color:var(--muted);font-family:'Nunito',sans-serif;font-size:14.5px;font-weight:800;text-decoration:none}
+  .ga-nav a:hover{color:var(--text)}
+}
 .ga-eyebrow{font-size:13.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);text-align:center;margin-bottom:8px}
 .ga-fork-h{font-family:'Fredoka One',cursive;font-weight:400;font-size:28px;line-height:1.2;text-align:center;color:var(--text)}
 .ga-about{max-width:420px;margin:22px auto 0;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.5}
@@ -304,7 +360,12 @@ body.theme-sage-dark .theme-btn .ic-moon{display:none}
 .nt-badge{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#DC2626;color:#fff;font:800 10.5px/17px 'Nunito',sans-serif;text-align:center;display:none}
 .nt-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .nt-close{width:34px;height:34px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);font-size:15px;cursor:pointer;flex-shrink:0}
-.nt-row{display:flex;gap:12px;width:100%;padding:12px 4px;border:none;border-bottom:1px solid var(--border);background:none;color:var(--text);text-align:left;font-family:'Nunito',sans-serif;cursor:pointer}
+.nt-row{display:flex;align-items:flex-start;gap:6px;width:100%;border-bottom:1px solid var(--border)}
+.nt-main{display:flex;gap:12px;flex:1;min-width:0;padding:12px 4px;border:none;background:none;color:var(--text);text-align:left;font-family:'Nunito',sans-serif;cursor:pointer}
+.nt-acts{display:flex;gap:2px;padding-top:8px;flex-shrink:0}
+.nt-act{width:36px;height:36px;border-radius:50%;border:none;background:none;font-size:16px;cursor:pointer;opacity:.45;filter:grayscale(1)}
+.nt-act.on{opacity:1;filter:none;background:var(--surface2)}
+.nt-act:active{transform:scale(.9)}
 .nt-row .e{font-size:20px;width:26px;text-align:center;flex-shrink:0}
 .nt-row .nt-txt{min-width:0;flex:1}
 .nt-row b{display:block;font-size:14.5px;font-weight:800}
@@ -410,6 +471,9 @@ html:not(.ml-css) #map>*{visibility:hidden} /* until maplibre-gl.css has applied
 .list-card{background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;border:1.5px solid var(--border);cursor:pointer;transition:transform .15s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px}
 .list-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--jc,var(--purple))}
 .list-card:active{transform:scale(.98)}
+/* dark mode (27 Nov 2026): list view page grey like the top bar, job / helper / pro tiles black like the selected toggle */
+body.theme-sage-dark #app-list{background:var(--surface)}
+body.theme-sage-dark .list-card,body.theme-sage-dark .list-tile{background:#000!important}
 .lc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
 .lc-cat{font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--jc,var(--purple));display:flex;align-items:center;gap:4px;flex-shrink:0}
 .lc-budget{font-size:17px;font-weight:800;color:var(--lime);white-space:nowrap;flex-shrink:0}
@@ -700,6 +764,7 @@ body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 /* ── FIND A HELPER ── */
 .hs-btn{display:flex;align-items:center;gap:6px;height:38px;padding:0 13px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;max-width:210px;transition:transform .15s}
 .hs-btn:active{transform:scale(.96)}
+.hs-btn.nav-hide{display:none}
 .hs-btn svg{width:16px;height:16px;flex-shrink:0;color:var(--purple)}
 .hs-btn #hs-label,.hs-btn #ps-label{overflow:hidden;text-overflow:ellipsis}
 .hs-btn.on{background:#F59E0B;border-color:#F59E0B;color:#1E2620}
@@ -707,8 +772,7 @@ body.theme-sage-dark .rtw-seg button.on{color:#F5B82E}
 /* ── ONE FILTER BUTTON (15 Nov 2026): "🔍 Filter", orange outline; widens to show the pick ── */
 .fs-btn{border-color:#F58A07;background:var(--surface)}
 .fs-btn svg{color:#F58A07}
-.fs-btn.on.pro-on{background:#F58A07;border-color:#F58A07;color:#fff}
-.fs-btn.on.pro-on svg{color:#fff}
+/* Pro pick uses the same amber button as helpers and services (27 Nov 2026 — Roman; was orange #F58A07 + white text via .pro-on) */
 .fs-back{border:none;background:none;padding:0 4px 0 0;font:900 15px 'Nunito',sans-serif;color:var(--muted);cursor:pointer}
 .fs-pane{display:none}.fs-pane.on{display:block}
 .fs-choice{display:flex;align-items:center;gap:12px;width:100%;padding:16px 14px;margin-bottom:10px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);font-family:'Nunito',sans-serif;text-align:left;cursor:pointer;color:var(--text)}
@@ -735,7 +799,9 @@ body.theme-sage-dark .fs-become{color:#F58A07}
 .fs-become-box .row button{flex:1;padding:12px;border-radius:12px;font:800 14.5px 'Nunito',sans-serif;cursor:pointer}
 .fs-go{border:0;background:#F58A07;color:#fff}
 .fs-cancel{border:1px solid var(--border);background:transparent;color:var(--muted)}
-.hs-x{margin-left:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.14);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.hs-x{margin-left:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.14);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;position:relative}
+/* ✕ tap area 44×44 px (Apple minimum), icon unchanged — taps near the ✕ clear the filter instead of opening the menu (27 Nov 2026) */
+.hs-x::before{content:'';position:absolute;inset:-12px;border-radius:50%}
 .hs-ov{display:none;position:absolute;inset:0;z-index:150;background:rgba(20,30,24,.28)}
 .hs-ov.open{display:block}
 .hs-pop{position:absolute;top:calc(var(--sat) + 64px);right:12px;width:min(380px,calc(100% - 24px));max-height:calc(100% - var(--sat) - 150px);overflow-y:auto;background:var(--surface);border:1.5px solid var(--border);border-radius:18px;box-shadow:0 12px 34px rgba(0,0,0,.22);padding:14px;animation:hsIn .16s ease-out}
@@ -828,11 +894,20 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   <div class="ga-wrap">
     <div class="ga-hdr">
       <div class="wordmark ga-wm" role="img" aria-label="Yoodle"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span><span class="lca">.ca</span></div>
+      <nav class="ga-nav" aria-label="Yoodle"><a href="/how-it-works">How it works</a><a href="/services">Home services</a><a href="/pros">Find a pro</a></nav>
       <button class="ga-pill" onclick="openAuthSheet('signin')">Sign in</button>
     </div>
 
     <!-- LANDING -->
     <div class="ga-page" id="ga-landing">
+      <!-- Guest map preview (step 4): filled by js/guest-map.js guestPreviewInit(); stays hidden if the map can't start -->
+      <div class="ga-map" id="ga-map" hidden>
+        <div id="ga-map-canvas"></div>
+        <div class="ga-tiles-dim" id="ga-tiles-dim" onclick="guestCloseTiles()"></div>
+        <div class="ga-tiles" id="ga-tiles" role="dialog" aria-modal="true" aria-labelledby="ga-tiles-t"><div class="ga-tiles-hd"><div class="ga-tiles-t" id="ga-tiles-t"></div><button type="button" class="ga-tiles-x" aria-label="Close" onclick="guestCloseTiles()">×</button></div><div class="ga-tiles-list" id="ga-tiles-list"></div></div>
+        <div class="ga-map-legend"><span><i style="background:#DC2626"></i><b data-gt="guest.legend.need_help">Need help</b></span><span><i style="background:#2563EB"></i><b data-gt="guest.legend.jobs">Job listings</b></span><span><i style="background:#5C8A6A"></i><b data-gt="guest.legend.helpers">Offering help</b></span></div>
+        <div class="ga-map-line" data-gt="guest.banner">Showing Toronto &amp; GTA · Sign in to see your area</div>
+      </div>
       <div class="ga-eyebrow">Yoodle · Neighbours helping neighbours</div>
       <h1 class="ga-fork-h">What would you like to do?</h1>
       <div class="ga-fork-sub">Free for everyone. No fees, ever.</div>
@@ -848,32 +923,36 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       </button>
 
       <div class="ga-alt">Already on Yoodle? <a onclick="openAuthSheet('signin')">Sign in</a></div>
-      <div class="auth-legal">By continuing you agree to Yoodle's <a href="/terms">Terms of Use</a> and <a href="/privacy">Privacy Policy</a>. No spam, ever.<br><a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a> · <a href="/news">News</a> · <a href="/blog">Blog</a> · <a href="/pros">Find a pro</a> · <a href="/ambassadors">Ambassadors</a></div>
       <!-- What Yoodle is: plain text for visitors and for Google's sign-in (OAuth) branding review -->
       <section class="ga-about" aria-labelledby="ga-about-h">
         <h2 id="ga-about-h">What is Yoodle?</h2>
-        <p>Yoodle is a free app that connects neighbours in Canada for odd jobs and local help. Post a task — yard work, moving help, cleaning, snow shovelling and more — and people nearby offer to help. Or set up a helper profile and find paid work close to home.</p>
-        <p>You sign in to Yoodle with Google or with a code sent to your email, so you can post jobs, message neighbours and get updates. Posting and applying for jobs is always free, and Yoodle never sells your data. See our <a href="/privacy">Privacy Policy</a>.</p>
+        <p>Yoodle is a free app that connects neighbours in Canada and the United States for odd jobs and local help. Post a task — lawn care, house cleaning, moving help, snow removal, handyman jobs and more — and people nearby offer to help. Or set up a helper profile and find paid work close to home.</p>
+        <p>Neighbours also offer fixed-price home services such as gutter cleaning, window cleaning and driveway snow removal, so you can compare prices from people near you and hire someone without asking for quotes.</p>
+        <p>When a home repair needs a licensed trade, Yoodle Pros connects you with local plumbers, electricians, HVAC technicians and more. You can check their licence and ID badges and message them for free.</p>
+        <p>You sign in to Yoodle with Google, with Apple in the Yoodle iPhone app, or with a code sent to your email, so you can post jobs, message neighbours and get updates. Posting and applying for jobs is always free, and Yoodle never sells your data. See our <a href="/privacy">Privacy Policy</a>.</p>
       </section>
-    </div>
+      <div class="auth-legal">By continuing you agree to Yoodle's <a href="/terms">Terms of Use</a> and <a href="/privacy">Privacy Policy</a>. No spam, ever.<br><a href="/how-it-works">How it works</a> · <a href="/services">Home services</a> · <a href="/faq">FAQ</a> · <a href="/news">News</a> · <a href="/blog">Blog</a> · <a href="/pros">Find a pro</a> · <a href="/ambassadors">Ambassadors</a></div>
 
-    <!-- GUEST POST FORM -->
-    <div class="ga-page" id="ga-post" hidden>
-      <button class="ga-back" onclick="closeGuestPost()">← Back</button>
-      <div class="ga-post-h">Post a job</div>
-      <div class="ga-post-sub">Free, always. Takes about a minute.</div>
-      <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="g-title" type="text" maxlength="120" placeholder="e.g. Help me move a couch"></div>
-      <div class="form-g"><label class="form-lbl">Description</label><textarea class="form-ta" id="g-desc" placeholder="Describe what needs doing, when, any requirements…"></textarea></div>
-      <div class="form-g"><label class="form-lbl">Budget (CAD $)</label><input class="form-inp" id="g-budget" type="number" min="0" inputmode="decimal" placeholder="e.g. 50"></div>
-      <div class="ga-loc-note">📍 You'll pin your location right after signing in — your exact address is never shown publicly.</div>
-      <button class="ga-cta" style="margin-top:0" onclick="saveGuestPost()">Continue</button>
+      <!-- GUEST POST FORM (inside the landing: desktop shows it in the left column, next to the map) -->
+      <div class="ga-page" id="ga-post" hidden>
+        <button class="ga-back" onclick="closeGuestPost()">← Back</button>
+        <div class="ga-post-h">Post a job</div>
+        <div class="ga-post-sub">Free, always. Takes about a minute.</div>
+        <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="g-title" type="text" maxlength="120" placeholder="e.g. Help me move a couch"></div>
+        <div class="form-g"><label class="form-lbl">Description</label><textarea class="form-ta" id="g-desc" placeholder="Describe what needs doing, when, any requirements…"></textarea></div>
+        <div class="form-g"><label class="form-lbl">Budget (CAD $)</label><input class="form-inp" id="g-budget" type="number" min="0" inputmode="decimal" placeholder="e.g. 50"></div>
+        <div class="ga-loc-note">📍 You'll pin your location right after signing in — your exact address is never shown publicly.</div>
+        <button class="ga-cta" style="margin-top:0" onclick="saveGuestPost()">Continue</button>
+      </div>
     </div>
   </div>
 
   <!-- SIGN-IN SHEET -->
   <div class="ga-dim" id="ga-dim" onclick="closeAuthSheet()"></div>
   <div class="ga-sheet" id="ga-sheet" role="dialog" aria-modal="true" aria-labelledby="ga-sheet-h">
+    <div class="ga-grab"></div>
     <button class="ga-x" type="button" onclick="closeAuthSheet()" aria-label="Close">✕</button>
+    <button class="ga-back ga-sheet-back" type="button" onclick="closeAuthSheet()">← Back</button>
     <h3 id="ga-sheet-h">Welcome back</h3>
     <div class="ga-sheet-p" id="ga-sheet-p">Sign in to Yoodle — no passwords needed.</div>
     <div class="ga-draft" id="ga-draft" style="display:none">
@@ -929,12 +1008,13 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   <div class="top-bar">
     <div class="wordmark top-wm"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span></div>
     <div class="top-right">
-      <button class="vw-btn" id="vw-btn" onclick="openViewPanel()" aria-label="Views of your helper profile"><span id="vw-ic" aria-hidden="true"></span><span id="vw-n">0</span></button>
       <button class="hs-btn fs-btn" id="hs-btn" onclick="hsToggle()" aria-label="Filter the map: helpers or professionals">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <span id="hs-label">Filter</span>
         <span id="hs-x" class="hs-x" style="display:none" onclick="event.stopPropagation();fsClear()" aria-label="Clear filter">✕</span>
       </button>
+      <!-- order (27 Nov 2026, Rhea): Filter · views · light/dark. Filter shows on Browse (map and list) only: js/navigation.js -->
+      <button class="vw-btn" id="vw-btn" onclick="openViewPanel()" aria-label="Views of your helper profile"><span id="vw-ic" aria-hidden="true"></span><span id="vw-n">0</span></button>
       <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Switch light/dark mode" title="Switch light/dark mode">
         <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="1.5" x2="12" y2="3.5"/><line x1="12" y1="20.5" x2="12" y2="22.5"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1.5" y1="12" x2="3.5" y2="12"/><line x1="20.5" y1="12" x2="22.5" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -1029,8 +1109,8 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <div style="font-size:13.5px;font-weight:800;color:var(--muted);margin-bottom:10px" id="list-sub">Within — km · map area</div>
       <!-- Tabs -->
       <div style="display:flex;gap:6px;background:var(--surface2);border-radius:12px;padding:4px">
-        <button id="list-tab-jobs" onclick="switchListTab('jobs')" style="flex:1;padding:9px;border-radius:8px;border:none;background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Jobs <span id="list-jobs-count" style="color:var(--purple)">0</span></button>
-        <button id="list-tab-helpers" onclick="switchListTab('helpers')" style="flex:1;padding:9px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Helpers <span id="list-helpers-count" style="color:var(--lime)">0</span></button>
+        <button id="list-tab-jobs" onclick="switchListTab('jobs')" style="flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--lime);background:#000;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Jobs <span id="list-jobs-count" style="color:var(--purple)">0</span></button>
+        <button id="list-tab-helpers" onclick="switchListTab('helpers')" style="flex:1;padding:9px;border-radius:8px;border:1.5px solid transparent;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Helpers <span id="list-helpers-count" style="color:var(--lime)">0</span></button>
       </div>
     </div>
     <!-- Scrollable content -->
@@ -1073,7 +1153,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <button onclick="nav('post')" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>
         <div class="section-h" style="margin-bottom:0">Post a Job</div>
       </div>
-      <div id="p-offer" class="p-offer" style="display:none"></div><!-- private job offer to a contact (js/contacts.js) -->
       <input type="hidden" id="p-cat" value="">
       <div class="form-g"><label class="form-lbl">Category</label><div id="p-cat-grid" class="ys-pcats"></div></div>
       <div class="form-g"><label class="form-lbl">Job Title</label><input class="form-inp" id="p-title" type="text" placeholder="e.g. Help me move a couch"></div>
@@ -1145,6 +1224,18 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
           <div style="flex:1;min-width:0"><div class="pf-t">Push notifications</div><div id="notif-tip-body" class="pf-d"></div></div></div>
       </div>
       <!-- Invite neighbours card removed 17 Nov 2026 (referral links and openReferralModal still work) -->
+      <!-- Feedback & suggestions (27 Nov 2026): one-way, js/feedback.js → admin console FEEDBACK & SUGGESTIONS.
+           Support stays a two-way chat (Yoodi → Contact support, js/support-chat.js). -->
+      <div id="fb-card" class="pf-card fb-card">
+        <div class="fb-t">💡 Feedback &amp; suggestions</div>
+        <div class="fb-d">Tell us what to improve. We read every message, but can't reply here.</div>
+        <div class="fb-box">
+          <textarea id="fb-text" maxlength="2000" rows="3" aria-label="Feedback or suggestion for the Yoodle team" oninput="fbInput()"
+            placeholder="One-way feedback and suggestions, e.g. it would be great to filter jobs by price. Need help? Chat with Yoodi, our assistant, on the Browse page."></textarea>
+          <button id="fb-send" class="fb-send" type="button" onclick="fbSend()" aria-label="Send feedback" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></button>
+        </div>
+        <div id="fb-ok" class="fb-ok">✅ Thanks! Your feedback helps us make Yoodle better.</div>
+      </div>
       <button class="btn-so" onclick="signOut()">Sign out</button>
     </div>
   </div>
@@ -1163,13 +1254,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         </button>
         </div>
       </div>
-      <!-- Chats | Contacts tabs (26 Nov 2026): Contacts = friend requests by email + friend chats (js/contacts.js) -->
-      <div class="msg-tabs" role="tablist">
-        <button id="msg-tab-chats" class="on" type="button" role="tab" onclick="msgTab('chats')">Chats</button>
-        <button id="msg-tab-contacts" type="button" role="tab" onclick="msgTab('contacts')">Contacts <span class="ct-badge" id="ct-badge"></span></button>
-      </div>
       <div id="conversations-list"><div class="loading"><div class="spinner"></div></div></div>
-      <div id="contacts-pane" style="display:none"></div>
     </div>
   </div>
 
@@ -1219,7 +1304,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <!-- RATE -->
       <div class="form-g">
         <label class="form-lbl">Your rate for other jobs</label>
-        <div style="font-size:13.5px;color:var(--muted);margin-bottom:10px">For jobs not covered by your standard services.</div>
+        <div style="font-size:13.5px;color:var(--muted);margin-bottom:10px">For jobs not covered by your fixed-price services.</div>
         <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:6px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;min-width:120px">
             <span style="font-size:15px;font-weight:800;color:var(--muted)">$</span>
@@ -1292,7 +1377,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="chat-title">—</div>
         <div style="font-size:13.5px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer" id="chat-other" onclick="if(activeChatDoerId)openOtherProfile(activeChatDoerId)">—<span style="font-size:11.5px;opacity:.5">›</span></div>
       </div>
-      <button id="chat-connect" class="chat-connect" type="button" style="display:none" onclick="ctConnectTap(this)"></button><!-- Connect (js/contacts.js) -->
       <div class="card-menu-wrap" id="chat-more-wrap">
         <button class="card-menu-btn" onclick="event.stopPropagation();toggleCardMenu(event,'chat-menu')" aria-label="More options" style="width:40px;height:40px;font-size:22px">⋮</button>
         <div class="card-menu-drop" id="chat-menu" style="top:44px">
@@ -1424,17 +1508,6 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 </div>
 
 <!-- RENEW SHEET (Activity: expired / paused job → pick the new end date, js/job-expiry.js) -->
-<!-- SEND A PRIVATE JOB TO A CONTACT (js/contacts.js ctPickContact) -->
-<div class="modal-ov" id="ct-pick-modal" onclick="if(event.target.id==='ct-pick-modal')closeOv('ct-pick-modal')">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-title" style="margin-bottom:6px">Send to a contact</div>
-    <div style="font-size:14px;color:var(--muted);margin-bottom:14px;line-height:1.5">Only you and the contact you pick can see this job. They can accept or decline it.</div>
-    <div id="ct-pick-list"></div>
-    <button onclick="closeOv('ct-pick-modal')" style="width:100%;padding:14px;border-radius:var(--radius);background:transparent;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:6px">Cancel</button>
-  </div>
-</div>
-
 <div class="modal-ov" id="renew-modal" onclick="if(event.target.id==='renew-modal')closeOv('renew-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -1493,8 +1566,8 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
       <div class="modal-handle"></div>
       <!-- Tabs -->
       <div style="display:flex;gap:0;background:var(--surface2);border-radius:var(--radius-sm);padding:4px;margin-bottom:16px">
-        <button id="sheet-tab-jobs" onclick="switchSheetTab('jobs')" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--surface);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Jobs <span id="sheet-jobs-count" style="color:var(--purple)">0</span></button>
-        <button id="sheet-tab-helpers" onclick="switchSheetTab('helpers')" style="flex:1;padding:10px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Help <span id="sheet-helpers-count" style="color:var(--lime)">0</span></button>
+        <button id="sheet-tab-jobs" onclick="switchSheetTab('jobs')" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid var(--lime);background:#000;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Jobs <span id="sheet-jobs-count" style="color:var(--purple)">0</span></button>
+        <button id="sheet-tab-helpers" onclick="switchSheetTab('helpers')" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid transparent;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Help <span id="sheet-helpers-count" style="color:var(--lime)">0</span></button>
       </div>
     </div>
     <div id="sheet-content" style="flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch"></div>
@@ -1556,6 +1629,8 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
         <div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5">To report someone, open their profile or your chat with them and tap Report. We review reports within 24 hours.</div>
       </div>
       <button class="btn-del" onclick="openDeleteAccount()">Delete my account</button>
+      <!-- App only: filled in by js/native-app.js (app and live-update version; 7 taps switch test phones to staging updates) -->
+      <div id="app-ver-line" onclick="appVerTap()" style="display:none;font-size:12px;color:var(--muted);text-align:center;margin-top:14px;padding:6px;-webkit-user-select:none;user-select:none"></div>
   </div>
 </div>
 
@@ -1772,52 +1847,53 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <!-- App code (25 Nov 2026): split out of this file into js/ by feature. Plain scripts, loaded in this order;
      see js/README.md. Bump a file's ?v= when you change it. -->
 <script src="js/core-config.js?v=20261126u"></script>
-<script src="js/core-state.js?v=20261125a"></script>
-<script src="js/core-ui.js?v=20261125a"></script>
+<script src="js/core-state.js?v=20261127u"></script>
+<script src="js/core-ui.js?v=20261127r"></script>
 <script src="js/core-address.js?v=20261125a"></script>
 <script src="js/map.js?v=20261125a"></script>
 <script src="js/theme.js?v=20261125a"></script>
 <script src="js/contact.js?v=20261125a"></script>
-<script src="js/find-helper.js?v=20261125a"></script>
-<script src="js/find-pro.js?v=20261125e"></script>
+<script src="js/find-helper.js?v=20261127d"></script>
+<script src="js/find-pro.js?v=20261127a"></script>
 <script src="js/location.js?v=20261125a"></script>
 <script src="js/map-pins.js?v=20261126o"></script>
 <script src="js/listings.js?v=20261125c"></script>
 <script src="js/analytics.js?v=20261125a"></script>
 <script src="js/view-counter.js?v=20261126b"></script>
-<script src="js/map-data.js?v=20261126o"></script>
-<script src="js/list-view.js?v=20261125e"></script>
+<script src="js/map-data.js?v=20261127r"></script>
+<script src="js/list-view.js?v=20261127d"></script>
 <script src="js/account-checks.js?v=20261125a"></script>
 <script src="js/home-base.js?v=20261125a"></script>
 <script src="js/report-block.js?v=20261125a"></script>
-<script src="js/other-profile.js?v=20261125a"></script>
-<script src="js/navigation.js?v=20261125a"></script>
-<script src="js/landing.js?v=20261125a"></script>
-<script src="js/auth.js?v=20261126r"></script>
+<script src="js/other-profile.js?v=20261127r"></script>
+<script src="js/navigation.js?v=20261127x"></script>
+<script src="js/landing.js?v=20261127a"></script>
+<script src="js/guest-map.js?v=20261127e"></script>
+<script src="js/auth.js?v=20261127t"></script>
 <script src="js/settings.js?v=20261125a"></script>
 <script src="js/tutor-link.js?v=20261125a"></script>
-<script src="js/notifications.js?v=20261126b"></script>
-<script src="js/session.js?v=20261126a"></script>
+<script src="js/notifications.js?v=20261127y"></script>
+<script src="js/session.js?v=20261127a"></script>
 <script src="js/push-web.js?v=20261125a"></script>
-<script src="js/realtime.js?v=20261125a"></script>
-<script src="js/job-detail.js?v=20261126r2"></script>
+<script src="js/realtime.js?v=20261127v"></script>
+<script src="js/job-detail.js?v=20261127u"></script>
 <script src="js/job-expiry.js?v=20261126d"></script>
-<script src="js/job-post.js?v=20261126o"></script>
-<script src="js/my-jobs.js?v=20261126p"></script>
+<script src="js/job-post.js?v=20261127u"></script>
+<script src="js/my-jobs.js?v=20261127t"></script>
 <script src="js/job-edit.js?v=20261126p"></script>
 <script src="js/profile.js?v=20261125a"></script>
-<script src="js/messages.js?v=20261126p"></script>
-<script src="js/contacts.js?v=20261126s"></script>
-<script src="js/chat.js?v=20261126r2"></script>
+<script src="js/messages.js?v=20261127z"></script>
+<script src="js/chat.js?v=20261127u"></script>
 <script src="js/reactions.js?v=20261125a"></script>
 <script src="js/id-verification.js?v=20261125a"></script>
 <script src="js/ready-to-work.js?v=20261126a"></script>
-<script src="js/helper-profile.js?v=20261125a"></script>
+<script src="js/helper-profile.js?v=20261127b"></script>
 <script src="js/share.js?v=20261125a"></script>
 <script src="js/ratings.js?v=20261125a"></script>
 <script src="js/push-prompts.js?v=20261125a"></script>
 <script src="js/referrals.js?v=20261125a"></script>
-<script src="js/main.js?v=20261126a"></script>
+<script src="js/feedback.js?v=20261127d"></script>
+<script src="js/main.js?v=20261127a"></script>
 
 </body>
 </html>

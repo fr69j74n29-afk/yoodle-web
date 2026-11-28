@@ -438,6 +438,27 @@ body::before {
 
 /* BREAKDOWN SECTION */
 .section-title.lazy-h { cursor: pointer; user-select: none; }
+.ks-row { display: flex; align-items: center; gap: 14px; padding: 10px 0; }
+.ks-row + .ks-row { border-top: 1px solid var(--border); }
+.ks-txt { flex: 1; min-width: 0; }
+.ks-txt span:not(.ks-state) { display: block; font-size: 13px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+.ks-txt small { display: block; font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.ks-state { font-family: var(--mono); font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 100px; margin-left: 6px; }
+.ks-state.on { background: rgba(34,197,94,.15); color: #22C55E; }
+.ks-state.off { background: rgba(220,38,38,.15); color: #EF4444; }
+.ks-btn { flex-shrink: 0; padding: 9px 16px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; color: #fff; }
+.ks-btn.kill { background: #DC2626; }
+.ks-btn.revive { background: #16A34A; }
+.ks-note { color: var(--muted); font-size: 13px; }
+.fb-row { padding: 12px 0; border-top: 1px solid var(--border); }
+.fb-row:first-child { border-top: none; }
+.fb-row.done { opacity: .55; }
+.fb-meta { font-size: 13px; }
+.fb-meta a { color: var(--lime); }
+.fb-meta span { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.fb-body { margin: 8px 0; font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.fb-foot { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.fb-foot small { color: var(--muted); font-size: 11.5px; }
 .section-title.lazy-h .lazy-hint { float: right; font-size: 11px; font-weight: 700; letter-spacing: .5px; color: var(--muted); }
 .section-title.lazy-h:hover { color: var(--lime); }
 /* Section headings (31 Oct 2026, Roman: Space Mono 10px was impossible to read) → Nunito 14px, full-contrast text */
@@ -1098,6 +1119,19 @@ body::before {
       <div id="conv-rows" style="display:none;margin-top:12px"></div>
     </div>
 
+    <!-- KILL SWITCHES (27 Nov 2026, Rhea) — feature_flags via admin_feature_flags() / admin_set_feature_flag().
+         Yoodi off: hidden in the app and on the site (newer code), and the database refuses messages to and from her
+         and her drafts (all builds). Migration 20261127_005. -->
+    <div class="section-title">KILL SWITCHES</div>
+    <div class="breakdown-card" id="ks-wrap" style="margin-bottom:28px"><div class="ks-note">Loading…</div></div>
+
+    <!-- FEEDBACK & SUGGESTIONS (27 Nov 2026) — the Profile page box (js/feedback.js → send_feedback()), feedback only.
+         One-way: members can't see replies here; to answer, use their email. Support questions are in CONTACT SUPPORT. admin_feedback / admin_feedback_new / admin_feedback_done. -->
+    <div class="section-title lazy-h" onclick="toggleLazy('feedback')">FEEDBACK &amp; SUGGESTIONS <span id="fb-count" class="sup-badge" style="display:none"></span> <span class="lazy-hint" id="lazy-hint-feedback">▸ TAP TO LOAD</span></div>
+    <div id="lazy-feedback" style="display:none"><div class="breakdown-card" style="padding:8px 20px;margin-bottom:28px">
+      <div style="display:flex;justify-content:flex-end;gap:12px;padding:6px 0"><label style="font-size:12.5px;color:var(--muted);cursor:pointer"><input type="checkbox" id="fb-show-done" onchange="loadFeedback()"> Show done</label></div>
+      <div id="fb-wrap"></div></div></div>
+
     <!-- CONTACT SUPPORT (26 Nov 2026) — members' "Yoodle support" chats (Yoodi → Contact support).
          admin_support_inbox / admin_support_thread / admin_support_reply / admin_support_unread. No emails either way. -->
     <div class="section-title lazy-h" onclick="toggleLazy('support')">CONTACT SUPPORT <span id="sup-count" class="sup-badge" style="display:none"></span> <span class="lazy-hint" id="lazy-hint-support">▸ TAP TO LOAD</span></div>
@@ -1212,6 +1246,10 @@ body::before {
     <!-- FIND A HELPER SEARCHES (search_events) -->
     <div class="section-title lazy-h" onclick="toggleLazy('search')">FIND A HELPER — MOST SEARCHED — LAST 30 DAYS <span class="lazy-hint" id="lazy-hint-search">▸ TAP TO LOAD</span></div>
     <div id="lazy-search" style="display:none"><div id="search-stats" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
+
+    <!-- SERVICE SUGGESTIONS (27 Nov 2026) — "Missing a service? Suggest one →" in the app's Fixed-price services filter; table service_suggestions -->
+    <div class="section-title lazy-h" onclick="toggleLazy('sugg')">SERVICE SUGGESTIONS <span id="sugg-count" style="opacity:.8"></span> <span class="lazy-hint" id="lazy-hint-sugg">▸ TAP TO LOAD</span></div>
+    <div id="lazy-sugg" style="display:none"><div id="sugg-list" class="breakdown-card" style="padding:8px 20px;margin-bottom:28px"></div></div>
 
     <!-- RECENT ACTIVITY -->
     <div class="section-title lazy-h" onclick="toggleLazy('activity')">RECENT ACTIVITY — LAST 48 HOURS <span class="lazy-hint" id="lazy-hint-activity">▸ TAP TO LOAD</span></div>
@@ -1359,13 +1397,15 @@ function refreshAll() {
   getSuspended(true);
   loadStats();
   loadSupportBadge();   // CONTACT SUPPORT unread count in its heading (26 Nov 2026)
+  loadKillSwitches();   // KILL SWITCHES (27 Nov 2026)
+  loadFeedbackBadge();  // FEEDBACK & SUGGESTIONS new count in its heading (27 Nov 2026)
   Object.keys(_lazyOpen).forEach(k => LAZY[k]());   // only sections that are open reload   // tap-to-load sections that are open reload too
 }
 
 // ── TAP-TO-LOAD SECTIONS (15 Oct 2026) ──
 // Regions (+ admin-geo.js ≈300 KB, all profiles + all job locations), onboarding, shares, taps, agency, search
 // load only when their heading is tapped — not on every open of admin.html.
-const LAZY = { regions: loadRegions, onboard: loadOnboardStats, landing: loadLandingStats, webhits: loadWebHitsStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats,
+const LAZY = { feedback: loadFeedback, regions: loadRegions, onboard: loadOnboardStats, landing: loadLandingStats, webhits: loadWebHitsStats, share: loadShareStats, yoodi: loadYoodiStats, tap: loadTapStats, protap: loadProTapStats, agency: loadAgencyStats, search: loadSearchStats, sugg: loadServiceSuggestions,
   reports: loadReports, support: loadSupport, pros: loadPros, idv: loadIdvList, rtw: loadRtwCats, users: loadRecentUsers, activity: loadRecentActivity, amb: loadAmbassadors, susp: loadSuspended, notify: nfCount };
 // After an admin action: reload a section only if it's open; a closed one reloads fresh the next time it's opened.
 function lazyReload(k) {
@@ -1719,6 +1759,8 @@ function adminToast(msg) {
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escAttr(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+// Inside a quoted JS string in an inline handler: onclick="f('${escJsAttr(name)}')". &#39; is decoded before the JS runs, so escAttr alone lets O'Brien end the string.
+function escJsAttr(s) { return escAttr(String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n')); }
 
 function timeAgo(d) {
   const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -2228,7 +2270,7 @@ async function loadConvOverview() {
       <div style="color:var(--muted)">${esc(r.job || '—')} · ${esc(r.job_status || '')} · ${r.msgs} msg${r.msgs === 1 ? '' : 's'} · last <span title="${r.last_msg ? escAttr(timeAgo(r.last_msg)) : ''}">${esc(last)}</span></div>
       ${hist ? `<div style="margin-top:6px;padding:6px 10px;background:var(--surface2);border-radius:8px">${hist}</div>` : ''}
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
-        ${r.task_id && ['open', 'claimed'].includes(r.job_status) ? `<button class="btn-admin-msg btn-admin-danger" onclick="adminCancelJob('${r.task_id}','${escAttr(r.job || 'this job')}')">✕ Cancel job</button>` : ''}
+        ${r.task_id && ['open', 'claimed'].includes(r.job_status) ? `<button class="btn-admin-msg btn-admin-danger" onclick="adminCancelJob('${r.task_id}','${escJsAttr(r.job || 'this job')}')">✕ Cancel job</button>` : ''}
         ${convSuspendBtn(r.poster_id, r.poster, 'poster', suspendedIds)}
         ${convSuspendBtn(r.helper_id, r.helper, 'helper', suspendedIds)}
       </div>
@@ -2465,6 +2507,48 @@ async function loadSearchStats() {
     + `<div style="padding:10px 0 6px;font-size:12px;color:var(--muted)">Category picks in the map's Find a helper button by signed-in members. Admin and demo accounts are excluded; the same person picking the same category again within 10 minutes counts once. 0 nearby = searches with no matching helper inside their radius (unmet demand). Taps after = helper pins/cards tapped while that category was on.</div>`;
 }
 
+// ── SERVICE SUGGESTIONS (27 Nov 2026) ── admin_service_suggestions() newest first; status new / added / dismissed
+// via admin_service_suggestion_set(). MOST ASKED groups the same wording (case-insensitive), skipping tests and dismissed.
+async function loadServiceSuggestions() {
+  const el = document.getElementById('sugg-list'), cnt = document.getElementById('sugg-count');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_service_suggestions', { p_limit: 500 });
+  if (error) { el.innerHTML = `<div style="padding:14px 0;color:var(--muted);font-size:13px">Could not load: ${esc(error.message)}</div>`; return; }
+  const rows = data || [], real = rows.filter(r => !r.is_tester), fresh = real.filter(r => r.status === 'new');
+  if (cnt) cnt.textContent = rows.length ? `· ${fresh.length} new · ${real.length} total` : '';
+  if (!rows.length) { el.innerHTML = `<div style="padding:10px 0;color:var(--muted);font-size:13px">No suggestions yet.</div>`; return; }
+  const grp = {};
+  real.filter(r => r.status !== 'dismissed').forEach(r => { const k = r.text.trim().toLowerCase(); (grp[k] = grp[k] || { t: r.text, n: 0 }).n++; });
+  const top = Object.values(grp).filter(g => g.n > 1).sort((a, b) => b.n - a.n).slice(0, 8);
+  const topHtml = top.length ? `<div style="padding:10px 0 6px;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.4px">MOST ASKED</div>`
+    + top.map(g => `<div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid var(--border);font-size:14px"><span style="flex:1;font-weight:700">${esc(g.t)}</span><span>${g.n}×</span></div>`).join('')
+    + `<div style="padding:14px 0 6px;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.4px">ALL — NEWEST FIRST</div>` : '';
+  const when = d => new Date(d).toLocaleString('en-CA', { timeZone: 'America/Toronto', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const tag = (txt, bg, fg) => `<span style="margin-left:6px;font-size:11px;font-weight:800;border-radius:100px;padding:1px 8px;background:${bg};color:${fg}">${txt}</span>`;
+  const btn = (id, st, label) => `<button onclick="setServiceSuggestion(${Number(id)},'${st}')" style="padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;font-weight:700;cursor:pointer">${label}</button>`;
+  el.innerHTML = topHtml + rows.map(r => `<div style="padding:9px 0;border-top:1px solid var(--border);${r.status === 'dismissed' ? 'opacity:.45' : ''}">
+      <div style="font-size:14.5px;font-weight:700">${esc(r.text)}${r.status === 'added' ? tag('✓ ADDED', '#22A45D', '#fff') : ''}${r.is_tester ? tag('TEST', 'rgba(0,0,0,.12)', 'var(--muted)') : ''}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:4px;font-size:12.5px;color:var(--muted)">
+        <span>${esc(r.name || 'Deleted member')} · ${esc(when(r.created_at))}</span>
+        <span style="flex:1"></span>
+        ${r.status !== 'added' ? btn(r.id, 'added', '✓ Added') : ''}${r.status !== 'dismissed' ? btn(r.id, 'dismissed', 'Dismiss') : ''}${r.status !== 'new' ? btn(r.id, 'new', 'Undo') : ''}<button onclick="deleteServiceSuggestion(${Number(r.id)})" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(220,80,70,.5);background:transparent;color:#DC5046;font-size:12px;font-weight:700;cursor:pointer">Delete</button>
+      </div></div>`).join('')
+    + `<div style="padding:10px 0 4px;font-size:12px;color:var(--muted);line-height:1.5">From "Missing a service? Suggest one →" at the bottom of Filter → Fixed-price services. Each one is saved with the member and date/time. Mark ✓ Added once the service is in service_catalog. Dismiss greys it out and keeps it; Delete removes it for good. TEST = tester/demo accounts (not counted).</div>`;
+}
+// Delete = gone for good (admin_service_suggestion_delete), after a confirm. Dismiss keeps the row (greyed out).
+async function deleteServiceSuggestion(id) {
+  if (!confirm('Delete this suggestion for good? This can\'t be undone.')) return;
+  const { error } = await sb.rpc('admin_service_suggestion_delete', { p_id: id });
+  if (error) { alert('Could not delete: ' + error.message); return; }
+  loadServiceSuggestions();
+}
+async function setServiceSuggestion(id, status) {
+  const { error } = await sb.rpc('admin_service_suggestion_set', { p_id: id, p_status: status });
+  if (error) { alert('Could not update: ' + error.message); return; }
+  loadServiceSuggestions();
+}
+
 async function loadRecentActivity() {
   const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   const jobsEl = document.getElementById('activity-jobs');
@@ -2527,8 +2611,8 @@ async function loadRecentActivity() {
           <div class="ac-footer">
             <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${j.address ? '📍 ' + esc(j.address) : ''}</span>
             <span style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end">
-              <button class="btn-admin-msg" onclick="openAdminMsg('job','${j.poster_id}','${escAttr(poster.name || 'User')}','${j.id}','${escAttr(j.title || '')}')">💬 Message Poster</button>
-              ${['open', 'claimed'].includes(statusClass) ? `<button class="btn-admin-msg btn-admin-danger" onclick="adminCancelJob('${j.id}','${escAttr(j.title || 'this job')}')">✕ Cancel job</button>` : ''}
+              <button class="btn-admin-msg" onclick="openAdminMsg('job','${j.poster_id}','${escJsAttr(poster.name || 'User')}','${j.id}','${escJsAttr(j.title || '')}')">💬 Message Poster</button>
+              ${['open', 'claimed'].includes(statusClass) ? `<button class="btn-admin-msg btn-admin-danger" onclick="adminCancelJob('${j.id}','${escJsAttr(j.title || 'this job')}')">✕ Cancel job</button>` : ''}
               ${suspendBtn(j.poster_id, suspendedIds)}
             </span>
           </div>
@@ -2557,7 +2641,7 @@ async function loadRecentActivity() {
               </div>
             </div>
             <span style="display:flex;flex-direction:column;gap:6px">
-              <button class="btn-admin-msg" onclick="openAdminMsg('helper','${h.id}','${escAttr(h.name || 'Helper')}','','')">💬 Message</button>
+              <button class="btn-admin-msg" onclick="openAdminMsg('helper','${h.id}','${escJsAttr(h.name || 'Helper')}','','')">💬 Message</button>
               ${suspendBtn(h.id, suspendedIds)}
             </span>
           </div>
@@ -2728,6 +2812,65 @@ async function sendAdminMsg() {
 // starts a new support chat for them (admin_support_reply).
 const SUP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 9h8"/><path d="M8 13h6"/><path d="M14 18h-1l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v4.5"/><path d="M19 22v.01"/><path d="M19 19a2.003 2.003 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483"/></svg>';
 let _supOpen = null;   // { conv, name, email, cleared } while a thread is shown
+
+// ── FEEDBACK & SUGGESTIONS (27 Nov 2026) ── the Profile page box (one-way). New ones first; "Done" hides them (Show done brings them back).
+async function loadFeedbackBadge() {
+  const el = document.getElementById('fb-count'); if (!el) return;
+  const { data: n, error } = await sb.rpc('admin_feedback_new');
+  if (error || !n) { el.style.display = 'none'; return; }
+  el.textContent = n + ' NEW'; el.style.display = '';
+}
+async function loadFeedback() {
+  const wrap = document.getElementById('fb-wrap'); if (!wrap) return;
+  wrap.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)"><div class="loader-ring" style="margin:0 auto"></div></div>';
+  const { data, error } = await sb.rpc('admin_feedback', { p_limit: 200, p_include_done: !!document.getElementById('fb-show-done')?.checked });
+  if (error) { wrap.innerHTML = '<div class="ks-note" style="padding:12px 0">Could not load: ' + escAttr(error.message) + '</div>'; return; }
+  if (!data || !data.length) { wrap.innerHTML = '<div class="ks-note" style="padding:12px 0">No new feedback.</div>'; loadFeedbackBadge(); return; }
+  wrap.innerHTML = data.map(f => {
+    const c = f.context || {}, when = new Date(f.created_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    const where = [c.app === 'ios' ? 'iPhone app' : c.app === 'web' ? 'website' : '', c.site === 'staging' ? 'staging' : ''].filter(Boolean).join(' · ');
+    return `<div class="fb-row${f.done_at ? ' done' : ''}">
+      <div class="fb-meta"><b>${escAttr(f.name || 'Member')}</b>${f.email ? ` · <a href="mailto:${escAttr(f.email)}?subject=${encodeURIComponent('Your Yoodle feedback')}">${escAttr(f.email)}</a>` : ''}
+        <span>${escAttr(when)}${where ? ' · ' + escAttr(where) : ''}</span></div>
+      <div class="fb-body">${escAttr(f.body)}</div>
+      <div class="fb-foot">${f.done_at ? `<small>Done${f.done_by ? ' by ' + escAttr(f.done_by) : ''}</small>` : ''}
+        <button class="ks-btn ${f.done_at ? 'revive' : 'kill'}" style="padding:6px 12px;font-size:12.5px;${f.done_at ? '' : 'background:#16A34A'}" onclick="markFeedback('${f.id}', ${!f.done_at})">${f.done_at ? 'Mark as new' : '✓ Done'}</button></div>
+    </div>`;
+  }).join('');
+  loadFeedbackBadge();
+}
+async function markFeedback(id, done) {
+  const { error } = await sb.rpc('admin_feedback_done', { p_id: id, p_done: done });
+  if (error) { alert('Could not update: ' + error.message); return; }
+  loadFeedback();
+}
+
+// ── KILL SWITCHES (27 Nov 2026) ──
+const KS_INFO = {
+  yoodi: { name: 'Yoodi', on: 'On: members can chat with Yoodi.',
+           off: 'Off: Yoodi is hidden in the app and on the site, and nobody can message her (her replies are stopped too). Members see Contact support in her place.' },
+  ready_to_work: { name: 'Ready to work', on: 'On.', off: 'Off.' }
+};
+async function loadKillSwitches() {
+  const wrap = document.getElementById('ks-wrap'); if (!wrap) return;
+  const { data, error } = await sb.rpc('admin_feature_flags');
+  if (error) { wrap.innerHTML = '<div class="ks-note">Could not load switches: ' + escAttr(error.message) + '</div>'; return; }
+  const rows = (data || []).filter(f => KS_INFO[f.key]).sort((a, b) => (a.key === 'yoodi' ? -1 : b.key === 'yoodi' ? 1 : 0));
+  wrap.innerHTML = rows.map(f => {
+    const i = KS_INFO[f.key];
+    const when = f.updated_at ? new Date(f.updated_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+    return `<div class="ks-row"><div class="ks-txt"><b>${escAttr(i.name)}</b> <span class="ks-state ${f.enabled ? 'on' : 'off'}">${f.enabled ? 'ON' : 'OFF'}</span>
+      <span>${escAttr(f.enabled ? i.on : i.off)}</span><small>${when ? 'Changed ' + escAttr(when) : ''}${f.updated_by ? ' by ' + escAttr(f.updated_by) : ''}</small></div>
+      <button class="ks-btn ${f.enabled ? 'kill' : 'revive'}" onclick="toggleKillSwitch('${escJsAttr(f.key)}', ${!f.enabled})">${f.enabled ? 'Turn off' : 'Turn on'}</button></div>`;
+  }).join('') || '<div class="ks-note">No switches.</div>';
+}
+async function toggleKillSwitch(key, enable) {
+  const i = KS_INFO[key] || { name: key };
+  if (!confirm(enable ? `Turn ${i.name} back on for everyone?` : `Turn ${i.name} OFF for everyone?\n\n${i.off || ''}`)) return;
+  const { error } = await sb.rpc('admin_set_feature_flag', { p_key: key, p_enabled: enable });
+  if (error) { alert('Could not change it: ' + error.message); return; }
+  loadKillSwitches();
+}
 
 async function loadSupportBadge() {
   const el = document.getElementById('sup-count');

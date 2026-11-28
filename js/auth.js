@@ -191,4 +191,5 @@ function oneSignalLogout(){
   try{if(oneSignalReady&&window.OneSignalDeferred)window.OneSignalDeferred.push(async(os)=>{try{await os.logout();}catch(e){}});}catch(e){}
 }
 async function signOut(){oneSignalLogout();if(window.ctReset)ctReset(); // Contacts tab (js/contacts.js)
+  tabClearAll(); // saved Messages / Activity lists (js/core-state.js): the next person on this phone never sees them
   if(sb)await sb.auth.signOut();else showAuthScreen();}

@@ -181,7 +181,7 @@ function hsvcBuildScreen(){
   v.innerHTML='<div class="myjobs-inner" style="padding-bottom:40px">'+
     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">'+
       '<button onclick="hsvcBack()" aria-label="Back" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>'+
-      '<div class="section-h" style="margin-bottom:0">Standard services</div></div>'+
+      '<div class="section-h" style="margin-bottom:0">My Fixed-Price Services</div></div>'+
     '<div id="hsvc-settings"></div>'+
     '<button class="btn-primary" id="hsvc-save-btn" onclick="hsvcSaveClick()" style="display:none">Save services</button>'+
   '</div>';
@@ -218,11 +218,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 // Profile tab button (active, paused and expired helper cards). "NEW" label until opened once on this device.
 function hsvcProfileBtn(){
   var seen=false;try{seen=localStorage.getItem('yoodle_hsvc_seen')==='1';}catch(e){}
-  return '<button onclick="hsvcGoSettings()" class="pf-btn sec">Standard services'+(seen?'':' <span style="font-size:11px;font-weight:800;color:#fff;background:var(--lime);border-radius:100px;padding:2px 7px;margin-left:4px;vertical-align:1px">NEW</span>')+' ›</button>';
+  return '<button onclick="hsvcGoSettings()" class="pf-btn sec">My Fixed-Price Services'+(seen?'':' <span style="font-size:11px;font-weight:800;color:#fff;background:var(--lime);border-radius:100px;padding:2px 7px;margin-left:4px;vertical-align:1px">NEW</span>')+' ›</button>';
 }
 function hsvcGoSettings(from){
   try{localStorage.setItem('yoodle_hsvc_seen','1');}catch(e){}
-  document.querySelectorAll('.pf-btn').forEach(function(b){if(/Standard services/.test(b.textContent)){var n=b.querySelector('span');if(n)n.remove();}});
+  document.querySelectorAll('.pf-btn').forEach(function(b){if(/My Fixed-Price Services/.test(b.textContent)){var n=b.querySelector('span');if(n)n.remove();}});
   hsvcBuildScreen();
   HSVC.from=from||'profile';
   nav('services');
@@ -249,7 +249,7 @@ async function hsvcOpenSettings(){
   ]);
   var cats=res[0],own=res[1],prof=res[2]&&res[2].data;
   if(own.error||!cats.length){hsvcGate('Could not load services right now. Please try again in a minute.');return;}
-  if(!prof||!prof.helper_address){hsvcGate('Standard services are part of your helper profile. Set up your helper profile first, then come back here to add fixed prices.','Set up helper profile ›','helper');return;}
+  if(!prof||!prof.helper_address){hsvcGate('Fixed-price services are part of your helper profile. Set up your helper profile first, then come back here to add fixed prices.','Set up helper profile ›','helper');return;}
   HSVC.locked=typeof hpIsVagueText==='function'?hpIsVagueText(prof.helper_address):false;
   HSVC.paused=!prof.visible_on_map;
   HSVC.mine=own.data||[];
@@ -258,7 +258,7 @@ async function hsvcOpenSettings(){
     '<div class="sub">Set fixed prices so homeowners near you can book you directly. Leave a price empty if you don\'t offer that option.</div>'+
     (prof.visible_on_map?'':'<div class="hsvc-note">⏸️ Your helper listing is paused or expired, so neighbours can\'t see these services until you resume it.<br><button class="btn-primary" style="margin-top:10px" onclick="hsvcResume()">Resume listing ›</button></div>')+
     '<div class="hsvc-req">🔒 Uses your helper address to match you with homeowners nearby. It\'s never shown.</div>'+
-    '<div class="hsvc-lock">📍 Your helper location is only a city. Add your street address to offer standard services.<br><button class="btn-primary" style="margin-top:10px" onclick="nav(\'helper\')">Add street address ›</button></div>'+
+    '<div class="hsvc-lock">📍 Your helper location is only a city. Add your street address to offer fixed-price services.<br><button class="btn-primary" style="margin-top:10px" onclick="nav(\'helper\')">Add street address ›</button></div>'+
     '<div class="hsvc-cards">'+cats.map(function(c){
       var rows=mine.filter(function(r){return r.service_key===c.key;});
       var on=rows.some(function(r){return r.active;});
@@ -412,9 +412,43 @@ function hsvcFilterMarkup(){
   var pane=document.createElement('div');pane.className='fs-pane';pane.id='fs-svc';
   pane.innerHTML='<div class="hs-head"><b><button class="fs-back" onclick="fsStep(\'start\')" aria-label="Back">‹</button>Fixed-price services</b>'+
     '<button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>'+
-    '<div class="hs-sub">Helpers near you who list their prices</div><div id="fs-svc-grid" class="hs-grid" style="margin-top:12px"></div>';
+    '<div class="hs-sub">Helpers near you who list their prices</div><div id="fs-svc-grid" class="hs-grid" style="margin-top:12px"></div>'+
+    '<button class="fs-become fs-sugg-link" onclick="fsStep(\'suggest\')">Missing a service? Suggest one →</button>';
   var pp=document.getElementById('fs-pro');
   if(pp)pp.insertAdjacentElement('afterend',pane);else{var pop=document.getElementById('fs-pop');if(pop)pop.appendChild(pane);}
+  hsvcSuggestMarkup(pane);
+}
+// ── "Missing a service? Suggest one →" (27 Nov 2026) ──
+// Link at the bottom of the services submenu → #fs-suggest pane (one text box, max 80 chars) → one insert into
+// service_suggestions (user_id + created_at filled by the database; admin.html: SERVICE SUGGESTIONS). Internal use:
+// no server checks or limits (Roman). The thank-you shows right away; the insert runs in the background.
+function hsvcSuggestMarkup(after){
+  if(document.getElementById('fs-suggest'))return;
+  var pane=document.createElement('div');pane.className='fs-pane fs-become-box';pane.id='fs-suggest';
+  pane.innerHTML='<div class="hs-head"><b><button class="fs-back" onclick="fsStep(\'svc\')" aria-label="Back">‹</button>Suggest a service</b>'+
+    '<button class="hs-close" onclick="hsClose()" aria-label="Close">✕</button></div>'+
+    '<p>What fixed-price service should Yoodle add?</p>'+
+    '<input id="fs-sugg-in" class="fs-sugg-in" type="text" maxlength="80" autocomplete="off" enterkeyhint="send" placeholder="e.g. Pressure washing" '+
+    'onkeydown="if(event.key===\'Enter\'){event.preventDefault();hsvcSuggestSend();}">'+
+    '<div class="row"><button class="fs-cancel" onclick="fsStep(\'svc\')">Cancel</button>'+
+    '<button class="fs-go fs-sugg-go" id="fs-sugg-go" onclick="hsvcSuggestSend()">Send</button></div>';
+  after.insertAdjacentElement('afterend',pane);
+}
+// called by fsStep('suggest') (js/find-helper.js): clear the box and focus it
+function hsvcSuggestOpen(){
+  var i=document.getElementById('fs-sugg-in');
+  if(i)i.value='';
+  if(i)setTimeout(function(){try{i.focus();}catch(e){}},60);
+}
+function hsvcSuggestSend(){
+  var i=document.getElementById('fs-sugg-in');
+  var t=(i&&i.value||'').replace(/\s+/g,' ').trim();
+  if(!t){if(i)i.focus();return;}
+  if(typeof sb==='undefined'||!sb||typeof me==='undefined'||!me){toast('Please sign in to send a suggestion.');return;}
+  sb.from('service_suggestions').insert({text:t.slice(0,80)})
+    .then(function(r){if(r&&r.error)console.warn('[hsvc] suggest',r.error.message);},function(e){console.warn('[hsvc] suggest',e&&e.message||e);});
+  toast('✨ Thanks! We got your suggestion.');
+  fsStep('svc');
 }
 function hsvcFilterGrid(){
   var el=document.getElementById('fs-svc-grid');if(!el)return;
@@ -446,4 +480,8 @@ async function hsvcFilterSync(){
   // bright "$" badge (the 💲 emoji rendered thin and faded next to the colour emojis — Roman, 21 Nov 2026)
   // services submenu: one service per line (Roman, 21 Nov 2026)
   '\n#fs-svc-grid{grid-template-columns:1fr}#fs-svc-grid .hs-cat{padding:13px 14px}#fs-svc-grid .hs-cat .e{font-size:22px}'+
+  // suggest a service (27 Nov 2026): green link like the "$" choice; input 16px so iPhone Safari doesn't zoom
+  '\n.fs-sugg-link{color:#1E7E45}body.theme-sage-dark .fs-sugg-link{color:#4CC985}'+
+  '\n.fs-sugg-in{display:block;width:100%;box-sizing:border-box;margin:0 0 12px;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font:700 16px \'Nunito\',sans-serif}'+
+  '\n.fs-sugg-in:focus{outline:none;border-color:#22A45D}.fs-go.fs-sugg-go{background:#22A45D}'+
   '\n.hsvc-dol{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin:0 2px;border-radius:50%;background:#22A45D;color:#fff;font:900 20px/1 \'Nunito\',sans-serif;box-shadow:0 2px 8px rgba(34,164,93,.4)}';})();

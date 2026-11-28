@@ -23,8 +23,9 @@
     },
     "CapacitorUpdater": {
       "appId": "ca.yoodle.app",
-      "autoUpdate": "atBackground",
-      "allowModifyUrl": true
+      "autoUpdate": "off",
+      "allowModifyUrl": true,
+      "statsUrl": ""
     }
   }
 }

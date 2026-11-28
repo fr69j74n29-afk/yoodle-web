@@ -1,0 +1,130 @@
+# Live update bundle for the iOS/Android app, self-hosted (no Capgo account; capacitor-build.md §2.7 in yoodle-docs).
+# Builds the app's web files (index.html, js/, pages, images), zips them and publishes the zip as a GitHub Release
+# "bundle-<version>" on this repo. Nothing reaches phones until app-version.json points at it (promotion, below).
+#
+# Run by hand only: push a tag named live-<anything> on a commit of main, staging or mobile-app:
+#   git tag live-1 origin/staging && git push origin live-1
+#
+# Promote (this is the release): paste the "bundle" JSON from the run summary into app-version.json in a small PR,
+#   staging branch first (test phones read https://yoodle.ca/staging/app-version.json), then main
+#   (everyone reads https://yoodle.ca/app-version.json). Production should only use bundles built from main.
+# Phones check on start and on resume (js/native-app.js), download the zip (the plugin verifies the sha256 checksum)
+# and switch to it the next time the app goes to the background. Roll back by pointing app-version.json at an older bundle.
+#
+# Bundle version: <app version major.minor>.<run number>, e.g. 1.0.3, so it goes up with every run and is never below
+# the app version (js/native-app.js skips bundles below the installed app version).
+# Native check: fails if the native plugins differ from mobile/native-release.json (the app build these bundles are for).
+#   A live update can't deliver native code; see mobile/scripts/native-fingerprint.mjs.
+# The repo is public, so logs and releases are public. The bundle is the same code as the public website. No secrets used.
+name: App live update bundle
+
+on:
+  push:
+    tags: ['live-*']
+
+permissions:
+  contents: write # create the release
+
+concurrency:
+  group: app-bundle
+  cancel-in-progress: false
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Only commits that are on a deploy branch become bundles
+      - name: Check the commit is on main, staging or mobile-app
+        working-directory: .
+        run: |
+          on=""
+          for b in main staging mobile-app; do
+            git fetch -q origin "$b" 2>/dev/null || continue
+            git merge-base --is-ancestor "$GITHUB_SHA" "origin/$b" && on="$on $b"
+          done
+          if [ -z "$on" ]; then
+            echo "Commit ${GITHUB_SHA:0:7} is not on main, staging or mobile-app; not building." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "ON_BRANCHES=${on# }" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm ci
+
+      - name: Native compatibility check
+        run: |
+          if ! native=$(node scripts/native-fingerprint.mjs check 2>check.err); then
+            { echo "### Not built: native code changed"; echo '```'; cat check.err; echo '```'; } | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "NATIVE=$native" >> "$GITHUB_ENV"
+          echo "BUNDLE=$native.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+          echo "App version $native -> bundle $native.$GITHUB_RUN_NUMBER"
+
+      - name: Build the web bundle (mobile/www)
+        run: npm run build:www
+
+      # Zipped with the Capgo CLI (Capgo's docs: other zip tools can make archives the plugin can't read). This command
+      # works offline: no Capgo account or key. The checksum is the sha256 of the zip; checked again with sha256sum.
+      - name: Zip
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          npx --yes @capgo/cli@8.112.0 bundle zip ca.yoodle.app --path www --bundle "$BUNDLE" \
+            --name "$RUNNER_TEMP/out/bundle.zip" --json > "$RUNNER_TEMP/zip.json"
+          cat "$RUNNER_TEMP/zip.json"
+          sum=$(node -p "require(process.env.RUNNER_TEMP + '/zip.json').checksum")
+          real=$(sha256sum "$RUNNER_TEMP/out/bundle.zip" | cut -d' ' -f1)
+          if [ "$sum" != "$real" ]; then echo "Checksum mismatch: CLI $sum, file $real"; exit 1; fi
+          echo "CHECKSUM=$sum" >> "$GITHUB_ENV"
+
+      - name: Publish the GitHub Release
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          url="https://github.com/$GITHUB_REPOSITORY/releases/download/bundle-$BUNDLE/bundle.zip"
+          cat > "$RUNNER_TEMP/bundle.json" <<EOF
+          "bundle": {
+            "version": "$BUNDLE",
+            "url": "$url",
+            "checksum": "$CHECKSUM",
+            "min_native": "$NATIVE"
+          }
+          EOF
+          {
+            echo "Live update bundle **$BUNDLE** from \`$GITHUB_REF_NAME\` @ \`${GITHUB_SHA:0:7}\` (on: $ON_BRANCHES). For app $NATIVE and later."
+            echo
+            echo "Not on phones yet. To release it, put this in \`app-version.json\` (staging branch first, then main):"
+            echo
+            echo '```json'
+            cat "$RUNNER_TEMP/bundle.json"
+            echo '```'
+          } > "$RUNNER_TEMP/notes.md"
+          gh release create "bundle-$BUNDLE" "$RUNNER_TEMP/out/bundle.zip" \
+            --target "$GITHUB_SHA" --title "App bundle $BUNDLE" --notes-file "$RUNNER_TEMP/notes.md" --latest=false
+          { echo "### Live update bundle published"; cat "$RUNNER_TEMP/notes.md"; } >> "$GITHUB_STEP_SUMMARY"
+
+      # Rough adoption numbers: each phone downloads a bundle once (counts download starts, including retries)
+      - name: Downloads of recent bundles
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo; echo "#### Downloads of recent bundles"; echo
+            echo "| Bundle | Downloads |"; echo "|---|---|"
+            gh api "repos/$GITHUB_REPOSITORY/releases?per_page=30" \
+              --jq '.[] | select(.tag_name | startswith("bundle-")) | "| \(.tag_name) | \([.assets[] | select(.name == "bundle.zip") | .download_count] | add // 0) |"' | head -10
+          } >> "$GITHUB_STEP_SUMMARY"

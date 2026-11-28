@@ -121,20 +121,24 @@ async function openJob(j){
     } else {
       btn.textContent='No longer available';btn.disabled=true;
     }
+  } else if(j.status==='offered'&&!window.offerAccept){
+    // js/contacts.js isn't loaded (Contacts held back on the live site): nothing here would work
+    _an.textContent='🔒 A private job offer. Private offers aren’t available in this version of Yoodle yet.';_an.style.display='block';
+    btn.textContent='Not available yet';btn.disabled=true;btn.onclick=null;
   } else if(j.status==='offered'){
     // Private job offer between contacts (js/contacts.js): only the poster and private_for can read it
     _an.textContent=isPoster?'🔒 Private offer: only you and your contact can see this job. Make it public to let anyone apply.':'🔒 A private job offer for you. Only the two of you can see it.';
     _an.style.display='block';
     if(isPoster){
       btn.textContent='Make public';
-      btn.onclick=()=>tapConfirm(btn,'Tap again to make it public',()=>offerMakePublic(j.id));
+      btn.onclick=()=>tapConfirm(btn,'Tap again to make it public',()=>{if(window.offerMakePublic)offerMakePublic(j.id);});
       unclaimBtn.innerHTML='✏️ Edit offer';unclaimBtn.style.display='block';
       unclaimBtn.onclick=()=>{closeOv('modal');openEditModal(j.id);};
     } else {
       btn.textContent='Accept job';
-      btn.onclick=()=>tapConfirm(btn,'Tap again to accept',()=>offerAccept(j));
+      btn.onclick=()=>tapConfirm(btn,'Tap again to accept',()=>{if(window.offerAccept)offerAccept(j);});
       unclaimBtn.innerHTML='Decline';unclaimBtn.style.display='block';
-      unclaimBtn.onclick=()=>tapConfirm(unclaimBtn,'Tap again to decline',()=>offerDecline(j.id));
+      unclaimBtn.onclick=()=>tapConfirm(unclaimBtn,'Tap again to decline',()=>{if(window.offerDecline)offerDecline(j.id);});
     }
   } else if(j.status==='completed'){
     btn.textContent='Job Completed';btn.disabled=true;
@@ -233,7 +237,7 @@ async function jobAction(){
     }
     await sb.from('applications').update({status:'rejected'}).eq('task_id',activeJob.id).eq('status','pending');
     closeOv('modal');
-    toast('🗑️ Job cancelled');loadJobs();
+    toast('🗑️ Job cancelled');loadJobs();tabDirty(); // Activity and Messages reload on the next visit
   }
 }
 
@@ -283,7 +287,7 @@ async function applyForJob(taskId,posterId,jobTitle){
   document.getElementById('applied-chat-btn').dataset.posterRating=activeJob?.profiles?.rating||'';
   document.getElementById('applied-withdraw-btn').dataset.taskId=taskId;
   openOv('applied-modal');
-  toast('🙋 Interest expressed!');
+  toast('🙋 Interest expressed!');tabDirty(); // new chat + "helping with" card
   loadJobs();
 }
 
@@ -372,8 +376,8 @@ async function openApplicants(taskId,taskTitle){
       </div>
       ${bio}
       <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="openChatWithApplicant('${taskId}','${esc(name)}','${app.applicant_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
-        <button onclick="assignApplicant('${taskId}','${app.id}','${app.applicant_id}','${esc(name)}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">✅ Assign</button>
+        <button onclick="openChatWithApplicant('${taskId}','${escJs(name)}','${app.applicant_id}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:var(--surface);border:1.5px solid var(--border);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Chat</button>
+        <button onclick="assignApplicant('${taskId}','${app.id}','${app.applicant_id}','${escJs(name)}')" style="flex:1;padding:10px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--btn-a),var(--btn-b));border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">✅ Assign</button>
       </div>
     </div>`;
   }).join('');
