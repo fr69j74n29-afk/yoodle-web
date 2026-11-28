@@ -181,6 +181,7 @@ body.theme-sage-dark .le{color:#E0C45A}
 .ga-wrap{width:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;flex:1 0 auto;position:relative;z-index:1;padding:calc(var(--sat) + 14px) 22px calc(var(--sab) + 24px)}
 .ga-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
 .ga-wm{font-size:34px}
+.ga-nav{display:none} /* desktop only: header links (Roman, 28 Nov) */
 .ga-pill{background:var(--sage-soft);color:var(--pink);border:none;border-radius:999px;padding:9px 18px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
 .ga-pill:active{transform:scale(.96)}
 .ga-page{display:flex;flex-direction:column}
@@ -250,6 +251,12 @@ html.on-landing,html.on-landing body{background:#EEF2EC} /* landing screen up: l
   .ga-map-actions{position:absolute;left:12px;right:12px;bottom:12px;z-index:50;background:var(--bg);border-radius:16px;padding:12px 14px 4px;box-shadow:0 8px 30px rgba(0,0,0,.18)}
   .ga-map-actions.open{display:block}
   .ga-map-actions .ga-choice{min-height:64px;padding:12px 16px;margin-bottom:10px}
+  /* Desktop polish (Roman, 28 Nov): full-width footer under both columns, "What is Yoodle?" left-aligned, header links */
+  #ga-landing>.auth-legal{grid-column:1 / -1;grid-row:13;max-width:none;width:100%;margin-top:40px;padding-top:18px;border-top:1px solid var(--border)}
+  #ga-landing>.ga-about{text-align:left;margin:24px 0 0;max-width:none}
+  .ga-nav{display:flex;align-items:center;gap:24px;margin-left:auto;margin-right:22px}
+  .ga-nav a{color:var(--muted);font-family:'Nunito',sans-serif;font-size:14.5px;font-weight:800;text-decoration:none}
+  .ga-nav a:hover{color:var(--text)}
 }
 .ga-eyebrow{font-size:13.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);text-align:center;margin-bottom:8px}
 .ga-fork-h{font-family:'Fredoka One',cursive;font-weight:400;font-size:28px;line-height:1.2;text-align:center;color:var(--text)}
@@ -874,6 +881,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
   <div class="ga-wrap">
     <div class="ga-hdr">
       <div class="wordmark ga-wm" role="img" aria-label="Yoodle"><span class="ly">y</span><span class="lo1">o</span><span class="lo2">o</span><span class="ld">d</span><span class="ll">l</span><span class="le">e</span><span class="lca">.ca</span></div>
+      <nav class="ga-nav" aria-label="Yoodle"><a href="/how-it-works">How it works</a><a href="/services">Home services</a><a href="/pros">Find a pro</a></nav>
       <button class="ga-pill" onclick="openAuthSheet('signin')">Sign in</button>
     </div>
 
