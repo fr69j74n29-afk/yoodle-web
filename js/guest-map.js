@@ -163,7 +163,7 @@ function _gmActionsHtml(title,inMap){
 
 // ── Step 4: landing page preview map (27 Nov 2026) ──
 // Short Toronto map on the signed-out landing page: above "What would you like to do?" on phones, beside it on desktop (≥ 900 px, CSS).
-// Never leaves the GTA. Opens 2 zoom levels in (Roman, 28 Nov) and can be moved straight away:
+// Never leaves the GTA. Opens 1 zoom level in (Roman, 28 Nov: +2, then back 1) and can be moved straight away:
 // desktop: drag with the mouse, + / − buttons, the mouse wheel scrolls the page;
 // phone: one finger scrolls the page, two fingers move / pinch-zoom the map (MapLibre cooperativeGestures — shows "Use two fingers to move the map").
 // Started after the landing text is on screen. Runs once.
@@ -178,7 +178,7 @@ function guestPreviewInit(){
     _gmPreviewMap=new maplibregl.Map({
       container:'ga-map-canvas',
       style:(typeof OFM_STYLE!=='undefined'&&OFM_STYLE['sage-light'])||'https://tiles.openfreemap.org/styles/positron', // always light (Roman, 27 Nov): matches the light landing page
-      center:[-79.42,43.71], zoom:desktop?11.3:10.9, minZoom:8.6, maxZoom:13,
+      center:[-79.42,43.71], zoom:desktop?10.3:9.9, minZoom:8.6, maxZoom:13,
       maxBounds:[[-80.25,43.25],[-78.75,44.20]],
       dragPan:true, cooperativeGestures:!desktop, dragRotate:false, pitchWithRotate:false, touchPitch:false, scrollZoom:false, keyboard:false,
       attributionControl:false
