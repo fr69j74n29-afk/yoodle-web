@@ -222,6 +222,8 @@ body.theme-sage-dark .le{color:#E0C45A}
 .ga-tiles-list{display:flex;flex-direction:column;gap:10px}
 #view-auth .list-card,#view-auth .list-tile{background:var(--surface)!important;color:var(--text)}
 #view-auth .lc-desc{color:var(--muted)}
+#view-auth{overflow-x:hidden;overflow-x:clip} /* the decorative glow (::after, right:-80px) made the page 80px wider than phones → sideways shift */
+.ga-map-actions{display:none}
 @media(min-width:900px){
   #view-auth .ga-wrap{max-width:1180px}
   #ga-landing{display:grid;grid-template-columns:440px 1fr;column-gap:48px;align-items:start}
@@ -230,6 +232,9 @@ body.theme-sage-dark .le{color:#E0C45A}
   #ga-post{max-width:440px}
   .ga-tiles{position:absolute;left:auto;right:12px;top:12px;bottom:12px;transform:none;width:360px;max-width:none;max-height:none;border-radius:16px;padding:12px 14px;z-index:40}
   .ga-tiles-dim{display:none!important}
+  .ga-map-actions{position:absolute;left:12px;right:12px;bottom:12px;z-index:50;background:var(--bg);border-radius:16px;padding:12px 14px 4px;box-shadow:0 8px 30px rgba(0,0,0,.18)}
+  .ga-map-actions.open{display:block}
+  .ga-map-actions .ga-choice{min-height:64px;padding:12px 16px;margin-bottom:10px}
 }
 .ga-eyebrow{font-size:13.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);text-align:center;margin-bottom:8px}
 .ga-fork-h{font-family:'Fredoka One',cursive;font-weight:400;font-size:28px;line-height:1.2;text-align:center;color:var(--text)}
@@ -1835,7 +1840,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/other-profile.js?v=20261127r"></script>
 <script src="js/navigation.js?v=20261127x"></script>
 <script src="js/landing.js?v=20261125a"></script>
-<script src="js/guest-map.js?v=20261127d"></script>
+<script src="js/guest-map.js?v=20261127e"></script>
 <script src="js/auth.js?v=20261127t"></script>
 <script src="js/settings.js?v=20261125a"></script>
 <script src="js/tutor-link.js?v=20261125a"></script>

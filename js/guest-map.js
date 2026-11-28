@@ -127,6 +127,15 @@ function guestCloseTiles(){
 // Built once with the same modal classes as the rest of the app.
 function guestOpenActions(title){
   closeOv('stack-modal');guestCloseTiles();
+  // Desktop landing page: the sheet comes up from the bottom of the map (Roman, 27 Nov). Phone: bottom of the screen.
+  const mapBox=document.getElementById('ga-map');
+  if(mapBox&&!mapBox.hidden&&window.matchMedia('(min-width:900px)').matches){
+    let inMap=document.getElementById('ga-map-actions');
+    if(!inMap){inMap=document.createElement('div');inMap.id='ga-map-actions';inMap.className='ga-map-actions';mapBox.appendChild(inMap);}
+    inMap.innerHTML=_gmActionsHtml(title,true);
+    inMap.classList.add('open');
+    return;
+  }
   let ov=document.getElementById('guest-actions');
   if(!ov){
     ov=document.createElement('div');
@@ -134,22 +143,28 @@ function guestOpenActions(title){
     ov.addEventListener('click',e=>{if(e.target===ov)closeOv('guest-actions');});
     (document.getElementById('view-auth')||document.body).appendChild(ov); // inside the landing page → its light colours
   }
-  const btn=(icon,bg,t,sub,act)=>`<button type="button" class="ga-choice" onclick="closeOv('guest-actions');${act}" style="border:1.5px solid var(--border)">
+  ov.innerHTML=`<div class="modal-sheet"><div class="modal-handle"></div>${_gmActionsHtml(title,false)}</div>`;
+  openOv('guest-actions');
+}
+function guestCloseActions(){closeOv('guest-actions');document.getElementById('ga-map-actions')?.classList.remove('open');}
+// The three choices (Post a job or task · Find me work · Sign in). inMap = desktop panel inside the map (adds a × to close).
+function _gmActionsHtml(title,inMap){
+  const btn=(icon,bg,t,sub,act)=>`<button type="button" class="ga-choice" onclick="guestCloseActions();${act}" style="border:1.5px solid var(--border)">
       <div class="ga-choice-ico" style="background:${bg}">${icon}</div>
       <div><div class="ga-choice-t">${esc(t)}</div>${sub?`<div class="ga-choice-d">${esc(sub)}</div>`:''}</div></button>`;
-  ov.innerHTML=`<div class="modal-sheet"><div class="modal-handle"></div>
-    <div class="modal-title" style="margin-bottom:14px">${esc(title||gT('guest.more.title','Sign in to see more'))}</div>
-    ${btn('<span style="font-size:22px;font-weight:900;color:#1E2620">+</span>','#F97316',gT('guest.action.post','Post a job or task'),gT('guest.action.post_sub','I have a task that needs doing'),"openGuestPost()")}
-    ${btn('<span style="font-size:20px;color:#1E2620">☆</span>','#8DE0A8',gT('guest.action.work','Find me work'),gT('guest.action.work_sub','I want to offer a skill or service'),"openAuthSheet('helper')")}
-    ${btn('<span style="font-size:18px;color:#1E2620">→</span>','var(--sage-soft,#E3ECE5)',gT('guest.action.signin','Sign in'),'',"openAuthSheet('signin')")}
-  </div>`;
-  openOv('guest-actions');
+  const head=esc(title||gT('guest.more.title','Sign in to see more'));
+  return (inMap
+      ?`<div class="ga-tiles-hd"><div class="ga-tiles-t">${head}</div><button type="button" class="ga-tiles-x" aria-label="Close" onclick="guestCloseActions()">×</button></div>`
+      :`<div class="modal-title" style="margin-bottom:14px">${head}</div>`)
+    +btn('<span style="font-size:22px;font-weight:900;color:#1E2620">+</span>','#F97316',gT('guest.action.post','Post a job or task'),gT('guest.action.post_sub','I have a task that needs doing'),"openGuestPost()")
+    +btn('<span style="font-size:20px;color:#1E2620">☆</span>','#8DE0A8',gT('guest.action.work','Find me work'),gT('guest.action.work_sub','I want to offer a skill or service'),"openAuthSheet('helper')")
+    +btn('<span style="font-size:18px;color:#1E2620">→</span>','var(--sage-soft,#E3ECE5)',gT('guest.action.signin','Sign in'),'',"openAuthSheet('signin')");
 }
 
 // ── Step 4: landing page preview map (27 Nov 2026) ──
 // Short Toronto map on the signed-out landing page: above "What would you like to do?" on phones, beside it on desktop (≥ 900 px, CSS).
-// Zoom only, never moves away from the GTA: no dragging (a one-finger swipe scrolls the page), pinch / double-tap zoom around the centre,
-// desktop: + / − buttons and the mouse wheel scrolls the page. Started after the landing text is on screen. Runs once.
+// Never leaves the GTA. At the starting view: zoom only (a one-finger swipe scrolls the page); once zoomed in the map can be dragged.
+// Pinch / double-tap zoom around the centre; desktop: + / − buttons and the mouse wheel scrolls the page. Started after the landing text is on screen. Runs once.
 let _gmPreviewMap=null;
 function guestPreviewInit(){
   const box=document.getElementById('ga-map'), canvas=document.getElementById('ga-map-canvas');
@@ -170,7 +185,10 @@ function guestPreviewInit(){
     _gmPreviewMap.touchZoomRotate.disableRotation();
     _gmPreviewMap.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>'}),'bottom-right');
     if(desktop)_gmPreviewMap.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
-    _gmPreviewMap.on('click',guestCloseTiles); // tap the map (not a pin) → close the tiles
+    _gmPreviewMap.on('click',()=>{guestCloseTiles();document.getElementById('ga-map-actions')?.classList.remove('open');}); // tap the map (not a pin) → close tiles / sheet
+    // 3. Move the map only once zoomed in (Roman, 27 Nov): at the starting view a swipe still scrolls the page; zoomed in, drag to look around (still inside the GTA box).
+    const z0=_gmPreviewMap.getZoom();
+    _gmPreviewMap.on('zoomend',()=>{if(_gmPreviewMap.getZoom()>z0+0.25)_gmPreviewMap.dragPan.enable();else _gmPreviewMap.dragPan.disable();});
     // The map credit folds into the (i) button on the member map once you drag; guests can't drag, so fold it on load.
     _gmPreviewMap.on('load',()=>{const a=box.querySelector('.maplibregl-ctrl-attrib');if(a){a.classList.remove('maplibregl-compact-show');a.removeAttribute('open');}});
     guestMapLoad().then(rows=>{
