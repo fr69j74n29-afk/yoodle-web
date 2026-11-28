@@ -130,3 +130,35 @@ function guestOpenActions(title){
   </div>`;
   openOv('guest-actions');
 }
+
+// ── Step 4: landing page preview map (27 Nov 2026) ──
+// Short Toronto map on the signed-out landing page: above "What would you like to do?" on phones, beside it on desktop (≥ 900 px, CSS).
+// Zoom only, never moves away from the GTA: no dragging (a one-finger swipe scrolls the page), pinch / double-tap zoom around the centre,
+// desktop: + / − buttons and the mouse wheel scrolls the page. Started after the landing text is on screen. Runs once.
+let _gmPreviewMap=null;
+function guestPreviewInit(){
+  const box=document.getElementById('ga-map'), canvas=document.getElementById('ga-map-canvas');
+  if(_gmPreviewMap||!box||!canvas||typeof maplibregl==='undefined')return;
+  const start=()=>{
+    if(_gmPreviewMap)return;
+    box.hidden=false;
+    const desktop=window.matchMedia('(min-width:900px)').matches;
+    _gmPreviewMap=new maplibregl.Map({
+      container:'ga-map-canvas',
+      style:(typeof OFM_STYLE!=='undefined'&&typeof _curTheme==='function')?OFM_STYLE[_curTheme()]:'https://tiles.openfreemap.org/styles/positron',
+      center:[-79.42,43.71], zoom:desktop?9.3:8.9, minZoom:8.6, maxZoom:13,
+      maxBounds:[[-80.25,43.25],[-78.75,44.20]],
+      dragPan:false, dragRotate:false, pitchWithRotate:false, touchPitch:false, scrollZoom:false, keyboard:false,
+      attributionControl:false
+    });
+    _gmPreviewMap.touchZoomRotate.enable({around:'center'});
+    _gmPreviewMap.touchZoomRotate.disableRotation();
+    _gmPreviewMap.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>'}),'bottom-right');
+    if(desktop)_gmPreviewMap.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    guestMapLoad().then(rows=>{
+      document.querySelectorAll('#ga-map [data-gt]').forEach(el=>{el.textContent=gT(el.dataset.gt,el.textContent);});
+      guestDrawPins(_gmPreviewMap,rows);
+    });
+  };
+  (window.requestIdleCallback||((f)=>setTimeout(f,300)))(start,{timeout:1500});
+}
