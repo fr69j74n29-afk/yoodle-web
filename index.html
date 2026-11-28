@@ -225,6 +225,7 @@ body.theme-sage-dark .le{color:#E0C45A}
 #view-auth .list-card,#view-auth .list-tile{background:var(--surface)!important;color:var(--text)}
 #view-auth .lc-desc{color:var(--muted)}
 html.on-landing,html.on-landing body{background:#EEF2EC} /* landing screen up: light base behind Safari's see-through bars (was the app's black → black strip after the phone was idle) */
+#ga-landing[hidden],#ga-post[hidden]{display:none!important} /* desktop grid (display:grid) was overriding hidden → Post a job form showed below the landing page */
 #view-auth{overflow-x:hidden;overflow-x:clip} /* the decorative glow (::after, right:-80px) made the page 80px wider than phones → sideways shift */
 .ga-map-actions{display:none}
 #ga-map .maplibregl-control-container>div{z-index:30} /* zoom +/- and map credit above the pins (pins 10-20), under the tiles panel (40) and sheet (50) */
