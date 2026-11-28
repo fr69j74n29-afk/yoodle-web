@@ -203,6 +203,22 @@ body.theme-sage-dark .le{color:#E0C45A}
 .ga-alt a{color:var(--purple);font-weight:800;cursor:pointer;text-decoration:none}
 #view-auth .auth-legal{margin-top:22px}
 #ga-landing{padding-top:18px}
+/* Guest map preview (iOS/landing redesign step 4, 27 Nov 2026): short Toronto map on the signed-out landing page */
+.ga-map{position:relative;height:400px;margin:0 0 22px;border-radius:18px;overflow:hidden;background:#0C110E;border:1px solid var(--border)}
+.ga-map[hidden]{display:none}
+#ga-map-canvas{position:absolute;inset:0}
+.ga-map-legend{position:absolute;left:10px;top:10px;z-index:2;padding:8px 10px;border-radius:12px;background:rgba(17,23,19,.92);border:1px solid #2A332D;color:#F0EFEA;font:800 12px 'Nunito',sans-serif;display:flex;flex-direction:column;gap:4px;pointer-events:none}
+.ga-map-legend span{display:flex;align-items:center;gap:7px}
+.ga-map-legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.ga-map-line{position:absolute;left:10px;right:10px;bottom:10px;z-index:2;padding:8px 12px;border-radius:12px;background:rgba(13,18,15,.92);border:1px solid #2A332D;color:#F0EFEA;font:800 13px 'Nunito',sans-serif;pointer-events:none}
+.ga-map .maplibregl-ctrl-bottom-right{bottom:44px}
+@media(min-width:900px){
+  #view-auth .ga-wrap{max-width:1180px}
+  #ga-landing{display:grid;grid-template-columns:440px 1fr;column-gap:48px;align-items:start}
+  #ga-landing>*{grid-column:1}
+  #ga-landing>.ga-map{grid-column:2;grid-row:1 / span 12;height:620px;margin:0;position:sticky;top:24px}
+  #ga-post{max-width:440px}
+}
 .ga-eyebrow{font-size:13.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);text-align:center;margin-bottom:8px}
 .ga-fork-h{font-family:'Fredoka One',cursive;font-weight:400;font-size:28px;line-height:1.2;text-align:center;color:var(--text)}
 .ga-about{max-width:420px;margin:22px auto 0;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.5}
@@ -831,6 +847,12 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 
     <!-- LANDING -->
     <div class="ga-page" id="ga-landing">
+      <!-- Guest map preview (step 4): filled by js/guest-map.js guestPreviewInit(); stays hidden if the map can't start -->
+      <div class="ga-map" id="ga-map" hidden>
+        <div id="ga-map-canvas"></div>
+        <div class="ga-map-legend"><span><i style="background:#DC2626"></i><b data-gt="guest.legend.need_help">Need help</b></span><span><i style="background:#2563EB"></i><b data-gt="guest.legend.jobs">Job listings</b></span><span><i style="background:#5C8A6A"></i><b data-gt="guest.legend.helpers">Offering help</b></span></div>
+        <div class="ga-map-line" data-gt="guest.banner">Showing Toronto &amp; GTA · Sign in to see your area</div>
+      </div>
       <div class="ga-eyebrow">Yoodle · Neighbours helping neighbours</div>
       <h1 class="ga-fork-h">What would you like to do?</h1>
       <div class="ga-fork-sub">Free for everyone. No fees, ever.</div>
@@ -1799,7 +1821,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/other-profile.js?v=20261127r"></script>
 <script src="js/navigation.js?v=20261127x"></script>
 <script src="js/landing.js?v=20261125a"></script>
-<script src="js/guest-map.js?v=20261127a"></script>
+<script src="js/guest-map.js?v=20261127b"></script>
 <script src="js/auth.js?v=20261127t"></script>
 <script src="js/settings.js?v=20261125a"></script>
 <script src="js/tutor-link.js?v=20261125a"></script>
@@ -1825,7 +1847,7 @@ body.theme-sage-dark .safety-tip{--tip-bg:#2A2110;--tip-bd:#5A4520;--tip-tx:#F0C
 <script src="js/push-prompts.js?v=20261125a"></script>
 <script src="js/referrals.js?v=20261125a"></script>
 <script src="js/feedback.js?v=20261127d"></script>
-<script src="js/main.js?v=20261126a"></script>
+<script src="js/main.js?v=20261127a"></script>
 
 </body>
 </html>
