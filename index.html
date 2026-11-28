@@ -224,6 +224,7 @@ body.theme-sage-dark .le{color:#E0C45A}
 #view-auth .lc-desc{color:var(--muted)}
 #view-auth{overflow-x:hidden;overflow-x:clip} /* the decorative glow (::after, right:-80px) made the page 80px wider than phones → sideways shift */
 .ga-map-actions{display:none}
+#ga-map .maplibregl-control-container>div{z-index:30} /* zoom +/- and map credit above the pins (pins 10-20), under the tiles panel (40) and sheet (50) */
 @media(min-width:900px){
   #view-auth .ga-wrap{max-width:1180px}
   #ga-landing{display:grid;grid-template-columns:440px 1fr;column-gap:48px;align-items:start}
