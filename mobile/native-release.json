@@ -1,0 +1,16 @@
+{
+  "native": "1.0",
+  "plugins": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/browser": "8.0.5",
+    "@capacitor/geolocation": "8.2.5",
+    "@capacitor/ios": "8.6.2",
+    "@capacitor/keyboard": "8.0.6",
+    "@capacitor/preferences": "8.0.1",
+    "@capacitor/share": "8.0.3",
+    "@capgo/capacitor-social-login": "8.7.13",
+    "@capgo/capacitor-updater": "8.54.2",
+    "@onesignal/capacitor-plugin": "1.2.3"
+  }
+}

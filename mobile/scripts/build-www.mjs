@@ -1,4 +1,4 @@
-// Builds mobile/www: the web bundle shipped inside the iOS/Android app (and uploaded to Capgo).
+// Builds mobile/www: the web bundle shipped inside the iOS/Android app (and zipped as a live update by app-bundle.yml).
 // It copies the same files the GitHub Pages deploy publishes (.github/workflows/deploy.yml):
 // everything in the repo root except the folders below. Files are copied as-is (not minified)
 // so the app is easy to debug. Minifying can be added later to match the site.
