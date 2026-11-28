@@ -94,7 +94,9 @@ function _gmHelperTile(r){
   </div>`;
 }
 
-// Pin tap → the existing #stack-modal sheet with guest tiles. Title from app_text ("5 jobs in Woodbridge", "1 helper in this area").
+// Pin tap → guest tiles. Landing page: its own light sheet (phone) / panel inside the map (desktop, CSS ≥ 900 px).
+// Elsewhere (no #ga-tiles, e.g. the iOS guest mode later): the existing #stack-modal sheet.
+// Title from app_text ("5 jobs in Woodbridge", "1 helper in this area").
 function guestOpenTiles(group){
   if(!group||!group.length)return;
   const n=group.length, isHelper=group[0].kind==='helper', area=!isHelper&&group[0].area;
@@ -103,21 +105,34 @@ function guestOpenTiles(group){
     :(area
       ?(n===1?gT('guest.sheet.job_area','1 job in {area}',{area}):gT('guest.sheet.jobs_area','{n} jobs in {area}',{n,area}))
       :(n===1?gT('guest.sheet.job_here','1 job in this area'):gT('guest.sheet.jobs_here','{n} jobs in this area',{n})));
+  const html=group.map(r=>isHelper?_gmHelperTile(r):_gmJobTile(r)).join('');
+  const panel=document.getElementById('ga-tiles');
+  if(panel){
+    document.getElementById('ga-tiles-t').textContent=title;
+    document.getElementById('ga-tiles-list').innerHTML=html;
+    panel.scrollTop=0;
+    panel.classList.add('open');document.getElementById('ga-tiles-dim').classList.add('open');
+    return;
+  }
   document.getElementById('stack-title').textContent=title;
-  document.getElementById('stack-list').innerHTML=group.map(r=>isHelper?_gmHelperTile(r):_gmJobTile(r)).join('');
+  document.getElementById('stack-list').innerHTML=html;
   openOv('stack-modal');
+}
+function guestCloseTiles(){
+  document.getElementById('ga-tiles')?.classList.remove('open');
+  document.getElementById('ga-tiles-dim')?.classList.remove('open');
 }
 
 // Tile tap or the guest + button → one sheet: Post a job or task · Find me work · Sign in.
 // Built once with the same modal classes as the rest of the app.
 function guestOpenActions(title){
-  closeOv('stack-modal');
+  closeOv('stack-modal');guestCloseTiles();
   let ov=document.getElementById('guest-actions');
   if(!ov){
     ov=document.createElement('div');
     ov.className='modal-ov';ov.id='guest-actions';
     ov.addEventListener('click',e=>{if(e.target===ov)closeOv('guest-actions');});
-    document.body.appendChild(ov);
+    (document.getElementById('view-auth')||document.body).appendChild(ov); // inside the landing page → its light colours
   }
   const btn=(icon,bg,t,sub,act)=>`<button type="button" class="ga-choice" onclick="closeOv('guest-actions');${act}" style="border:1.5px solid var(--border)">
       <div class="ga-choice-ico" style="background:${bg}">${icon}</div>
@@ -145,7 +160,7 @@ function guestPreviewInit(){
     const desktop=window.matchMedia('(min-width:900px)').matches;
     _gmPreviewMap=new maplibregl.Map({
       container:'ga-map-canvas',
-      style:(typeof OFM_STYLE!=='undefined'&&typeof _curTheme==='function')?OFM_STYLE[_curTheme()]:'https://tiles.openfreemap.org/styles/positron',
+      style:(typeof OFM_STYLE!=='undefined'&&OFM_STYLE['sage-light'])||'https://tiles.openfreemap.org/styles/positron', // always light (Roman, 27 Nov): matches the light landing page
       center:[-79.42,43.71], zoom:desktop?9.3:8.9, minZoom:8.6, maxZoom:13,
       maxBounds:[[-80.25,43.25],[-78.75,44.20]],
       dragPan:false, dragRotate:false, pitchWithRotate:false, touchPitch:false, scrollZoom:false, keyboard:false,
@@ -155,6 +170,7 @@ function guestPreviewInit(){
     _gmPreviewMap.touchZoomRotate.disableRotation();
     _gmPreviewMap.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>'}),'bottom-right');
     if(desktop)_gmPreviewMap.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    _gmPreviewMap.on('click',guestCloseTiles); // tap the map (not a pin) → close the tiles
     // The map credit folds into the (i) button on the member map once you drag; guests can't drag, so fold it on load.
     _gmPreviewMap.on('load',()=>{const a=box.querySelector('.maplibregl-ctrl-attrib');if(a){a.classList.remove('maplibregl-compact-show');a.removeAttribute('open');}});
     guestMapLoad().then(rows=>{
